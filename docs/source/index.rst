@@ -4,21 +4,28 @@
 Welcome to neatseq_flow's additional modules documentation!
 ===============================================================
 
-Contents:
+
+:ref:`Modules in main NeatSeq-Flow repository <neatseq_flow:builtin_modules>`
+----------------------------------------------------------------------------------
+
+
+Modules in this repository
+-----------------------------------------
 
 .. toctree::
    :maxdepth: 2
 
-   Annotation
-   Assembly
-   ChIP_seq
-   clustering
-   metagenomics
-   microbiology
-   QIIME
-   Reports
-   UCSCtools
-   variants
+   Modules_docs/Annotation
+   Modules_docs/Assembly
+   Modules_docs/ChIP_seq
+   Modules_docs/clustering
+   Modules_docs/metagenomics
+   Modules_docs/microbiology
+   Modules_docs/QIIME
+   Modules_docs/Reports
+   Modules_docs/UCSCtools
+   Modules_docs/variants
+   Modules_docs/Main_NSF_modules/modules
    
 
        

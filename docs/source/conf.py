@@ -14,11 +14,12 @@
 import sys
 import os
 
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('../../Modules'))
-sys.path.insert(0, os.path.abspath('../../../../release_1.0.1/neatseq_flow'))
+# sys.path.insert(0, os.path.abspath('../../Modules/Main_NSF_modules'))
 
 # -- General configuration ------------------------------------------------
 
@@ -84,9 +85,7 @@ language = None
 exclude_patterns = []
 
 # 
-autodoc_mock_imports = [
-    'PLC_Step'
-]
+autodoc_mock_imports = ["PLC_step","modules.global_defs"]
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -305,4 +304,9 @@ texinfo_documents = [
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/': None}
+# intersphinx_mapping = {'https://docs.python.org/': None}
+intersphinx_mapping = {'python': ('https://docs.python.org/', None),
+                       'neatseq_flow':('http://neatseq-flow.readthedocs.io/en/latest/', None)}
+
+
+
