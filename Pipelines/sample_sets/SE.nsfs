@@ -1,0 +1,12 @@
+Title       SE_samples
+
+
+Sample		Sample4
+Single		/path/Sample4/Sample4_R1_001.fastq.gz
+Single		/path/Sample4/Sample4_R1_002.fastq.gz
+
+
+Sample		Sample5
+
+Single		/path/Sample5/Sample5_R1_001.fastq.gz
+Single		/path/Sample5/Sample5_R1_002.fastq.gz

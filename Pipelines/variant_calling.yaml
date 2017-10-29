@@ -1,0 +1,81 @@
+Global_params:
+    Default_wait: 10
+    Qsub_opts: -cwd
+    Qsub_q: bioinfo.q
+    module_path:  C:\Users\sklarz.BGU-USERS\Documents\python_pipeline_gitlab\python_pipeline\additional_modules\additional_modules_release_1.0.0
+Vars:
+    paths:
+        varscan:    /path/to/java -jar /path/to/VarScan.jar 
+        bowtie2:    /path/to/bowtie2
+        samtools:   /path/to/samtools
+        freebayes:  /path/to/freebayes
+        vcftools:   /path/to/vcftools
+    ref_genome:
+        fasta:      /path/to/ref_genome
+        bowtie2_ind: /path/to/ref_genome/bowtie2_ind
+Step_params:
+    merge1:
+        module: merge
+        script_path: cat
+    bowtieR1:
+        module: bowtie2_mapper
+        base: merge1
+        script_path: {Vars.paths.bowtie2}
+        qsub_params:
+            -pe: shared 20
+        get_map_log:
+        get_stderr:
+        # scope: project
+        ref_genome: {Vars.ref_genome.fasta}
+        redirects:
+            --very-sensitive:
+            -p: 20
+            -q:
+            -x: {Vars.ref_genome.bowtie2_ind}
+    samtools1:
+        module: samtools
+        base: bowtieR1
+        script_path: {Vars.paths.samtools}
+        qsub_params:
+            -pe: shared 20
+        view: -buh -@ 20 -F 4
+        sort: -@ 20
+        index:
+        flagstat:
+        stats: --remove-dups
+        del_sam:
+        del_unsorted:
+    freebayes1:
+        module: freebayes
+        base: samtools1
+        script_path: {Vars.paths.freebayes}
+        output_type: gvcf
+        scope: project
+        redirects:
+            -v:
+    mpileup_varscan1:
+        module: mpileup_varscan
+        base: samtools1
+        script_path: '{Vars.paths.varscan} mpileup2snp'
+        mpileup_path: '{Vars.paths.samtools} mpileup --max-depth 6000'
+        scope: project
+        redirects:
+            --min-coverage: 4
+            --output-vcf:
+            --variants: 1
+    vcftools1:
+        module: vcftools
+        base: mpileup_varscan1
+        script_path: {Vars.paths.vcftools}
+        scope: project
+        input: vcf
+        redirects:
+            --recode:
+            --012:
+            --get-INFO: 
+                - NS
+                - DB
+            --extract-FORMAT-info: GT
+            --maf: 0.1
+            
+            

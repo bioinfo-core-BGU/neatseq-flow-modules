@@ -1,0 +1,6 @@
+pick_otus:enable_rev_strand_match				True
+join_paired_ends:min_overlap					1
+
+
+split_libraries_fastq:phred_offset      33
+

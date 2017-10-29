@@ -1,0 +1,4 @@
+*.pyc
+git-gui*
+not_for_publication
+docs/build

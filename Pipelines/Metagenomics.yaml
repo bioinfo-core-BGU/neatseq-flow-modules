@@ -1,0 +1,195 @@
+Global_params:
+    Default_wait: 100
+    Qsub_opts: -V -cwd
+    Qsub_path: /storage/SGE6U8/bin/lx24-amd64
+    Qsub_q: bioinfo.q
+    module_path: C:\Users\sklarz.BGU-USERS\Documents\python_pipeline_gitlab\python_pipeline\additional_modules\additional_modules_release_1.0.0
+Vars:
+    paths:
+        fastqc:         /path/to/fastqc
+        trimmo:         /path/to/java -jar /path/to/trimmomatic-0.32.jar
+        kraken:         /path/to/kraken
+        kaiju:          /path/to/kaiju_dir/
+        metaphlan2:     /path/to/metaphlan2
+        bowtie2:        /path/to/bowtie2
+        diamond:        /path/to/diamond
+        humann2:        /path/to/humann2
+        megahit:        /path/to/megahit
+        prokka:         /path/to/prokka
+        quast:          /path/to/quast
+        spades:         /path/to/spades
+        RGI:            /path/to/CARD-RGI/RGI_v3.1.1/   # Path to RGI installation dir. Must include rgi.py and convertJsonToTSV.py
+        KronaTools:     /path/to/KronaTools-2.6.1/
+    dirs:
+        trimmo:         /path/to/trimmomatic
+    databases:
+        humann2:
+            chocophlan: /path/to/HUMAnN2_v0.11.1/databases/chocophlan
+            uniref:     /path/to/HUMAnN2_v0.11.1/databases/uniref
+        kraken:         /path/to/kraken_std_db
+Step_params:
+    merge1:
+        module: merge
+        script_path: gzip -cd
+    fqc_merge1:
+        module: fastqc_html
+        base: merge1
+        script_path: {Vars.paths.fastqc}
+        qsub_params:
+            -pe: shared 15
+        redirects:
+            --threads: 15
+    trim1:
+        module: trimmo
+        base: merge1
+        script_path: {Vars.paths.trimmo}
+        qsub_params:
+            -pe: shared 20
+            node: node1
+            queue: stam.q
+        spec_dir: /path/to/Trimmomatic_dir/
+        todo: LEADING:20 TRAILING:20
+        redirects:
+            -threads: 20
+    fqc_trim1:
+        module: fastqc_html
+        base: trim1
+        script_path: {Vars.paths.fastqc}
+        qsub_params:
+            -pe: shared 15
+        redirects:
+            --threads: 15
+    metph1:
+        module: metaphlan2
+        base: trim1
+        script_path: '{Vars.paths.metaphlan2}/metaphlan2.py'
+        qsub_params:
+            -V: null
+        export: 'PERL5LIB="{Vars.paths.KronaTools}/lib:$PERL5LIB"'
+        ktImportText_path: '{Vars.paths.KronaTools}/bin/ktImportText'
+        merge_metaphlan_tables: '{Vars.paths.metaphlan2}/utils/merge_metaphlan_tables.py'
+        metaphlan2krona_path:   '{Vars.paths.metaphlan2}/utils/metaphlan2krona.py'
+        redirects:
+            --biom: null
+            --bowtie2_exe: {Vars.paths.bowtie2}
+            --bowtie2db: '{Vars.paths.metaphlan2}/db_v20/mpa_v20_m200'
+            --bowtie2out:
+            --input_type: fastq
+            --mdelim: ';'
+            --mpa_pkl: '{Vars.paths.metaphlan2}/db_v20/mpa_v20_m200.pkl'
+            --nproc: 30
+    HUMAnN2_1:
+        module: HUMAnN2
+        base: trim1
+        script_path: {Vars.paths.humann2}
+        join_tables: null
+        renorm_table: --units cpm -p
+        redirects:
+            --bowtie2: {Vars.paths.bowtie2}
+            --diamond: {Vars.paths.diamond}
+            --gap-fill: 'on'
+            --input-format: fastq
+            --metaphlan: {Vars.paths.metaphlan2}
+            --minpath: 'on'
+            --nucleotide-database: {Vars.databases.humann2.chocophlan}
+            --protein-database: {Vars.databases.humann2.uniref}
+            --threads: 30
+    kaiju1:
+        module: kaiju
+        base: trim1
+        script_path: '{Vars.paths.kaiju}/bin/kaiju'
+        setenv: 'PERL5LIB={Vars.paths.KronaTools}/lib:$PERL5LIB'
+        kaiju2krona: '{Vars.paths.kaiju}/bin/kaiju2krona'
+        ktImportText_path: '{Vars.paths.KronaTools}/bin/ktImportText'
+        names_dmp: '{Vars.paths.kaiju}/kaijudb/names.dmp'
+        redirects:
+            -f: '{Vars.paths.kaiju}/kaijudb/kaiju_db.fmi'
+            -t: '{Vars.paths.kaiju}/kaijudb/nodes.dmp'
+            -z: 40
+    kraken1:
+        module: kraken
+        base: trim1
+        script_path: '{Vars.paths.kraken}'
+        qsub_params:
+            -pe: shared 20
+            node: sge180, sge102
+        merge_kraken_reports:
+        ktImportTaxonomy_path: '{Vars.paths.KronaTools}/bin/ktImportTaxonomy
+            -u  http://krona.sourceforge.net'
+        redirects:
+            --db: {Vars.databases.kraken}
+            --preload: null
+            --quick: null
+            --threads: 20
+    megahit1:
+        module: megahit_assembl
+        base: trim1
+        script_path: {Vars.paths.megahit}
+        qsub_params:
+            -pe: shared 30
+            node: sge37
+        scope: project
+        redirects:
+            --continue: null
+            --num-cpu-threads: 30
+    quast_megahit:
+        module: quast
+        base: megahit1
+        script_path: {Vars.paths.quast}
+        level: project
+        redirects:
+            --min-contig: 100
+    spades1:
+        module: spades_assembl
+        base: trim1
+        script_path: {Vars.paths.spades}
+        scope: sample
+        redirects:
+            --meta:
+    quast_spades:
+        module: quast
+        base: spades1
+        script_path: {Vars.paths.quast}
+        level: project
+        redirects:
+            --min-contig: 100
+    prokka1:
+        module: prokka
+        base: spades1
+        script_path: {Vars.paths.prokka}
+        qsub_params:
+            -pe: shared 20
+        generate_GFF_dir:
+        # stop_and_show:
+        # scope: project
+        redirects:
+            --cpus: 20
+            --fast:
+            --force:
+            --genus: Staphylococcus
+            --metagenome:
+            --strain:
+    rgi_megahit:
+        module: CARD_RGI
+        base: spades1
+        script_path: 'python {Vars.paths.RGI}/rgi.py'
+        JSON2tsv_script: 'python {Vars.paths.RGI}/convertJsonToTSV.py'
+        qsub_params:
+            -pe: shared 15
+        orf_to_use: -x
+        scope: sample
+        redirects:
+            -n: 20
+            -x: 1
+    rgi_spades:
+        module: CARD_RGI
+        base: spades1
+        script_path: 'python {Vars.paths.RGI}/rgi.py'
+        JSON2tsv_script: 'python {Vars.paths.RGI}/convertJsonToTSV.py'
+        qsub_params:
+            -pe: shared 15
+        local: /local/bioinfo
+        orf_to_use: -x
+        redirects:
+            -n: 20
+            -x: 1

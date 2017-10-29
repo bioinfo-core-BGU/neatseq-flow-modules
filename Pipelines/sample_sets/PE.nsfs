@@ -1,0 +1,26 @@
+Title       PE
+
+
+Sample		Sample1
+Forward		/path/Sample1/Sample1_F1.fastq.gz
+Reverse		/path/Sample1/Sample1_R1.fastq.gz
+
+Forward		/path/Sample1/Sample1_F2.fastq.gz
+Reverse		/path/Sample1/Sample1_R2.fastq.gz
+
+
+Sample		Sample2
+Forward		/path/Sample2/Sample2_F1.fastq.gz
+Reverse		/path/Sample2/Sample2_R1.fastq.gz
+                                 
+Forward		/path/Sample2/Sample2_F2.fastq.gz
+Reverse		/path/Sample2/Sample2_R2.fastq.gz
+
+
+Sample		Sample3
+Forward		/path/Sample3/Sample3_F1.fastq.gz
+Reverse		/path/Sample3/Sample3_R1.fastq.gz
+                                 
+Forward		/path/Sample3/Sample3_F2.fastq.gz
+Reverse		/path/Sample3/Sample3_R2.fastq.gz
+

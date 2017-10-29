@@ -1,0 +1,30 @@
+Title           ChIP-seq_PE
+
+# Read files. Make sure: 1. number of reverse and forward files is identical. 2. They are in the same order
+Sample Sample1_anti
+Forward /path/to/Sample1_anti_GTGGCC_L001_R1_001.fastq
+Reverse /path/to//Sample1_anti_GTGGCC_L001_R2_001.fastq
+Forward /path/to//Sample1_anti_GTGGCC_L001_R1_002.fastq
+Reverse /path/to//Sample1_anti_GTGGCC_L001_R2_002.fastq
+
+Sample Sample1_input
+Forward /path/to/Sample1_input_GTGGCC_L001_R1_001.fastq
+Reverse /path/to//Sample1_input_GTGGCC_L001_R2_001.fastq
+Forward /path/to//Sample1_input_GTGGCC_L001_R1_002.fastq
+Reverse /path/to//Sample1_input_GTGGCC_L001_R2_002.fastq
+
+Sample Sample2_anti
+Forward /path/to//Sample2_anti_GTCCGC_L001_R1_001.fastq
+Reverse /path/to//Sample2_anti_GTCCGC_L001_R2_001.fastq
+Forward /path/to//Sample2_anti_GTCCGC_L001_R1_002.fastq
+Reverse /path/to//Sample2_anti_GTCCGC_L001_R2_002.fastq
+
+Sample Sample2_input
+Forward /path/to//Sample2_input_GTGAAA_L001_R1_001.fastq
+Reverse /path/to//Sample2_input_GTGAAA_L001_R2_001.fastq
+Forward /path/to//Sample2_input_GTGAAA_L001_R1_002.fastq
+Reverse /path/to//Sample2_input_GTGAAA_L001_R2_002.fastq
+
+Sample_Control          Sample1_anti:Sample1_input
+Sample_Control          Sample2_anti:Sample2_input
+
