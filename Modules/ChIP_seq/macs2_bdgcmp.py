@@ -3,6 +3,9 @@
 Module ``macs2_bdgcmp``
 ---------------------------
 
+
+:Authors: Menachem Sklarz
+
 A module for running macs2 bdgcmp:
 
 Requires

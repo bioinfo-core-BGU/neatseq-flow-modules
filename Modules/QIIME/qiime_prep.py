@@ -1,9 +1,10 @@
-
-
-""" A module for preparing fastq reads for analysis with QIIME (1.9):
-
+""" 
 Module ``qiime_prep``
 -------------------------------
+
+:Authors: Menachem Sklarz
+
+A module for preparing fastq reads for analysis with QIIME (1.9):
 
 The reads stored in each sample are optinally joined and then set it a directory in such a way the downstream, QIIME's demult can concatenate the sequences while saving the sample of origin.
 

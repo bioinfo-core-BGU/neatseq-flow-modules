@@ -4,6 +4,9 @@
 Module ``vsearch_cluster``
 --------------------------------
 
+
+:Authors: Menachem Sklarz
+
 A module for running vsearch clustering:
 
 The reads stored in fasta files are clustered with one of the 3 methods available: cluster_fast, cluster_size or cluster_smallmem.

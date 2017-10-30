@@ -3,6 +3,9 @@
 Module ``kraken``
 --------------------------------
 
+
+:Authors: Menachem Sklarz
+
 A module for running ``kraken``:
 
 Note that ``kraken`` executable must be in a folder together with ``kraken-translate`` and ``kraken-report``. This is the default for ``kraken`` installation. 

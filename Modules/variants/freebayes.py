@@ -2,6 +2,7 @@
 Module ``freebayes``
 -----------------------
 
+
 :Authors: Menachem Sklarz
 
 A module for identifying variants by running freebayes:

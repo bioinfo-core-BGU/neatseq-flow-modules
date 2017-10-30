@@ -1,7 +1,9 @@
-
 """ 
 Module ``qiime_filter_samples_from_otu_table``
 -----------------------------------------------
+
+
+:Authors: Menachem Sklarz
 
 A module for running QIIME's ``filter_samples_from_otu_table.py``
 

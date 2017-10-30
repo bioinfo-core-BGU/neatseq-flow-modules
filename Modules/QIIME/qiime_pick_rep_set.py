@@ -1,7 +1,9 @@
-
 """ 
 Module ``qiime_pick_rep_set``
 --------------------------------
+
+
+:Authors: Menachem Sklarz
 
 A module for running QIIME's ``pick_rep_set.py``
 

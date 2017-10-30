@@ -3,6 +3,9 @@
 Module ``metaphlan2``
 --------------------------------
 
+
+:Authors: Menachem Sklarz
+
 A module for running ``metaphlan2``:
 
 

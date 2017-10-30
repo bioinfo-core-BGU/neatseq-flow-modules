@@ -3,6 +3,9 @@
 Module ``UCSC_BW_wig``
 ----------------------------
 
+
+:Authors: Menachem Sklarz
+
 A module for creating wig and bigwig files using UCSC tools:
 
 The module creates bigwig and wig files from the current active BedGraph file.

@@ -1,8 +1,12 @@
-
-""" A module for running QIIME's identify_chimeric_seqs.py:
+""" 
 
 Module ``qiime_chimera``
 ----------------------------
+
+
+:Authors: Menachem Sklarz
+
+A module for running QIIME's identify_chimeric_seqs.py:
 
 The module can operate on the raw ``seqs.fna`` or on an aligned version. The latter is used for ChimeraSlayer and the former for usearch61
 

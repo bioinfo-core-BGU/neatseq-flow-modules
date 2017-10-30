@@ -2,6 +2,9 @@
 Module ``parse_blast``
 -----------------------
 
+
+:Authors: Menachem Sklarz
+
 :Authors: Menachem Sklarz
           
 
@@ -74,9 +77,6 @@ Lines for parameter file
             --num_hits: 1
 
             
-References
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 """
 

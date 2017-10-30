@@ -3,6 +3,9 @@
 Module ``NGSplot``
 -----------------------
 
+
+:Authors: Menachem Sklarz
+
 A module for running NGSplot:
 
 Runs NGSplot on existing **sorted** BAM files. 

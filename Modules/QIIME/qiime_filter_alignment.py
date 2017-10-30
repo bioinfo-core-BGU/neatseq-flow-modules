@@ -1,8 +1,9 @@
-
 """ 
-
 Module ``qiime_filter_alignment``
 ------------------------------------
+
+
+:Authors: Menachem Sklarz
 
 A module for running QIIME's ``filter_alignment.py``
 

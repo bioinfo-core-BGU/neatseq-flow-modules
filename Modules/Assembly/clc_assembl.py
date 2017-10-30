@@ -2,6 +2,9 @@
 Module ``clc_assembl``
 --------------------------------
 
+
+:Authors: Menachem Sklarz
+
 A class that defines a module for assembling reads using CLC assembler.
 
  

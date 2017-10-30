@@ -2,6 +2,9 @@
 Module ``CARD_RGI``
 ------------------------
 
+
+:Authors: Menachem Sklarz
+
 A module for running CARD RGI:
 
 RGI is executed on the contigs stored in a Nucleotide fasta file.

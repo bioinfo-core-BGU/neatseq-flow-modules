@@ -1,8 +1,11 @@
-
-""" A module for running ``QIIME's align_seqs.py``:
-
+""" 
 Module ``qiime_align_seqs``
 ----------------------------
+
+
+:Authors: Menachem Sklarz
+
+A module for running ``QIIME's align_seqs.py``:
 
 Can be used for the parallel versions thereof: ``parallel_align_seqs_pynast.py``
 

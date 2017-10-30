@@ -4,6 +4,9 @@
 Module ``cd_hit``
 ------------------------
 
+
+:Authors: Menachem Sklarz
+
 A module for clustering with cd-hit/ch-hit-est:
 
 This module runs both cd-hit and cd-hit-est. The type of sequence (`nucl` or `prot`) will be determined by the program supplied in `script_path`.

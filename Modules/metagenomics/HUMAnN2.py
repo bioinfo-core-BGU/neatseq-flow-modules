@@ -3,6 +3,9 @@
 Module ``HUMAnN2``
 --------------------------------
 
+
+:Authors: Menachem Sklarz
+
 A module for running ``HUMAnN2``:
 
 

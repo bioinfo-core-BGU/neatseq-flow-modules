@@ -2,6 +2,9 @@
 Module ``mpileup_varscan``
 ------------------------------
 
+
+:Authors: Menachem Sklarz
+
 A module for identifying variance by running mpileup and piping it's (large) output into varscan:
 
 Requires

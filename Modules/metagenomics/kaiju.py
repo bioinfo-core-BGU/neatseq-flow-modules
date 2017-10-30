@@ -3,6 +3,9 @@
 Module ``kaiju``
 --------------------------------
 
+
+:Authors: Menachem Sklarz
+
 A module for running ``kaiju``:
 
 

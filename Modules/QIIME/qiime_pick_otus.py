@@ -1,7 +1,9 @@
-
 """ 
 Module ``qiime_pick_otus``
 ----------------------------
+
+
+:Authors: Menachem Sklarz
 
 A module for running QIIME's ``pick_otus.py``
 

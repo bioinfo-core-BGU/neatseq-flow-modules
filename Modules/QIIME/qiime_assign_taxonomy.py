@@ -1,7 +1,9 @@
-
 """ 
 Module ``qiime_assign_taxonomy``
 ----------------------------------
+
+
+:Authors: Menachem Sklarz
 
 A module for running QIIME's ``assign_taxonomy.py``
 

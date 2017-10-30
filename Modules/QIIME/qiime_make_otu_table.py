@@ -1,7 +1,9 @@
-
 """ 
 Module ``qiime_make_otu_table``
 -----------------------------------
+
+
+:Authors: Menachem Sklarz
 
 A module for running QIIME's ``make_otu_table.py``:
 

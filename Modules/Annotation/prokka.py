@@ -2,7 +2,6 @@
 Module ``prokka`` 
 -------------------
 
-
 :Authors: Menachem Sklarz
 
 

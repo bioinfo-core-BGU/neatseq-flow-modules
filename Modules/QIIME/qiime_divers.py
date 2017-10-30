@@ -1,7 +1,9 @@
-
 """ 
 Module ``qiime_divers``
 ----------------------------
+
+
+:Authors: Menachem Sklarz
 
 A module for running QIIME's ``core_diversity_analyses.py``:
 

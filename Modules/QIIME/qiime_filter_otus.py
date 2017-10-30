@@ -1,7 +1,9 @@
-
 """ 
 Module ``qiime_filter_otus``
 ----------------------------
+
+
+:Authors: Menachem Sklarz
 
 A module for running QIIME's ``filter_otus_from_otu_table.py``
 

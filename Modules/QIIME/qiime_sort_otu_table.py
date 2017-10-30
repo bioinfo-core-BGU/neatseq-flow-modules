@@ -1,7 +1,9 @@
-
 """ 
 Module ``qiime_sort_otu_table``
 ---------------------------------
+
+
+:Authors: Menachem Sklarz
 
 A module for running QIIME's ``sort_otu_table.py``
 

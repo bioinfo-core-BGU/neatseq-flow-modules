@@ -1,9 +1,11 @@
-
-
-""" A module for running QIIME's multiple_split_libraries_fastq.py:
-
+"""
 Module ``qiime_demult``
 ----------------------------
+
+
+:Authors: Menachem Sklarz
+
+A module for running QIIME's multiple_split_libraries_fastq.py:
 
 The reads from step qiime_prep are combined into one seqs.fna file.
 

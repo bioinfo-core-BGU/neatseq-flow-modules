@@ -3,6 +3,9 @@
 Module ``CEAS``
 -------------------
 
+
+:Authors: Menachem Sklarz
+
 A module for running CEAS:
 
 Requires

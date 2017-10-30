@@ -3,6 +3,9 @@
 Module ``vsearch_derepel``
 --------------------------------
 
+
+:Authors: Menachem Sklarz
+
 A module for running vsearch read dereplication:
 
 Performs dereplication on fastq and fasta files.

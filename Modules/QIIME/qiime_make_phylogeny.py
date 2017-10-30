@@ -1,8 +1,10 @@
-
 """ 
 
 Module ``qiime_make_phylogeny``
 --------------------------------
+
+
+:Authors: Menachem Sklarz
 
 A module for running QIIME's ``make_phylogeny.py``
 
