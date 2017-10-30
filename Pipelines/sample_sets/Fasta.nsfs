@@ -1,0 +1,13 @@
+Title       BlastExperiment
+
+
+Sample  Sample1
+Nucleotide      /path/to/Sample1.fna
+Protein         /path/to/Sample1.faa
+
+
+
+Sample  Sample2 
+Nucleotide      /path/to/Sample2.fna
+Protein         /path/to/Sample2.faa
+

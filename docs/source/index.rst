@@ -27,7 +27,13 @@ Modules in this repository
    Modules_docs/variants
    Modules_docs/Main_NSF_modules/modules
    
+Pipelines docs 
+-------------------------
 
+.. runblock:: pycon
+
+    >>> for i in range(5):
+    ...    print i
        
 Indices and tables
 ==================

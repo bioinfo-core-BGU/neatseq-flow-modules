@@ -21,6 +21,8 @@ import os
 sys.path.insert(0, os.path.abspath('../../Modules'))
 # sys.path.insert(0, os.path.abspath('../../Modules/Main_NSF_modules'))
 
+# print sys.path
+# sys.exit(sys.path)
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -36,8 +38,12 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
     'sphinx.ext.ifconfig',
-    'sphinx.ext.viewcode',
+    'sphinx.ext.viewcode'
 ]
+
+
+
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -100,7 +106,7 @@ autodoc_mock_imports = ["PLC_step","modules.global_defs"]
 
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.
-#show_authors = False
+show_authors = True
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -310,3 +316,6 @@ intersphinx_mapping = {'python': ('https://docs.python.org/', None),
 
 
 
+autoyaml_root = "../../Pipelines"
+autoyaml_doc_delimeter = "###"
+autoyaml_comment = "#"

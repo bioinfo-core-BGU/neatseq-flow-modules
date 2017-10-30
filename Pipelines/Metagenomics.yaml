@@ -4,6 +4,24 @@ Global_params:
     Qsub_path: /storage/SGE6U8/bin/lx24-amd64
     Qsub_q: bioinfo.q
     module_path: C:\Users\sklarz.BGU-USERS\Documents\python_pipeline_gitlab\python_pipeline\additional_modules\additional_modules_release_1.0.0
+Description: |
+    A pipeline for executing various analyses on metagenomics data
+    --------------------------------------------------------------
+    
+    Includes two approaches:
+    a. Analysis of the raw reads with:
+        - kraken
+        - metaphlan2
+        - kaiju
+        - HUMAnN2
+       The output from the former three programs is also plotted with krona (to disable plotting with krona, comment out the lines referring to krona in the instance definition.)  
+    b. Assembly and analysis of the assembled reads:
+        1. Assembly below is done with two tools: spades and megahit
+        2. Each assembly is quality tested with quast
+        3. assemblies are annotated with prokka 
+        4. Antibiotic resistance is determined with CARD RGI
+        5. Not included. Resistance and virulence can also be determined by BLASTing AR and virulence databases against the assemblies. See module BLAST.
+    ----------------------------------------------------------------
 Vars:
     paths:
         fastqc:         /path/to/fastqc
@@ -114,8 +132,7 @@ Step_params:
             -pe: shared 20
             node: sge180, sge102
         merge_kraken_reports:
-        ktImportTaxonomy_path: '{Vars.paths.KronaTools}/bin/ktImportTaxonomy
-            -u  http://krona.sourceforge.net'
+        ktImportTaxonomy_path: '{Vars.paths.KronaTools}/bin/ktImportTaxonomy -u  http://krona.sourceforge.net'
         redirects:
             --db: {Vars.databases.kraken}
             --preload: null

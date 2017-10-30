@@ -3,7 +3,27 @@ Global_params:
     Main: CWD
     Qsub_opts: -cwd
     Qsub_q: bioinfo.q
-    module_path: C:\Users\sklarz.BGU-USERS\Documents\python_pipeline_gitlab\python_pipeline\additional_modules\additional_modules_release_1.0.0
+    module_path: C:\Users\sklarz.BGU-USERS\Documents\python_pipeline_gitlab\python_pipeline\additional_modules\additional_modules_release_1.1.0
+Description: |
+    A pipeline for executing a standard ChIP-seq analysis
+    --------------------------------------------------------------
+    
+    The pipeline includes the following stages:
+    1. Preparation and QA:
+        a. Merging the reads into a signle file per sample.
+        b. QC with fastqc
+        c. Trimming with trimmomatic
+        d. QC on trimmed reads with fastqc
+    2. Mapping 
+        a. Mapping the reads to the reference genome with bowtie2
+        b. Conversion to sorted BAM with samtools
+        c. Converting to UCSC and IGV format
+    3. Finding ChIP peaks
+        a. Peak calling is performed with macs2 callpeak
+        b. Further analysis of the peaks is done with macs2 bdgcmp
+    4. Reporting
+        a. Analysis of the BAM files is done with NGSplot, with -R set to enhancer, exon, genebody and tss
+
 Vars:
     paths:
         fastqc:         /path/to/fastqc
@@ -22,6 +42,7 @@ Vars:
         chrom_sizes:    /path/to/chrom.sizes
         ceas_db:        /path/to/CEAS-Package-1.0.2/databases/hg19.refGene
         bowtie2_ind:    /path/to/bowtie2/index  # Without the suffix
+        NGSplot_code:   mm10
 Step_params:
     merge1:
         module: merge
@@ -52,7 +73,7 @@ Step_params:
             -pe: shared 15
         redirects:
             --threads: 15
-    bwt2_Zhou:
+    bwt2_map:
         module: bowtie2_mapper
         base: trim1
         script_path: {Vars.paths.bowtie2}
@@ -69,9 +90,9 @@ Step_params:
             -p: 20
             -q:
             -x: {Vars.reference.bowtie2_ind}
-    sam_Zhou:
+    sam2bam:
         module: samtools
-        base: bwt2_Zhou
+        base: bwt2_map
         script_path: {Vars.paths.samtools}
         qsub_params:
             -pe: shared 20
@@ -81,13 +102,13 @@ Step_params:
         view: -buh  -q 30 -@ 20 -F 4
     IGVcount1:
         module: IGV_count
-        base: sam_Zhou
+        base: sam2bam
         script_path: '{Vars.paths.java} -Xmx1500m -jar {Vars.paths.igvtools} count'
         format: tdf
         genome: {Vars.reference.chrom_sizes}
     NGSplot_enhancer:
         module: NGSplot
-        base: sam_Zhou
+        base: sam2bam
         script_path: 'Rscript {Vars.paths.NGSplot}/bin/ngs.plot.r'
         qsub_params:
             -pe: shared 20
@@ -99,7 +120,7 @@ Step_params:
             -R: enhancer
     NGSplot_exon:
         module: NGSplot
-        base: sam_Zhou
+        base: sam2bam
         script_path: 'Rscript {Vars.paths.NGSplot}/bin/ngs.plot.r'
         qsub_params:
             -pe: shared 20
@@ -111,7 +132,7 @@ Step_params:
             -R: exon
     NGSplot_genebody:
         module: NGSplot
-        base: sam_Zhou
+        base: sam2bam
         script_path: 'Rscript {Vars.paths.NGSplot}/bin/ngs.plot.r'
         qsub_params:
             -pe: shared 20
@@ -123,7 +144,7 @@ Step_params:
             -R: genebody
     NGSplot_tss:
         module: NGSplot
-        base: sam_Zhou
+        base: sam2bam
         script_path: 'Rscript {Vars.paths.NGSplot}/bin/ngs.plot.r'
         qsub_params:
             -pe: shared 20
@@ -135,14 +156,14 @@ Step_params:
             -R: tss
     genCovBed:
         module: genomeCoverageBed
-        base: sam_Zhou
+        base: sam2bam
         script_path: '{Vars.paths.bedtools}/genomeCoverageBed'
         redirects:
             -bg:
             -g: {Vars.reference.chrom_sizes}
-    macs1_Zhou:
+    macs1_findpeaks:
         module: macs2_callpeak
-        base: sam_Zhou
+        base: sam2bam
         script_path: '{Vars.paths.macs2} callpeak'
         bedToBigBed_path: '{Vars.paths.kentUtils}/bedToBigBed'
         chrom.sizes: {Vars.reference.chrom_sizes}
@@ -160,7 +181,7 @@ Step_params:
         genome: {Vars.reference.chrom_sizes}
     bdgcmp_Zhou:
         module: macs2_bdgcmp
-        base: macs1_Zhou
+        base: macs1_findpeaks
         script_path: '{Vars.paths.macs2} bdgcmp'
         genome: {Vars.reference.chrom_sizes}
         slop_path: '{Vars.paths.bedtools}/bedtools slop'
@@ -168,22 +189,22 @@ Step_params:
         ucscTools_path: {Vars.paths.kentUtils}
         redirects:
             --method: FE
-    macs1_Zhou_UCSC:
+    macs1_findpeaks_UCSC:
         module: UCSC_BW_wig
-        base: macs1_Zhou
+        base: macs1_findpeaks
         script_path: {Vars.paths.kentUtils}
         bedGraphToBigWig_params: -blockSize 10 -itemsPerSlot 20
         bigWigToWig_params: -chrom X1 -start X2 -end X3
         genome: {Vars.reference.chrom_sizes}
     CEAS1:
         module: CEAS
-        base: macs1_Zhou_UCSC
+        base: macs1_findpeaks_UCSC
         script_path: '{Vars.paths.ceas}/bin/ceas'
         setenv: 'PYTHONPATH={Vars.paths.ceas}/lib/python2.7/site-packages:$PYTHONPATH'
         redirects:
             -g: {Vars.reference.ceas_db}
-    macs1_Zhou_tdf:
+    macs1_findpeaks_tdf:
         module: IGV_toTDF
-        base: macs1_Zhou_UCSC
+        base: macs1_findpeaks_UCSC
         script_path: '{Vars.paths.java} -Xmx1500m -jar {Vars.paths.igvtools} toTDF'
         genome: mm10
