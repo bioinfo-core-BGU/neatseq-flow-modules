@@ -1,7 +1,12 @@
-""" A module for running prokka:
-
+""" 
 Module ``prokka`` 
 -------------------
+
+
+:Authors: Menachem Sklarz
+
+
+A module for running prokka:
 
 Prokka is executed on the contigs stored in sample_data.
 

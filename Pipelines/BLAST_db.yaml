@@ -62,10 +62,10 @@ Step_params:
             --columns2keep: '"group name accession qseqid sallseqid evalue bitscore
                 score pident coverage align_len"'
             --dbtable: {Vars.databases.gene_list.table}
-            --group_dif_name: # See parse_blast.R documentation for how this is to be specified
+            --group_dif_name: # See parse_blast_general.R documentation for how this is to be specified
             --max_evalue: 1e-7
             --merge_blast: qseqid
-            --merge_metadata: # See parse_blast.R documentation for how this is to be specified
+            --merge_metadata: # See parse_blast_general.R documentation for how this is to be specified
             --min_align_len: 30
             --min_coverage: 60
             --names: '"qseqid sallseqid qlen slen qstart qend sstart send length evalue

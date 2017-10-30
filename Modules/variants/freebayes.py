@@ -2,6 +2,8 @@
 Module ``freebayes``
 -----------------------
 
+:Authors: Menachem Sklarz
+
 A module for identifying variants by running freebayes:
 
 Requires
@@ -63,6 +65,13 @@ Lines for parameter file
         redirects: 
             --strict-vcf:
     
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Marth GT, Korf I, Yandell MD, Yeh RT, Gu Z, Zakeri H, Stitziel NO, Hillier L, Kwok PY, Gish WR: "A general approach to single-nucleotide polymorphism discovery". *Nat Genet.* 1999, 23: 452-456. 10.1038/70570.
+
+Acknowledgments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
