@@ -8,6 +8,8 @@ Welcome to neatseq_flow's additional modules documentation!
 :ref:`Modules in main NeatSeq-Flow repository <neatseq_flow:builtin_modules>`
 ----------------------------------------------------------------------------------
 
+.. _additional_modules_repo:
+
 
 Modules in this repository
 -----------------------------------------

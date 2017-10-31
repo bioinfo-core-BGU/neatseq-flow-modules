@@ -1,5 +1,5 @@
 # **NeatSeq-Flow**: A Lightweight Software for Efficient Execution of High Throughput Sequencing Workflows.
-<img src="docs/source/figs/logo_Hor.png" alt="sdsdsdsd" style="width: 200px;"/>
+![NeatSeq-Flow Logo](doc/source/figs/logo_Hor_small.png "NeatSeq-Flow")
 
 
 # Additional NeatSeq-Flow modules
