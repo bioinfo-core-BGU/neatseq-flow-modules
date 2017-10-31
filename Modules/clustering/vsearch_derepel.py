@@ -1,10 +1,12 @@
-
+# -*- coding: UTF-8 -*-
 """ 
 Module ``vsearch_derepel``
 --------------------------------
 
 
 :Authors: Menachem Sklarz
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
 A module for running vsearch read dereplication:
 
@@ -64,6 +66,11 @@ For external index:
             --sizein:
             --sizeout:
 
+
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Rognes, T., Flouri, T., Nichols, B., Quince, C. and Mahé, F., 2016. **VSEARCH: a versatile open source tool for metagenomics**. *PeerJ*, 4, p.e2584.
 
 """
 

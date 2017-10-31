@@ -1,9 +1,14 @@
+# -*- coding: UTF-8 -*-
 """
 Module ``qiime_demult``
 ----------------------------
 
 
 :Authors: Menachem Sklarz
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
+
+.. Note:: This module was developed as part of a study led by Dr. Jacob Moran Gilad
 
 A module for running QIIME's multiple_split_libraries_fastq.py:
 
@@ -49,6 +54,13 @@ Lines for parameter file
             --parameter_fp: /path/to/qiime_params
             --remove_filepath_in_name: null
     
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Caporaso, J.G., Kuczynski, J., Stombaugh, J., Bittinger, K., Bushman, F.D., Costello, E.K., Fierer, N., Peña, A.G., Goodrich, J.K., Gordon, J.I. and Huttley, G.A., 2010. "QIIME allows analysis of high-throughput community sequencing data". *Nature methods*, 7(5), pp.335-336.
+
+
+
 """
 
 

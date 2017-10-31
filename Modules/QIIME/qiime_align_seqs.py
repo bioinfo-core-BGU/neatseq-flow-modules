@@ -1,9 +1,14 @@
+# -*- coding: UTF-8 -*-
 """ 
 Module ``qiime_align_seqs``
 ----------------------------
 
 
 :Authors: Menachem Sklarz
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
+
+.. Note:: This module was developed as part of a study led by Dr. Jacob Moran Gilad
 
 A module for running ``QIIME's align_seqs.py``:
 
@@ -57,6 +62,13 @@ Lines for parameter file
             --jobs_to_start: 5
             --retain_temp_files: 
     
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Caporaso, J.G., Kuczynski, J., Stombaugh, J., Bittinger, K., Bushman, F.D., Costello, E.K., Fierer, N., Peña, A.G., Goodrich, J.K., Gordon, J.I. and Huttley, G.A., 2010. "QIIME allows analysis of high-throughput community sequencing data". *Nature methods*, 7(5), pp.335-336.
+
+
+
 """
 
 

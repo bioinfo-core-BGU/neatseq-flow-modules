@@ -1,9 +1,15 @@
+# -*- coding: UTF-8 -*-
 """ 
 Module ``CARD_RGI``
 ------------------------
 
 
 :Authors: Menachem Sklarz
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
+
+.. Note:: This module was developed as part of a study led by Dr. Jacob Moran Gilad
+
 
 A module for running CARD RGI:
 
@@ -83,6 +89,11 @@ Lines for parameter file
         redirects:
             -n: 20
             -x: 1
+
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+McArthur, A.G., Waglechner, N., Nizam, F., Yan, A., Azad, M.A., Baylay, A.J., Bhullar, K., Canova, M.J., De Pascale, G., Ejim, L. and Kalan, L., 2013. **The comprehensive antibiotic resistance database**. *Antimicrobial agents and chemotherapy*, 57(7), pp.3348-3357.
 
 """
 

@@ -1,11 +1,12 @@
-
-
+# -*- coding: UTF-8 -*-
 """ 
 Module ``megahit_assembl``
 --------------------------------
 
 
 :Authors: Menachem Sklarz
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
 A class that defines a module for assembling reads using MEGAHIT assembler.
 
@@ -66,6 +67,14 @@ Lines for parameter file
         redirects:
             --continue: 
             --num-cpu-threads: 30
+
+            
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Li, D., Liu, C.M., Luo, R., Sadakane, K. and Lam, T.W., 2015. **MEGAHIT: an ultra-fast single-node solution for large and complex metagenomics assembly via succinct de Bruijn graph**. *Bioinformatics*, 31(10), pp.1674-1676.
+
+
 """
 
 

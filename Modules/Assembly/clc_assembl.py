@@ -1,9 +1,12 @@
+# -*- coding: UTF-8 -*-
 """ 
 Module ``clc_assembl``
 --------------------------------
 
 
 :Authors: Menachem Sklarz
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
 A class that defines a module for assembling reads using CLC assembler.
 
@@ -66,6 +69,7 @@ Lines for parameter file
         redirects:
             --cpus: 30
             
+
 """
 
 import os

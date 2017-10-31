@@ -1,10 +1,13 @@
-
+# -*- coding: UTF-8 -*-
 """ 
 Module ``UCSC_BW_wig``
 ----------------------------
 
 
 :Authors: Menachem Sklarz
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
+
 
 A module for creating wig and bigwig files using UCSC tools:
 
@@ -55,6 +58,10 @@ Lines for parameter file
         bedGraphToBigWig_params:     -blockSize=10 -itemsPerSlot=20
         bigWigToWig_params:          -chrom X1 -start X2 -end X3
 
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Kent, W.J., Zweig, A.S., Barber, G., Hinrichs, A.S. and Karolchik, D., 2010. **BigWig and BigBed: enabling browsing of large distributed datasets**. *Bioinformatics*, 26(17), pp.2204-2207.
 """
 
 

@@ -1,12 +1,11 @@
+# -*- coding: UTF-8 -*-
 """ 
 Module ``parse_blast``
 -----------------------
 
-
 :Authors: Menachem Sklarz
-
-:Authors: Menachem Sklarz
-          
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
 
 A module for running ``parse_blast_general.R``:
@@ -76,7 +75,6 @@ Lines for parameter file
                 bitscore score pident qframe"'
             --num_hits: 1
 
-            
 
 """
 

@@ -1,10 +1,12 @@
-
+# -*- coding: UTF-8 -*-
 """ 
 Module ``NGSplot``
 -----------------------
 
 
 :Authors: Menachem Sklarz
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
 A module for running NGSplot:
 
@@ -64,6 +66,9 @@ Lines for parameter file
         qsub_params:
             -pe:            shared 20
 
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Shen, L., Shao, N., Liu, X. and Nestler, E., 2014. **ngs.plot: Quick mining and visualization of next-generation sequencing data by integrating genomic databases**. *BMC genomics*, 15(1), p.284.
 
 """
 import os

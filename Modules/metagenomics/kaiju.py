@@ -1,10 +1,14 @@
-
+# -*- coding: UTF-8 -*-
 """ 
 Module ``kaiju``
 --------------------------------
 
-
 :Authors: Menachem Sklarz
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
+
+.. Note:: This module was developed as part of a study led by Dr. Jacob Moran Gilad
+
 
 A module for running ``kaiju``:
 
@@ -66,6 +70,10 @@ Lines for parameter file
             -t: /path/to/kaijudb/nodes.dmp
             -z: 40            
             
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Menzel, P., Ng, K.L. and Krogh, A., 2016. **Fast and sensitive taxonomic classification for metagenomics with Kaiju**. Nature communications, 7.
+
 """
 
 

@@ -1,10 +1,12 @@
-
+# -*- coding: UTF-8 -*-
 """ 
 Module ``CEAS``
 -------------------
 
 
 :Authors: Menachem Sklarz
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
 A module for running CEAS:
 
@@ -49,6 +51,12 @@ Lines for parameter file
         script_path: /path/to/bin/ceas
         redirects:
             -g: /path/to/hg19.refGene
+
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Shin, H., Liu, T., Manrai, A.K. and Liu, X.S., 2009. **CEAS: cis-regulatory element annotation system**. *Bioinformatics*, 25(19), pp.2605-2606.
+
 
 """
 

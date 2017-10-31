@@ -1,9 +1,12 @@
+# -*- coding: UTF-8 -*-
 """ 
 Module ``freebayes``
 -----------------------
 
-
 :Authors: Menachem Sklarz
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
+
 
 A module for identifying variants by running freebayes:
 
@@ -69,10 +72,8 @@ Lines for parameter file
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Marth GT, Korf I, Yandell MD, Yeh RT, Gu Z, Zakeri H, Stitziel NO, Hillier L, Kwok PY, Gish WR: "A general approach to single-nucleotide polymorphism discovery". *Nat Genet.* 1999, 23: 452-456. 10.1038/70570.
+Marth GT, Korf I, Yandell MD, Yeh RT, Gu Z, Zakeri H, Stitziel NO, Hillier L, Kwok PY, Gish WR: **A general approach to single-nucleotide polymorphism discovery**. *Nat Genet.* 1999, 23: 452-456. 10.1038/70570.
 
-Acknowledgments
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 

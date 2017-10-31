@@ -1,3 +1,7 @@
+# **NeatSeq-Flow**: A Lightweight Software for Efficient Execution of High Throughput Sequencing Workflows.
+<img src="docs/source/figs/logo_Hor.png" alt="sdsdsdsd" style="width: 200px;"/>
+
+
 # Additional NeatSeq-Flow modules
 
 This repository includes modules that extend the functionality of NeatSeq-Flow to additional programs.
@@ -17,6 +21,16 @@ Please follow the instructions in [the main NeatSeq-Flow repo](https://github.co
 
 ## Adding your own modules to NeatSeq-Flow
 
-You can easily [write your own modules](http://neatseq-flow.readthedocs.io/en/latest/06.addnew_module.html#for-the-programmer-adding-modules), to include currently unsupported programs in NeatSeq-Flow. Adding these modules is done by adding the local path to the `module_path` line in the parameter file.
+You can easily [write your own modules](http://neatseq-flow.readthedocs.io/en/latest/06.addnew_module.html#for-the-programmer-adding-modules), to include currently unsupported programs in NeatSeq-Flow. Adding these modules is done by adding the local path to the [`module_path`](http://neatseq-flow.readthedocs.io/en/latest/02.build_WF.html#global-parameters) line in the parameter file.
 
 Alternatively, you can add your program without creating a module, [using the `Generic` module](http://neatseq-flow.readthedocs.io/en/latest/modules/generic.html#module-step_classes.Generic.Generic). This enables quickly adding steps to your pipeline without needing to create modules. However, you will need to define the input and output locations in the parameter file. See the [documentation](http://neatseq-flow.readthedocs.io/en/latest/modules/generic.html#module-step_classes.Generic.Generic) for the generic module.  
+
+## Contact
+
+Please contact Menachem Sklarz at: [sklarz@bgu.ac.il](mailto:sklarz@bgu.ac.il)
+
+## Citation
+
+When using NeatSeq-Flow, please cite as follows:
+
+Sklarz, M.Y., et al. (2017) **NeatSeq-Flow: A Lightweight Software for Efficient Execution of High Throughput Sequencing Workflows**. [bioRxiv doi: 10.1101/173005](http://www.biorxiv.org/content/early/2017/08/08/173005)

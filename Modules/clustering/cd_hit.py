@@ -1,11 +1,12 @@
-
-
+# -*- coding: UTF-8 -*-
 """ 
 Module ``cd_hit``
 ------------------------
 
 
 :Authors: Menachem Sklarz
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
 A module for clustering with cd-hit/ch-hit-est:
 
@@ -69,6 +70,12 @@ Lines for parameter file
         scope: project
         redirects:
             -T: 40
+
+            
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Fu, L., Niu, B., Zhu, Z., Wu, S. and Li, W., 2012. **CD-HIT: accelerated for clustering the next-generation sequencing data.** *Bioinformatics*, 28(23), pp.3150-3152.
 """
 
 

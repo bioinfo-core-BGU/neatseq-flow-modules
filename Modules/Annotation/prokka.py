@@ -1,8 +1,11 @@
+# -*- coding: UTF-8 -*-
 """ 
 Module ``prokka`` 
 -------------------
 
 :Authors: Menachem Sklarz
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
 
 A module for running prokka:
@@ -88,6 +91,10 @@ Lines for parameter file
             --metagenome: 
             --strain: 
 
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Seemann, T., 2014. **Prokka: rapid prokaryotic genome annotation**. *Bioinformatics*, 30(14), pp.2068-2069.
 """
 
 

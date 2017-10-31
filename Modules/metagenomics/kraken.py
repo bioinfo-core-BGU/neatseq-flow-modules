@@ -1,10 +1,13 @@
-
+# -*- coding: UTF-8 -*-
 """ 
 Module ``kraken``
 --------------------------------
 
-
 :Authors: Menachem Sklarz
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
+
+.. Note:: This module was developed as part of a study led by Dr. Jacob Moran Gilad
 
 A module for running ``kraken``:
 
@@ -76,7 +79,10 @@ Lines for parameter file
             --quick: 
             --threads: 20
 
-            
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Wood, D.E. and Salzberg, S.L., 2014. **Kraken: ultrafast metagenomic sequence classification using exact alignments**. *Genome biology*, 15(3), p.R46.
+
 """
 
 

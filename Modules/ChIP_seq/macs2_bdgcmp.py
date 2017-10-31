@@ -1,10 +1,12 @@
-
+# -*- coding: UTF-8 -*-
 """ 
 Module ``macs2_bdgcmp``
 ---------------------------
 
 
 :Authors: Menachem Sklarz
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
 A module for running macs2 bdgcmp:
 
@@ -59,6 +61,11 @@ Lines for parameter file
         toTDF_path: /path/to/bin/java -Xmx1500m -jar /path/to/igvtools.jar toTDF
         redirects:
             --method: FE
+
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Feng, J., Liu, T., Qin, B., Zhang, Y. and Liu, X.S., 2012. **Identifying ChIP-seq enrichment using MACS**. *Nature protocols*, 7(9), pp.1728-1740.
 
 """
 

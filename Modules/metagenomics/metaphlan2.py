@@ -1,10 +1,13 @@
-
+# -*- coding: UTF-8 -*-
 """ 
 Module ``metaphlan2``
 --------------------------------
 
-
 :Authors: Menachem Sklarz
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
+
+.. Note:: This module was developed as part of a study led by Dr. Jacob Moran Gilad
 
 A module for running ``metaphlan2``:
 
@@ -86,6 +89,11 @@ Lines for parameter file
             --mpa_pkl: /path/to/mpa_v20_m200.pkl
             
             
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Truong, D.T., Franzosa, E.A., Tickle, T.L., Scholz, M., Weingart, G., Pasolli, E., Tett, A., Huttenhower, C. and Segata, N., 2015. **MetaPhlAn2 for enhanced metagenomic taxonomic profiling**. *Nature methods*, 12(10), pp.902-903.
+
 """
 
 

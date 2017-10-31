@@ -1,9 +1,12 @@
+# -*- coding: UTF-8 -*-
 """ 
 Module ``mpileup_varscan``
 ------------------------------
 
 
 :Authors: Menachem Sklarz
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
 A module for identifying variance by running mpileup and piping it's (large) output into varscan:
 
@@ -68,7 +71,11 @@ Lines for parameter file
             --output-vcf:
             --variants: 1
     
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Li, H., Handsaker, B., Wysoker, A., Fennell, T., Ruan, J., Homer, N., Marth, G., Abecasis, G. and Durbin, R., 2009. **The sequence alignment/map format and SAMtools**. *Bioinformatics*, 25(16), pp.2078-2079.
 
+- Koboldt, D.C., Chen, K., Wylie, T., Larson, D.E., McLellan, M.D., Mardis, E.R., Weinstock, G.M., Wilson, R.K. and Ding, L., 2009. **VarScan: variant detection in massively parallel sequencing of individual and pooled samples**. *Bioinformatics*, 25(17), pp.2283-2285.
 """
 
 

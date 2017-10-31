@@ -1,10 +1,13 @@
-
+# -*- coding: UTF-8 -*-
 """ 
 Module ``HUMAnN2``
 --------------------------------
 
-
 :Authors: Menachem Sklarz
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
+
+.. Note:: This module was developed as part of a study led by Dr. Jacob Moran Gilad
 
 A module for running ``HUMAnN2``:
 
@@ -84,6 +87,12 @@ Lines for parameter file
             --protein-database: {Vars.databases.uniref}
             --threads: 30
             
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+`HUMAnN2 home page <http://huttenhower.sph.harvard.edu/humann2>`_
+
+
 """
 
 import os
