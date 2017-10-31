@@ -27,7 +27,6 @@ Modules in this repository
    Modules_docs/Reports
    Modules_docs/UCSCtools
    Modules_docs/variants
-   Modules_docs/Main_NSF_modules/modules
    
 Pipelines docs 
 -------------------------
