@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-Module ``mpileup_varscan``
+``mpileup_varscan``                            
 ------------------------------
 
 

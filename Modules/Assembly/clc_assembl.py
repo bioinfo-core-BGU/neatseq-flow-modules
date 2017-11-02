@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-Module ``clc_assembl``
+``clc_assembl``                            
 --------------------------------
 
 

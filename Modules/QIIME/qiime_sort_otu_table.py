@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-Module ``qiime_sort_otu_table``
+``qiime_sort_otu_table``                            
 ---------------------------------
 
 

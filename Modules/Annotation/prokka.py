@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-Module ``prokka`` 
+``prokka``                             
 -------------------
 
 :Authors: Menachem Sklarz

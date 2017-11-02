@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-Module ``vsearch_cluster``
+``vsearch_cluster``                            
 --------------------------------
 
 

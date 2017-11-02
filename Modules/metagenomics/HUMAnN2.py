@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-Module ``HUMAnN2``
+``HUMAnN2``                            
 --------------------------------
 
 :Authors: Menachem Sklarz

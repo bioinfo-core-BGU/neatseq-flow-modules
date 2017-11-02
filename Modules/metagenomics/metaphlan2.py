@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-Module ``metaphlan2``
+``metaphlan2``                            
 --------------------------------
 
 :Authors: Menachem Sklarz

@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-Module ``megahit_assembl``
+``megahit_assembl``                            
 --------------------------------
 
 

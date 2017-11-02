@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-Module ``CARD_RGI``
+``CARD_RGI``                            
 ------------------------
 
 

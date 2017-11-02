@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-Module ``vsearch_derepel``
+``vsearch_derepel``                            
 --------------------------------
 
 

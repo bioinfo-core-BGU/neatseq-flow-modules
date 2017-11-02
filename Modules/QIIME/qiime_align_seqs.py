@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-Module ``qiime_align_seqs``
+``qiime_align_seqs``                            
 ----------------------------
 
 

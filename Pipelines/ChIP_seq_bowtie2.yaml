@@ -8,6 +8,8 @@ Description: |
     A pipeline for executing a standard ChIP-seq analysis
     --------------------------------------------------------------
     
+    The workflow is based on a workflow kindly provided by Dr. Dena Leshkowitz of the Life Sciences Core Facilities, Weizmann Institute of Science.
+    
     The pipeline includes the following stages:
     1. Preparation and QA:
         a. Merging the reads into a signle file per sample.

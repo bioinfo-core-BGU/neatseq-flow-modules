@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-Module ``qiime_pick_otus``
+``qiime_pick_otus``                            
 ----------------------------
 
 

@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-Module ``kaiju``
+``kaiju``                            
 --------------------------------
 
 :Authors: Menachem Sklarz

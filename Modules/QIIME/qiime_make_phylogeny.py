@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 """ 
 
-Module ``qiime_make_phylogeny``
+``qiime_make_phylogeny``                            
 --------------------------------
 
 

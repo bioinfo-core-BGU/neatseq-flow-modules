@@ -6,14 +6,15 @@ Global_params:
 Vars:
     paths:
         vsearch:    /fastspace/bioinfo_apps/vsearch/vsearch_v2.3.4/bin
-
-# The following pipeline clusters a set of fastq reads into unique sequences.
-# Can be used for analysis or RDA-seq, for instance.
-# Includes the following steps:
-# a. fastq files are dereplicated with vsearch at the sample scope,
-# b. resulting unique sequences are merged to obtain a project-level fasta file,
-# c. project level fasta file is again dereplicated
-# d. and resulting sequences are clustered using vsearch and cd-hit (the use can choose between them)
+Description: |
+    A pipeline for clustering a set of fastq reads into unique sequences.
+    ---------------------------------------------------------------------
+    Can be used for analysis or RDA-seq, for instance.
+    Includes the following steps:
+    a. fastq files are dereplicated with vsearch at the sample scope,
+    b. resulting unique sequences are merged to obtain a project-level fasta file,
+    c. project level fasta file is again dereplicated
+    d. and resulting sequences are clustered using vsearch and cd-hit (the use can choose between them)
 Step_params:
     merge1:
         module: merge

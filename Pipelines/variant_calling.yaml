@@ -3,6 +3,18 @@ Global_params:
     Qsub_opts: -cwd
     Qsub_q: bioinfo.q
     module_path:  C:\Users\sklarz.BGU-USERS\Documents\python_pipeline_gitlab\python_pipeline\additional_modules\additional_modules_release_1.0.0
+Description: |
+    A pipeline for clustering a set of fastq reads into unique sequences.
+    ---------------------------------------------------------------------
+    
+    Includes the following steps:
+    1. Merging the fastq sequences into a single file per sample
+    2. Mapping to a reference genome with bowtie2
+    3. Sorting, filtering and conversion to BAM with samtools
+    4. Variant calling with two programs:
+        a. freebayes
+        b. mpileup and varscan
+    5. Analysis of the resulting VCF file with VCFtools.
 Vars:
     paths:
         varscan:    /path/to/java -jar /path/to/VarScan.jar 

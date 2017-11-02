@@ -8,6 +8,8 @@ Description: |
     A pipeline for executing various analyses on metagenomics data
     --------------------------------------------------------------
     
+    Developed as part of a study led by Prof. Jacob Moran-Gilad
+    
     Includes two approaches:
     a. Analysis of the raw reads with:
         - kraken

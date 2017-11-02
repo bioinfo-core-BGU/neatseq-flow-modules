@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-Module ``qiime_prep``
+``qiime_prep``                            
 -------------------------------
 
 :Authors: Menachem Sklarz
@@ -41,7 +41,7 @@ Output
 
         * ``self.sample_data[<sample>]["fastq.J"]``
 
-    * puts the unjoined formward reads in:
+    * puts the unjoined forward reads in:
 
         * ``self.sample_data[<sample>]["fastq.F"]``
 
@@ -59,7 +59,8 @@ Parameters that can be set
     :widths: 15, 10, 10
 
     "join", "none, join (or join_cat - not implemented)", "Wheather to join paired reads."
-    "unjoined", "forward, reverse, both or none", "What to do with unjoined sequences?"
+    "unjoined", "forward, reverse, both or none", "What to do with unjoined sequences? Use only forward, only reverse, both or none. If join is none, use this parameter to indicate which reads to take for analysis."
+    "join_algo", "forward, reverse, both or none", "What to do with unjoined sequences?"
     "parameters", "", "Path to QIIME parameter file to be used downstream"
 
     
@@ -111,27 +112,32 @@ class Step_qiime_prep(Step):
         else:
             self.write_warning("Dir %s exists for links\n" % self.links_dir)
         
-            
-        try:
-            self.params["unjoined"]
-        except KeyError:
-            raise AssertionExcept("You must have an 'unjoined' parameter\n" )
         try:
             self.params["join"]
         except KeyError:
             raise AssertionExcept("You must have a 'join' parameter\n")
-        
-        if "-m" in self.params["redir_params"]:
-            self.params["join_algo"] = self.params["redir_params"]["-m"]
-        elif "--pe_join_method" in self.params["redir_params"]:
-            self.params["join_algo"] = self.params["redir_params"]["--pe_join_method"]
+
+        try:
+            self.params["unjoined"]
+        except KeyError:
+            raise AssertionExcept("You must have an 'unjoined' parameter\n" )
+
+        if self.params["join"].lower() == "none":  # Can be 'none', 'join' or 'join_cat', which means to just concatenate the F and R reads. Not implemented
+            if self.params["unjoined"].lower() == "none":
+                raise AssertionExcept("You can't set both 'join' and 'unjoined' to 'none'!")
+        elif self.params["join"].lower() == "join_cat":  # Can be 'none', 'join' or 'join_cat', which means to just concatenate the F and R reads. Not implemented
+            pass
         else:
-            if self.params["join"] != "none":
+            if "-m" in self.params["redir_params"]:
+                self.params["join_algo"] = self.params["redir_params"]["-m"]
+            elif "--pe_join_method" in self.params["redir_params"]:
+                self.params["join_algo"] = self.params["redir_params"]["--pe_join_method"]
+            else:
                 self.write_warning("No algoritm specified. Using fastq-join")
                 self.params["join_algo"] = "fastq-join"
-                
-        if self.params["join_algo"] not in ["fastq-join", "SeqPrep"]:
-            raise AssertionExcept("You must define the --pe_join_method parameter. Either fastq-join or SeqPrep...\n")
+                    
+            if self.params["join_algo"] not in ["fastq-join", "SeqPrep"]:
+                raise AssertionExcept("You must define the --pe_join_method parameter. Either fastq-join or SeqPrep...\n")
                         
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
@@ -190,7 +196,7 @@ class Step_qiime_prep(Step):
             if self.sample_data[sample]["type"] == "SE":
                 directions_to_use |= {"fastq.S"}
             else:   # PE or mixed
-                if self.params["join"].lower() != "none":
+                if self.params["join"].lower() == "join":
                     directions_to_use |= {"fastq.J"}
                 if self.params["unjoined"].lower() == "forward":  # Options: forward, reverse, both or none
                     directions_to_use |= {"fastq.F","fastq.S"}        # Assumption: in case of mixed PE and SE, if you want the forward then you want the single sequences too.
@@ -202,7 +208,6 @@ class Step_qiime_prep(Step):
                     if not directions_to_use:  # directions_to_use is empty!
                         raise RuntimeError("You can't pass 'none' to both 'join' and 'unjoined' parameters in step %s" % self.name)
             
-            
             # If no join is required then only make links:
             if self.sample_data[sample]["type"] == "SE" or self.params["join"].lower() == "none":
                 
@@ -211,10 +216,12 @@ class Step_qiime_prep(Step):
 
                 for direction in directions:
                     # print STDERR "$direction, $sample-->".$samples_hash->{$name}->{$sample}->{$direction}."\n";
-                    link_name = "".join([self.links_dir + sample + os.sep, ".".join([sample, direction[5], "fastq"])])
+                    link_name = "".join([self.links_dir + sample + os.sep, ".".join([sample, direction[6], "fastq"])])
+
                     if os.path.exists(link_name):
                         self.write_warning("Link $link_name exists. Will overwrite when script is executed!!!!\n" )
-                    cmd = "ln -s %s %s" % (self.sample_data[sample][direction], link_name)
+                    cmd = "ln -sf %s %s" % (self.sample_data[sample][direction], link_name)
+                    
                     self.script += cmd + "\n\n";
                     
             

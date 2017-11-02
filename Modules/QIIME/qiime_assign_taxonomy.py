@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-Module ``qiime_assign_taxonomy``
+``qiime_assign_taxonomy``                            
 ----------------------------------
 
 

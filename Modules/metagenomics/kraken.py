@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-Module ``kraken``
+``kraken``                            
 --------------------------------
 
 :Authors: Menachem Sklarz

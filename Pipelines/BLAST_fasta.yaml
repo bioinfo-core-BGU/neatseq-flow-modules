@@ -4,53 +4,193 @@ Global_params:
     Qsub_opts: -V -cwd
     Qsub_q: bioinfo.q
     module_path: C:\Users\sklarz.BGU-USERS\Documents\python_pipeline_gitlab\python_pipeline\additional_modules\additional_modules_release_1.1.0
+Description: |
+    A pipeline showing various ways for using BLAST 
+    ------------------------------------------------
+    
+    Input: paired end or single end reads in gzipped fastq format (fq.gz).
+    
+    The workflow includes the following stages:
+    
+    1. Merging and QC
+    2. Assembly using MEGAHIT (sample scope. i.e. one assembly per sample)
+    3. Constructing a BLAST db from the assembly using the 'makeblastdb' module
+    4. Searching the assembly using a fasta query file.
+    5. Annotation of the assemblies using prokka
+    6. Using the resulting predicted gene sequences to search a BLAST database.
+    7. Using the alternative BLAST module ('blast_new') to search the assembly for the predicted genes.
+    
+    Note. Module 'parse_blast' uses a program for parsing tabular BLAST tables. The code is freelly accessible at https://github.com/bioinfo-core-BGU/parse_blast
+
 Vars:
     paths:
-        makeblastdb:    /path/to/makeblastdb
-        blastx:         /path/to/blastx
-        parse_blast:    Rscript /path/to/parse_blast.R
-        compare_blast_parsed_reports:    Rscript /path/to/compare_blast_parsed_reports.R
+        fastqc:                             /path/to/fastqc
+        trimmo:                             /path/to/java -jar /path/to/trimmomatic-0.32.jar
+        megahit:                            /path/to/megahit
+        quast:                              /path/to/quast
+        prokka:                             /path/to/prokka
+        makeblastdb:                        /path/to/makeblastdb
+        blast:                              /path/to/blast/bin
+        parse_blast:                        Rscript /path/to/parse_blast.R
+        compare_blast_parsed_reports:       Rscript /path/to/compare_blast_parsed_reports.R
     databases:
-        uniprot_sprot:  /path/to/uniprot_sprot.fasta
-        VFDB:           /path/to/VFDB.tsv
+        VFDB:
+            fasta:                          /path/to/VFDB.faa
+            table:                          /path/to/VFDB.tsv
+        uniprot_sprot:
+            fasta:                          /path/to/uniprot_sprot.fasta
+            blastdb:                        /path/to/uniprot_sprot      # Prefix of blastdb of uniprot_sprot
 Step_params:
-    merge1:
-        module: merge
-        script_path: cat
-    mkblst1:
-        module: makeblastdb
-        base: merge1
-        script_path: {Vars.paths.makeblastdb}
-        scope: sample
+############################ 1. merge and QC
+    merge_reads:
+        module:             merge
+        script_path:        gzip -cd
+    fqc_merge:
+        module:             fastqc_html
+        base:               merge_reads
+        script_path:        {Vars.paths.fastqc}
         qsub_params:
-            -pe: shared 20
+            -pe:            shared 15
         redirects:
-            -dbtype: nucl
-    tbl_blst:
-        module: blast
-        base: mkblst1
-        script_path: {Vars.paths.blastx}
+            --threads:      15
+    trim_reads:
+        module:             trimmo
+        base:               merge_reads
+        script_path:        {Vars.paths.trimmo}
         qsub_params:
-            -pe: shared 20
-            queue: all.q
-        fasta2use: nucl
-        scope: sample
+            -pe:            shared 20
+        todo:               LEADING:20 TRAILING:20
         redirects:
-            -evalue: 0.0001
+            -threads:       20
+    fqc_trim:
+        module:             fastqc_html
+        base:               trim_reads
+        script_path:        {Vars.paths.fastqc}
+        qsub_params:
+            -pe:            shared 15
+        redirects:
+            --threads:      15    
+############################ 2. Assembly and QC
+    megahit_asmbl:
+        module:             megahit_assembl
+        base:               trim_reads
+        script_path:        {Vars.paths.megahit}
+        qsub_params:
+            -pe:            shared 30
+        scope:              sample
+        redirects:
+            --continue: 
+            --num-cpu-threads: 30
+    quast_megahit:
+        module:             quast
+        base:               megahit_asmbl
+        script_path:        {Vars.paths.quast}
+        scope:              sample
+        redirects:
+            --min-contig:   100
+############################ 3. BLAST db construction
+    mkblst_asmbl:
+        module:             makeblastdb
+        base:               megahit_asmbl
+        script_path:        {Vars.paths.makeblastdb}
+        scope:              sample
+        qsub_params:
+            -pe:            shared 20
+        redirects:
+            -dbtype:        nucl
+############################ 4. BLAST external fasta against assembly
+    blst_asmbl:
+        module:             blast
+        base:               mkblst_asmbl
+        script_path:        '{Vars.paths.blast}/tblastn'
+        qsub_params:
+            -pe:            shared 20
+            queue:          all.q
+        scope:              sample
+        redirects:
+            -evalue:        0.0001
             -num_descriptions: 20
-            -num_threads: 20
-            -outfmt: '"6 qseqid sallseqid qlen slen qstart qend sstart send length
-                evalue bitscore score pident qframe"'
-            -query: {Vars.databases.uniprot_sprot}
+            -num_threads:   20
+            -outfmt:        '"6 qseqid sallseqid qlen slen qstart qend sstart send length
+                            evalue bitscore score pident qframe"'
+            -query:         {Vars.databases.VFDB.fasta}
     parse_tbl_blst:
-        module: parse_blast
-        base: tbl_blst
-        script_path: {Vars.paths.parse_blast}
-        blast_merge_path: {Vars.paths.compare_blast_parsed_reports}
+        module:             parse_blast
+        base:               blst_asmbl
+        script_path:        {Vars.paths.parse_blast}
+        blast_merge_path:   {Vars.paths.compare_blast_parsed_reports}
         scope:  sample
         redirects:
-            --dbtable: {Vars.paths.VFDB}
-            --max_evalue: 1e-7
+            --dbtable:      {Vars.databases.VFDB.table}
+            --max_evalue:   1e-7
             --min_bitscore: 100
-            --names: '"qseqid sallseqid qlen slen qstart qend sstart send length evalue
-                bitscore score pident qframe"'
+            --names:        '"qseqid sallseqid qlen slen qstart qend sstart send length evalue
+                            bitscore score pident qframe"'
+############################ 5. Annotation of the assembly with prokka
+    prokka_asmbl:
+        module:             prokka
+        base:               megahit_asmbl
+        script_path:        {Vars.paths.prokka}
+        qsub_params:
+            -pe:            shared 20
+        generate_GFF_dir:
+        scope:              sample
+        redirects:
+            --cpus:         20
+            --fast:
+            --force:
+            --genus:        Staphylococcus
+            --metagenome:
+            --strain:
+############################ 6. BLAST predicted genes against swissprot
+    blst_genes:
+        module:             blast
+        base:               prokka_asmbl
+        script_path:        '{Vars.paths.blast}/blastx'
+        qsub_params:
+            -pe:            shared 20
+            queue:          all.q
+        fasta2use:          nucl
+        scope:              sample
+        redirects:
+            -evalue:        0.0001
+            -num_descriptions: 20
+            -num_threads:   20
+            -outfmt:        '"6 qseqid sallseqid qlen slen qstart qend sstart send length
+                            evalue bitscore score pident qframe"'
+            -db:            {Vars.databases.uniprot_sprot.blastdb}
+    parse_tbl_blst:
+        module:             parse_blast
+        base:               blst_genes
+        script_path:        {Vars.paths.parse_blast}
+        blast_merge_path:   {Vars.paths.compare_blast_parsed_reports}
+        scope:              sample
+        redirects:
+            --dbtable:      {Vars.databases.VFDB.table}
+            --max_evalue:   1e-7
+            --min_bitscore: 100
+            --names:        '"qseqid sallseqid qlen slen qstart qend sstart send length evalue
+                            bitscore score pident qframe"'
+############################ 7. BLAST predicted genes against swissprot - Alternative module 
+    blst_genes_alt:
+        module:             blast_new
+        base:               prokka_asmbl
+        script_path:        '{Vars.paths.blast}/blastx'
+        redirects:
+            -db:            {Vars.databases.uniprot_sprot.blastdb}
+            -query:         sample
+            -evalue:        0.0001
+        querytype:          nucl   # Use the 'nucl' output from prokka
+############################ BONUS. BLAST predicted genes against assembly 
+    blst_genes_asmbl:
+        module:             blast_new
+        base:               [prokka_asmbl,mkblst_asmbl]
+        script_path:        '{Vars.paths.blast}/blastn'
+        redirects:
+            -db:            sample
+            -query:         sample
+            -evalue:        0.0001
+        querytype:          nucl   # Use the 'nucl' output from prokka
+        dbtype:             nucl   # Use the 'nucl' output from prokka
+
+

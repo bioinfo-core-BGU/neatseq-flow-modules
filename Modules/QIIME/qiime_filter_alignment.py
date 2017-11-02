@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-Module ``qiime_filter_alignment``
+``qiime_filter_alignment``                            
 ------------------------------------
 
 

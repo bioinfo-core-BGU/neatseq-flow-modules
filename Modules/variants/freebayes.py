@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-Module ``freebayes``
+``freebayes``                            
 -----------------------
 
 :Authors: Menachem Sklarz

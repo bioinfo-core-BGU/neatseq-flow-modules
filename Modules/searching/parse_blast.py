@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-Module ``parse_blast``
+``parse_blast``                            
 -----------------------
 
 :Authors: Menachem Sklarz

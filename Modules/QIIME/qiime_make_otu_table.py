@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-Module ``qiime_make_otu_table``
+``qiime_make_otu_table``                            
 -----------------------------------
 
 
