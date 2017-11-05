@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``trinity``
+``trinity_mapping``
 -----------------------------------------------------------------
 :Authors: Menachem Sklarz
 :Affiliation: Bioinformatics core facility
@@ -187,7 +187,7 @@ class Step_trinity_mapping(Step):
             
             transcripts = self.sample_data[sample]["fasta.nucl"] \
                 if self.params["scope"] == "sample" \
-                else  self.sample_data[sample]["fasta.nucl"]
+                else  self.sample_data["fasta.nucl"]
                 
                 
             if self.params["scope"] == "sample":  # For sample scope assembly, add prep_reference per sample.
