@@ -1,0 +1,190 @@
+Global_params:
+    Default_wait: 100
+    Qsub_opts: -V -cwd
+    Qsub_q: queue.q
+    module_path: C:\Users\sklarz.BGU-USERS\Documents\python_pipeline_gitlab\python_pipeline\additional_modules\additional_modules_release_1.1.0
+Vars:
+    paths:
+        trimmo:     /path/to/java -jar /path/to/trimmomatic-0.32.jar
+        bowtie2-build:     /path/to/bowtie2-build
+        bowtie2:    /path/to/bowtie2
+        fastqc:     /path/to/fastqc
+        Trinity:    /path/to/Trinity
+        makeblastdb: /path/to/makeblastdb
+        blastx:     /path/to/blastx
+        blastn:     /path/to/blastn
+        java:       /path/to/java    
+        SGE_Trinity_conf:   /path/to/SGE_Trinity_conf.txt
+    databases:
+        sprot:      /path/to/sprot_db
+        query:      /path/to/query
+Step_params:
+    merge1:
+        module: merge
+        script_path: gzip -cd
+    fqc_merge1:
+        module: fastqc_html
+        base: merge1
+        script_path: {Vars.paths.fastqc}
+        qsub_params:
+            -pe: shared 15
+        redirects:
+            --threads: 15
+    trim1:
+        module: trimmo
+        base: merge1
+        script_path: '{Vars.paths.java} -jar trimmomatic-0.32.jar'
+        qsub_params:
+            -pe: shared 20
+            node: node1
+            queue: stam.q
+        spec_dir: {Vars.paths.trimmo}
+        todo: LEADING:20 TRAILING:20
+        redirects:
+            -threads: 20
+    fqc_trim1:
+        module: fastqc_html
+        base: trim1
+        script_path: {Vars.paths.fastqc}
+        qsub_params:
+            -pe: shared 15
+        redirects:
+            --threads: 15
+    trin_tags1:
+        module: add_trinity_tags
+        base: trim1
+        script_path: 
+    trinity1:
+        module: trinity
+        base: trin_tags1
+        script_path:            {Vars.paths.Trinity}
+        qsub_params:
+            -pe: shared 20
+        scope: sample
+        redirects:
+            --CPU: 20
+            --JM: 140G
+            --full_cleanup: null
+            --grid_conf:        /path/to/SGE_Trinity_conf.txt
+            --min_kmer_cov: 2
+            --seqType: fq
+    trin_map1:
+        module:               trinity_mapping
+        base:                 trinity1
+        script_path:          /fastspace/bioinfo_apps/trinityrnaseq_r20140717/util/align_and_estimate_abundance.pl
+        scope:              sample
+        redirects:
+            --est_method:     RSEM
+            --aln_method:     bowtie
+            --trinity_mode:
+            --seqType:        fq
+
+    trin_map_stats:
+        module:           trinmap_statistics
+        base:                trin_map1
+        script_path:      /fastspace/bioinfo_apps/trinityrnaseq_r20140717/util/abundance_estimates_to_matrix.pl
+        # use_isoforms:          # use isoforms results. Remove to use genes results
+        scope:              sample
+        redirects:
+            --est_method:        RSEM
+        # stop_and_show:
+        
+    # mkblst1:
+        # module: makeblastdb
+        # base: trinity1
+        # script_path: {Vars.paths.makeblastdb}
+        # scope: project
+        # redirects:
+            # -dbtype: nucl
+    # sprot:
+        # module: blast
+        # base: trinity1
+        # script_path: {Vars.paths.blastx}
+        # scope: project
+        # redirects:
+            # -db: {Vars.databases.sprot}
+            # -evalue: 0.0001
+            # -max_target_seqs: 5
+            # -outfmt: '"6 qseqid sallseqid qlen slen qstart qend sstart send length
+                # evalue bitscore score pident qframe"'
+    # blastOnAssembl:
+        # module: blast
+        # base: mkblst1
+        # script_path: {Vars.paths.blastn}
+        # qsub_params:
+            # -pe: shared 40
+            # node: sge102
+        # fasta2use: nucl
+        # scope: project
+        # redirects:
+            # -evalue: 0.0001
+            # -num_descriptions: 20
+            # -num_threads: 40
+            # -outfmt: '"6 qseqid sallseqid qlen slen qstart qend sstart send length
+                # evalue bitscore score pident qframe"'
+            # -query: {Vars.databases.query}
+    # bwt2_build:
+        # module: bowtie2_builder
+        # base: trinity1
+        # script_path: {Vars.paths.bowtie2-build}
+        # scope: project
+    # bwt2_map:
+        # module: bowtie2_mapper
+        # base: bwt2_build
+        # script_path: {Vars.paths.bowtie2}
+        # qsub_params:
+            # -pe: shared 20
+        # get_map_log: null
+        # get_stderr: null
+        # scope: project
+        # redirects:
+            # -p: 20
+            # -q: null
+# # --------- Sample-scope assembly and BLAST:
+    # trinity_smp:
+        # module: trinity
+        # base: trin_tags1
+        # script_path: {Vars.paths.Trinity}
+        # qsub_params:
+            # -pe: shared 20
+        # scope: sample
+        # redirects:
+            # --CPU: 20
+            # --JM: 140G
+            # --full_cleanup: null
+            # --grid_conf: {Vars.paths.SGE_Trinity_conf}
+            # --min_kmer_cov: 2
+            # --seqType: fq
+    # mkblst_smp:
+        # module: makeblastdb
+        # base: trinity_smp
+        # script_path: {Vars.paths.makeblastdb}
+        # scope: sample
+        # redirects:
+            # -dbtype: nucl
+    # sprot_smp:
+        # module: blast
+        # base: trinity_smp
+        # script_path: {Vars.paths.blastx}
+        # scope: sample
+        # redirects:
+            # -db: /path/to/sprot
+            # -evalue: 0.0001
+            # -max_target_seqs: 5
+            # -outfmt: '"6 qseqid sallseqid qlen slen qstart qend sstart send length
+                # evalue bitscore score pident qframe"'
+    # blastOnAssembl_smp:
+        # module: blast
+        # base: mkblst_smp
+        # script_path: {Vars.paths.blastn}
+        # qsub_params:
+            # -pe: shared 40
+        # fasta2use: nucl
+        # scope: sample
+        # redirects:
+            # -evalue: 0.0001
+            # -num_descriptions: 20
+            # -num_threads: 40
+            # -outfmt: '"6 qseqid sallseqid qlen slen qstart qend sstart send length
+                # evalue bitscore score pident qframe"'
+            # -query: /path/to/query.fasta
