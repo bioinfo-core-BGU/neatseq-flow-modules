@@ -93,14 +93,14 @@ class Step_add_trinity_tags(Step):
       
     def build_scripts(self):
         
-        
+
         # Each iteration must define the following class variables:
             # spec_script_name
             # script
         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
             # Adding tags to Forward and Reverse files only
             for direction in ["Forward","Reverse","Single"]:
-                file_slot = "reads" + direction[0]  # file_slot is "fastq.F", "fastq.R" and "readS" for "Forward", "Reverse" and "Single" resepctively
+                file_slot = "fastq." + direction[0]  # file_slot is "fastq.F", "fastq.R" and "readS" for "Forward", "Reverse" and "Single" resepctively
                 if (file_slot in self.sample_data[sample].keys()):
                     self.script = ""
                     direction_tag = direction[0] # Get first letter in direction

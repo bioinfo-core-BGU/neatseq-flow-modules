@@ -42,6 +42,8 @@ Step_params:
         todo: LEADING:20 TRAILING:20
         redirects:
             -threads: 20
+            -sasa: sasa
+
     fqc_trim1:
         module: fastqc_html
         base: trim1
@@ -73,6 +75,7 @@ Step_params:
         base:                 trinity1
         script_path:          /fastspace/bioinfo_apps/trinityrnaseq_r20140717/util/align_and_estimate_abundance.pl
         scope:              sample
+        setenv:             PATH="/gpfs0/bioinfo/apps/samtools/samtools-1.3/bin:$PATH"
         redirects:
             --est_method:     RSEM
             --aln_method:     bowtie
