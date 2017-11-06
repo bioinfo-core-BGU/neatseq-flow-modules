@@ -87,10 +87,10 @@ class Step_trinity_mapping(Step):
         self.shell = "csh"      # Can be set to "bash" by inheriting instances
         self.file_tag = "trin_mapping"
         
-        try:
-            self.params["redir_params"]["--aln_method"]
-        except KeyError:
+        if "--aln_method" not in self.params["redir_params"]:
             raise AssertionExcept("You must pass an --aln_method to trin_mapping\n")
+        self.params["aln_method"] = self.params["redir_params"]["--aln_method"]
+        del self.params["redir_params"]["--aln_method"]
         
         if "scope" not in self.params:
             raise AssertionExcept("Please specify a 'scope': Either 'sample' or 'project'.")
@@ -118,6 +118,14 @@ class Step_trinity_mapping(Step):
         else:
             raise AssertionExcept("'scope' must be either 'sample' or 'project'.")
 
+
+        if self.params["aln_method"] not in ["bowtie", "bowtie2"]:
+            self.write_warning("--aln_method is not bowtie or bowtie2. Will ignore it's value and pass a sample BAM file.")
+            for sample in self.sample_data["samples"]:
+                if "bam" not in self.sample_data[sample]:
+                    raise AssertionExcept("It seems there is no BAM file for the sample.", sample)
+                
+
         
         
     def create_spec_wrapping_up_script(self):
@@ -130,7 +138,7 @@ class Step_trinity_mapping(Step):
         """ Add script to run BEFORE all other steps
         """
   
-        if self.params["scope"] == "project":
+        if self.params["scope"] == "project" and self.params["aln_method"] in ["bowtie", "bowtie2"]:
             
             self.script = ""
 
@@ -138,7 +146,7 @@ class Step_trinity_mapping(Step):
             # Create script and write to SCRPT
             # First: transcript preparation (with --pre_reference arg)
             self.script += self.get_script_const()
-
+            self.script += "--aln_method %s \\\n\t"   % self.params["aln_method"]
             self.script += "--transcripts %s \\\n\t"   % self.sample_data["fasta.nucl"]
             self.script += "--prep_reference \n\n"
         else:
@@ -193,16 +201,22 @@ class Step_trinity_mapping(Step):
             if self.params["scope"] == "sample":  # For sample scope assembly, add prep_reference per sample.
                 self.script += "# Preperaing the reference for analysis:\n\n"
                 self.script += self.get_script_const()
-
+                self.script += "--aln_method %s \\\n\t"   % self.params["aln_method"]
                 self.script += "--transcripts %s \\\n\t"   % transcripts
                 self.script += "--prep_reference \n\n"
 
+                
         
             # Create script and write to SCRPT
             # First: transcript preparation (with --pre_reference arg) 
             #  - This is done with preliminary script (see create_spec_preliminary_script())
             self.script += self.get_script_const()
-
+            
+            if self.params["aln_method"] in ["bowtie", "bowtie2"]:
+                self.script += "--aln_method %s \\\n\t"   % self.params["aln_method"]
+            else:
+                self.script += "--aln_method %s \\\n\t"   % self.sample_data[sample]["bam"]  # Checked above. BAM must exist.
+                
             self.script += "--transcripts %s \\\n\t"   % transcripts
             self.script += "--output_dir %s \\\n\t"    % use_dir
             self.script += "--output_prefix %s \\\n\t" % sample
@@ -213,11 +227,17 @@ class Step_trinity_mapping(Step):
                 self.script += "--single %s \n\n"      % single
  
 
-            self.sample_data[sample]["bam"] = "%s%s.bowtie.bam" % (sample_dir,sample)
+            self.sample_data[sample]["bam"] = "{dir}{sample}.{method}.bam".format(dir    = sample_dir, \
+                                                                                  sample = sample, \
+                                                                                  method = self.params["aln_method"])
             
             # It is possible to pass a bam file instead of alignment method. 
             # This option is not covered here yet...
-            self.sample_data[sample]["mapper"] = "trinity/%s" % self.params["redir_params"]["--aln_method"]
+            if self.params["aln_method"] in ["bowtie", "bowtie2"]:
+                self.sample_data[sample]["mapper"] = "trinity/%s" % self.params["aln_method"]
+            else:
+                self.sample_data[sample]["mapper"] = "Unknown"
+            
             
             self.sample_data[sample]["reference"] = transcripts
             
