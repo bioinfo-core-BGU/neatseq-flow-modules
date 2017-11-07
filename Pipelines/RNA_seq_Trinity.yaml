@@ -74,3 +74,14 @@ Step_params:
         redirects:
             --est_method:   RSEM
         # stop_and_show:
+
+    STAR_bld_ind:
+        module:             STAR_builder
+        base:               trinity1
+        script_path:        /path/to/STAR
+        scope:              project
+    STAR_map:
+        module:             STAR_mapper
+        base:               STAR_bld_ind
+        script_path:        /path/to/STAR
+        scope:              project
