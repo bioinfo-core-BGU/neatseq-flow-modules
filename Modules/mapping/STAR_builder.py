@@ -42,8 +42,17 @@ Lines for parameter file
 
 ::
 
-    FILL IN
 
+    STAR_bld_ind:
+        module:             STAR_builder
+        base:               trinity1
+        script_path:        /path/to/STAR
+        scope:              project
+        qsub_params:
+            queue:          star.q
+        redirects:
+            --genomeSAindexNbases:  12
+            --genomeChrBinNbits:    10
 
     
 References
@@ -137,7 +146,7 @@ class Step_STAR_builder(Step):
         
                 self.script += "--runMode genomeGenerate \\\n\t"
                 self.script += "--genomeDir %s \\\n\t"  % use_dir
-                self.script += "--genomeFastaFiles %s \\\n\t"  % self.sample_data[sample]["fasta.nucl"]
+                self.script += "--genomeFastaFiles %s \n\n"  % self.sample_data[sample]["fasta.nucl"]
 
 
                 self.sample_data[sample]["STAR_index"] = sample_dir
@@ -165,7 +174,7 @@ class Step_STAR_builder(Step):
             self.script += self.get_script_const()
             self.script += "--runMode genomeGenerate \\\n\t"
             self.script += "--genomeDir %s \\\n\t"  % use_dir
-            self.script += "--genomeFastaFiles %s \\\n\t"  % self.sample_data["fasta.nucl"]
+            self.script += "--genomeFastaFiles %s \n\n"  % self.sample_data["fasta.nucl"]
 
 
 

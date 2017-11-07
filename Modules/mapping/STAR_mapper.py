@@ -105,8 +105,56 @@ class Step_STAR_mapper(Step):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         # self.file_tag = "Bowtie_mapper"
 
-        if "--genomeDir" not in self.params["redir_params"]:
-            raise AssertionExcept("No --genomeDir specified. You must specify a STAR index of the genome.")
+        ##########################################
+        
+        # Require either 'scope' or '-x':
+        if "scope" in self.params:
+            # If scope defined, comment if also -x exists.
+            if "--genomeDir" in self.params["redir_params"]:
+                raise AssertionExcept("Both 'scope' and '--genomeDir' specified!\n")
+
+            # Loop over samples to set the reference genome:
+            for sample in self.sample_data["samples"]:
+                if self.params["scope"] == "project":
+                    # Set project wide reference:
+                    try:
+                        self.sample_data[sample]["reference"] = self.sample_data["STAR_fasta"]
+                    except:
+                        raise AssertionExcept("No reference exists at 'project' scope. Do you have a STAR_builder step defined?")
+                elif self.params["scope"] == "sample":
+                    # Set per-sample reference:
+                    try:
+                        self.sample_data[sample]["reference"] = self.sample_data[sample]["STAR_fasta"]
+                    except:
+                        raise AssertionExcept("No reference exists at 'sample' scope. Do you have a STAR_builder step defined?",sample)
+                else:
+                    raise AssertionExcept("Scope must be either 'sample' or 'project'")
+                
+                
+            if "ref_genome" in self.params.keys():
+                raise AssertionExcept("ref_genome was passed, and 'scope' was defined. Resolve!\n")
+        else:
+            # If scope is not defined, require '--genomeDir'
+            if not "--genomeDir" in self.params["redir_params"]:
+                raise AssertionExcept("Neither 'scope' nor '--genomeDir' specified.\n")
+            # Storing reference genome for use by downstream steps:
+            if "ref_genome" in self.params.keys():
+                for sample in self.sample_data["samples"]:
+                    # If reference already exists, ignore ref_genome
+                    if "reference" in self.sample_data[sample]:
+                        self.write_warning("ref_genome was passed, but a reference already exists. Setting reference to 'ref_genome'\n")
+                        
+                
+                    self.sample_data[sample]["reference"] = self.params["ref_genome"]
+            else:
+                self.write_warning("No reference given. It is highly recommended to give one!\n")
+
+        ##########################################
+        
+        
+        
+        # if "--genomeDir" not in self.params["redir_params"]:
+            # raise AssertionExcept("No --genomeDir specified. You must specify a STAR index of the genome.")
         
         if "ref_genome" not in self.params.keys():
             self.write_warning("No reference given with 'ref_genome' (path to fasta file). It is highly recommended to give one!\n")
