@@ -1,6 +1,7 @@
 Global_params:
     Default_wait: 100
     Qsub_opts: -V -cwd
+    Qsub_path: /path/to/qsub/bin
     Qsub_q: queue.q
     module_path: C:\Users\sklarz.BGU-USERS\Documents\python_pipeline_gitlab\python_pipeline\additional_modules\additional_modules_release_1.1.0
 Description: |

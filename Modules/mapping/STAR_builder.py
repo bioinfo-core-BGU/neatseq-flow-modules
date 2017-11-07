@@ -78,6 +78,17 @@ class Step_STAR_builder(Step):
         # self.file_tag = "Bowtie_mapper"
 
 
+        
+        for redir2remove in ["--runMode", "--genomeDir", "--genomeFastaFiles"]:
+            if redir2remove in self.params["redir_params"]:
+                del self.params["redir_params"][redir2remove]
+                self.write_warning("You are not supposed to specify %s in redirects. We set it automatically" % redir2remove)
+
+
+    def step_sample_initiation(self):
+        """ A place to do initiation stages following setting of sample_data
+        """
+        
         if "scope" not in self.params.keys():
             # Try guessing scope:
             try:  # Does a nucl fasta exist for project?
@@ -98,17 +109,6 @@ class Step_STAR_builder(Step):
                 except KeyError:
                     raise AssertionExcept("Sample does not have a nucl fasta defined. Can't build index\n", sample)
 
-        
-        for redir2remove in ["--runMode", "--genomeDir", "--genomeFastaFiles"]:
-            if redir2remove in self.params["redir_params"]:
-                del self.params["redir_params"][redir2remove]
-                self.write_warning("You are not supposed to specify %s in redirects. We set it automatically" % redir2remove)
-
-
-    def step_sample_initiation(self):
-        """ A place to do initiation stages following setting of sample_data
-        """
-        
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """

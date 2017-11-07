@@ -1,7 +1,8 @@
 Global_params:
     Default_wait: 10
     Qsub_opts: -cwd
-    Qsub_q: bioinfo.q
+    Qsub_q: myqueue.q
+    Qsub_path: /path/to/qsub/bin
     module_path:  C:\Users\sklarz.BGU-USERS\Documents\python_pipeline_gitlab\python_pipeline\additional_modules\additional_modules_release_1.0.0
 Description: |
     A pipeline for clustering a set of fastq reads into unique sequences.

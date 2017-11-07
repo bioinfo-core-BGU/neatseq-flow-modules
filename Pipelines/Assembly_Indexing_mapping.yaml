@@ -1,0 +1,141 @@
+Global_params:
+    Default_wait: 100
+    Qsub_opts: -V -cwd
+    Qsub_path: /path/to/qsub/bin
+    Qsub_q: myqueue.q
+    module_path: /path/to/modules
+Description: |
+    A pipeline for creating and assembly and mapping to it
+    --------------------------------------------------------------
+    
+    This workflow demonstrates the use of the index building and mapping modules.
+    Steps:
+    1. A sample-wise assembly is constructed with megahit module
+    2. An index for the assembly is created with bowtie2, bowtie, bwa and STAR index builder modules.
+    3. The reads are mapped to the assembly with bowtie2, bowtie, bwa and STAR index mapper modules.
+    ----------------------------------------------------------------
+Vars:
+    paths:
+        fastqc:             /path/to/fastqc
+        trimmo:             /path/to/java -jar /path/to/trimmomatic-0.32.jar
+        bowtie2:            /path/to/bowtie2/bin    # Path to dir containing bowtie2 and bowtie2-build
+        bowtie:             /path/to/bowtie/bin     # Path to dir containing bowtie and bowtie-build
+        bwa:                /path/to/bwa            # Path to bwa executable
+        STAR:               /path/to/STAR           # Path to STAR executable
+        megahit:            /path/to/megahit
+        quast:              /path/to/quast
+    dirs:   
+        trimmo:             /path/to/trimmomatic
+Step_params:
+    merge1:
+        module:             merge
+        script_path:        gzip -cd
+    fqc_merge1:
+        module:             fastqc_html
+        base:               merge1
+        script_path:        {Vars.paths.fastqc}
+        qsub_params:
+            -pe:            shared 15
+        redirects:
+            --threads:      15
+    trim1:
+        module:             trimmo
+        base:               merge1
+        script_path:        {Vars.paths.trimmo}
+        qsub_params:
+            -pe:            shared 20
+            node:           node1
+            queue:          stam.q
+        spec_dir:           {Vars.dirs.trimmo}
+        todo:               LEADING:20 TRAILING:20
+        redirects:
+            -threads:       20
+    fqc_trim1:
+        module:             fastqc_html
+        base:               trim1
+        script_path:        {Vars.paths.fastqc}
+        qsub_params:
+            -pe:            shared  15
+        redirects:
+            --threads:      15
+    megahit1:
+        module:             megahit_assembl
+        base:               trim1
+        script_path:        {Vars.paths.megahit}
+        qsub_params:
+            -pe: shared 30
+        scope:              project
+        redirects:
+            --continue: 
+            --num-cpu-threads: 30
+    quast_megahit:
+        module:             quast
+        base:               megahit1
+        script_path:        {Vars.paths.quast}
+        level:              project
+        redirects:
+            --min-contig:   100
+############# bowtie2
+    bwt2_build:
+        module:             bowtie2_builder
+        base:               megahit1
+        script_path:        '{Vars.paths.bowtie2}/bowtie2-build'
+        scope:              project
+
+    bwt2_1:
+        module:             bowtie2_mapper
+        base:               bwt2_build
+        script_path:        '{Vars.paths.bowtie2}/bowtie2'
+        qsub_params:
+            -pe:            shared 20
+        get_map_log:
+        scope:              project
+        redirects:
+            -p:             20
+            -q: 
+############# bowtie
+    bwt1_bld_ind:
+        module:             bowtie1_builder
+        base:               megahit1
+        script_path:        '{Vars.paths.bowtie}/bowtie-build'
+        scope:              project
+
+    bwt1_1:
+        module:             bowtie1_mapper
+        base:               bwt1_bld_ind
+        script_path:        '{Vars.paths.bowtie}/bowtie-build'
+        scope:              project
+############# bwa
+
+    bwa_bld_ind:
+        module:             bwa_builder
+        base:               megahit1
+        script_path:        '{Vars.paths.bwa} index'
+        scope:              project
+
+    bwa_1:
+        module:             bwa_mapper
+        base:               bwa_bld_ind
+        script_path:        '{Vars.paths.bwa}'
+        mod:                mem
+        scope:              project
+
+############# STAR
+
+    STAR_bld_ind:
+        module:             STAR_builder
+        base:               megahit1
+        script_path:        {Vars.paths.STAR}
+        scope:              project
+        qsub_params:
+            queue:          star.q
+        redirects:
+            --genomeSAindexNbases:  12
+            --genomeChrBinNbits:    10
+    STAR_map:
+        module:             STAR_mapper
+        base:               STAR_bld_ind
+        script_path:        {Vars.paths.STAR}
+        scope:              project
+        redirects:
+            --readMapNumber:    1000

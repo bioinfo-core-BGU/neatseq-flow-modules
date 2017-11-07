@@ -1,9 +1,9 @@
 Global_params:
     Default_wait: 100
     Qsub_opts: -V -cwd
-    Qsub_path: /storage/SGE6U8/bin/lx24-amd64
-    Qsub_q: bioinfo.q
-    module_path: C:\Users\sklarz.BGU-USERS\Documents\python_pipeline_gitlab\python_pipeline\additional_modules\additional_modules_release_1.0.0
+    Qsub_path: /path/to/qsub/bin
+    Qsub_q: myqueue.q
+    module_path: C:\Users\sklarz.BGU-USERS\Documents\python_pipeline_gitlab\python_pipeline\additional_modules\additional_modules_release_1.1.0
 Description: |
     A pipeline for executing various analyses on metagenomics data
     --------------------------------------------------------------
@@ -212,3 +212,4 @@ Step_params:
         redirects:
             -n: 20
             -x: 1
+    
