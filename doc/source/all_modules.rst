@@ -15,6 +15,10 @@ Preparation and QC
 
 .. automodule:: main_NSF_classes.Reports.Multiqc
 
+.. automodule:: Liron.Cutadapt_module.Cutadapt
+
+.. automodule:: Liron.Trim_Galore_module.Trim_Galore
+
 
 Mapping
 ========================================
@@ -36,6 +40,10 @@ Mapping
 .. automodule:: main_NSF_classes.mapping.bwa_builder
 
 .. automodule:: main_NSF_classes.mapping.bwa_mapper
+
+.. automodule:: mapping.STAR_mapper
+
+.. automodule:: mapping.STAR_builder
 
 .. automodule:: main_NSF_classes.mapping.samtools
 
@@ -71,6 +79,8 @@ RNA-seq Aassembly
 
 .. automodule:: main_NSF_classes.RNA_seq.add_trinity_tags
 
+.. automodule:: Liron.RSEM_module.RSEM
+
  
 Assembly QC
 ========================================
@@ -89,7 +99,9 @@ Modules for sequence annotation
    :local:
    :depth: 1
 
-.. automodule:: Annotation.prokka
+.. automodule:: Annotation.prokka_old
+
+.. automodule:: Liron.Prokka_module.Prokka
 
 
 Modules for sequence clustering
@@ -139,6 +151,16 @@ Modules for microbiology
 
 .. automodule:: microbiology.CARD_RGI
 
+.. automodule:: Liron.cgMLST_and_MLST_typing_module.cgMLST_and_MLST_typing
+
+.. automodule:: Liron.Roary_module.Roary
+
+.. automodule:: Liron.Snippy_module.Snippy
+
+
+
+
+
 Modules for QIIME (version 1.9)
 ========================================
 
@@ -178,11 +200,6 @@ Modules for QIIME (version 1.9)
 
 
 
-
-
-
-
-
 Modules for various reporting programs
 ========================================
 
@@ -196,6 +213,12 @@ Modules for various reporting programs
 .. automodule:: Reports.NGSplot
 
 .. automodule:: main_NSF_classes.Reports.Multiqc
+
+.. automodule:: Liron.Collect_results_module.Collect_results
+
+
+
+
 Modules for sequence-searching related tasks
 ============================================
 
@@ -214,6 +237,7 @@ Modules for sequence-searching related tasks
 
 .. automodule:: searching.parse_blast
 
+.. automodule:: Liron.Gassst_module.Gassst
 
 BAM conversion to other formats
 ============================================
