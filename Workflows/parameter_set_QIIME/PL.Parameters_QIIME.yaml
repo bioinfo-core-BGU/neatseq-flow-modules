@@ -3,7 +3,7 @@ Global_params:
     Qsub_opts:        -V -cwd
     Qsub_q:           queue.q
     Qsub_path:        /path/to/qsub/dir
-    module_path:      C:\Users\sklarz.BGU-USERS\Documents\python_pipeline_gitlab\python_pipeline\additional_modules\additional_modules_release_1.1.0
+    module_path:      C:\Users\sklarz.BGU-USERS\Documents\python_pipeline_gitlab\python_pipeline\modules_repo\modules_release_1.1.0
 Description: |
     A pipeline for executing a complete QIIME (v1.9) analysis
     ---------------------------------------------------------
