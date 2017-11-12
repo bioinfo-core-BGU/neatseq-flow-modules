@@ -1,0 +1,32 @@
+Global_params:
+    Default_wait: 10
+    Qsub_opts: -cwd
+    Qsub_q: myqueue.q
+    Qsub_path: /path/to/qsub/bin
+    module_path:  C:\Users\sklarz.BGU-USERS\Documents\python_pipeline_gitlab\python_pipeline\additional_modules\additional_modules_release_1.0.0
+Vars:
+    paths:
+        vsearch:    /fastspace/bioinfo_apps/vsearch/vsearch_v2.3.4/bin
+Description: |
+    A pipeline for clustering a set of fastq reads into unique sequences.
+    ---------------------------------------------------------------------
+    Can be used for analysis or RDA-seq, for instance.
+    Includes the following steps:
+    a. fastq files are dereplicated with vsearch at the sample scope,
+    b. resulting unique sequences are merged to obtain a project-level fasta file,
+    c. project level fasta file is again dereplicated
+    d. and resulting sequences are clustered using vsearch and cd-hit (the use can choose between them)
+Step_params:
+    merge1:
+        module: merge
+        script_path: cat
+    faschnuchel:
+        module: vsearch_derepel
+        base: merge1
+        script_path: '{Vars.paths.vsearch}/vsearch'
+        script_path: '{Vars.paths.vsearch}/vsearch'
+        scope: sample
+        type: derep_fulllength
+        redirects:
+            --id: 0.85  
+    
