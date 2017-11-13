@@ -1,6 +1,8 @@
 .. neatseq_flow modules documentation master file, created by
    sphinx-quickstart on Sun Jan 08 15:32:48 2017.
 
+.. _module_repo_docs:
+
 NeatSeq_Flow's Module and Workflow Repository 
 =============================================
 
