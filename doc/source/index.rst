@@ -12,8 +12,9 @@ NeatSeq_Flow's Module and Workflow Repository
    :alt: NeatSeq-Flow logo
 
 .. image:: https://readthedocs.org/projects/neatseq-flow-modules/badge/?version=latest
-   :target: http://neatseq-flow.readthedocs.io/projects/neatseq_flow_additional_modules/en/latest/?badge=latest
+   :target: http://neatseq-flow-modules.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
+
                 
 **NeatSeq-Flow** is a lightweight software for efficient execution of high throughput sequencing workflows. See the **NeatSeq-Flow** documentation at http://neatseq-flow.readthedocs.io/en/latest/.
 

@@ -2,8 +2,10 @@
 
 <img src="https://github.com/bioinfo-core-BGU/neatseq-flow/blob/master/doc/source/figs/NeatSeq_Flow_logo.png" width="400">
 
-[![Documentation Status](https://readthedocs.org/projects/neatseq-flow-modules/badge/?version=latest)](http://neatseq-flow.readthedocs.io/projects/additional_modules/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/neatseq-flow-modules/badge/?version=latest)](http://neatseq-flow-modules.readthedocs.io/en/latest/?badge=latest)
 
+
+                
 
 # Additional NeatSeq-Flow modules
 
