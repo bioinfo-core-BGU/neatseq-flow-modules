@@ -1,5 +1,5 @@
 """ 
-``spades_assembl`` (Included in main NeatSeq-Flow repo)
+``spades_assembl`` :sup:`*`
 -----------------------------------------------------------------
 
 :Authors: Menachem Sklarz

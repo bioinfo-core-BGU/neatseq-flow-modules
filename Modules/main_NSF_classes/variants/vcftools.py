@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``vcftools`` (Included in main NeatSeq-Flow repo)
+``vcftools`` :sup:`*`
 -----------------------------------------------------------------
 
 :Authors: Menachem Sklarz

@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``bowtie1_builder`` (Included in main NeatSeq-Flow repo)
+``bowtie1_builder`` :sup:`*`
 -----------------------------------------------------------------
 
 :Authors: Menachem Sklarz

@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``genomeCoverageBed`` (Included in main NeatSeq-Flow repo)
+``genomeCoverageBed`` :sup:`*`
 -----------------------------------------------------------------
 :Authors: Menachem Sklarz
 :Affiliation: Bioinformatics core facility

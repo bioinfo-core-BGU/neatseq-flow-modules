@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``vsearch_derepel``                            
+``vsearch_derepel``
 --------------------------------
 
 
@@ -190,7 +190,7 @@ class Step_vsearch_derepel(Step):
 
             self.sample_data["fasta.nucl"] = "%s%s.fasta" % (self.base_dir , output_prefix)
             self.sample_data["vsearch_derepl"] = self.sample_data["fasta.nucl"]
-            self.stamp_file(self.sample_data["fasta"]["fasta.nucl"])
+            self.stamp_file(self.sample_data["fasta.nucl"])
                     
         
             # Move all files from temporary local dir to permanent base_dir

@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``cd_hit``                            
+``cd_hit``
 ------------------------
 
 
@@ -100,7 +100,7 @@ class Step_cd_hit(Step):
         elif re.search("cd-hit$", self.params["script_path"]):
             self.type = "prot"
         else:
-            raise AssertionExcept("'script_path' must include either 'cd-hit' or 'cd-hit-est'")
+            raise AssertionExcept("'script_path' must include either 'cd-hit' or 'cd-hit-est'. You set it to '%s'" % self.params["script_path"])
             
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data

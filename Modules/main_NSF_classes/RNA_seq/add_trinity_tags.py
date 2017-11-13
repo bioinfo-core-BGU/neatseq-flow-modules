@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``add_trinity_tags`` (Included in main NeatSeq-Flow repo)
+``add_trinity_tags`` :sup:`*`
 -----------------------------------------------------------------
 :Authors: Menachem Sklarz
 :Affiliation: Bioinformatics core facility

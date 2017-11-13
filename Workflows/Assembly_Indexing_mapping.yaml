@@ -3,9 +3,9 @@ Global_params:
     Qsub_opts: -V -cwd
     Qsub_path: /path/to/qsub/bin
     Qsub_q: myqueue.q
-    module_path: /path/to/modules
+    module_path:      ../modules_release_1.1.0
 Description: |
-    A pipeline for creating and assembly and mapping to it
+    A pipeline for creating an assembly and mapping to it
     --------------------------------------------------------------
     
     This workflow demonstrates the use of the index building and mapping modules.
@@ -16,6 +16,7 @@ Description: |
     ----------------------------------------------------------------
 Vars:
     paths:
+        merge:              gzip -cd    
         fastqc:             /path/to/fastqc
         trimmo:             /path/to/java -jar /path/to/trimmomatic-0.32.jar
         bowtie2:            /path/to/bowtie2/bin    # Path to dir containing bowtie2 and bowtie2-build
@@ -29,7 +30,7 @@ Vars:
 Step_params:
     merge1:
         module:             merge
-        script_path:        gzip -cd
+        script_path:        {Vars.paths.merge}
     fqc_merge1:
         module:             fastqc_html
         base:               merge1

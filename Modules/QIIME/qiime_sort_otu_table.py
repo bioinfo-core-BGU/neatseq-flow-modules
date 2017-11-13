@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``qiime_sort_otu_table``                            
+``qiime_sort_otu_table``
 ---------------------------------
 
 

@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``samtools`` (Included in main NeatSeq-Flow repo)
+``samtools`` :sup:`*`
 -----------------------------------------------------------------
 
 :Authors: Menachem Sklarz

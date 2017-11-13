@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``kaiju``                            
+``kaiju``
 --------------------------------
 
 :Authors: Menachem Sklarz

@@ -1,12 +1,16 @@
 Global_params:
-    Default_wait: 10
-    Qsub_opts: -cwd
-    Qsub_q: myqueue.q
-    Qsub_path: /path/to/qsub/bin
-    module_path:  C:\Users\sklarz.BGU-USERS\Documents\python_pipeline_gitlab\python_pipeline\additional_modules\additional_modules_release_1.0.0
+    Default_wait:       10
+    Qsub_opts:          -cwd
+    Qsub_q:             myqueue.q
+    Qsub_path:          /path/to/qsub/bin
+    module_path:        ../modules_release_1.1.0
 Vars:
     paths:
-        vsearch:    /fastspace/bioinfo_apps/vsearch/vsearch_v2.3.4/bin
+        merge:          gzip -cd    
+        vsearch:        /path/to/vsearch_v2.3.4/bin   # Path to bin where vsearch is installed
+        cdhit:          /path/to/cd-hit-est           # Path to cd-hit (for amino acid) or cd-hit-est (for nucleotides)
+        
+
 Description: |
     A pipeline for clustering a set of fastq reads into unique sequences.
     ---------------------------------------------------------------------
@@ -16,52 +20,53 @@ Description: |
     b. resulting unique sequences are merged to obtain a project-level fasta file,
     c. project level fasta file is again dereplicated
     d. and resulting sequences are clustered using vsearch and cd-hit (the use can choose between them)
+
 Step_params:
     merge1:
-        module: merge
-        script_path: cat
+        module:         merge
+        script_path:    {Vars.paths.merge}
     derepel1:
-        module: vsearch_derepel
-        base: merge1
-        script_path: '{Vars.paths.vsearch}/vsearch'
-        script_path: '{Vars.paths.vsearch}/vsearch'
-        scope: sample
-        type: derep_fulllength
+        module:         vsearch_derepel
+        base:           merge1
+        script_path:    '{Vars.paths.vsearch}/vsearch'
+        script_path:    '{Vars.paths.vsearch}/vsearch'
+        scope:          sample
+        type:           derep_fulllength
         redirects:
-            --id: 0.85  
+            --id:       0.85  
     merge_proj:
-        module: merge_project
-        base: derepel1
-        script_path: cat
-        type: fasta.nucl
+        module:         merge_project
+        base:           derepel1
+        script_path:    cat
+        type:           fasta.nucl
     derepel_proj:
-        module: vsearch_derepel
-        base: merge_proj
-        script_path: '{Vars.paths.vsearch}/vsearch'
-        scope: project
-        type: derep_fulllength
+        module:         vsearch_derepel
+        base:           merge_proj
+        script_path:    '{Vars.paths.vsearch}/vsearch'
+        scope:          project
+        type:           derep_fulllength
         uc:
     clust_proj:
-        module: vsearch_cluster
-        base: derepel_proj
-        script_path: '{Vars.paths.vsearch}/vsearch'
+        module:         vsearch_cluster
+        base:           derepel_proj
+        script_path:    '{Vars.paths.vsearch}/vsearch'
         qsub_params:
-            -pe: shared 40
-        fasta_outputs: centroids,consout
-        scope: project
-        type: cluster_fast
+            -pe:        shared 40
+        fasta_outputs:  centroids,consout
+        scope:          project
+        type:           cluster_fast
         redirects:
-            --id: 0.85  
-            --qmask: dust
-            --strand: both
-            --threads: 40
+            --id:       0.85  
+            --qmask:    dust
+            --strand:   both
+            --threads:  40
     clust_proj_cdhit:
-        module: cd_hit
-        base: derepel_proj
-        script_path: {Vars.paths.cd-hit}
+        module:         cd_hit
+        base:           derepel_proj
+        script_path:    '{Vars.paths.cdhit}'
         qsub_params:
-            -pe: shared 40
-        scope: project
+            -pe:        shared 40
+        scope:          project
         redirects:
-            -T: 40
-            -c: 0.85
+            -T:         40
+            -c:         0.85

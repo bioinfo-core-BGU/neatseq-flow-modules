@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``fastqc_html`` (Included in main NeatSeq-Flow repo)
+``fastqc_html`` :sup:`*`
 -----------------------------------------------------------------
 :Authors: Menachem Sklarz
 :Affiliation: Bioinformatics core facility

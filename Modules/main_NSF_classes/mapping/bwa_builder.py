@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``bwa_builder`` (Included in main NeatSeq-Flow repo)
+``bwa_builder`` :sup:`*`
 -----------------------------------------------------------------
 :Authors: Menachem Sklarz
 :Affiliation: Bioinformatics core facility

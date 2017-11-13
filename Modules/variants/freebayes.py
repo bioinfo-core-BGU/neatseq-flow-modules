@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``freebayes``                            
+``freebayes``
 -----------------------
 
 :Authors: Menachem Sklarz

@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``macs2_callpeak`` (Included in main NeatSeq-Flow repo)
+``macs2_callpeak`` :sup:`*`
 -----------------------------------------------------------------
 
 

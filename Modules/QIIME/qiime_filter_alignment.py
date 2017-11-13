@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``qiime_filter_alignment``                            
+``qiime_filter_alignment``
 ------------------------------------
 
 

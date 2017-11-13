@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``megahit_assembl``                            
+``megahit_assembl``
 --------------------------------
 
 

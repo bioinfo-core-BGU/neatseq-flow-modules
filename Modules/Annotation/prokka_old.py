@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``prokka_old``
+``prokka_old``  :sup:`*`
 -------------------
 
 :Authors: Menachem Sklarz

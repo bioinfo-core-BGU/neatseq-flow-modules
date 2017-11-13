@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``merge`` (Included in main NeatSeq-Flow repo)
+``merge`` :sup:`*`
 -----------------------------------------------------------------
 
 :Authors: Menachem Sklarz

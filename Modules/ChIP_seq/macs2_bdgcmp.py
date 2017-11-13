@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``macs2_bdgcmp``                            
+``macs2_bdgcmp``
 ---------------------------
 
 

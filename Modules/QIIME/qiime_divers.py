@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``qiime_divers``                            
+``qiime_divers``
 ----------------------------
 
 

@@ -1,5 +1,5 @@
 """ 
-``Generic`` (Included in main NeatSeq-Flow repo)
+``Generic`` :sup:`*`
 -----------------------------------------------------------------
 
 A class that defines a module for a generic module.

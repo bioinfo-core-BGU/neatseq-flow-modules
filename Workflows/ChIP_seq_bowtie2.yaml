@@ -3,7 +3,7 @@ Global_params:
     Qsub_opts: -cwd
     Qsub_q: myqueue.q
     Qsub_path: /path/to/qsub/bin
-    module_path: C:\Users\sklarz.BGU-USERS\Documents\python_pipeline_gitlab\python_pipeline\additional_modules\additional_modules_release_1.1.0
+    module_path:      ../modules_release_1.1.0
 Description: |
     A pipeline for executing a standard ChIP-seq analysis
     --------------------------------------------------------------
@@ -23,11 +23,14 @@ Description: |
     3. Finding ChIP peaks
         a. Peak calling is performed with macs2 callpeak
         b. Further analysis of the peaks is done with macs2 bdgcmp
+        c. Analysis of ChIP-seq results with CEAS
     4. Reporting
         a. Analysis of the BAM files is done with NGSplot, with -R set to enhancer, exon, genebody and tss
+        
 
 Vars:
     paths:
+        merge:          gzip -cd    
         fastqc:         /path/to/fastqc
         trimmo:         /path/to/trimmomatic-0.32.jar
         bowtie2:        /path/to/bowtie2
@@ -37,8 +40,9 @@ Vars:
         igvtools:       /path/to/igvtools.jar
         NGSplot:        /path/to/ngsplot-2.61/    # Path to bin/ directory in which the executabe is installed
         bedtools:       /path/to/bedtools  # Path to bedtools bin/. Should contain bedtools and genomeCoverageBed executables
-        kentUtils:  /path/to/kentUtils/bin
-        ceas:     /path/to/CEAS/    # Path to the directory. Should include /bin/ceas and /lib/python2.7
+        kentUtils:      /path/to/kentUtils/bin
+        ceas:           /path/to/CEAS/    # Path to the directory. Should include /bin/ceas and /lib/python2.7
+        multiqc:        /path/to/multiqc
     reference:
         fasta:          /path/to/fasta
         chrom_sizes:    /path/to/chrom.sizes
@@ -46,167 +50,181 @@ Vars:
         bowtie2_ind:    /path/to/bowtie2/index  # Without the suffix
         NGSplot_code:   mm10
 Step_params:
+# ---------------------------------- 1. Merge, QC  and trimming
     merge1:
-        module: merge
-        script_path: gzip -cd
+        module:         merge
+        script_path:    {Vars.paths.merge}
     fqc_merge1:
-        module: fastqc_html
-        base: merge1
-        script_path: {Vars.paths.fastqc}
+        module:         fastqc_html
+        base:           merge1
+        script_path:    {Vars.paths.fastqc}
         qsub_params:
-            -pe: shared 15
+            -pe:        shared 15
         redirects:
-            --threads: 15
+            --threads:  15
     trim1:
-        module: trimmo
-        base: merge1
-        script_path: '{Vars.paths.java} -jar {Vars.paths.trimmo}'
+        module:         trimmo
+        base:           merge1
+        script_path:    '{Vars.paths.java} -jar {Vars.paths.trimmo}'
         qsub_params:
-            -pe: shared 20
+            -pe:        shared 20
 #        spec_dir: 
-        todo: LEADING:20 TRAILING:20
+        todo:           LEADING:20 TRAILING:20
         redirects:
-            -threads: 20
+            -threads:   20
     fqc_trim1:
-        module: fastqc_html
-        base: trim1
-        script_path: {Vars.paths.fastqc}
+        module:         fastqc_html
+        base:           trim1
+        script_path:    {Vars.paths.fastqc}
         qsub_params:
-            -pe: shared 15
+            -pe:        shared 15
         redirects:
-            --threads: 15
+            --threads:  15
+# ---------------------------------- 2. Mapping and format conversion
     bwt2_map:
-        module: bowtie2_mapper
-        base: trim1
-        script_path: {Vars.paths.bowtie2}
+        module:         bowtie2_mapper
+        base:           trim1
+        script_path:    {Vars.paths.bowtie2}
         qsub_params:
-            -pe: shared 20
+            -pe:        shared 20
         get_map_log:
         get_stderr:
-        ref_genome: {Vars.reference.fasta}
+        ref_genome:     {Vars.reference.fasta}
         redirects:
             --end-to-end:
-            -L: 32
-            -N: 1
-            -k: 2
-            -p: 20
-            -q:
-            -x: {Vars.reference.bowtie2_ind}
+            -L:         32
+            -N:         1
+            -k:         2
+            -p:         20
+            -q:     
+            -x:         {Vars.reference.bowtie2_ind}
     sam2bam:
-        module: samtools
-        base: bwt2_map
-        script_path: {Vars.paths.samtools}
+        module:         samtools
+        base:           bwt2_map
+        script_path:    {Vars.paths.samtools}
         qsub_params:
-            -pe: shared 20
-        del_unsorted:
-        index:
-        sort: -@ 20
-        view: -buh  -q 30 -@ 20 -F 4
+            -pe:        shared 20
+        view:           -buh  -q 30 -@ 20 -F 4
+        sort:           -@ 20
+        flagstat: 
+        index: 
+        stats:          --remove-dups
+        del_sam: 
+        del_unsorted: 
     IGVcount1:
-        module: IGV_count
-        base: sam2bam
-        script_path: '{Vars.paths.java} -Xmx1500m -jar {Vars.paths.igvtools} count'
-        format: tdf
-        genome: {Vars.reference.chrom_sizes}
-    NGSplot_enhancer:
-        module: NGSplot
-        base: sam2bam
-        script_path: 'Rscript {Vars.paths.NGSplot}/bin/ngs.plot.r'
-        qsub_params:
-            -pe: shared 20
-        setenv: NGSPLOT={Vars.paths.NGSplot} 
-        redirects:
-            -G: mm10
-            -GO: hc
-            -P: 20
-            -R: enhancer
-    NGSplot_exon:
-        module: NGSplot
-        base: sam2bam
-        script_path: 'Rscript {Vars.paths.NGSplot}/bin/ngs.plot.r'
-        qsub_params:
-            -pe: shared 20
-        setenv: NGSPLOT={Vars.paths.NGSplot} 
-        redirects:
-            -G: mm10
-            -GO: hc
-            -P: 20
-            -R: exon
-    NGSplot_genebody:
-        module: NGSplot
-        base: sam2bam
-        script_path: 'Rscript {Vars.paths.NGSplot}/bin/ngs.plot.r'
-        qsub_params:
-            -pe: shared 20
-        setenv: NGSPLOT={Vars.paths.NGSplot} 
-        redirects:
-            -G: mm10
-            -GO: hc
-            -P: 20
-            -R: genebody
-    NGSplot_tss:
-        module: NGSplot
-        base: sam2bam
-        script_path: 'Rscript {Vars.paths.NGSplot}/bin/ngs.plot.r'
-        qsub_params:
-            -pe: shared 20
-        setenv: NGSPLOT={Vars.paths.NGSplot} 
-        redirects:
-            -G: mm10
-            -GO: hc
-            -P: 20
-            -R: tss
+        module:         IGV_count
+        base:           sam2bam
+        script_path:    '{Vars.paths.java} -Xmx1500m -jar {Vars.paths.igvtools} count'
+        format:         tdf
+        genome:         {Vars.reference.chrom_sizes}
     genCovBed:
-        module: genomeCoverageBed
-        base: sam2bam
-        script_path: '{Vars.paths.bedtools}/genomeCoverageBed'
+        module:         genomeCoverageBed
+        base:           sam2bam
+        script_path:    '{Vars.paths.bedtools}/genomeCoverageBed'
         redirects:
             -bg:
-            -g: {Vars.reference.chrom_sizes}
+            -g:         {Vars.reference.chrom_sizes}
+    UCSCmap_bams:
+        module:         UCSC_BW_wig
+        base:           genCovBed
+        script_path:    {Vars.paths.kentUtils}
+        bedGraphToBigWig_params: -blockSize 10 -itemsPerSlot 20
+        bigWigToWig_params: -chrom X1 -start X2 -end X3
+        genome:         {Vars.reference.chrom_sizes}
+    multiqc_sum:
+        module:         Multiqc
+        base:
+            - sam2bam
+            - fqc_trim1
+            - fqc_merge1
+        script_path:    {Vars.paths.multiqc}
+# ---------------------------------- 4. BAM analysis with NGSplot
+    NGSplot_enhancer:
+        module:         NGSplot
+        base:           sam2bam
+        script_path:    'Rscript {Vars.paths.NGSplot}/bin/ngs.plot.r'
+        qsub_params:
+            -pe:        shared 20
+        setenv:         NGSPLOT={Vars.paths.NGSplot} 
+        redirects:
+            -G:         mm10
+            -GO:        hc
+            -P:         20
+            -R:         enhancer
+    NGSplot_exon:
+        module:         NGSplot
+        base:           NGSplot_enhancer
+        script_path:    'Rscript {Vars.paths.NGSplot}/bin/ngs.plot.r'
+        qsub_params:
+            -pe:        shared 20
+        setenv:         NGSPLOT={Vars.paths.NGSplot} 
+        redirects:
+            -G:         mm10
+            -GO:        hc
+            -P:         20
+            -R:         exon
+    NGSplot_genebody:
+        module:         NGSplot
+        base:           NGSplot_exon
+        script_path:    'Rscript {Vars.paths.NGSplot}/bin/ngs.plot.r'
+        qsub_params:
+            -pe:        shared 20
+        setenv:         NGSPLOT={Vars.paths.NGSplot} 
+        redirects:
+            -G:         mm10
+            -GO:        hc
+            -P:         20
+            -R:         genebody
+    NGSplot_tss:
+        module:         NGSplot
+        base:           NGSplot_genebody
+        script_path:    'Rscript {Vars.paths.NGSplot}/bin/ngs.plot.r'
+        qsub_params:
+            -pe:        shared 20
+        setenv:         NGSPLOT={Vars.paths.NGSplot} 
+        redirects:
+            -G:         mm10
+            -GO:        hc
+            -P:         20
+            -R:         tss
+# ---------------------------------- 3. Peak finding and format, comparison to input and format conversion
     macs1_findpeaks:
-        module: macs2_callpeak
-        base: sam2bam
-        script_path: '{Vars.paths.macs2} callpeak'
+        module:         macs2_callpeak
+        base:           sam2bam
+        script_path:    '{Vars.paths.macs2} callpeak'
         bedToBigBed_path: '{Vars.paths.kentUtils}/bedToBigBed'
-        chrom.sizes: {Vars.reference.chrom_sizes}
-        getfasta: '{Vars.paths.bedtools}/bedtools getfasta -name -s'
+        chrom.sizes:    {Vars.reference.chrom_sizes}
+        getfasta:       '{Vars.paths.bedtools}/bedtools getfasta -name -s'
         redirects:
             --SPMR:
             --bdg:
-            -g: mm
-    UCSCmap_bams:
-        module: UCSC_BW_wig
-        base: genCovBed
-        script_path: {Vars.paths.kentUtils}
-        bedGraphToBigWig_params: -blockSize 10 -itemsPerSlot 20
-        bigWigToWig_params: -chrom X1 -start X2 -end X3
-        genome: {Vars.reference.chrom_sizes}
-    bdgcmp_Zhou:
-        module: macs2_bdgcmp
-        base: macs1_findpeaks
-        script_path: '{Vars.paths.macs2} bdgcmp'
-        genome: {Vars.reference.chrom_sizes}
-        slop_path: '{Vars.paths.bedtools}/bedtools slop'
-        toTDF_path: '{Vars.paths.java} -Xmx1500m -jar {Vars.paths.igvtools} toTDF'
+            -g:         mm
+    bdgcmp_comp:
+        module:         macs2_bdgcmp
+        base:           macs1_findpeaks
+        script_path:    '{Vars.paths.macs2} bdgcmp'
+        genome:         {Vars.reference.chrom_sizes}
+        slop_path:      '{Vars.paths.bedtools}/bedtools slop'
+        toTDF_path:     '{Vars.paths.java} -Xmx1500m -jar {Vars.paths.igvtools} toTDF'
         ucscTools_path: {Vars.paths.kentUtils}
         redirects:
-            --method: FE
+            --method:   FE
     macs1_findpeaks_UCSC:
-        module: UCSC_BW_wig
-        base: macs1_findpeaks
-        script_path: {Vars.paths.kentUtils}
+        module:         UCSC_BW_wig
+        base:           macs1_findpeaks
+        script_path:    {Vars.paths.kentUtils}
         bedGraphToBigWig_params: -blockSize 10 -itemsPerSlot 20
         bigWigToWig_params: -chrom X1 -start X2 -end X3
-        genome: {Vars.reference.chrom_sizes}
-    CEAS1:
-        module: CEAS
-        base: macs1_findpeaks_UCSC
-        script_path: '{Vars.paths.ceas}/bin/ceas'
-        setenv: 'PYTHONPATH={Vars.paths.ceas}/lib/python2.7/site-packages:$PYTHONPATH'
-        redirects:
-            -g: {Vars.reference.ceas_db}
+        genome:         {Vars.reference.chrom_sizes}
     macs1_findpeaks_tdf:
-        module: IGV_toTDF
-        base: macs1_findpeaks_UCSC
-        script_path: '{Vars.paths.java} -Xmx1500m -jar {Vars.paths.igvtools} toTDF'
-        genome: mm10
+        module:         IGV_toTDF
+        base:           macs1_findpeaks_UCSC
+        script_path:    '{Vars.paths.java} -Xmx1500m -jar {Vars.paths.igvtools} toTDF'
+        genome:         mm10
+    CEAS1:
+        module:         CEAS
+        base:           macs1_findpeaks_UCSC
+        script_path:    '{Vars.paths.ceas}/bin/ceas'
+        setenv:         'PYTHONPATH={Vars.paths.ceas}/lib/python2.7/site-packages:$PYTHONPATH'
+        redirects:
+            -g:         {Vars.reference.ceas_db}

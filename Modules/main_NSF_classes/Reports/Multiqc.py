@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``Multiqc`` (Included in main NeatSeq-Flow repo)
+``Multiqc`` :sup:`*`
 -----------------------------------------------------------------
 :Authors: Menachem Sklarz
 :Affiliation: Bioinformatics core facility

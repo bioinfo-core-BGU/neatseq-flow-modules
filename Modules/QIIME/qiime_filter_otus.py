@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``qiime_filter_otus``                            
+``qiime_filter_otus``
 ----------------------------
 
 

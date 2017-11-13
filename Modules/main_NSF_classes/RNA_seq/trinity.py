@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``trinity`` (Included in main NeatSeq-Flow repo)
+``trinity`` :sup:`*`
 -----------------------------------------------------------------
 :Authors: Menachem Sklarz
 :Affiliation: Bioinformatics core facility

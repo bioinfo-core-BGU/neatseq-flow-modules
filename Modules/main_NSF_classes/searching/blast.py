@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``blast`` (Included in main NeatSeq-Flow repo)
+``blast`` :sup:`*`
 -----------------------------------------------------------------
 
 :Authors: Menachem Sklarz

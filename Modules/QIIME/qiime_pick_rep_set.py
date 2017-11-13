@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``qiime_pick_rep_set``                            
+``qiime_pick_rep_set``
 --------------------------------
 
 

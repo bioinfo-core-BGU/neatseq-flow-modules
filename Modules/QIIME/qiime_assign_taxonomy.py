@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``qiime_assign_taxonomy``                            
+``qiime_assign_taxonomy``
 ----------------------------------
 
 

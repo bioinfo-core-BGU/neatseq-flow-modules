@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``vsearch_cluster``                            
+``vsearch_cluster``
 --------------------------------
 
 

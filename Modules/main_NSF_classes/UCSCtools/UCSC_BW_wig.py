@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``UCSC_BW_wig`` (Included in main NeatSeq-Flow repo)
+``UCSC_BW_wig`` :sup:`*`
 -----------------------------------------------------------------
 :Authors: Menachem Sklarz
 :Affiliation: Bioinformatics core facility
@@ -24,8 +24,8 @@ Output
 
 * Puts output sam files in the following slots:
 
-    * self.sample_data[<sample>]["bw"]
-    * self.sample_data[<sample>]["wig"]
+    * ``self.sample_data[<sample>]["bw"]``
+    * ``self.sample_data[<sample>]["wig"]``
     
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

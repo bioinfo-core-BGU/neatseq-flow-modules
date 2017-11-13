@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``IGV_toTDF`` (Included in main NeatSeq-Flow repo)
+``IGV_toTDF`` :sup:`*`
 -----------------------------------------------------------------
 
 :Authors: Menachem Sklarz

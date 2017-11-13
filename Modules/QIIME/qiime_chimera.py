@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 """ 
 
-``qiime_chimera``                            
+``qiime_chimera``
 ----------------------------
 
 

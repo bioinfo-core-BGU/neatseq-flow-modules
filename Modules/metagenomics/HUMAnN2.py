@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``HUMAnN2``                            
+``HUMAnN2``
 --------------------------------
 
 :Authors: Menachem Sklarz

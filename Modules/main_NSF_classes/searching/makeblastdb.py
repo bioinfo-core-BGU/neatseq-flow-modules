@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``makeblastdb`` (Included in main NeatSeq-Flow repo)
+``makeblastdb`` :sup:`*`
 -----------------------------------------------------------------
 
 :Authors: Menachem Sklarz

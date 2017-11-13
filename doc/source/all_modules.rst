@@ -1,3 +1,5 @@
+
+
 Preparation and QC
 ========================================
 
@@ -19,6 +21,7 @@ Preparation and QC
 
 .. automodule:: Liron.Trim_Galore_module.Trim_Galore
 
+.. automodule:: miscellaneous.merge_project
 
 Mapping
 ========================================
@@ -67,7 +70,7 @@ Genome Assembly
 .. automodule:: main_NSF_classes.Assembly.spades_assembl
 
 
-RNA-seq Aassembly
+Transcriptome Assembly
 ========================================
 
 .. contents:: Modules included in this section
@@ -91,7 +94,7 @@ Assembly QC
 
 .. automodule:: main_NSF_classes.Assembly.quast
 
-Modules for sequence annotation
+Sequence Annotation
 ========================================
 
 
@@ -99,12 +102,13 @@ Modules for sequence annotation
    :local:
    :depth: 1
 
-.. automodule:: Annotation.prokka_old
-
 .. automodule:: Liron.Prokka_module.Prokka
 
+.. automodule:: Annotation.prokka_old
 
-Modules for sequence clustering
+
+
+Sequence Clustering
 ========================================
 
 
@@ -120,7 +124,8 @@ Modules for sequence clustering
 
 .. automodule:: clustering.vsearch_derepel
 
-Modules for metagenomics
+
+Metagenomics
 ========================================
 
 
@@ -139,7 +144,7 @@ Modules for metagenomics
 .. automodule:: metagenomics.metaphlan2
 
 
-Modules for microbiology
+Microbiology
 ========================================
 
 
@@ -161,7 +166,7 @@ Modules for microbiology
 
 
 
-Modules for QIIME (version 1.9)
+QIIME (version 1.9)
 ========================================
 
 
@@ -200,7 +205,7 @@ Modules for QIIME (version 1.9)
 
 
 
-Modules for various reporting programs
+Various Reporting Programs
 ========================================
 
 
@@ -219,7 +224,7 @@ Modules for various reporting programs
 
 
 
-Modules for sequence-searching related tasks
+Sequence-Searching Related Tasks
 ============================================
 
 
@@ -239,7 +244,8 @@ Modules for sequence-searching related tasks
 
 .. automodule:: Liron.Gassst_module.Gassst
 
-BAM conversion to other formats
+
+BAM Conversion to Other Formats
 ============================================
 
 .. contents:: Modules included in this section
@@ -256,7 +262,7 @@ BAM conversion to other formats
 
 
 
-Modules for various variant-related tasks
+Variant-related Tasks
 ============================================
 
 
@@ -274,7 +280,7 @@ Modules for various variant-related tasks
 .. automodule:: main_NSF_classes.variants.vcftools
 
 
-Modules for ChIP-seq
+ChIP-seq
 ========================================
 
 
@@ -288,7 +294,7 @@ Modules for ChIP-seq
 
 .. automodule:: ChIP_seq.CEAS
 
-Generic module
+Generic Module
 ========================================
 
 
@@ -298,4 +304,9 @@ Generic module
 
 
 .. automodule:: main_NSF_classes.Generic.Generic
+
+
+
+
+
 

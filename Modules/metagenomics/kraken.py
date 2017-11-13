@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``kraken``                            
+``kraken``
 --------------------------------
 
 :Authors: Menachem Sklarz

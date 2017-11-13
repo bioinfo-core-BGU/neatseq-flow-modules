@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 """ 
 
-``qiime_make_phylogeny``                            
+``qiime_make_phylogeny``
 --------------------------------
 
 

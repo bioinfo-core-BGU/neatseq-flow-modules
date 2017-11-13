@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# neatseq_flow additional modules documentation build configuration file...
+# neatseq_flow modules repository documentation build configuration file...
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -60,7 +60,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'neatseq_flow additional modules'
+project = u'NeatSeq_Flow Module Repository'
 copyright = u'2017, Menachem Sklarz'
 author = u'Menachem Sklarz'
 

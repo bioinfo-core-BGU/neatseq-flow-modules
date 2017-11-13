@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``mpileup_varscan``                            
+``mpileup_varscan``
 ------------------------------
 
 

@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``IGV_count`` (Included in main NeatSeq-Flow repo)
+``IGV_count`` :sup:`*`
 -----------------------------------------------------------------
 
 :Authors: Menachem Sklarz

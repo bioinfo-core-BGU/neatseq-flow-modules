@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``bowtie2_mapper`` (Included in main NeatSeq-Flow repo)
+``bowtie2_mapper`` :sup:`*`
 -----------------------------------------------------------------
 
 :Authors: Menachem Sklarz

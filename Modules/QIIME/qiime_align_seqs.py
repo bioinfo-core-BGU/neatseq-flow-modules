@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``qiime_align_seqs``                            
+``qiime_align_seqs``
 ----------------------------
 
 

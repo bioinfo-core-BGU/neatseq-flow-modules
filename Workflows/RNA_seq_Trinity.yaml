@@ -1,9 +1,9 @@
 Global_params:
-    Default_wait: 100
+    Default_wait: 10
     Qsub_opts: -V -cwd
     Qsub_path: /path/to/qsub/bin
     Qsub_q: queue.q
-    module_path: C:\Users\sklarz.BGU-USERS\Documents\python_pipeline_gitlab\python_pipeline\additional_modules\additional_modules_release_1.1.0
+    module_path:      ../modules_release_1.1.0
 Description: |
     A pipeline for basic RNA-seq analysis using Trinity
     ---------------------------------------------------
@@ -27,15 +27,17 @@ Description: |
     
 Vars:
     paths:
+        merge:              gzip -cd    
         bowtie2:            /path/to/bowtie2_v2.2.5         # Path to the dir which includes bowtie2 and bowtie2-build executables
         Trinity:            /path/to/trinity/               # Path to the dir which contains Trinity executable and a dir util/ with the toolkit scripts
         SGE_Trinity_conf:   /path/to/cluster_Trinity_conf.txt  # Path to file with cluster configuration for trinity. See --grid_conf parameter in trinity manual.
         RSEM:               /path/to/rsem/bin               # Path to dir containing rsem scripts 
         samtools:           /path/to/samtools-1.3/bin       # Path to dir containing samtools executable
+        STAR:               /path/to/STAR                   # Path to STAR executable
 Step_params:
     merge1:
         module:             merge
-        script_path:        gzip -cd
+        script_path:        {Vars.paths.merge}
     trin_tags1:
         module:             add_trinity_tags
         base:               merge1
@@ -79,10 +81,10 @@ Step_params:
     STAR_bld_ind:
         module:             STAR_builder
         base:               trinity1
-        script_path:        /path/to/STAR
+        script_path:        {Vars.paths.STAR}
         scope:              project
     STAR_map:
         module:             STAR_mapper
         base:               STAR_bld_ind
-        script_path:        /path/to/STAR
+        script_path:        {Vars.paths.STAR}
         scope:              project

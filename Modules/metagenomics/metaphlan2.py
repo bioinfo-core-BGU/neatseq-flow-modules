@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``metaphlan2``                            
+``metaphlan2``
 --------------------------------
 
 :Authors: Menachem Sklarz

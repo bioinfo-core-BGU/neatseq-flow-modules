@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``qiime_filter_samples_from_otu_table``                            
+``qiime_filter_samples_from_otu_table``
 -----------------------------------------------
 
 

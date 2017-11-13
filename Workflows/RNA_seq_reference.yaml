@@ -1,44 +1,68 @@
 Global_params:
-    Default_wait: 10
-    Qsub_opts: -V -cwd
-    Qsub_path: /path/to/qsub/bin
-    Qsub_q: myqueue.q
-    module_path: C:\Users\sklarz.BGU-USERS\Documents\python_pipeline_gitlab\python_pipeline\additional_modules\additional_modules_release_1.1.0
+    Default_wait:           10
+    Qsub_opts:              -V -cwd
+    Qsub_path:              /path/to/qsub/bin
+    Qsub_q:                 myqueue.q
+    module_path:            ../modules_release_1.1.0
+Documentation: |
+    A pipeline for executing a RNA-seq analysis on a model organism
+    ----------------------------------------------------------------
+    
+    The pipeline includes the following stages:
+    1. Preparation and QA:
+        a. Merging the reads into a signle file per sample.
+        b. QC with fastqc
+        c. Trimming with trimmomatic
+        d. QC on trimmed reads with fastqc
+    2. Analysis:
+        a. Mapping of the reads to the reference genome is performed with STAR (``STAR`` module).
+        b. Creating counts table with htseq-count (``htseq_count`` module)
 
+Vars:
+    paths:
+        merge:              cat
+        trimmo:             /path/to/trimmomatic-0.32.jar
+        fastqc:             /path/to/fastqc
+        STAR:               /path/to/STAR
+        samtools:           /path/to/samtools
+        htseq_count:        /path/to/htseq-count
+    genome:
+        fasta:              /path/to/GRCh38.fna
+        gtf:                /path/to/GRCh38.gtf
+        STAR_index:         /path/to/GRCh38_STARind/            # Directory in which STAR index was created
 Step_params:
     merge1:
-        module: merge
-        script_path: cat
+        module:             merge
+        script_path:        {Vars.paths.merge}
     trim1:
-        module: trimmo
-        base: merge1
-        script_path: java -jar trimmomatic-0.32.jar
-        spec_dir: /fastspace/bioinfo_apps/Trimmomatic-0.32
-        todo: ILLUMINACLIP:TruSeq3-SE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15
-            MINLEN:36
+        module:             trimmo
+        base:               merge1
+        script_path:        'java -jar {Vars.paths.trimmo}'
+        spec_dir:           /fastspace/bioinfo_apps/Trimmomatic-0.32
+        todo:               ILLUMINACLIP:TruSeq3-SE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15
+            MINLEN:         36
         redirects:
-            -threads: 20
+            -threads:       20
     fQC_trimmo:
-        module: fastqc_html
-        base: trim1
-        script_path: /fastspace/bioinfo_apps/FastQC/fastqc
+        module:             fastqc_html
+        base:               trim1
+        script_path:        {Vars.paths.fastqc}
         qsub_params:
-            -pe: shared 20
+            -pe:            shared 20
         redirects:
-            --threads: 20
+            --threads:      20
     STAR1:
-        module: STAR_mapper
-        base: trim1
-        script_path: /gpfs0/bioinfo/apps/STAR/STAR-v2.5.3a/bin/Linux_x86_64/STAR
+        module:             STAR_mapper
+        base:               trim1
+        script_path:        {Vars.paths.STAR}
         qsub_params:
-            -pe: shared 5
-            queue: star.q
-        ref_genome: /fastspace/bioinfo_databases/STAR_GRCh38_Gencode21/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna
+            -pe:            shared 5
+        ref_genome:         {Vars.genome.fasta}
         redirects:
-            --genomeDir: /fastspace/bioinfo_databases/STAR_GRCh38_Gencode21
+            --genomeDir:    {Vars.genome.STAR_index}
             --outSAMstrandField: intronMotif
-            --runMode: alignReads
-            --runThreadN: 5
+            --runMode:      alignReads
+            --runThreadN:   5
             --readMapNumber:  1000
             --outSAMtype: BAM SortedByCoordinate Unsorted
             --outSAMattributes:  NH HI AS nM NM MD jM jI XS ch
@@ -47,20 +71,24 @@ Step_params:
             --quantMode:    TranscriptomeSAM   # TranscriptomeSAM  or GeneCounts
 
     samtools_STAR1:
-        module: samtools
-        base: STAR1
-        script_path: /fastspace/bioinfo_apps/samtools/samtools-1.3/bin/samtools
+        module:             samtools
+        base:               STAR1
+        script_path:        {Vars.paths.samtools}
         qsub_params:
-            -pe: shared 20
-        index: null
-        sort: -@ 20
-        view: -buh  -@ 20 -F 4
+            -pe:            shared 20
+        view:               -buh  -@ 20 -F 4
+        sort:               -@ 20
+        flagstat: 
+        index: 
+        stats:              --remove-dups
+        del_sam: 
+        del_unsorted: 
     htseq_c1:
-        module: htseq_count
-        base: samtools_STAR1
-        script_path: /storage16/app/bioinfo/python_packages/bin/htseq-count
-        gff: /fastspace/bioinfo_databases/STAR_GRCh38_Gencode21/gencode.v21.annotation.gtf
+        module:             htseq_count
+        base:               samtools_STAR1
+        script_path:        {Vars.paths.htseq_count}
+        gff:                {Vars.genome.gtf}
         redirects:
-            --format: bam
-            -m: intersection-nonempty
-            -s: 'no'
+            --format:       bam
+            -m:             intersection-nonempty
+            -s:             'no'

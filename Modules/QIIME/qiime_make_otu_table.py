@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``qiime_make_otu_table``                            
+``qiime_make_otu_table``
 -----------------------------------
 
 

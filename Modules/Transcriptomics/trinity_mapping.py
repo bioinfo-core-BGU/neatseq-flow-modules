@@ -112,7 +112,7 @@ class Step_trinity_mapping(Step):
                 if "fasta.nucl" not in self.sample_data[sample]:
                     raise AssertionExcept("It seems there is no sample-wide assembly.", sample)
         elif self.params["scope"] == "project":
-            print self.sample_data.keys()
+            # print self.sample_data.keys()
             if "fasta.nucl" not in self.sample_data.keys():
                 raise AssertionExcept("It seems there is no project-wide assembly.")
         else:

@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``qiime_prep``                            
+``qiime_prep``
 -------------------------------
 
 :Authors: Menachem Sklarz

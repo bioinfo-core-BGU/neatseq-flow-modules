@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``del_type`` (Included in main NeatSeq-Flow repo)
+``del_type`` :sup:`*`
 -----------------------------------------------------------------
 :Authors: Menachem Sklarz
 :Affiliation: Bioinformatics core facility

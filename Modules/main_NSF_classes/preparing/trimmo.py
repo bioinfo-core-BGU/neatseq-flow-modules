@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``trimmo`` (Included in main NeatSeq-Flow repo)
+``trimmo`` :sup:`*`
 -----------------------------------------------------------------
 
 :Authors: Menachem Sklarz

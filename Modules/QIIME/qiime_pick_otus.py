@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``qiime_pick_otus``                            
+``qiime_pick_otus``
 ----------------------------
 
 

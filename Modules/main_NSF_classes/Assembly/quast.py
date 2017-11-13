@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``quast`` (Included in main NeatSeq-Flow repo)
+``quast`` :sup:`*`
 -----------------------------------------------------------------
 
 :Authors: Menachem Sklarz

@@ -3,7 +3,7 @@ Global_params:
     Qsub_opts:        -V -cwd
     Qsub_q:           queue.q
     Qsub_path:        /path/to/qsub/dir
-    module_path:      C:\Users\sklarz.BGU-USERS\Documents\python_pipeline_gitlab\python_pipeline\modules_repo\modules_release_1.1.0
+    module_path:      ../modules_release_1.1.0
 Description: |
     A pipeline for executing a complete QIIME (v1.9) analysis
     ---------------------------------------------------------
@@ -33,6 +33,7 @@ Description: |
         2. You can sort the BIOM table samples by a specific field of the mapping file with the qiime_sort_otu_table module
 Vars:
     paths:                  
+        merge:              gzip -cd
         fastqc:             /path/to/fastqc
         multiqc:            /path/to/multiqc
         java:               /path/to/java
@@ -52,7 +53,7 @@ Vars:
 Step_params:
     merge1:                            
         module:             merge
-        script_path:        gzip -cd
+        script_path:        {Vars.paths.merge}
     fQC_merge:
         module:             fastqc_html
         base:               merge1
