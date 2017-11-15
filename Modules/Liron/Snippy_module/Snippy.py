@@ -12,7 +12,9 @@ Module ``Snippy``
 .. Note:: This module was developed as part of a study led by Dr. Jacob Moran Gilad
 
 SHORT DESCRIPTION
-    A module for running Snippy on fastq files
+
+A module for running Snippy on fastq files
+
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     fastq files in at least one of the following slots:
@@ -89,8 +91,7 @@ Lines for parameter file
             --minfrac:                          # Minumum proportion for variant evidence
             --reference:                        # Reference Genome location
             --cleanup                           # Remove all non-SNP files: BAMs, indices etc (default OFF)            
-References
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 """
 

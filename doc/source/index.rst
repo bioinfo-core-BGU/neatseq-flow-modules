@@ -49,11 +49,30 @@ Following is a list of modules included in this repository.
 .. Modules included in the repository 
 .. -----------------------------------
 
+
 .. toctree::
    :maxdepth: 2
    :caption: Modules
 
-   all_modules
+   Module_docs/BAMConversion
+   Module_docs/ChIPseq
+   Module_docs/GenericModule
+   Module_docs/GenomeAssembly
+   Module_docs/Mapping
+   Module_docs/Metagenomics
+   Module_docs/Microbiology
+   Module_docs/PreparationAndQC
+   Module_docs/QIIME
+   Module_docs/SequenceAnnotation
+   Module_docs/SequenceClustering
+   Module_docs/SequenceSearching
+   Module_docs/TranscriptomeAssembly
+   Module_docs/Variants
+   Module_docs/VariousReportingPrograms
+
+..   all_modules
+   
+   
    
 .. Workflows included in the repository
 .. -------------------------------------
