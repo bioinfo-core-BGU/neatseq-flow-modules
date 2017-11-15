@@ -91,7 +91,7 @@ class Step_Gassst(Step):
             Good place for parameter testing.
             Wrong place for sample data testing
         """
-        self.shell = "csh"      # Can be set to "bash" by inheriting instances
+        self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = ".Gassst.out"
         import inspect
         self.module_location=os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))

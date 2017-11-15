@@ -70,7 +70,7 @@ class Step_genomeCoverageBed(Step):
   
     
     def step_specific_init(self):
-        self.shell = "csh"      # Can be set to "bash" by inheriting instances
+        self.shell = "bash"      # Can be set to "bash" by inheriting instances
         # self.file_tag = "Bowtie_mapper"
 
         if not "-g" in self.params["redir_params"]:

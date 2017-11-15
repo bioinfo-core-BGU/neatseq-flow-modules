@@ -108,7 +108,7 @@ __author__ = "Levin Liron"
 class Step_Snippy(Step):
 
     def step_specific_init(self):
-        self.shell = "csh"      # Can be set to "bash" by inheriting instances
+        self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = ""
         import inspect
         self.module_location=os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))

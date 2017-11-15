@@ -71,7 +71,7 @@ Step_params:
         script_path:        '{Vars.paths.java} -jar {Vars.trimmo.path}'
         qsub_params:              
             -pe:            shared 20
-        todo:               ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:20 TRAILING:20 SLIDINGWINDOW:4:15 MINLEN:100
+        todo:               ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:20 TRAILING:20 SLIDINGWINDOW:4:15 MINLEN:36
         spec_dir:           {Vars.trimmo.spec_dir}
         redirects:          
             -threads:       20

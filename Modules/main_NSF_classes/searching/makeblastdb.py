@@ -80,7 +80,7 @@ class Step_makeblastdb(Step):
             Good place for parameter testing.
             Wrong place for sample data testing
         """
-        self.shell = "csh"      # Can be set to "bash" by inheriting instances
+        self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = ".makeblastdb.out"
 
         # Checking this once and then applying to each sample:
@@ -116,7 +116,7 @@ class Step_makeblastdb(Step):
                 self.dbtype = self.params["redir_params"]["-dbtype"]
                 self.sample_data[sample]["fasta." + self.dbtype]
             except KeyError:
-                raise AssertionExcept("No file exists in sample for specified -dbtype (%s)\n" % dbtype, sample)
+                raise AssertionExcept("No file exists in sample for specified -dbtype (%s)\n" % self.dbtype, sample)
 
     def step_sample_initiation_byproject(self):
 

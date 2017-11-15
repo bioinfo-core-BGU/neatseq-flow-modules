@@ -89,7 +89,7 @@ sam_bam_dict     = {"SAM":"sam", "BAM":"bam", "REFERENCE":"reference"}
 class Step_merge(Step):
     
     def step_specific_init(self):
-        self.shell = "csh"      # Can be set to "bash" by inheriting instances
+        self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = "merge"
         
         

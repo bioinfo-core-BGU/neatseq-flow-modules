@@ -69,7 +69,7 @@ class Step_IGV_count(Step):
 
     
     def step_specific_init(self):
-        self.shell = "csh"      # Can be set to "bash" by inheriting instances
+        self.shell = "bash"      # Can be set to "bash" by inheriting instances
         # self.file_tag = "Bowtie_mapper"
 
         if "format" not in self.params.keys():

@@ -39,8 +39,7 @@ Step_params:
         base:               merge1
         script_path:        'java -jar {Vars.paths.trimmo}'
         spec_dir:           /fastspace/bioinfo_apps/Trimmomatic-0.32
-        todo:               ILLUMINACLIP:TruSeq3-SE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15
-            MINLEN:         36
+        todo:               ILLUMINACLIP:TruSeq3-SE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
         redirects:
             -threads:       20
     fQC_trimmo:

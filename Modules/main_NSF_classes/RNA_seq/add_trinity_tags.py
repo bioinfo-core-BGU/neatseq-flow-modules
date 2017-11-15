@@ -56,7 +56,7 @@ import sys
 import re
 from neatseq_flow.PLC_step import Step,AssertionExcept
 
-from  modules.global_defs import ZIPPED_EXTENSIONS, ARCHIVE_EXTENSIONS, KNOWN_FILE_EXTENSIONS
+from  neatseq_flow.modules.global_defs import ZIPPED_EXTENSIONS, ARCHIVE_EXTENSIONS, KNOWN_FILE_EXTENSIONS
 
 
 
@@ -72,7 +72,7 @@ class Step_add_trinity_tags(Step):
 
     
     def step_specific_init(self):
-        self.shell = "csh"      # Can be set to "bash" by inheriting instances
+        self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = "trin_tags.fq"
         
     def step_sample_initiation(self):

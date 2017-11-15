@@ -99,7 +99,7 @@ class Step_parse_blast(Step):
             Good place for parameter testing.
             Wrong place for sample data testing
         """
-        self.shell = "csh"      # Can be set to "bash" by inheriting instances
+        self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = ".blast.parsed"
 
         

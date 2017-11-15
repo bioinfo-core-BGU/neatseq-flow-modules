@@ -78,7 +78,7 @@ __version__ = "0.2.0"
 class Step_Trim_Galore(Step):
 
     def step_specific_init(self):
-        self.shell = "csh"      # Can be set to "bash" by inheriting instances
+        self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = "trim_galore.fq"
         if "--output_dir" in self.params["redir_params"] or "-o" in self.params["redir_params"]:
             raise AssertionExcept("You should not give output directory\n")

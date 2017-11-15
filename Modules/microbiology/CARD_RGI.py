@@ -108,7 +108,7 @@ __author__ = "Michal_Gordon"
 class Step_CARD_RGI(Step):
 
     def step_specific_init(self):
-        self.shell = "csh"      # Can be set to "bash" by inheriting instances
+        self.shell = "bash"      # Can be set to "bash" by inheriting instances
 
         # Making sure only -x or --orf were passed 
         if "-x" in self.params["redir_params"] and "--orf" in self.params["redir_params"]:

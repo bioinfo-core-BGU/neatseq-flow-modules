@@ -71,7 +71,7 @@ __version__ = "1.1.0"
 class Step_fastqc_html(Step):
 
     def step_specific_init(self):
-        self.shell = "csh"      # Can be set to "bash" by inheriting instances
+        self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = "fasqc"
 
     def step_sample_initiation(self):

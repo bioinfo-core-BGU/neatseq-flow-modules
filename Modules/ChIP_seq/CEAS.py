@@ -74,7 +74,7 @@ class Step_CEAS(Step):
 
 
     def step_specific_init(self):
-        self.shell = "csh"      # Can be set to "bash" by inheriting instances
+        self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = "CEAS"
 
     def step_sample_initiation(self):

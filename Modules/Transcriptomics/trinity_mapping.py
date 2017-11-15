@@ -84,7 +84,7 @@ class Step_trinity_mapping(Step):
 
     
     def step_specific_init(self):
-        self.shell = "csh"      # Can be set to "bash" by inheriting instances
+        self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = "trin_mapping"
         
         if "--aln_method" not in self.params["redir_params"]:

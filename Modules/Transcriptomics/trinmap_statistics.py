@@ -77,7 +77,7 @@ __version__ = "0.2.0"
 class Step_trinmap_statistics(Step):
     
     def step_specific_init(self):
-        self.shell = "csh"      # Can be set to "bash" by inheriting instances
+        self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = "trin_stats"
         
         if "use_isoforms" not in self.params:

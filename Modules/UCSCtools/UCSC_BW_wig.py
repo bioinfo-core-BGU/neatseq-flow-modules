@@ -75,7 +75,7 @@ __version__ = "0.2.0"
 class Step_UCSC_BW_wig(Step):
     
     def step_specific_init(self):
-        self.shell = "csh"      # Can be set to "bash" by inheriting instances
+        self.shell = "bash"      # Can be set to "bash" by inheriting instances
 
         if not "genome"  in self.params:
             raise AssertionExcept("You must pass a 'genome' parameter!")
