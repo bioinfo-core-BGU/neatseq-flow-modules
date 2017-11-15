@@ -80,7 +80,7 @@ Marth GT, Korf I, Yandell MD, Yeh RT, Gu Z, Zakeri H, Stitziel NO, Hillier L, Kw
 
 import os
 import sys
-from PLC_step import Step,AssertionExcept
+from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Menachem Sklarz"

@@ -90,7 +90,7 @@ Danecek, P., Auton, A., Abecasis, G., Albers, C.A., Banks, E., DePristo, M.A., H
 
 import os
 import sys
-from PLC_step import Step,AssertionExcept
+from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Menachem Sklarz"

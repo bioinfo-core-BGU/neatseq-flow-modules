@@ -81,7 +81,7 @@ Li, D., Liu, C.M., Luo, R., Sadakane, K. and Lam, T.W., 2015. **MEGAHIT: an ultr
 
 import os
 import sys
-from PLC_step import Step,AssertionExcept
+from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Menachem Sklarz"

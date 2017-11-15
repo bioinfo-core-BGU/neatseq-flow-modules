@@ -61,7 +61,7 @@ Andrews, S., 2010. FastQC: a quality control tool for high throughput sequence d
 
 import os
 import sys
-from PLC_step import Step,AssertionExcept
+from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Menachem Sklarz"

@@ -71,9 +71,9 @@ Lines for parameter file
 import os
 import sys
 import re
-from PLC_step import Step,AssertionExcept
+from neatseq_flow.PLC_step import Step,AssertionExcept
 
-from  modules.global_defs import ZIPPED_EXTENSIONS, ARCHIVE_EXTENSIONS, KNOWN_FILE_EXTENSIONS
+from  neatseq_flow.modules.global_defs import ZIPPED_EXTENSIONS, ARCHIVE_EXTENSIONS, KNOWN_FILE_EXTENSIONS
 
 
 

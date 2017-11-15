@@ -41,7 +41,7 @@ Ewels, P., Magnusson, M., Lundin, S. and Käller, M., 2016. **MultiQC: summarize
 import os
 import sys
 import re
-from PLC_step import Step,AssertionExcept
+from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Levinl based on Menachem Sklarz"

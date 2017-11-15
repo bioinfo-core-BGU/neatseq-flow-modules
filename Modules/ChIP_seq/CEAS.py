@@ -62,7 +62,7 @@ Shin, H., Liu, T., Manrai, A.K. and Liu, X.S., 2009. **CEAS: cis-regulatory elem
 
 import os
 import sys
-from PLC_step import Step,AssertionExcept
+from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Menachem Sklarz"

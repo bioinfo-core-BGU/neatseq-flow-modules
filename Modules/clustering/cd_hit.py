@@ -80,7 +80,7 @@ Fu, L., Niu, B., Zhu, Z., Wu, S. and Li, W., 2012. **CD-HIT: accelerated for clu
 
 
 import os, sys, re
-from PLC_step import Step,AssertionExcept
+from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Menachem Sklarz"

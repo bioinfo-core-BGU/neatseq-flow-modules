@@ -113,7 +113,7 @@ Acknowledgments
 import os
 import sys
 import re
-from PLC_step import Step,AssertionExcept
+from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Liron Levin"

@@ -56,7 +56,7 @@ Langmead, B., Trapnell, C., Pop, M. and Salzberg, S.L., 2009. **Ultrafast and me
     
 import os
 import sys
-from PLC_step import Step,AssertionExcept
+from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Menachem Sklarz"

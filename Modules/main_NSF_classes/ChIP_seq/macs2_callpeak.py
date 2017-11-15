@@ -88,7 +88,7 @@ Feng, J., Liu, T., Qin, B., Zhang, Y. and Liu, X.S., 2012. **Identifying ChIP-se
 import os
 import os.path
 import sys
-from PLC_step import Step,AssertionExcept
+from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Menachem Sklarz"

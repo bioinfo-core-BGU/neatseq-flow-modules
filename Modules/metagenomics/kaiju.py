@@ -81,7 +81,7 @@ Menzel, P., Ng, K.L. and Krogh, A., 2016. **Fast and sensitive taxonomic classif
 
 import os
 import sys
-from PLC_step import Step,AssertionExcept
+from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Menachem Sklarz"

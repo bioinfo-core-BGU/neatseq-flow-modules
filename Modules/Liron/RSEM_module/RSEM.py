@@ -89,7 +89,7 @@ References
 import os
 import sys
 import re
-from PLC_step import Step
+from neatseq_flow.PLC_step import Step
 
 __author__ = "Levin Levin"
 

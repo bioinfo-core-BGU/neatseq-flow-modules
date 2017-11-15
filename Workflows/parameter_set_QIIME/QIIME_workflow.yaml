@@ -4,6 +4,9 @@ Global_params:
     Qsub_q:           queue.q
     Qsub_path:        /path/to/qsub/dir
     module_path:      ../modules_release_1.1.0
+    conda:
+        path:       /path/to/conda/bin
+        env:        NSF
 Description: |
     A pipeline for executing a complete QIIME (v1.9) analysis
     ---------------------------------------------------------
