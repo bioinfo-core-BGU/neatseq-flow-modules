@@ -2,3 +2,5 @@
 git-gui*
 not_for_publication
 doc/build
+dist
+NeatSeq_Flow_modules.egg-info
