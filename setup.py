@@ -57,7 +57,6 @@ setup(
                                         'Workflows/ChIP_seq_bowtie2.yaml',
                                         'Workflows/Clustering.yaml',
                                         'Workflows/Metagenomics.yaml',
-                                        'Workflows/parameter_set_QIIME',
                                         'Workflows/parameter_set_QIIME/qiime1_mapping.txt',
                                         'Workflows/parameter_set_QIIME/qiime1_params.txt',
                                         'Workflows/parameter_set_QIIME/QIIME_workflow.yaml',
