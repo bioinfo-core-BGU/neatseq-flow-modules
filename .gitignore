@@ -1,6 +1,6 @@
 *.pyc
 git-gui*
 not_for_publication
-doc/build
+docs/build/**
 dist
 NeatSeq_Flow_modules.egg-info
