@@ -21,7 +21,7 @@ Requires
 
     * ``sample_data[<sample>]["reference"]``
     
-..Note:: Do not specify the reference (-f), since it is filled in automatically by neatseq-flow
+.. Note:: Do not specify the reference (-f), since it is filled in automatically by neatseq-flow
 
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

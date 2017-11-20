@@ -36,7 +36,7 @@ Output
 
 
     
-..Note:: When using ``parallel_align_seqs_pynast.py``, the module tries to build the scripts appropriately. **It is wise to check the parallel scripts before running them...**
+.. Note:: When using ``parallel_align_seqs_pynast.py``, the module tries to build the scripts appropriately. **It is wise to check the parallel scripts before running them...**
   
   
 Parameters that can be set

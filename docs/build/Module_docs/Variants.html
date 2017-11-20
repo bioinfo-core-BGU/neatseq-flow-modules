@@ -1,0 +1,607 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Variant-related Tasks &mdash; NeatSeq_Flow Module Repository 1.1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="NeatSeq_Flow Module Repository 1.1.0 documentation" href="../index.html"/>
+        <link rel="next" title="Various Reporting Programs" href="VariousReportingPrograms.html"/>
+        <link rel="prev" title="Transcriptome Assembly" href="TranscriptomeAssembly.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> NeatSeq_Flow Module Repository
+          
+
+          
+            
+            <img src="../_static/logo_Hor.png" class="logo" />
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <p class="caption"><span class="caption-text">Modules</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="BAMConversion.html">BAM Conversion to Other Formats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ChIPseq.html">ChIP-seq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="GenericModule.html">Generic Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="GenomeAssembly.html">Genome Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Mapping.html">Mapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metagenomics.html">Metagenomics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Microbiology.html">Microbiology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PreparationAndQC.html">Preparation and QC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="QIIME.html">QIIME (version 1.9)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SequenceAnnotation.html">Sequence Annotation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SequenceClustering.html">Sequence Clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SequenceSearching.html">Sequence-Searching Related Tasks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TranscriptomeAssembly.html">Transcriptome Assembly</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Variant-related Tasks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#freebayes"><code class="docutils literal"><span class="pre">freebayes</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requires">Requires</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#output">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parameters-that-can-be-set">Parameters that can be set</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#comments">Comments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lines-for-parameter-file">Lines for parameter file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#mpileup-varscan"><code class="docutils literal"><span class="pre">mpileup_varscan</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Requires</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Parameters that can be set</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">Comments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">Lines for parameter file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#vcftools"><code class="docutils literal"><span class="pre">vcftools</span></code> <sup>*</sup></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id7">Requires</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">Parameters that can be set</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id10">Lines for parameter file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id11">References</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="VariousReportingPrograms.html">Various Reporting Programs</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Workflows</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/Assembly_Indexing_mapping.html">Assembly and Mapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/BLAST_db.html">BLAST on <cite>fasta</cite> files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/BLAST_fasta.html">Assembly and Searching</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/ChIP_seq_bowtie2.html">ChIP-seq analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/Metagenomics.html">Metagenomics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/RNA_seq_Trinity.html">Non-Model Transcriptomics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/RNA_seq_reference.html">Reference-based Transcriptomics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/variant_calling.html">Variant calling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/Clustering.html">Read clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/QIIME_workflow.html">QIIME analysis</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">NeatSeq_Flow Module Repository</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+    <li>Variant-related Tasks</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/Module_docs/Variants.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="variant-related-tasks">
+<h1>Variant-related Tasks<a class="headerlink" href="#variant-related-tasks" title="Permalink to this headline">¶</a></h1>
+<div class="contents local topic" id="modules-included-in-this-section">
+<p class="topic-title first">Modules included in this section</p>
+<ul class="simple">
+<li><a class="reference internal" href="#freebayes" id="id12"><code class="docutils literal"><span class="pre">freebayes</span></code></a></li>
+<li><a class="reference internal" href="#mpileup-varscan" id="id13"><code class="docutils literal"><span class="pre">mpileup_varscan</span></code></a></li>
+<li><a class="reference internal" href="#vcftools" id="id14"><code class="docutils literal"><span class="pre">vcftools</span></code> <sup>*</sup></a></li>
+</ul>
+</div>
+<span class="target" id="module-variants.freebayes"></span><div class="section" id="freebayes">
+<h2><a class="toc-backref" href="#id12"><code class="docutils literal"><span class="pre">freebayes</span></code></a><a class="headerlink" href="#freebayes" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Menachem Sklarz</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<p>A module for identifying variants by running freebayes:</p>
+<div class="section" id="requires">
+<h3>Requires<a class="headerlink" href="#requires" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">BAM files in the the following slots:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;bam&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">Genome reference fasta files in the the following slot (the slot should be populated by the module that created the <code class="docutils literal"><span class="pre">bam</span></code> file):</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;reference&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+<p>..Note:: Do not specify the reference (-f), since it is filled in automatically by neatseq-flow</p>
+</div>
+<div class="section" id="output">
+<h3>Output<a class="headerlink" href="#output" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">If <code class="docutils literal"><span class="pre">scope</span></code> is set to <code class="docutils literal"><span class="pre">sample</span></code>:</p>
+<blockquote>
+<div><ul>
+<li><p class="first">Puts output files in:</p>
+<blockquote>
+<div><p><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;vcf&quot;]</span></code>  (if <code class="docutils literal"><span class="pre">output_type</span></code> is set to <code class="docutils literal"><span class="pre">vcf</span></code>)
+<code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;gvcf&quot;]</span></code> (if <code class="docutils literal"><span class="pre">output_type</span></code> is set to <code class="docutils literal"><span class="pre">gvcf</span></code>)</p>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">If <code class="docutils literal"><span class="pre">scope</span></code> is set to <code class="docutils literal"><span class="pre">project</span></code>:</p>
+<blockquote>
+<div><ul>
+<li><p class="first">Puts output files in:</p>
+<blockquote>
+<div><p><code class="docutils literal"><span class="pre">sample_data[&quot;vcf&quot;]</span></code>  (if <code class="docutils literal"><span class="pre">output_type</span></code> is set to <code class="docutils literal"><span class="pre">vcf</span></code>)
+<code class="docutils literal"><span class="pre">sample_data[&quot;gvcf&quot;]</span></code> (if <code class="docutils literal"><span class="pre">output_type</span></code> is set to <code class="docutils literal"><span class="pre">gvcf</span></code>)</p>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="parameters-that-can-be-set">
+<h3>Parameters that can be set<a class="headerlink" href="#parameters-that-can-be-set" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="43%" />
+<col width="29%" />
+<col width="29%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Values</th>
+<th class="head">Comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>output_type</td>
+<td>vcf|gvcf</td>
+<td>The type of output produced by freebayes. (Can be specified alternatively with appropriate redirects)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="comments">
+<h3>Comments<a class="headerlink" href="#comments" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="lines-for-parameter-file">
+<h3>Lines for parameter file<a class="headerlink" href="#lines-for-parameter-file" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">freebayes1</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">freebayes</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">samtools1</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">freebayes</span>
+    <span class="n">scope</span><span class="p">:</span> <span class="n">sample</span>
+    <span class="n">output_type</span><span class="p">:</span> <span class="n">vcf</span>
+    <span class="n">redirects</span><span class="p">:</span> 
+        <span class="o">--</span><span class="n">strict</span><span class="o">-</span><span class="n">vcf</span><span class="p">:</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="references">
+<h3>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h3>
+<p>Marth GT, Korf I, Yandell MD, Yeh RT, Gu Z, Zakeri H, Stitziel NO, Hillier L, Kwok PY, Gish WR: <strong>A general approach to single-nucleotide polymorphism discovery</strong>. <em>Nat Genet.</em> 1999, 23: 452-456. 10.1038/70570.</p>
+</div>
+</div>
+<span class="target" id="module-variants.mpileup_varscan"></span><div class="section" id="mpileup-varscan">
+<h2><a class="toc-backref" href="#id13"><code class="docutils literal"><span class="pre">mpileup_varscan</span></code></a><a class="headerlink" href="#mpileup-varscan" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Menachem Sklarz</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<p>A module for identifying variance by running mpileup and piping it’s (large) output into varscan:</p>
+<div class="section" id="id1">
+<h3>Requires<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">BAM files in the the following slots:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;bam&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">Genome reference fasta files in the the following slot (the slot should be populated by the module that created the <code class="docutils literal"><span class="pre">bam</span></code> file):</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;reference&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="id2">
+<h3>Output<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">If <code class="docutils literal"><span class="pre">scope</span></code> is set to <code class="docutils literal"><span class="pre">sample</span></code>:</p>
+<blockquote>
+<div><ul>
+<li><p class="first">Puts output files in:</p>
+<blockquote>
+<div><p><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;vcf&quot;]</span></code>
+<code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;variants&quot;]</span></code> (if <code class="docutils literal"><span class="pre">--output-vcf</span></code> is not redirected in <code class="docutils literal"><span class="pre">redirects</span></code>)</p>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">If <code class="docutils literal"><span class="pre">scope</span></code> is set to <code class="docutils literal"><span class="pre">project</span></code>:</p>
+<blockquote>
+<div><ul>
+<li><p class="first">Puts output files in:</p>
+<blockquote>
+<div><p><code class="docutils literal"><span class="pre">sample_data[&quot;vcf&quot;]</span></code>
+<code class="docutils literal"><span class="pre">sample_data[&quot;variants&quot;]</span></code> (if <code class="docutils literal"><span class="pre">--output-vcf</span></code> is not redirected in <code class="docutils literal"><span class="pre">redirects</span></code>)</p>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="id3">
+<h3>Parameters that can be set<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="43%" />
+<col width="29%" />
+<col width="29%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Values</th>
+<th class="head">Comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>mpileup_path</td>
+<td>path</td>
+<td>The full path to the mpileup program. You can append additional mpileup arguments after the path (see example lines)</td>
+</tr>
+<tr class="row-odd"><td>script_path</td>
+<td>path</td>
+<td>The full path to the relevant varscan program (see example lines).</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id4">
+<h3>Comments<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id5">
+<h3>Lines for parameter file<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">mpileup_varscan1</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">mpileup_varscan</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">samtools1</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">java</span> <span class="o">-</span><span class="n">jar</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">VarScan</span><span class="o">.</span><span class="n">v2</span><span class="o">.</span><span class="mf">3.9</span><span class="o">.</span><span class="n">jar</span> <span class="n">mpileup2snp</span>
+    <span class="n">mpileup_path</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">samtools</span> <span class="n">mpileup</span> <span class="o">--</span><span class="nb">max</span><span class="o">-</span><span class="n">depth</span> <span class="mi">6000</span>
+    <span class="n">scope</span><span class="p">:</span> <span class="n">sample</span>
+    <span class="n">redirects</span><span class="p">:</span>
+        <span class="o">--</span><span class="nb">min</span><span class="o">-</span><span class="n">coverage</span><span class="p">:</span> <span class="mi">4</span>
+        <span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="n">vcf</span><span class="p">:</span>
+        <span class="o">--</span><span class="n">variants</span><span class="p">:</span> <span class="mi">1</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id6">
+<h3>References<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Li, H., Handsaker, B., Wysoker, A., Fennell, T., Ruan, J., Homer, N., Marth, G., Abecasis, G. and Durbin, R., 2009. <strong>The sequence alignment/map format and SAMtools</strong>. <em>Bioinformatics</em>, 25(16), pp.2078-2079.</li>
+<li>Koboldt, D.C., Chen, K., Wylie, T., Larson, D.E., McLellan, M.D., Mardis, E.R., Weinstock, G.M., Wilson, R.K. and Ding, L., 2009. <strong>VarScan: variant detection in massively parallel sequencing of individual and pooled samples</strong>. <em>Bioinformatics</em>, 25(17), pp.2283-2285.</li>
+</ul>
+</div>
+</div>
+<span class="target" id="module-main_NSF_classes.variants.vcftools"></span><div class="section" id="vcftools">
+<h2><a class="toc-backref" href="#id14"><code class="docutils literal"><span class="pre">vcftools</span></code> <sup>*</sup></a><a class="headerlink" href="#vcftools" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Menachem Sklarz</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<p>A module for running vcftools:</p>
+<p>Can take a VCF, gunzipped VCF or BCF file as input.</p>
+<p>Produces an output file, as specified by the output options arguments.</p>
+<div class="section" id="id7">
+<h3>Requires<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">Input files in one of the following slots (for project scope):</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;VCF&quot;</span> <span class="pre">|</span> <span class="pre">&quot;gzVCF&quot;</span> <span class="pre">|</span> <span class="pre">&quot;BCF&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">Input files in one of the following slots (for sample scope):</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;variants&quot;][&quot;VCF&quot;</span> <span class="pre">|</span> <span class="pre">&quot;gzVCF&quot;</span> <span class="pre">|</span> <span class="pre">&quot;BCF&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="id8">
+<h3>Output<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><dl class="first docutils">
+<dt>Puts output files in the following slots (for project scope): </dt>
+<dd><p class="first last"><code class="docutils literal"><span class="pre">self.sample_data[&lt;output</span> <span class="pre">type&gt;]</span></code></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Puts output files in the following slots (for sample scope): </dt>
+<dd><p class="first last"><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;variants&quot;][&lt;output</span> <span class="pre">type&gt;]</span></code></p>
+</dd>
+</dl>
+</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>Output type is set by redirecting the required type, <em>i.e.</em> any number of the following list of types.</p>
+<p>For extracting several INFO fields, set <code class="docutils literal"><span class="pre">--get-INFO</span></code> to a list of INFO elements to extract (instead of passing <code class="docutils literal"><span class="pre">--get-INFO</span></code> several times). See examples below.</p>
+<p>If several output types are passed, each type will be created in parallel with a different vcftools script.</p>
+<p>See the vcftools manual for details (<a class="reference external" href="https://vcftools.github.io/man_latest.html">https://vcftools.github.io/man_latest.html</a>).</p>
+<p class="last"><code class="docutils literal"><span class="pre">&quot;--freq&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--freq2&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--counts&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--counts2&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--depth&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--site-depth&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--site-mean-depth&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--geno-depth&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--hap-r2&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--geno-r2&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--geno-chisq&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--hap-r2-positions&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--geno-r2-positions&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--interchrom-hap-r2&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--interchrom-geno-r2&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--TsTv&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--TsTv-summary&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--TsTv-by-count&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--TsTv-by-qual&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--FILTER-summary&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--site-pi&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--window-pi&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--weir-fst-pop&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--het&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--hardy&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--TajimaD&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--indv-freq-burden&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--LROH&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--relatedness&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--relatedness2&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--site-quality&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--missing-indv&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--missing-site&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--SNPdensity&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--kept-sites&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--removed-sites&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--singletons&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--hist-indel-len&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--hapcount&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--mendel&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--extract-FORMAT-info&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--get-INFO&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--recode&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--recode-bcf&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--12&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--IMPUTE&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--ldhat&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--ldhat-geno&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--BEAGLE-GL&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--BEAGLE-PL&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--plink&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;--plink-tped&quot;</span></code>.</p>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">At the moment, you can’t pass more than one <code class="docutils literal"><span class="pre">extract-FORMAT-info</span></code> option at once. For more than one <code class="docutils literal"><span class="pre">extract-FORMAT-info</span></code>, create more than one instance of <code class="docutils literal"><span class="pre">vcftools</span></code>.</p>
+</div>
+</div>
+<div class="section" id="id9">
+<h3>Parameters that can be set<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="43%" />
+<col width="29%" />
+<col width="29%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Values</th>
+<th class="head">Comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>scope</td>
+<td>project | sample</td>
+<td>Indicates whether to use a project or sample bowtie1 index.</td>
+</tr>
+<tr class="row-odd"><td>input</td>
+<td>vcf | bcf | gzvcf</td>
+<td>Type of input to use. Default: vcf</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id10">
+<h3>Lines for parameter file<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">vcftools1</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">vcftools</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">freebayes1</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">vcftools</span>
+    <span class="n">scope</span><span class="p">:</span> <span class="n">project</span>
+    <span class="nb">input</span><span class="p">:</span> <span class="n">vcf</span>
+    <span class="n">redirects</span><span class="p">:</span>
+        <span class="o">--</span><span class="n">recode</span><span class="p">:</span>
+        <span class="o">--</span><span class="n">extract</span><span class="o">-</span><span class="n">FORMAT</span><span class="o">-</span><span class="n">info</span><span class="p">:</span> <span class="n">GT</span>
+        <span class="o">--</span><span class="n">get</span><span class="o">-</span><span class="n">INFO</span><span class="p">:</span>
+            <span class="o">-</span> <span class="n">NS</span>
+            <span class="o">-</span> <span class="n">DB</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id11">
+<h3>References<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+<p>Danecek, P., Auton, A., Abecasis, G., Albers, C.A., Banks, E., DePristo, M.A., Handsaker, R.E., Lunter, G., Marth, G.T., Sherry, S.T. and McVean, G., 2011. <strong>The variant call format and VCFtools</strong>. <em>Bioinformatics</em>, 27(15), pp.2156-2158.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="VariousReportingPrograms.html" class="btn btn-neutral float-right" title="Various Reporting Programs" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="TranscriptomeAssembly.html" class="btn btn-neutral" title="Transcriptome Assembly" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Menachem Sklarz.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

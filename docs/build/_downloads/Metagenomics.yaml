@@ -1,0 +1,212 @@
+Global_params:
+    Default_wait: 10
+    Qsub_opts: -V -cwd
+    Qsub_path: /path/to/qsub/bin
+    Qsub_q: myqueue.q
+    module_path:      ../modules_release_1.1.0
+Description: |
+    A pipeline for executing various analyses on metagenomics data
+    --------------------------------------------------------------
+    
+    Developed as part of a study led by Prof. Jacob Moran-Gilad
+    
+    Includes two approaches:
+    a. Analysis of the raw reads with:
+        - kraken
+        - metaphlan2
+        - kaiju
+        - HUMAnN2
+       The output from the former three programs is also plotted with krona (to disable plotting with krona, comment out the lines referring to krona in the instance definition.)  
+    b. Assembly and analysis of the assembled reads:
+        1. Assembly below is done with two tools: spades and megahit
+        2. Each assembly is quality tested with quast
+        3. assemblies are annotated with prokka 
+        4. Antibiotic resistance is determined with CARD RGI
+        5. Not included. Resistance and virulence can also be determined by BLASTing AR and virulence databases against the assemblies. See module BLAST.
+    ----------------------------------------------------------------
+Vars:
+    paths:
+        merge:          gzip -cd    
+        fastqc:         /path/to/fastqc
+        trimmo:         /path/to/java -jar /path/to/trimmomatic-0.32.jar
+        kraken:         /path/to/kraken
+        kaiju:          /path/to/kaiju_dir/
+        metaphlan2:     /path/to/metaphlan2
+        bowtie2:        /path/to/bowtie2
+        diamond:        /path/to/diamond
+        humann2:        /path/to/humann2
+        megahit:        /path/to/megahit
+        prokka:         /path/to/prokka
+        quast:          /path/to/quast
+        spades:         /path/to/spades
+        RGI:            /path/to/CARD-RGI/RGI_v3.1.1/   # Path to RGI installation dir. Must include rgi.py and convertJsonToTSV.py
+        KronaTools:     /path/to/KronaTools-2.6.1/
+    dirs:
+        trimmo:         /path/to/trimmomatic
+    databases:
+        humann2:
+            chocophlan: /path/to/HUMAnN2_v0.11.1/databases/chocophlan
+            uniref:     /path/to/HUMAnN2_v0.11.1/databases/uniref
+        kraken:         /path/to/kraken_std_db
+Step_params:
+# ---------------------------- Merge, QC and trimming
+    merge1:
+        module:         merge
+        script_path:    {Vars.paths.merge}
+    fqc_merge1:
+        module:         fastqc_html
+        base:           merge1
+        script_path:    {Vars.paths.fastqc}
+        qsub_params:
+            -pe:        shared 15
+        redirects:
+            --threads:  15
+    trim1:
+        module:         trimmo
+        base:           merge1
+        script_path:    {Vars.paths.trimmo}
+        qsub_params:
+            -pe:        shared 20
+        spec_dir:       /path/to/Trimmomatic_dir/
+        todo:           LEADING:20 TRAILING:20
+        redirects:
+            -threads:   20
+    fqc_trim1:
+        module:         fastqc_html
+        base:           trim1
+        script_path:    {Vars.paths.fastqc}
+        qsub_params:
+            -pe:        shared 15
+        redirects:
+            --threads:  15
+# ------------------------------- a. Metagenomic analysis of raw reads:
+    metph1:
+        module:             metaphlan2
+        base:               trim1
+        script_path:        '{Vars.paths.metaphlan2}/metaphlan2.py'
+        qsub_params:
+            -V: 
+        export:             'PERL5LIB="{Vars.paths.KronaTools}/lib:$PERL5LIB"'
+        ktImportText_path: '{Vars.paths.KronaTools}/bin/ktImportText'
+        merge_metaphlan_tables: '{Vars.paths.metaphlan2}/utils/merge_metaphlan_tables.py'
+        metaphlan2krona_path:   '{Vars.paths.metaphlan2}/utils/metaphlan2krona.py'
+        redirects:
+            --biom: 
+            --bowtie2_exe:  {Vars.paths.bowtie2}
+            --bowtie2db:    '{Vars.paths.metaphlan2}/db_v20/mpa_v20_m200'
+            --bowtie2out:
+            --input_type:   fastq
+            --mdelim:       ';'
+            --mpa_pkl:      '{Vars.paths.metaphlan2}/db_v20/mpa_v20_m200.pkl'
+            --nproc:        30
+    HUMAnN2_1:
+        module:             HUMAnN2
+        base:               trim1
+        script_path:        {Vars.paths.humann2}
+        join_tables: 
+        renorm_table:       --units cpm -p
+        redirects:
+            --bowtie2:      {Vars.paths.bowtie2}
+            --diamond:      {Vars.paths.diamond}
+            --gap-fill:     'on'
+            --input-format: fastq
+            --metaphlan:    {Vars.paths.metaphlan2}
+            --minpath:      'on'
+            --nucleotide-database: {Vars.databases.humann2.chocophlan}
+            --protein-database: {Vars.databases.humann2.uniref}
+            --threads:      30
+    kaiju1:
+        module:             kaiju
+        base:               trim1
+        script_path:        '{Vars.paths.kaiju}/bin/kaiju'
+        setenv:             'PERL5LIB={Vars.paths.KronaTools}/lib:$PERL5LIB'
+        kaiju2krona:        '{Vars.paths.kaiju}/bin/kaiju2krona'
+        ktImportText_path:  '{Vars.paths.KronaTools}/bin/ktImportText'
+        names_dmp:          '{Vars.paths.kaiju}/kaijudb/names.dmp'
+        redirects:
+            -f:             '{Vars.paths.kaiju}/kaijudb/kaiju_db.fmi'
+            -t:             '{Vars.paths.kaiju}/kaijudb/nodes.dmp'
+            -z:             40
+    kraken1:
+        module:             kraken
+        base:               trim1
+        script_path:        '{Vars.paths.kraken}'
+        qsub_params:
+            -pe:            shared 20
+        merge_kraken_reports:
+        ktImportTaxonomy_path: '{Vars.paths.KronaTools}/bin/ktImportTaxonomy -u  http://krona.sourceforge.net'
+        redirects:
+            --db:           {Vars.databases.kraken}
+            --preload: 
+            --quick: 
+            --threads:      20
+# ------------------------------- b. Assembly and analysis of the assembly
+    megahit1:
+        module:             megahit_assembl
+        base:               trim1
+        script_path:        {Vars.paths.megahit}
+        qsub_params:
+            -pe:            shared 30
+        scope:              project
+        redirects:
+            --continue: 
+            --num-cpu-threads: 30
+    quast_megahit:
+        module:             quast
+        base:               megahit1
+        script_path:        {Vars.paths.quast}
+        level:              project
+        redirects:
+            --min-contig:   100
+    spades1:
+        module:             spades_assembl
+        base:               trim1
+        script_path:        {Vars.paths.spades}
+        scope:              sample
+        redirects:
+            --meta:
+    quast_spades:
+        module:             quast
+        base:               spades1
+        script_path:        {Vars.paths.quast}
+        level:              project
+        redirects:
+            --min-contig:   100
+    prokka1:
+        module:             prokka_old
+        base:               spades1
+        script_path:        {Vars.paths.prokka}
+        qsub_params:
+            -pe:            shared 20
+        generate_GFF_dir:
+        redirects:
+            --cpus:         20
+            --fast:
+            --force:
+            --genus:        Staphylococcus
+            --metagenome:
+            --strain:
+    rgi_megahit:
+        module:             CARD_RGI
+        base:               spades1
+        script_path:        'python {Vars.paths.RGI}/rgi.py'
+        JSON2tsv_script:    'python {Vars.paths.RGI}/convertJsonToTSV.py'
+        qsub_params:
+            -pe:            shared 15
+        orf_to_use:         -x
+        scope:              sample
+        redirects:
+            -n:             20
+            -x:             1
+    rgi_spades:
+        module:             CARD_RGI
+        base:               spades1
+        script_path:        'python {Vars.paths.RGI}/rgi.py'
+        JSON2tsv_script:    'python {Vars.paths.RGI}/convertJsonToTSV.py'
+        qsub_params:
+            -pe:            shared 15
+        orf_to_use:         -x
+        redirects:
+            -n:             20
+            -x:             1
+    

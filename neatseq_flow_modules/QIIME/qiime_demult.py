@@ -14,7 +14,7 @@ A module for running QIIME's multiple_split_libraries_fastq.py:
 
 The reads from step qiime_prep are combined into one seqs.fna file.
 
-..Note:: The module has not been tested on other types of data, such as undemultiplexed reads. It should work but there will probably be unexpected problems.
+.. Note:: The module has not been tested on other types of data, such as undemultiplexed reads. It should work but there will probably be unexpected problems.
 
 
 

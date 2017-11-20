@@ -1,0 +1,1447 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Mapping &mdash; NeatSeq_Flow Module Repository 1.1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="NeatSeq_Flow Module Repository 1.1.0 documentation" href="../index.html"/>
+        <link rel="next" title="Metagenomics" href="Metagenomics.html"/>
+        <link rel="prev" title="Genome Assembly" href="GenomeAssembly.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> NeatSeq_Flow Module Repository
+          
+
+          
+            
+            <img src="../_static/logo_Hor.png" class="logo" />
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <p class="caption"><span class="caption-text">Modules</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="BAMConversion.html">BAM Conversion to Other Formats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ChIPseq.html">ChIP-seq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="GenericModule.html">Generic Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="GenomeAssembly.html">Genome Assembly</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Mapping</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#bowtie2-builder"><code class="docutils literal"><span class="pre">bowtie2_builder</span></code> <sup>*</sup></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requires">Requires</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#output">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parameters-that-can-be-set">Parameters that can be set</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lines-for-parameter-file">Lines for parameter file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#bowtie2-mapper"><code class="docutils literal"><span class="pre">bowtie2_mapper</span></code> <sup>*</sup></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Requires</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Parameters that can be set</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">Lines for parameter file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#bowtie1-builder"><code class="docutils literal"><span class="pre">bowtie1_builder</span></code> <sup>*</sup></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id6">Requires</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">Parameters that can be set</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">Lines for parameter file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id10">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#bowtie1-mapper"><code class="docutils literal"><span class="pre">bowtie1_mapper</span></code> <sup>*</sup></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id11">Requires</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id13">Parameters that can be set</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id14">Lines for parameter file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id15">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#bwa-builder"><code class="docutils literal"><span class="pre">bwa_builder</span></code> <sup>*</sup></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id16">Requires</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id17">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id18">Parameters that can be set</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id19">Lines for parameter file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id20">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#bwa-mapper"><code class="docutils literal"><span class="pre">bwa_mapper</span></code> <sup>*</sup></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id21">Requires</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id22">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id23">Parameters that can be set</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id24">Lines for parameter file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id25">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#star-mapper"><code class="docutils literal"><span class="pre">STAR_mapper</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id26">Requires</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id27">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id28">Parameters that can be set</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id29">Lines for parameter file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id30">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#star-builder"><code class="docutils literal"><span class="pre">STAR_builder</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id31">Requires</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id32">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id33">Parameters that can be set</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id34">Lines for parameter file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id35">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#samtools"><code class="docutils literal"><span class="pre">samtools</span></code> <sup>*</sup></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id36">Lines for parameter file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id37">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#multiqc"><code class="docutils literal"><span class="pre">Multiqc</span></code> <sup>*</sup></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id38">Requires</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id39">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id40">Lines for parameter file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id41">References</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Metagenomics.html">Metagenomics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Microbiology.html">Microbiology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PreparationAndQC.html">Preparation and QC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="QIIME.html">QIIME (version 1.9)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SequenceAnnotation.html">Sequence Annotation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SequenceClustering.html">Sequence Clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SequenceSearching.html">Sequence-Searching Related Tasks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TranscriptomeAssembly.html">Transcriptome Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Variants.html">Variant-related Tasks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VariousReportingPrograms.html">Various Reporting Programs</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Workflows</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/Assembly_Indexing_mapping.html">Assembly and Mapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/BLAST_db.html">BLAST on <cite>fasta</cite> files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/BLAST_fasta.html">Assembly and Searching</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/ChIP_seq_bowtie2.html">ChIP-seq analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/Metagenomics.html">Metagenomics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/RNA_seq_Trinity.html">Non-Model Transcriptomics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/RNA_seq_reference.html">Reference-based Transcriptomics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/variant_calling.html">Variant calling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/Clustering.html">Read clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/QIIME_workflow.html">QIIME analysis</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">NeatSeq_Flow Module Repository</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+    <li>Mapping</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/Module_docs/Mapping.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="mapping">
+<h1>Mapping<a class="headerlink" href="#mapping" title="Permalink to this headline">¶</a></h1>
+<div class="contents local topic" id="modules-included-in-this-section">
+<p class="topic-title first">Modules included in this section</p>
+<ul class="simple">
+<li><a class="reference internal" href="#bowtie2-builder" id="id43"><code class="docutils literal"><span class="pre">bowtie2_builder</span></code> <sup>*</sup></a></li>
+<li><a class="reference internal" href="#bowtie2-mapper" id="id44"><code class="docutils literal"><span class="pre">bowtie2_mapper</span></code> <sup>*</sup></a></li>
+<li><a class="reference internal" href="#bowtie1-builder" id="id45"><code class="docutils literal"><span class="pre">bowtie1_builder</span></code> <sup>*</sup></a></li>
+<li><a class="reference internal" href="#bowtie1-mapper" id="id46"><code class="docutils literal"><span class="pre">bowtie1_mapper</span></code> <sup>*</sup></a></li>
+<li><a class="reference internal" href="#bwa-builder" id="id47"><code class="docutils literal"><span class="pre">bwa_builder</span></code> <sup>*</sup></a></li>
+<li><a class="reference internal" href="#bwa-mapper" id="id48"><code class="docutils literal"><span class="pre">bwa_mapper</span></code> <sup>*</sup></a></li>
+<li><a class="reference internal" href="#star-mapper" id="id49"><code class="docutils literal"><span class="pre">STAR_mapper</span></code></a></li>
+<li><a class="reference internal" href="#star-builder" id="id50"><code class="docutils literal"><span class="pre">STAR_builder</span></code></a></li>
+<li><a class="reference internal" href="#samtools" id="id51"><code class="docutils literal"><span class="pre">samtools</span></code> <sup>*</sup></a></li>
+<li><a class="reference internal" href="#multiqc" id="id52"><code class="docutils literal"><span class="pre">Multiqc</span></code> <sup>*</sup></a></li>
+</ul>
+</div>
+<span class="target" id="module-main_NSF_classes.mapping.bowtie2_builder"></span><div class="section" id="bowtie2-builder">
+<h2><a class="toc-backref" href="#id43"><code class="docutils literal"><span class="pre">bowtie2_builder</span></code> <sup>*</sup></a><a class="headerlink" href="#bowtie2-builder" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Menachem Sklarz</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<p>A module for running bowtie2 index builder:</p>
+<p>Builds a bowtie2 index for a fasta file stored at the project or sample level.</p>
+<p>Determine which one will be used by specifying <code class="docutils literal"><span class="pre">scope</span></code> as either <code class="docutils literal"><span class="pre">project</span></code> or <code class="docutils literal"><span class="pre">sample</span></code>.</p>
+<div class="section" id="requires">
+<h3>Requires<a class="headerlink" href="#requires" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">fasta files in one of the following slots:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fasta.nucl&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;fasta.nucl&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="output">
+<h3>Output<a class="headerlink" href="#output" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><dl class="first docutils">
+<dt>Puts output index files in one of the following slots:</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;bowtie2_index&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">self.sample_data[&quot;bowtie2_index&quot;]</span></code></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Puts the fasta file in the following slot:</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;reference&quot;]</span></code></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</div>
+<div class="section" id="parameters-that-can-be-set">
+<h3>Parameters that can be set<a class="headerlink" href="#parameters-that-can-be-set" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="43%" />
+<col width="29%" />
+<col width="29%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Values</th>
+<th class="head">Comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>scope</td>
+<td>project | sample</td>
+<td>Indicates whether to use a project fasta or a sample fasta.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="lines-for-parameter-file">
+<h3>Lines for parameter file<a class="headerlink" href="#lines-for-parameter-file" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">bwt2_build</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">bowtie2_builder</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">trinity1</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bowtie2</span><span class="o">-</span><span class="n">build</span>
+    <span class="n">scope</span><span class="p">:</span> <span class="n">project</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="references">
+<h3>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h3>
+<p>Langmead, B. and Salzberg, S.L., 2012. <strong>Fast gapped-read alignment with Bowtie 2</strong>. <em>Nature methods</em>, 9(4), pp.357-359.</p>
+</div>
+</div>
+<span class="target" id="module-main_NSF_classes.mapping.bowtie2_mapper"></span><div class="section" id="bowtie2-mapper">
+<h2><a class="toc-backref" href="#id44"><code class="docutils literal"><span class="pre">bowtie2_mapper</span></code> <sup>*</sup></a><a class="headerlink" href="#bowtie2-mapper" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Menachem Sklarz</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<p>A module for running bowtie2 mapper:</p>
+<p>The reads stored in each sample are aligned to one of the following bowtie2 indices:</p>
+<ul class="simple">
+<li>An external index passed with the <code class="docutils literal"><span class="pre">-x</span></code> parameter.</li>
+<li>A bowtie2 index on a project fasta files, such as an assembly from all samples. Specify with <code class="docutils literal"><span class="pre">bowtie2_mapper:scope</span>&#160; <span class="pre">project</span></code></li>
+<li>A sample bowtie2 index on a sample-specific fasta file, such as from a sample-wise assembly or from the sample file. Specify with <code class="docutils literal"><span class="pre">bowtie2_mapper:scope</span>&#160; <span class="pre">sample</span></code></li>
+</ul>
+<p>The latter two options <strong>must</strong> come after a <code class="docutils literal"><span class="pre">bowtie2_builder</span></code> instance.</p>
+<div class="admonition tip">
+<p class="first admonition-title">Tip</p>
+<p class="last">See the documentation for the <code class="docutils literal"><span class="pre">bowtie2_builder</span></code> module.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>fastq files are never defined project-wide</p>
+<p class="last">The <code class="docutils literal"><span class="pre">scope</span></code> parameter controls the origin of the index files, <em>i.e.</em> wheather the fasta file to map to is an assembly of the sample reads (scope: sample) or an assembly of all reads in the project (scope: project). The reads to be mapped are always saple reads, as a ‘fastq’ slot is not defined at the project level.</p>
+</div>
+<div class="section" id="id1">
+<h3>Requires<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">fastq files in one of the following slots:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fastq.F&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fastq.R&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fastq.S&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="id2">
+<h3>Output<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><dl class="first docutils">
+<dt>Puts output sam files in the following slots:</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;sam&quot;]</span></code></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Puts the name of the mapper in:</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;mapper&quot;]</span></code></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>puts fasta of reference genome (if one is given in param file) in:</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;reference&quot;]</span></code></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</div>
+<div class="section" id="id3">
+<h3>Parameters that can be set<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="43%" />
+<col width="29%" />
+<col width="29%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Values</th>
+<th class="head">Comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>-x</td>
+<td>path to bowtie2 index</td>
+<td>If not given, will look for a project bowtie2 index and then for a sample bowtie2 index</td>
+</tr>
+<tr class="row-odd"><td>ref_genome</td>
+<td>path to genome fasta</td>
+<td>If -x is NOT given, will use the equivalent internal fasta. If -x is passed, and ref_genome is NOT passed, will leave the reference slot empty</td>
+</tr>
+<tr class="row-even"><td>get_map_log</td>
+<td>&#160;</td>
+<td>Store the log produced by bowtie2 (This is bowtie2 standard output)</td>
+</tr>
+<tr class="row-odd"><td>scope</td>
+<td>project | sample</td>
+<td>Indicates whether to use a project or sample bowtie2 index.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id4">
+<h3>Lines for parameter file<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p><strong>For external index:</strong></p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">bwt2_1</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">bowtie2_mapper</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">trim1</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bowtie2</span>
+    <span class="n">qsub_params</span><span class="p">:</span>
+        <span class="o">-</span><span class="n">pe</span><span class="p">:</span> <span class="n">shared</span> <span class="mi">20</span>
+    <span class="n">get_map_log</span><span class="p">:</span>
+    <span class="n">ref_genome</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">ref_genome</span><span class="o">.</span><span class="n">fna</span>
+    <span class="n">redirects</span><span class="p">:</span>
+        <span class="o">-</span><span class="n">p</span><span class="p">:</span> <span class="mi">20</span>
+        <span class="o">-</span><span class="n">q</span><span class="p">:</span> <span class="n">null</span>
+        <span class="o">-</span><span class="n">x</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bowtie2_index</span><span class="o">/</span><span class="n">ref_genome</span>
+</pre></div>
+</div>
+<p><strong>Using a bowtie2 index constructed from a project fasta:</strong></p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">bwt2_1</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">bowtie2_mapper</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">bwt2_bld1</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bowtie2</span>
+    <span class="n">qsub_params</span><span class="p">:</span>
+        <span class="o">-</span><span class="n">pe</span><span class="p">:</span> <span class="n">shared</span> <span class="mi">20</span>
+    <span class="n">get_map_log</span><span class="p">:</span>
+    <span class="n">scope</span><span class="p">:</span> <span class="n">project</span>
+    <span class="n">redirects</span><span class="p">:</span>
+        <span class="o">-</span><span class="n">p</span><span class="p">:</span> <span class="mi">20</span>
+        <span class="o">-</span><span class="n">q</span><span class="p">:</span> <span class="n">null</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id5">
+<h3>References<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<p>Langmead, B. and Salzberg, S.L., 2012. <strong>Fast gapped-read alignment with Bowtie 2</strong>. <em>Nature methods</em>, 9(4), pp.357-359.</p>
+</div>
+</div>
+<span class="target" id="module-main_NSF_classes.mapping.bowtie1_builder"></span><div class="section" id="bowtie1-builder">
+<h2><a class="toc-backref" href="#id45"><code class="docutils literal"><span class="pre">bowtie1_builder</span></code> <sup>*</sup></a><a class="headerlink" href="#bowtie1-builder" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Menachem Sklarz</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<p>A module for running bowtie1 index builder:</p>
+<div class="section" id="id6">
+<h3>Requires<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">fasta files in one of the following slots:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;fasta.nucl&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fasta.nucl&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="id7">
+<h3>output<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>Puts output index files in one of the following slot:</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;bowtie1_index&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">self.sample_data[&quot;bowtie1_index&quot;]</span></code></li>
+</ul>
+</dd>
+</dl>
+</div>
+<div class="section" id="id8">
+<h3>Parameters that can be set<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="43%" />
+<col width="29%" />
+<col width="29%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Values</th>
+<th class="head">Comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>scope</td>
+<td>path to bowtie1 index</td>
+<td>If not given, will look for a project bowtie1 index and then for a sample bowtie1 index</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id9">
+<h3>Lines for parameter file<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">bwt1_bld_ind</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">bowtie1_builder</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">trinity1</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bowtie</span>
+    <span class="n">scope</span><span class="p">:</span> <span class="n">project</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id10">
+<h3>References<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<p>Langmead, B., Trapnell, C., Pop, M. and Salzberg, S.L., 2009. <strong>Ultrafast and memory-efficient alignment of short DNA sequences to the human genome</strong>. <em>Genome biology</em>, 10(3), p.R25.</p>
+</div>
+</div>
+<span class="target" id="module-main_NSF_classes.mapping.bowtie1_mapper"></span><div class="section" id="bowtie1-mapper">
+<h2><a class="toc-backref" href="#id46"><code class="docutils literal"><span class="pre">bowtie1_mapper</span></code> <sup>*</sup></a><a class="headerlink" href="#bowtie1-mapper" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Menachem Sklarz</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<p>A module for running bowtie1 mapper:</p>
+<p>The reads stored in each sample are aligned to one of the following bowtie indices:</p>
+<ul class="simple">
+<li>An external index passed with the <code class="docutils literal"><span class="pre">ebwt</span></code> parameter.</li>
+<li>A bowtie index on a project fasta files, such as an assembly from all samples. Specify with <code class="docutils literal"><span class="pre">bowtie1_mapper:scope</span>&#160; <span class="pre">project</span></code></li>
+<li>A sample bowtie1 index on a sample-specific fasta file, such as from a sample-wise assembly or from the sample file. Specify with <code class="docutils literal"><span class="pre">bowtie1_mapper:scope</span>&#160; <span class="pre">sample</span></code></li>
+</ul>
+<p>The latter two options <strong>must</strong> come after a <code class="docutils literal"><span class="pre">bowtie1_builder</span></code> instance.</p>
+<div class="section" id="id11">
+<h3>Requires<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">fastq files in one of the following slots:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fastq.F&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fastq.R&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fastq.S&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="id12">
+<h3>Output<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><dl class="first docutils">
+<dt>Puts output sam files in the following slots:</dt>
+<dd><p class="first last"><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;sam&quot;]</span></code></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Puts the name of the mapper in:</dt>
+<dd><p class="first last"><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;mapper&quot;]</span></code></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Puts fasta of reference genome (if one is given in param file) in:</dt>
+<dd><p class="first last"><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;reference&quot;]</span></code></p>
+</dd>
+</dl>
+</li>
+</ul>
+</div>
+<div class="section" id="id13">
+<h3>Parameters that can be set<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="43%" />
+<col width="29%" />
+<col width="29%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Values</th>
+<th class="head">Comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>ebwt</td>
+<td>path to bowtie1 index</td>
+<td>If not given, will look for a project bowtie1 index and then for a sample bowtie1 index</td>
+</tr>
+<tr class="row-odd"><td>ref_genome</td>
+<td>path to genome fasta</td>
+<td>If ebwt is NOT given, will use the equivalent internal fasta. If ebwt IS given, and ref_genome is NOT passed, will leave the reference slot empty.</td>
+</tr>
+<tr class="row-even"><td>scope</td>
+<td>project | sample</td>
+<td>Indicates whether to use a project or sample bowtie1 index.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id14">
+<h3>Lines for parameter file<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h3>
+<p><strong>For external index:</strong></p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">bwt1</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">bowtie1_mapper</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">trim1</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bowtie</span>
+    <span class="n">qsub_params</span><span class="p">:</span>
+        <span class="o">-</span><span class="n">pe</span><span class="p">:</span> <span class="n">shared</span> <span class="mi">20</span>
+    <span class="n">ebwt</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bowtie1_index</span><span class="o">/</span><span class="n">ref_genome</span>
+    <span class="n">ref_genome</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">ref_genome</span><span class="o">.</span><span class="n">fna</span>
+    <span class="n">redirects</span><span class="p">:</span>
+        <span class="o">-</span><span class="n">p</span><span class="p">:</span> <span class="mi">20</span>
+</pre></div>
+</div>
+<p><strong>For project bowtie index:</strong></p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">bwt1_1</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">bowtie1_mapper</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">bwt1_bld_ind</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bowtie</span>
+    <span class="n">scope</span><span class="p">:</span> <span class="n">project</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id15">
+<h3>References<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h3>
+<p>Langmead, B., Trapnell, C., Pop, M. and Salzberg, S.L., 2009. <strong>Ultrafast and memory-efficient alignment of short DNA sequences to the human genome</strong>. <em>Genome biology</em>, 10(3), p.R25.</p>
+</div>
+</div>
+<span class="target" id="module-main_NSF_classes.mapping.bwa_builder"></span><div class="section" id="bwa-builder">
+<h2><a class="toc-backref" href="#id47"><code class="docutils literal"><span class="pre">bwa_builder</span></code> <sup>*</sup></a><a class="headerlink" href="#bwa-builder" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Menachem Sklarz</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<p>A module for running bwa index builder:</p>
+<p>Builds a bwa index for a fasta file stored at the project or sample level.</p>
+<p>Determine which one will be used by specifying <code class="docutils literal"><span class="pre">scope</span></code> as either <code class="docutils literal"><span class="pre">project</span></code> or <code class="docutils literal"><span class="pre">sample</span></code>.</p>
+<div class="section" id="id16">
+<h3>Requires<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">fasta files in one of the following slots:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fasta.nucl&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;fasta.nucl&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="id17">
+<h3>Output<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><dl class="first docutils">
+<dt>Puts output index files in one of the following slots:</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;bwa_index&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">self.sample_data[&quot;bwa_index&quot;]</span></code></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Puts the fasta file in one of the following slot:</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;reference&quot;]</span></code></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</div>
+<div class="section" id="id18">
+<h3>Parameters that can be set<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="43%" />
+<col width="29%" />
+<col width="29%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Values</th>
+<th class="head">Comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>scope</td>
+<td>project | sample</td>
+<td>Indicates whether to use a project fasta or a sample fasta.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id19">
+<h3>Lines for parameter file<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">bwa_bld_ind</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">bwa_builder</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">spades1</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bwa</span> <span class="n">index</span>
+    <span class="n">scope</span><span class="p">:</span> <span class="n">project</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id20">
+<h3>References<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h3>
+<p>Li, H. and Durbin, R., 2009. <strong>Fast and accurate short read alignment with Burrows–Wheeler transform</strong>. <em>Bioinformatics</em>, 25(14), pp.1754-1760.</p>
+</div>
+</div>
+<span class="target" id="module-main_NSF_classes.mapping.bwa_mapper"></span><div class="section" id="bwa-mapper">
+<h2><a class="toc-backref" href="#id48"><code class="docutils literal"><span class="pre">bwa_mapper</span></code> <sup>*</sup></a><a class="headerlink" href="#bwa-mapper" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Menachem Sklarz</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<p>A module for running bwa mapper:</p>
+<p>The reads stored in each sample are aligned to one of the following bwa indices:</p>
+<ul class="simple">
+<li>An external index passed with the <code class="docutils literal"><span class="pre">ref_index</span></code> parameter.</li>
+<li>A bwa index on a project fasta files, such as an assembly from all samples. Specify with <code class="docutils literal"><span class="pre">bwa_mapper:scope</span>&#160; <span class="pre">project</span></code></li>
+<li>A sample bwa index on a sample-specific fasta file, such as from a sample-wise assembly or from the sample fasta file. Specify with <code class="docutils literal"><span class="pre">bwa_mapper:scope</span>&#160; <span class="pre">sample</span></code></li>
+</ul>
+<p>The latter two options <strong>must</strong> come after a <code class="docutils literal"><span class="pre">bwa_builder</span></code> instance.</p>
+<div class="section" id="id21">
+<h3>Requires<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">fastq files in one of the following slots:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fastq.F&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fastq.R&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fastq.S&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><dl class="first docutils">
+<dt>If <code class="docutils literal"><span class="pre">mod</span></code> is one of <code class="docutils literal"><span class="pre">samse,</span> <span class="pre">sampe</span></code>, the sai files are required as well (created by a <code class="docutils literal"><span class="pre">bwa</span> <span class="pre">aln</span></code> step:</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;saiF|saiR|saiS&quot;]</span></code></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</div>
+<div class="section" id="id22">
+<h3>Output<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><dl class="first docutils">
+<dt>Puts output sam files in the following slots:</dt>
+<dd><ul class="first last">
+<li><dl class="first docutils">
+<dt>If <code class="docutils literal"><span class="pre">mod</span></code> is one of <code class="docutils literal"><span class="pre">mem,</span> <span class="pre">samse,</span> <span class="pre">sampe,</span> <span class="pre">bwasw</span></code>:</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;sam&quot;]</span></code></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>If <code class="docutils literal"><span class="pre">mod</span></code> is <code class="docutils literal"><span class="pre">aln</span></code>:</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;saiF|saiR|saiS&quot;]</span></code></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Puts the name of the mapper in:</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;mapper&quot;]</span></code></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>puts fasta of reference genome (if one is given in param file) in:</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;reference&quot;]</span></code></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</div>
+<div class="section" id="id23">
+<h3>Parameters that can be set<a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="43%" />
+<col width="29%" />
+<col width="29%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Values</th>
+<th class="head">Comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>ref_index</td>
+<td>path to bwa index</td>
+<td>If not given, will look for a project bwa index and then for a sample bwa index</td>
+</tr>
+<tr class="row-odd"><td>ref_genome</td>
+<td>path to genome fasta</td>
+<td>If ref_index is NOT given, will use the equivalent internal fasta. If ref_index is passed, and ref_genome is NOT passed, will leave the reference slot empty</td>
+</tr>
+<tr class="row-even"><td>scope</td>
+<td>project | sample</td>
+<td>Indicates whether to use a project or sample bwa index.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id24">
+<h3>Lines for parameter file<a class="headerlink" href="#id24" title="Permalink to this headline">¶</a></h3>
+<p><strong>For external index:</strong></p>
+<ol class="arabic simple">
+<li>Using <code class="docutils literal"><span class="pre">mem</span></code>:</li>
+</ol>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">bwa_mem_1</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">bwa_mapper</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">trim1</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bwa</span>
+    <span class="n">mod</span><span class="p">:</span> <span class="n">mem</span>
+    <span class="n">qsub_params</span><span class="p">:</span>
+        <span class="o">-</span><span class="n">pe</span><span class="p">:</span> <span class="n">shared</span> <span class="mi">20</span>
+    <span class="n">ref_genome</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">ref_genome</span><span class="o">.</span><span class="n">fna</span>
+    <span class="n">ref_index</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bwa_index</span><span class="o">/</span><span class="n">ref_genome</span>
+    <span class="n">redirects</span><span class="p">:</span>
+        <span class="o">-</span><span class="n">t</span><span class="p">:</span> <span class="mi">20</span>
+</pre></div>
+</div>
+<p><strong>2. Using ``aln - samse/sampe``:</strong></p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">bwa_aln_1</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">bwa_mapper</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">trim1</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bwa_mapper</span>
+    <span class="n">mod</span><span class="p">:</span> <span class="n">aln</span>
+    <span class="n">qsub_params</span><span class="p">:</span>
+        <span class="o">-</span><span class="n">pe</span><span class="p">:</span> <span class="n">shared</span> <span class="mi">20</span>
+    <span class="n">ref_genome</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">ref_genome</span><span class="o">.</span><span class="n">fna</span>
+    <span class="n">ref_index</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bwa_index</span><span class="o">/</span><span class="n">ref_genome</span>
+    <span class="n">redirects</span><span class="p">:</span>
+        <span class="o">-</span><span class="n">t</span><span class="p">:</span> <span class="mi">20</span>
+<span class="n">bwa_samse_1</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">bwa_mapper</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">bwt2_1</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bwa</span>
+    <span class="n">mod</span><span class="p">:</span> <span class="n">samse</span>
+    <span class="n">ref_genome</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">ref_genome</span><span class="o">.</span><span class="n">fna</span>
+    <span class="n">ref_index</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bwa_index</span><span class="o">/</span><span class="n">ref_genome</span>
+</pre></div>
+</div>
+<p><strong>For project bwa index:</strong></p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">bwa_1</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">bwa_mapper</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">bwa_bld_ind</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bwa</span>
+    <span class="n">mod</span><span class="p">:</span> <span class="n">mem</span>
+    <span class="n">scope</span><span class="p">:</span> <span class="n">project</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id25">
+<h3>References<a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h3>
+<p>Li, H. and Durbin, R., 2009. <strong>Fast and accurate short read alignment with Burrows–Wheeler transform</strong>. <em>Bioinformatics</em>, 25(14), pp.1754-1760.</p>
+</div>
+</div>
+<span class="target" id="module-mapping.STAR_mapper"></span><div class="section" id="star-mapper">
+<h2><a class="toc-backref" href="#id49"><code class="docutils literal"><span class="pre">STAR_mapper</span></code></a><a class="headerlink" href="#star-mapper" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Menachem Sklarz</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<p>A module for running STAR mapper:</p>
+<div class="section" id="id26">
+<h3>Requires<a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">fastq files in one of the following slots:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fastq.F&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fastq.R&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fastq.S&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">If <code class="docutils literal"><span class="pre">scope</span></code> is set (must come after <code class="docutils literal"><span class="pre">STAR_builder</span></code> module which populates the required slots):</p>
+<blockquote>
+<div><ul>
+<li><p class="first">STAR index directories in:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;STAR_index&quot;]</span></code>  if <code class="docutils literal"><span class="pre">scope</span></code> = “sample”</li>
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;STAR_index&quot;]</span></code>  if <code class="docutils literal"><span class="pre">scope</span></code> = “project”</li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">Reference fasta files in:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;STAR_fasta&quot;]</span></code>  if <code class="docutils literal"><span class="pre">scope</span></code> = “sample”</li>
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;STAR_fasta&quot;]</span></code>  if <code class="docutils literal"><span class="pre">scope</span></code> = “project”</li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="id27">
+<h3>Output<a class="headerlink" href="#id27" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">Puts output sam files in the following slots:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;sam&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">Alternatively, if <code class="docutils literal"><span class="pre">--outSAMtype</span></code> is set to <code class="docutils literal"><span class="pre">BAM</span></code>, puts output BAM files in the following slots:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;bam&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;bam_unsorted&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">If <code class="docutils literal"><span class="pre">--outWigType</span></code> is set, will store outputs in:</p>
+<blockquote>
+<div><ul>
+<li><p class="first">if <code class="docutils literal"><span class="pre">--outWigType</span></code> is <code class="docutils literal"><span class="pre">wiggle</span></code></p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;wig2_UniqueMultiple&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;wig2_Unique&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;wig1_UniqueMultiple&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;wig1_Unique&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;wig&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">if <code class="docutils literal"><span class="pre">--outWigType</span></code> is <code class="docutils literal"><span class="pre">bedGraph</span></code></p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;bdg2_UniqueMultiple&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;bdg2_Unique&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;bdg1_UniqueMultiple&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;bdg1_Unique&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;bdg&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</li>
+<li><dl class="first docutils">
+<dt>Puts the name of the mapper in:</dt>
+<dd><p class="first last"><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;mapper&quot;]</span></code></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Puts fasta of reference genome (if one is given in param file) in:</dt>
+<dd><p class="first last"><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;reference&quot;]</span></code></p>
+</dd>
+</dl>
+</li>
+</ul>
+</div>
+<div class="section" id="id28">
+<h3>Parameters that can be set<a class="headerlink" href="#id28" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="43%" />
+<col width="29%" />
+<col width="29%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Values</th>
+<th class="head">Comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>ref_genome</td>
+<td>path to genome fasta</td>
+<td>If ebwt is NOT given, will use the equivalent internal fasta. If ebwt IS given, and ref_genome is NOT passed, will leave the reference slot empty.</td>
+</tr>
+<tr class="row-odd"><td>scope</td>
+<td>project | sample</td>
+<td>Not used</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id29">
+<h3>Lines for parameter file<a class="headerlink" href="#id29" title="Permalink to this headline">¶</a></h3>
+<p><strong>For external index:</strong></p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">STAR_map</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span>             <span class="n">STAR_mapper</span>
+    <span class="n">base</span><span class="p">:</span>               <span class="n">STAR_bld_ind</span>
+    <span class="n">script_path</span><span class="p">:</span>        <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">STAR</span>
+    <span class="n">redirects</span><span class="p">:</span>
+        <span class="o">--</span><span class="n">readMapNumber</span><span class="p">:</span>    <span class="mi">1000</span>
+        <span class="o">--</span><span class="n">genomeDir</span><span class="p">:</span>        <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">genome</span><span class="o">/</span><span class="n">STAR_index</span><span class="o">/</span>
+</pre></div>
+</div>
+<p><strong>For project STAR index:</strong></p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">STAR_map</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span>             <span class="n">STAR_mapper</span>
+    <span class="n">base</span><span class="p">:</span>               <span class="n">STAR_bld_ind</span>
+    <span class="n">script_path</span><span class="p">:</span>        <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">STAR</span>
+    <span class="n">scope</span><span class="p">:</span>              <span class="n">project</span>
+    <span class="n">redirects</span><span class="p">:</span>
+        <span class="o">--</span><span class="n">readMapNumber</span><span class="p">:</span>    <span class="mi">1000</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id30">
+<h3>References<a class="headerlink" href="#id30" title="Permalink to this headline">¶</a></h3>
+<p>Dobin, A., Davis, C.A., Schlesinger, F., Drenkow, J., Zaleski, C., Jha, S., Batut, P., Chaisson, M. and Gingeras, T.R., 2013. <strong>STAR: ultrafast universal RNA-seq aligner</strong>. <em>Bioinformatics</em>, 29(1), pp.15-21.</p>
+</div>
+</div>
+<span class="target" id="module-mapping.STAR_builder"></span><div class="section" id="star-builder">
+<h2><a class="toc-backref" href="#id50"><code class="docutils literal"><span class="pre">STAR_builder</span></code></a><a class="headerlink" href="#star-builder" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Menachem Sklarz</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<p>A module for running STAR genome index construction:</p>
+<div class="section" id="id31">
+<h3>Requires<a class="headerlink" href="#id31" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">fasta files in one of the following slots:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;fasta.nucl&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fasta.nucl&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="id32">
+<h3>Output<a class="headerlink" href="#id32" title="Permalink to this headline">¶</a></h3>
+<p>Puts output index files in one of the following slot:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;STAR_index&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">self.sample_data[&quot;STAR_index&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="id33">
+<h3>Parameters that can be set<a class="headerlink" href="#id33" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="43%" />
+<col width="29%" />
+<col width="29%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Values</th>
+<th class="head">Comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>scope</td>
+<td>project | sample</td>
+<td>Not used</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id34">
+<h3>Lines for parameter file<a class="headerlink" href="#id34" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">STAR_bld_ind</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span>             <span class="n">STAR_builder</span>
+    <span class="n">base</span><span class="p">:</span>               <span class="n">trinity1</span>
+    <span class="n">script_path</span><span class="p">:</span>        <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">STAR</span>
+    <span class="n">scope</span><span class="p">:</span>              <span class="n">project</span>
+    <span class="n">qsub_params</span><span class="p">:</span>
+        <span class="n">queue</span><span class="p">:</span>          <span class="n">star</span><span class="o">.</span><span class="n">q</span>
+    <span class="n">redirects</span><span class="p">:</span>
+        <span class="o">--</span><span class="n">genomeSAindexNbases</span><span class="p">:</span>  <span class="mi">12</span>
+        <span class="o">--</span><span class="n">genomeChrBinNbits</span><span class="p">:</span>    <span class="mi">10</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id35">
+<h3>References<a class="headerlink" href="#id35" title="Permalink to this headline">¶</a></h3>
+<p>Dobin, A., Davis, C.A., Schlesinger, F., Drenkow, J., Zaleski, C., Jha, S., Batut, P., Chaisson, M. and Gingeras, T.R., 2013. <strong>STAR: ultrafast universal RNA-seq aligner</strong>. <em>Bioinformatics</em>, 29(1), pp.15-21.</p>
+</div>
+</div>
+<span class="target" id="module-main_NSF_classes.mapping.samtools"></span><div class="section" id="samtools">
+<h2><a class="toc-backref" href="#id51"><code class="docutils literal"><span class="pre">samtools</span></code> <sup>*</sup></a><a class="headerlink" href="#samtools" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Menachem Sklarz</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<p>A class that defines a module for executing samtools on a SAM file.</p>
+<div class="admonition attention">
+<p class="first admonition-title">Attention</p>
+<p class="last">The module was tested on samtools 1.3</p>
+</div>
+<p>The samtools programs included in the module are the following:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">view</span></code> to convert the SAM file to a BAM file</li>
+<li><code class="docutils literal"><span class="pre">sort</span></code> to sort the BAM file</li>
+<li><code class="docutils literal"><span class="pre">index</span></code> creates an index for the BAM file</li>
+<li><code class="docutils literal"><span class="pre">flagstat</span></code> Runs flagstat on the BAM file</li>
+<li><code class="docutils literal"><span class="pre">stats</span></code> Runs stats on the BAM file</li>
+<li><code class="docutils literal"><span class="pre">idxstats</span></code> Runs idxstats on the BAM file</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>Order of samtools subprogram execution:</p>
+<p class="last">The <code class="docutils literal"><span class="pre">samtools</span></code> programs are executed in the order above. It is up to you to have a sensible combination…</p>
+</div>
+<p><strong>Requires</strong>:</p>
+<ul>
+<li><p class="first">A SAM file in the following location:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;sam&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+<p><strong>Output</strong>:</p>
+<ul>
+<li><p class="first">Depending on the parameters, will put files in the following locations:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;bam&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;index&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;unfiltered_bam&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;unsorted_bam&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;flagstat&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;stats&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;idxstats&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+<table border="1" class="docutils" id="id42">
+<caption><span class="caption-text">Parameters that can be set:</span><a class="headerlink" href="#id42" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col width="33%" />
+<col width="33%" />
+<col width="33%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Values</th>
+<th class="head">Comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>view</td>
+<td><em>e.g.</em>: -buh  -q 30</td>
+<td><code class="docutils literal"><span class="pre">samtools</span> <span class="pre">view</span></code> parameters.</td>
+</tr>
+<tr class="row-odd"><td>sort</td>
+<td><em>e.g.</em>: -&#64; 20</td>
+<td><code class="docutils literal"><span class="pre">samtools</span> <span class="pre">sort</span></code> parameters.</td>
+</tr>
+<tr class="row-even"><td>index</td>
+<td>&#160;</td>
+<td><code class="docutils literal"><span class="pre">samtools</span> <span class="pre">index</span></code> parameters.</td>
+</tr>
+<tr class="row-odd"><td>flagstat</td>
+<td>&#160;</td>
+<td>Leave empty. flagstat takes no parameters</td>
+</tr>
+<tr class="row-even"><td>stats</td>
+<td><code class="docutils literal"><span class="pre">samtools</span> <span class="pre">stats</span></code> parameters</td>
+<td>Adds code for <code class="docutils literal"><span class="pre">samtools</span> <span class="pre">stats</span></code></td>
+</tr>
+<tr class="row-odd"><td>idxstats</td>
+<td>&#160;</td>
+<td>Adds code for <code class="docutils literal"><span class="pre">samtools</span> <span class="pre">idxstats</span></code></td>
+</tr>
+<tr class="row-even"><td>filter_by_tag</td>
+<td><em>e.g.</em>: NM:i:[01]</td>
+<td>Filter BAM by one of the tags. Use an awk-compliant regular expression. In this example, keep only lines where the edit distance is 0 or 1. This is an experimental feature and should be used with caution…</td>
+</tr>
+<tr class="row-odd"><td>del_sam</td>
+<td>&#160;</td>
+<td>Remove SAM file</td>
+</tr>
+<tr class="row-even"><td>del_unsorted</td>
+<td>&#160;</td>
+<td>Remove unsorted bam file.</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="id36">
+<h3>Lines for parameter file<a class="headerlink" href="#id36" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sam_bwt1</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">samtools</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">bwt1</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">samtools</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">samtools</span>
+    <span class="n">qsub_params</span><span class="p">:</span>
+        <span class="o">-</span><span class="n">pe</span><span class="p">:</span> <span class="n">shared</span> <span class="mi">20</span>
+    <span class="n">view</span><span class="p">:</span> <span class="o">-</span><span class="n">buh</span>  <span class="o">-</span><span class="n">q</span> <span class="mi">30</span> <span class="o">-@</span> <span class="mi">20</span> <span class="o">-</span><span class="n">F</span> <span class="mi">4</span>
+    <span class="n">sort</span><span class="p">:</span> <span class="o">-@</span> <span class="mi">20</span>
+    <span class="n">flagstat</span><span class="p">:</span> 
+    <span class="n">index</span><span class="p">:</span> 
+    <span class="n">stats</span><span class="p">:</span> <span class="o">--</span><span class="n">remove</span><span class="o">-</span><span class="n">dups</span>
+    <span class="n">del_sam</span><span class="p">:</span> 
+    <span class="n">del_unsorted</span><span class="p">:</span> 
+</pre></div>
+</div>
+</div>
+<div class="section" id="id37">
+<h3>References<a class="headerlink" href="#id37" title="Permalink to this headline">¶</a></h3>
+<p>Li, H., Handsaker, B., Wysoker, A., Fennell, T., Ruan, J., Homer, N., Marth, G., Abecasis, G. and Durbin, R., 2009. <strong>The sequence alignment/map format and SAMtools</strong>. <em>Bioinformatics</em>, 25(16), pp.2078-2079.</p>
+</div>
+</div>
+<span class="target" id="module-main_NSF_classes.Reports.Multiqc"></span><div class="section" id="multiqc">
+<h2><a class="toc-backref" href="#id52"><code class="docutils literal"><span class="pre">Multiqc</span></code> <sup>*</sup></a><a class="headerlink" href="#multiqc" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Menachem Sklarz</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<p>A module for preparing a MultiQC report for all samples</p>
+<div class="section" id="id38">
+<h3>Requires<a class="headerlink" href="#id38" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>No real requirements. Will give a report with information if one of the base steps produces reports that MultiQC can read, <em>e.g.</em> fastqc, bowtie2, samtools etc.</li>
+</ul>
+</div>
+<div class="section" id="id39">
+<h3>Output<a class="headerlink" href="#id39" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">puts report dir in the following slot:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;Multiqc_report&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="id40">
+<h3>Lines for parameter file<a class="headerlink" href="#id40" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">firstMultQC</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">Multiqc</span>
+    <span class="n">base</span><span class="p">:</span>
+    <span class="o">-</span> <span class="n">sam_bwt2_1</span>
+    <span class="o">-</span> <span class="n">fqc_trim1</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">multiqc</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id41">
+<h3>References<a class="headerlink" href="#id41" title="Permalink to this headline">¶</a></h3>
+<p>Ewels, P., Magnusson, M., Lundin, S. and Käller, M., 2016. <strong>MultiQC: summarize analysis results for multiple tools and samples in a single report</strong>. <em>Bioinformatics</em>, 32(19), pp.3047-3048.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="Metagenomics.html" class="btn btn-neutral float-right" title="Metagenomics" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="GenomeAssembly.html" class="btn btn-neutral" title="Genome Assembly" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Menachem Sklarz.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

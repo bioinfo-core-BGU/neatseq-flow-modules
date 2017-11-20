@@ -1,0 +1,927 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Sequence-Searching Related Tasks &mdash; NeatSeq_Flow Module Repository 1.1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="NeatSeq_Flow Module Repository 1.1.0 documentation" href="../index.html"/>
+        <link rel="next" title="Transcriptome Assembly" href="TranscriptomeAssembly.html"/>
+        <link rel="prev" title="Sequence Clustering" href="SequenceClustering.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> NeatSeq_Flow Module Repository
+          
+
+          
+            
+            <img src="../_static/logo_Hor.png" class="logo" />
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <p class="caption"><span class="caption-text">Modules</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="BAMConversion.html">BAM Conversion to Other Formats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ChIPseq.html">ChIP-seq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="GenericModule.html">Generic Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="GenomeAssembly.html">Genome Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Mapping.html">Mapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metagenomics.html">Metagenomics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Microbiology.html">Microbiology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PreparationAndQC.html">Preparation and QC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="QIIME.html">QIIME (version 1.9)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SequenceAnnotation.html">Sequence Annotation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SequenceClustering.html">Sequence Clustering</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Sequence-Searching Related Tasks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#makeblastdb"><code class="docutils literal"><span class="pre">makeblastdb</span></code> <sup>*</sup></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requires">Requires</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#output">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parameters-that-can-be-set">Parameters that can be set:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lines-for-parameter-file">Lines for parameter file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#blast"><code class="docutils literal"><span class="pre">blast</span></code> <sup>*</sup></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Requires:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Output:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Parameters that can be set</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">Lines for parameter file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#blast-new-alternative-implementation"><code class="docutils literal"><span class="pre">blast_new</span></code> - Alternative implementation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id6">Requires:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">Output:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">Parameters that can be set</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id11">Lines for parameter file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#parse-blast"><code class="docutils literal"><span class="pre">parse_blast</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id13">Requires</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id14">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id15">Parameters that can be set</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id16">Lines for parameter file</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-gassst">Module <code class="docutils literal"><span class="pre">Gassst</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id17">Requires</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id18">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id19">Parameters that can be set</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#comments">Comments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id20">Lines for parameter file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id21">References</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="TranscriptomeAssembly.html">Transcriptome Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Variants.html">Variant-related Tasks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VariousReportingPrograms.html">Various Reporting Programs</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Workflows</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/Assembly_Indexing_mapping.html">Assembly and Mapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/BLAST_db.html">BLAST on <cite>fasta</cite> files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/BLAST_fasta.html">Assembly and Searching</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/ChIP_seq_bowtie2.html">ChIP-seq analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/Metagenomics.html">Metagenomics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/RNA_seq_Trinity.html">Non-Model Transcriptomics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/RNA_seq_reference.html">Reference-based Transcriptomics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/variant_calling.html">Variant calling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/Clustering.html">Read clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/QIIME_workflow.html">QIIME analysis</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">NeatSeq_Flow Module Repository</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+    <li>Sequence-Searching Related Tasks</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/Module_docs/SequenceSearching.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="sequence-searching-related-tasks">
+<h1>Sequence-Searching Related Tasks<a class="headerlink" href="#sequence-searching-related-tasks" title="Permalink to this headline">¶</a></h1>
+<div class="contents local topic" id="modules-included-in-this-section">
+<p class="topic-title first">Modules included in this section</p>
+<ul class="simple">
+<li><a class="reference internal" href="#makeblastdb" id="id22"><code class="docutils literal"><span class="pre">makeblastdb</span></code> <sup>*</sup></a></li>
+<li><a class="reference internal" href="#blast" id="id23"><code class="docutils literal"><span class="pre">blast</span></code> <sup>*</sup></a></li>
+<li><a class="reference internal" href="#blast-new-alternative-implementation" id="id24"><code class="docutils literal"><span class="pre">blast_new</span></code> - Alternative implementation</a></li>
+<li><a class="reference internal" href="#parse-blast" id="id25"><code class="docutils literal"><span class="pre">parse_blast</span></code></a></li>
+<li><a class="reference internal" href="#module-gassst" id="id26">Module <code class="docutils literal"><span class="pre">Gassst</span></code></a></li>
+</ul>
+</div>
+<span class="target" id="module-main_NSF_classes.searching.makeblastdb"></span><div class="section" id="makeblastdb">
+<h2><a class="toc-backref" href="#id22"><code class="docutils literal"><span class="pre">makeblastdb</span></code> <sup>*</sup></a><a class="headerlink" href="#makeblastdb" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Menachem Sklarz</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<p>Create a blastdb from a fasta file</p>
+<div class="section" id="requires">
+<h3>Requires<a class="headerlink" href="#requires" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">fastq files in the following slots:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fasta&quot;][&quot;nucl&quot;|&quot;prot&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><dl class="first docutils">
+<dt>Or (if ‘projectBLAST’ is set)</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;fasta&quot;][&quot;nucl&quot;|&quot;prot&quot;]</span></code></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</div>
+<div class="section" id="output">
+<h3>Output<a class="headerlink" href="#output" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">A BLAST database in the following slots:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;blastdb&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;blastdb.nucl&quot;|&quot;blastdb.prot&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;blastdb.nucl.log&quot;|&quot;blastdb.prot.log&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">Or (if ‘projectBLAST’ is set):</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;blastdb&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;blastdb.nucl&quot;|&quot;blastdb.prot&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;blastdb.nucl.log&quot;|&quot;blastdb.prot.log&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="parameters-that-can-be-set">
+<h3>Parameters that can be set:<a class="headerlink" href="#parameters-that-can-be-set" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="33%" />
+<col width="33%" />
+<col width="33%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Values</th>
+<th class="head">Comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>scope</td>
+<td>sample|project</td>
+<td>Set if project-wide or sample fasta slot should be used</td>
+</tr>
+<tr class="row-odd"><td>-dbtype</td>
+<td>nucl/prot</td>
+<td>This is a compulsory redirected parameter.Helps the module decide which fasta file to use.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="lines-for-parameter-file">
+<h3>Lines for parameter file<a class="headerlink" href="#lines-for-parameter-file" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">mkblst1</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">makeblastdb</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">trinity1</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">makeblastdb</span>
+    <span class="n">redirects</span><span class="p">:</span>
+        <span class="o">-</span><span class="n">dbtype</span><span class="p">:</span> <span class="n">nucl</span>
+    <span class="n">scope</span><span class="p">:</span> <span class="n">project</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="references">
+<h3>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h3>
+<p>Altschul, S.F., Madden, T.L., Schäffer, A.A., Zhang, J., Zhang, Z., Miller, W. and Lipman, D.J., 1997. <strong>Gapped BLAST and PSI-BLAST: a new generation of protein database search programs</strong>. <em>Nucleic acids research</em>, 25(17), pp.3389-3402.</p>
+</div>
+</div>
+<span class="target" id="module-main_NSF_classes.searching.blast"></span><div class="section" id="blast">
+<h2><a class="toc-backref" href="#id23"><code class="docutils literal"><span class="pre">blast</span></code> <sup>*</sup></a><a class="headerlink" href="#blast" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Menachem Sklarz</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<p>A class that defines a module for executing blast on a nucleotide or protein fasta file.
+The search can be either on a sample fasta or on a project-wide fasta.
+It can use the fasta as a database or as a query.
+If used as a database, you must call the makeblastdb module prior to this step.</p>
+<div class="section" id="id1">
+<h3>Requires:<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">fasta files in one of the following slots for sample-wise blast:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fasta.nucl&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fasta.prot&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">or fasta files in one of the following slots for project-wise blast:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;fasta.nucl&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;fasta.prot&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">or a <code class="docutils literal"><span class="pre">makeblastdb</span></code> index in one of the following slots:</p>
+<blockquote>
+<div><ul>
+<li><p class="first">When ‘scope’ is set to ‘project’</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;blastdb.nucl&quot;|&quot;blastdb.prot&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;blastdb.log.nucl&quot;|&quot;blastdb.log.prot&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">When ‘scope’ is set to ‘sample’</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;blastdb.nucl&quot;|&quot;blastdb.prot&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;blastdb.log.nucl&quot;|&quot;blastdb.log.prot&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="id2">
+<h3>Output:<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">puts BLAST output files in the following slots for sample-wise blast:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;blast.nucl&quot;|&quot;blast.prot&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;blast&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">puts fasta output files in the following slots for project-wise blast:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;blast.nucl&quot;|&quot;blast.prot&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;blast&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="id3">
+<h3>Parameters that can be set<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="40%" />
+<col width="40%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Values</th>
+<th class="head">Comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>scope</td>
+<td>sample|project</td>
+<td>Set if project-wide fasta slot should be used</td>
+</tr>
+<tr class="row-odd"><td>dbscope</td>
+<td>sample|project</td>
+<td>If scope=sample and you want to use internal fasta and database, this will tell</td>
+</tr>
+<tr class="row-even"><td>fasta2use</td>
+<td>nucl|prot</td>
+<td>Helps the module decide which fasta file to use.</td>
+</tr>
+<tr class="row-odd"><td>db2use</td>
+<td>nucl|prot</td>
+<td>Helps the module decide which database to use.</td>
+</tr>
+<tr class="row-even"><td>-query | -db</td>
+<td>Path to fasta or BLAST index</td>
+<td>The sequences to use as query, using the internal database as database, or a BLAST database index, using the internal fasta as query.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id4">
+<h3>Lines for parameter file<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>External query, project-wise fasta database (must be proceeded by <code class="docutils literal"><span class="pre">makeblastdb</span></code> module):</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">blastOnAssembl</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">blast</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">mkblst1</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">blastn</span>
+    <span class="n">fasta2use</span><span class="p">:</span> <span class="n">nucl</span>
+    <span class="n">scope</span><span class="p">:</span> <span class="n">project</span>
+    <span class="n">redirects</span><span class="p">:</span>
+        <span class="o">-</span><span class="n">evalue</span><span class="p">:</span> <span class="s1">&#39;0.0001&#39;</span>
+        <span class="o">-</span><span class="n">num_descriptions</span><span class="p">:</span> <span class="s1">&#39;20&#39;</span>
+        <span class="o">-</span><span class="n">num_threads</span><span class="p">:</span> <span class="s1">&#39;40&#39;</span>
+        <span class="o">-</span><span class="n">outfmt</span><span class="p">:</span> <span class="s1">&#39;&quot;6 qseqid sallseqid qlen slen qstart qend sstart send length</span>
+            <span class="n">evalue</span> <span class="n">bitscore</span> <span class="n">score</span> <span class="n">pident</span> <span class="n">qframe</span><span class="s2">&quot;&#39;</span>
+        <span class="o">-</span><span class="n">query</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">query</span><span class="o">.</span><span class="n">fasta</span>
+</pre></div>
+</div>
+<p>Sample specific fasta, external database:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sprot</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">blast</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">sample_assembl</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">blastx</span>
+    <span class="n">redirects</span><span class="p">:</span>
+        <span class="o">-</span><span class="n">db</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">database</span><span class="o">/</span><span class="n">index</span>
+        <span class="o">-</span><span class="n">evalue</span><span class="p">:</span> <span class="s1">&#39;0.0001&#39;</span>
+        <span class="o">-</span><span class="n">max_target_seqs</span><span class="p">:</span> <span class="s1">&#39;5&#39;</span>
+        <span class="o">-</span><span class="n">num_of_proc</span><span class="p">:</span> <span class="s1">&#39;20&#39;</span>
+        <span class="o">-</span><span class="n">num_threads</span><span class="p">:</span> <span class="s1">&#39;20&#39;</span>
+        <span class="o">-</span><span class="n">outfmt</span><span class="p">:</span> <span class="s1">&#39;&quot;6 qseqid sallseqid qlen slen qstart qend sstart send length</span>
+            <span class="n">evalue</span> <span class="n">bitscore</span> <span class="n">score</span> <span class="n">pident</span> <span class="n">qframe</span><span class="s2">&quot;&#39;</span>
+    <span class="n">scope</span><span class="p">:</span> <span class="n">sample</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id5">
+<h3>References<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<p>Altschul, S.F., Madden, T.L., Schäffer, A.A., Zhang, J., Zhang, Z., Miller, W. and Lipman, D.J., 1997. <strong>Gapped BLAST and PSI-BLAST: a new generation of protein database search programs</strong>. <em>Nucleic acids research</em>, 25(17), pp.3389-3402.</p>
+</div>
+</div>
+<span class="target" id="module-searching.blast_new"></span><div class="section" id="blast-new-alternative-implementation">
+<h2><a class="toc-backref" href="#id24"><code class="docutils literal"><span class="pre">blast_new</span></code> - Alternative implementation</a><a class="headerlink" href="#blast-new-alternative-implementation" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Menachem Sklarz</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<p>A class that defines a module for executing BLAST of any type on a nucleotide or protein fasta file.
+The search can be either on a sample fasta or on a project-wide fasta.
+It can use the fasta as a database or as a query.
+If used as a database, you must call the makeblastdb module prior to this step.</p>
+<p>both <code class="docutils literal"><span class="pre">-query</span></code> and <code class="docutils literal"><span class="pre">-db</span></code> must be passed in the redirected parameters. They should be set to one of the following values:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample</span></code> - The <code class="docutils literal"><span class="pre">-query</span></code> or <code class="docutils literal"><span class="pre">-db</span></code> should be taken from the sample scope</li>
+<li><code class="docutils literal"><span class="pre">project</span></code> - The <code class="docutils literal"><span class="pre">-query</span></code> or <code class="docutils literal"><span class="pre">-db</span></code> should be taken from the project scope</li>
+<li><strong>A path</strong> - A path to a <code class="docutils literal"><span class="pre">fasta</span></code> file or <code class="docutils literal"><span class="pre">makeblastdb</span></code> database to use in the parameter as-is.</li>
+</ul>
+<p>The type of fasta and database to use are set with the <code class="docutils literal"><span class="pre">querytype</span></code> and <code class="docutils literal"><span class="pre">dbtype</span></code> parameters, respectively. These must be set if the respective parameter (<code class="docutils literal"><span class="pre">-query</span></code> or <code class="docutils literal"><span class="pre">-db</span></code>) is set to <code class="docutils literal"><span class="pre">sample</span></code> or <code class="docutils literal"><span class="pre">project</span></code>.</p>
+<div class="section" id="id6">
+<h3>Requires:<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">fasta files in one of the following slots for sample-wise blast:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fasta.nucl&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fasta.prot&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">or fasta files in one of the following slots for project-wise blast:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;fasta.nucl&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;fasta.prot&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">or a <code class="docutils literal"><span class="pre">makeblastdb</span></code> index in one of the following slots:</p>
+<blockquote>
+<div><ul>
+<li><p class="first">When <code class="docutils literal"><span class="pre">-db</span></code> is set to ‘project’</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;blastdb.nucl&quot;|&quot;blastdb.prot&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">When <code class="docutils literal"><span class="pre">-db</span></code> is set to ‘sample’</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;blastdb.nucl&quot;|&quot;blastdb.prot&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="id7">
+<h3>Output:<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">puts BLAST output files in the following slots for sample-wise blast:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;blast.nucl&quot;|&quot;blast.prot&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;blast&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">puts fasta output files in the following slots for project-wise blast:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;blast.nucl&quot;|&quot;blast.prot&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;blast&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="id8">
+<h3>Parameters that can be set<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="40%" />
+<col width="40%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Values</th>
+<th class="head">Comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>dbtype</td>
+<td>sample|project</td>
+<td>If scope=sample and you want to use internal fasta and database, this will tell</td>
+</tr>
+<tr class="row-odd"><td>querytype</td>
+<td>nucl|prot</td>
+<td>Helps the module decide which fasta file to use.</td>
+</tr>
+<tr class="row-even"><td>-query | -db</td>
+<td><a href="#id9"><span class="problematic" id="id10">``</span></a>sample``|``project``|&lt;Path to fasta or BLAST index&gt;</td>
+<td>Redirected compulsory parameters. Set to <code class="docutils literal"><span class="pre">sample</span></code> for sample-scope files, to <code class="docutils literal"><span class="pre">project</span></code> for project-scope files, or to a path for an external file.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">You can’t set both <code class="docutils literal"><span class="pre">-db</span></code> and <code class="docutils literal"><span class="pre">-query</span></code> to external files. One of them at least has to be <code class="docutils literal"><span class="pre">sample</span></code> or <code class="docutils literal"><span class="pre">project</span></code>.</p>
+</div>
+</div>
+<div class="section" id="id11">
+<h3>Lines for parameter file<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+<p>External query, project-wise <em>nucl</em>-type database (must be proceeded by <code class="docutils literal"><span class="pre">makeblastdb</span></code> module):</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">tbl_blst_int</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">blast_new</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">mkblst1</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">blastn</span>
+    <span class="n">dbtype</span><span class="p">:</span> <span class="n">nucl</span>
+    <span class="n">redirects</span><span class="p">:</span>
+        <span class="o">-</span><span class="n">query</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">query</span><span class="o">.</span><span class="n">fasta</span>
+        <span class="o">-</span><span class="n">db</span><span class="p">:</span>  <span class="n">project</span>
+        <span class="o">-</span><span class="n">evalue</span><span class="p">:</span> <span class="mf">0.0001</span>
+        <span class="o">-</span><span class="n">max_target_seqs</span><span class="p">:</span> <span class="mi">5</span>
+        <span class="o">-</span><span class="n">num_of_proc</span><span class="p">:</span> <span class="mi">20</span>
+        <span class="o">-</span><span class="n">num_threads</span><span class="p">:</span> <span class="mi">20</span>
+</pre></div>
+</div>
+<p>Sample specific <em>prot</em>-type fasta, external database:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">tbl_blst_ext</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">blast_new</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">prokka1</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">blastp</span>
+    <span class="n">querytype</span><span class="p">:</span> <span class="n">prot</span>
+    <span class="n">redirects</span><span class="p">:</span>
+        <span class="o">-</span><span class="n">db</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">blasdb</span><span class="o">.</span><span class="n">ind</span>
+        <span class="o">-</span><span class="n">query</span><span class="p">:</span> <span class="n">sample</span>
+        <span class="o">-</span><span class="n">evalue</span><span class="p">:</span> <span class="mf">0.0001</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id12">
+<h3>References<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<p>Altschul, S.F., Madden, T.L., Schäffer, A.A., Zhang, J., Zhang, Z., Miller, W. and Lipman, D.J., 1997. <strong>Gapped BLAST and PSI-BLAST: a new generation of protein database search programs</strong>. <em>Nucleic acids research</em>, 25(17), pp.3389-3402.</p>
+</div>
+</div>
+<span class="target" id="module-searching.parse_blast"></span><div class="section" id="parse-blast">
+<h2><a class="toc-backref" href="#id25"><code class="docutils literal"><span class="pre">parse_blast</span></code></a><a class="headerlink" href="#parse-blast" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Menachem Sklarz</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<p>A module for running <code class="docutils literal"><span class="pre">parse_blast_general.R</span></code>:</p>
+<p>The <code class="docutils literal"><span class="pre">parse_blast_general</span></code> script will be available on github in the near future.</p>
+<p>The program performs the following tasks:</p>
+<ol class="arabic simple">
+<li>It adds annotation to raw tabular BLAST output files,</li>
+<li>filters the BLAST results by several possible fields,</li>
+<li>selects the best hit for a group when passed a grouping field and</li>
+<li>extracts the sequences equivalent to the alignments.</li>
+</ol>
+<div class="section" id="id13">
+<h3>Requires<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">Tabular BLAST result files in the following slots:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;blast.nucl|blast.fasta&quot;]</span></code> if <code class="docutils literal"><span class="pre">scope</span> <span class="pre">=</span> <span class="pre">sample</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;blast.nucl|blast.fasta&quot;]</span></code> if <code class="docutils literal"><span class="pre">scope</span> <span class="pre">=</span> <span class="pre">project</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="id14">
+<h3>Output<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">Puts the parsed report in:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;blast.parsed&quot;]</span></code>  if <code class="docutils literal"><span class="pre">scope</span> <span class="pre">=</span> <span class="pre">sample</span></code></li>
+<li><code class="docutils literal"><span class="pre">self.sample_data[&quot;blast.parsed&quot;]</span></code> if <code class="docutils literal"><span class="pre">scope</span> <span class="pre">=</span> <span class="pre">project</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="id15">
+<h3>Parameters that can be set<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="43%" />
+<col width="29%" />
+<col width="29%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Values</th>
+<th class="head">Comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>fasta2use</td>
+<td><code class="docutils literal"><span class="pre">nucl|prot</span></code></td>
+<td>If both nucl and prot BLAST reports exist, you have to specify which one to use with this parameter.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id16">
+<h3>Lines for parameter file<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">parse_blast_table</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">parse_blast</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">blst_table</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="p">{</span><span class="n">Vars</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">parse_blast</span><span class="p">}</span>
+    <span class="n">blast_merge_path</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{Vars.paths.compare_blast_parsed_reports}</span><span class="s1"> --variable evalue --full_txt_output&#39;</span>
+    <span class="n">scope</span><span class="p">:</span> <span class="n">sample</span>
+    <span class="n">redirects</span><span class="p">:</span>
+        <span class="o">--</span><span class="n">columns2keep</span><span class="p">:</span> <span class="s1">&#39;&quot;group name accession qseqid sallseqid evalue bitscore</span>
+            <span class="n">score</span> <span class="n">pident</span> <span class="n">coverage</span> <span class="n">align_len</span><span class="s2">&quot;&#39;</span>
+        <span class="o">--</span><span class="n">dbtable</span><span class="p">:</span> <span class="p">{</span><span class="n">Vars</span><span class="o">.</span><span class="n">databases</span><span class="o">.</span><span class="n">gene_list</span><span class="o">.</span><span class="n">table</span><span class="p">}</span>
+        <span class="o">--</span><span class="n">group_dif_name</span><span class="p">:</span> <span class="c1"># See parse_blast_general.R documentation for how this is to be specified</span>
+        <span class="o">--</span><span class="n">max_evalue</span><span class="p">:</span> <span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">7</span>
+        <span class="o">--</span><span class="n">merge_blast</span><span class="p">:</span> <span class="n">qseqid</span>
+        <span class="o">--</span><span class="n">merge_metadata</span><span class="p">:</span> <span class="c1"># See parse_blast_general.R documentation for how this is to be specified</span>
+        <span class="o">--</span><span class="n">min_align_len</span><span class="p">:</span> <span class="mi">30</span>
+        <span class="o">--</span><span class="n">min_coverage</span><span class="p">:</span> <span class="mi">60</span>
+        <span class="o">--</span><span class="n">names</span><span class="p">:</span> <span class="s1">&#39;&quot;qseqid sallseqid qlen slen qstart qend sstart send length evalue</span>
+            <span class="n">bitscore</span> <span class="n">score</span> <span class="n">pident</span> <span class="n">qframe</span><span class="s2">&quot;&#39;</span>
+        <span class="o">--</span><span class="n">num_hits</span><span class="p">:</span> <span class="mi">1</span>
+</pre></div>
+</div>
+</div>
+</div>
+<span class="target" id="module-Liron.Gassst_module.Gassst"></span><div class="section" id="module-gassst">
+<h2><a class="toc-backref" href="#id26">Module <code class="docutils literal"><span class="pre">Gassst</span></code></a><a class="headerlink" href="#module-gassst" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Liron Levin</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This module was developed as part of a study led by Dr. Jacob Moran Gilad</p>
+</div>
+<dl class="docutils">
+<dt>SHORT DESCRIPTION</dt>
+<dd>A module for executing Gassst on a nucleotide fasta file.
+The search can be either on a sample fasta or on a project-wide fasta.
+It can use the fasta as a database or as a query.</dd>
+</dl>
+<div class="section" id="id17">
+<h3>Requires<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><ul>
+<li><dl class="first docutils">
+<dt>fasta files in the following slot for sample-wise Gassst:</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fasta.nucl&quot;]</span></code></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>or fasta files in the following slots for project-wise Gassst:</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;fasta.nucl&quot;]</span></code></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="id18">
+<h3>Output<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><ul>
+<li><dl class="first docutils">
+<dt>puts Gassst output files in the following slots for sample-wise Gassst:</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;blast&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;blast.nucl&quot;]</span></code></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>puts fasta output files in the following slots for project-wise Gassst:</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;blast&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;blast.nucl&quot;]</span></code></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="id19">
+<h3>Parameters that can be set<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="43%" />
+<col width="29%" />
+<col width="29%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Values</th>
+<th class="head">Comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>scope</td>
+<td>project/sample</td>
+<td>Set if project-wide fasta.nucl file type should be used [project] the default is sample-wide fasta.nucl file type</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="comments">
+<h3>Comments<a class="headerlink" href="#comments" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div>Only -d [database] or -i [query] not both
+The Gassst module will generate blast like output with fields:
+“qseqid sallseqid qlen slen qstart qend sstart send length evalue sseq”</div></blockquote>
+</div>
+<div class="section" id="id20">
+<h3>Lines for parameter file<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Step_Name</span><span class="p">:</span>                         <span class="c1"># Name of this step</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">Gassst</span>                 <span class="c1"># Name of the module to use</span>
+    <span class="n">base</span><span class="p">:</span>                          <span class="c1"># Name of the step [or list of names] to run after [mast be after a fasta generating step]</span>
+    <span class="n">script_path</span><span class="p">:</span>                   <span class="c1"># Command for running the Gassst script</span>
+                                   <span class="c1"># The Gassst module will generate blast like output with fields:</span>
+                                   <span class="c1"># &quot;qseqid sallseqid qlen slen qstart qend sstart send length evalue sseq&quot;</span>
+    <span class="n">scope</span><span class="p">:</span>                         <span class="c1"># Set if project-wide fasta.nucl file type should be used [project] the default is sample-wide fasta.nucl file type</span>
+    <span class="n">qsub_params</span><span class="p">:</span>
+        <span class="o">-</span><span class="n">pe</span><span class="p">:</span>                       <span class="c1"># Number of CPUs to reserve for this analysis</span>
+    <span class="n">redirects</span><span class="p">:</span>
+        <span class="o">-</span><span class="n">h</span><span class="p">:</span>                        <span class="c1"># Max hits per query, for downstream best hit will be chosen!</span>
+        <span class="o">-</span><span class="n">i</span><span class="p">:</span>                        <span class="c1"># Only -d [database] or -i [query] not both</span>
+        <span class="o">-</span><span class="n">l</span><span class="p">:</span>                        <span class="c1"># Complexity_filter off</span>
+        <span class="o">-</span><span class="n">d</span><span class="p">:</span>                        <span class="c1"># Only -d [database] or -i [query] not both</span>
+        <span class="o">-</span><span class="n">n</span><span class="p">:</span>                        <span class="c1"># Number of CPUs running Gassst</span>
+        <span class="o">-</span><span class="n">p</span><span class="p">:</span>                        <span class="c1"># Minimum percentage of identity. Must be in the interval [0 100]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id21">
+<h3>References<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="TranscriptomeAssembly.html" class="btn btn-neutral float-right" title="Transcriptome Assembly" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="SequenceClustering.html" class="btn btn-neutral" title="Sequence Clustering" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Menachem Sklarz.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

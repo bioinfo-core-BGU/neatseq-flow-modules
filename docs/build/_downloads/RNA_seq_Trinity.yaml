@@ -1,0 +1,90 @@
+Global_params:
+    Default_wait: 10
+    Qsub_opts: -V -cwd
+    Qsub_path: /path/to/qsub/bin
+    Qsub_q: queue.q
+    module_path:      ../modules_release_1.1.0
+Description: |
+    A pipeline for basic RNA-seq analysis using Trinity
+    ---------------------------------------------------
+    
+    This workflow takes reads in fastq format, either paired-end or single, and assembles a trascriptome with Trinity.
+    
+    It then runs `align_and_estimate_abundance.pl` and `abundance_estimates_to_matrix.pl` to map the reads to the trascriptome and create normalized counts tables. These tables can then be used in DEseq2 or other tools for statistical analysis of RNA-seq data.
+    
+    Steps:
+    ------
+    
+    1. Concatenating the read files into single files per direction
+    
+        Note: No QC steps are included here, but you should consider adding trimmomatic and fastqc steps to the workflow.
+    
+    2. Adding tags required by trinity to the read titles (/1 and /2 for F and R. See https://github.com/trinityrnaseq/trinityrnaseq/wiki/Running-Trinity)
+    3. Running Trinity. Trinity must be configured to run on a cluster. The configuration file is passed with --grid_conf.
+    4. Mapping of the reads is performed with trinity_mapping module
+    5. Creating statistical tables is performed with trinmap_statistics module.
+    
+    
+Vars:
+    paths:
+        merge:              gzip -cd    
+        bowtie2:            /path/to/bowtie2_v2.2.5         # Path to the dir which includes bowtie2 and bowtie2-build executables
+        Trinity:            /path/to/trinity/               # Path to the dir which contains Trinity executable and a dir util/ with the toolkit scripts
+        SGE_Trinity_conf:   /path/to/cluster_Trinity_conf.txt  # Path to file with cluster configuration for trinity. See --grid_conf parameter in trinity manual.
+        RSEM:               /path/to/rsem/bin               # Path to dir containing rsem scripts 
+        samtools:           /path/to/samtools-1.3/bin       # Path to dir containing samtools executable
+        STAR:               /path/to/STAR                   # Path to STAR executable
+Step_params:
+    merge1:
+        module:             merge
+        script_path:        {Vars.paths.merge}
+    trin_tags1:
+        module:             add_trinity_tags
+        base:               merge1
+        script_path: 
+    trinity1:
+        module:             trinity
+        base:               trin_tags1
+        script_path:        '{Vars.paths.Trinity}/Trinity'
+        qsub_params:
+            -pe:            shared 20
+        scope:              project
+        redirects:
+            --CPU:          20
+            --JM:           140G
+            --full_cleanup: 
+            --grid_conf:    {Vars.paths.SGE_Trinity_conf}
+            --min_kmer_cov: 2
+            --seqType:      fq
+    trin_map1:
+        module:             trinity_mapping
+        base:               trinity1
+        script_path:        '{Vars.paths.Trinity}/util/align_and_estimate_abundance.pl'
+        scope:              project
+        setenv:             PATH "{Vars.paths.bowtie2}:{Vars.paths.RSEM}:{Vars.paths.samtools}:$PATH"
+        redirects:
+            --est_method:   RSEM
+            --aln_method:   bowtie2
+            --trinity_mode:
+            --seqType:      fq
+
+    trin_map_stats:
+        module:             trinmap_statistics
+        base:               trin_map1
+        script_path:        '{Vars.paths.Trinity}/util/abundance_estimates_to_matrix.pl'
+        # use_isoforms:          # use isoforms results. Remove to use genes results
+        scope:              project
+        redirects:
+            --est_method:   RSEM
+        # stop_and_show:
+
+    STAR_bld_ind:
+        module:             STAR_builder
+        base:               trinity1
+        script_path:        {Vars.paths.STAR}
+        scope:              project
+    STAR_map:
+        module:             STAR_mapper
+        base:               STAR_bld_ind
+        script_path:        {Vars.paths.STAR}
+        scope:              project

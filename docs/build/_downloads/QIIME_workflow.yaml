@@ -1,0 +1,182 @@
+Global_params:
+    Default_wait:     10
+    Qsub_opts:        -V -cwd
+    Qsub_q:           queue.q
+    Qsub_path:        /path/to/qsub/dir
+    module_path:      ../modules_release_1.1.0
+    conda:
+        path:       /path/to/conda/bin
+        env:        NSF
+Description: |
+    A pipeline for executing a complete QIIME (v1.9) analysis
+    ---------------------------------------------------------
+    
+    Developed as part of a study led by Prof. Jacob Moran-Gilad
+        
+    Includes the following stages:
+    A. Read preparation:
+        1. merge
+        2. trimmomatic - For cleaning the reads
+        3. FastQC - Checking the quality of the reads
+        4. MultiQC
+        5. Optional read joining with join_paired_ends.py (module qiime_prep)
+        6. Creating symbolic links to files so that demultiplication can recognise the sample names from the link names. 
+        7. Further QA and concatenating all sequences into a single fasta file with qiime_demult 
+        8. Identifying chimeric sequences (qiime_chimera module`)
+    B. Analysis (denovo OTU picking)
+        1. OTU picking
+        2. selecting representative sequences
+        3. Alingning to reference and filtering the alignment
+        4. Assigining taxonomic lineage to representative sequences
+        5. Creating phylogenetic tree
+        6. Creating BIOM table 
+        7. Computing core diversity analyses on the BIOM table.
+    C. Optional 
+        1. You can filter out particular samples or OTUs with modules qiime_filter_samples_from_otu_table and qiime_filter_otus, respectively.
+        2. You can sort the BIOM table samples by a specific field of the mapping file with the qiime_sort_otu_table module
+Vars:
+    paths:                  
+        merge:              gzip -cd
+        fastqc:             /path/to/fastqc
+        multiqc:            /path/to/multiqc
+        java:               /path/to/java
+    trimmo:                 
+        path:               /path/to/trimmomatic-0.36.jar    
+        spec_dir:           /path/to/trimmomatic/spec_dir   # Directory to cd into before executing trimmomatic. 
+                                                            # Should contain the adapters files
+    qiime:                            
+        path:               /path/to/qiime/bin
+        params:             /path/to/qiime_parameters.txt
+        mapping:            /path/to/mapping_4qiime_corrected.txt
+        env:                ENV1="" ENV2=""
+    reference_files:        
+        otus:               /path/to/97_otus.fasta
+        otus_aligned:       /path/to/97_otus_aligned.fasta
+        id_to_taxonomy:     /path/to/majority_taxonomy_7_levels.txt
+Step_params:
+    merge1:                            
+        module:             merge
+        script_path:        {Vars.paths.merge}
+    fQC_merge:
+        module:             fastqc_html
+        base:               merge1
+        script_path:        {Vars.paths.fastqc}
+        qsub_params:
+            -pe:            shared 20
+        redirects:
+            --threads:      20
+    trim1:
+        module:             trimmo
+        base:               merge1
+        script_path:        '{Vars.paths.java} -jar {Vars.trimmo.path}'
+        qsub_params:              
+            -pe:            shared 20
+        todo:               ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:20 TRAILING:20 SLIDINGWINDOW:4:15 MINLEN:36
+        spec_dir:           {Vars.trimmo.spec_dir}
+        redirects:          
+            -threads:       20
+    fQC_trimmo:             
+        module:             fastqc_html
+        base:               trim1
+        script_path:        {Vars.paths.fastqc}
+        qsub_params:              
+            -pe:            shared 20
+        redirects:              
+            --threads:      20
+    qc_report:              
+        module:             Multiqc
+        base:               [fQC_merge,fQC_trimmo]
+        script_path:        {Vars.paths.multiqc}
+    q_prep_1:               
+        module:             qiime_prep
+        base:               trim1
+        script_path:        '{Vars.qiime.path}/join_paired_ends.py'
+        setenv:             {Vars.qiime.env}
+        join:               join
+        unjoined:           both
+        parameters:         {Vars.qiime.params}
+        # unjoined: none  
+        redirects:                            
+            --pe_join_method: fastq-join
+    q_demult_1:                                           
+        module:             qiime_demult
+        base:               q_prep_1
+        script_path:        '{Vars.qiime.path}/multiple_split_libraries_fastq.py'
+        setenv:             {Vars.qiime.env}
+        redirects:              
+            --demultiplexing_method:             sampleid_by_file
+            --include_input_dir_path:
+            --parameter_fp:                      {Vars.qiime.params}
+            --remove_filepath_in_name:
+            
+    q_chimera_usrch:                       
+        module:                             qiime_chimera
+        base:                               q_demult_1
+        setenv:                             {Vars.qiime.env}
+        # script_path:                      '{Vars.qiime.path}/parallel_identify_chimeric_seqs.py'
+        script_path:                        '{Vars.qiime.path}/identify_chimeric_seqs.py'
+        method:                             usearch61 # Or ChimeraSlayer. Will guess depending on existing files.
+        # qsub_params:                      
+            # -pe:                          shared 20
+        redirects:                          
+            # --jobs_to_start:              20
+            --aligned_reference_seqs_fp:    {Vars.reference_files.otus_aligned}
+            --reference_seqs_fp:            {Vars.reference_files.otus}
+    q_pick_otu_1:                            
+        module:                             qiime_pick_otus
+        base:                               q_chimera_usrch
+        script_path:                        '{Vars.qiime.path}/pick_otus.py'
+        setenv:                             {Vars.qiime.env}
+    q_rep_set_1:                            
+        module:                             qiime_pick_rep_set
+        base:                               q_pick_otu_1
+        script_path:                        '{Vars.qiime.path}/pick_rep_set.py'
+        setenv:                             {Vars.qiime.env}
+    q_align_1:                            
+        module:                             qiime_align_seqs
+        base:                               q_rep_set_1
+        script_path:                        '{Vars.qiime.path}/parallel_align_seqs_pynast.py'
+        setenv:                             {Vars.qiime.env}
+        redirects:                            
+            --jobs_to_start:                5
+            --retain_temp_files:
+    q_tax_asn_1:                            
+        module:                             qiime_assign_taxonomy
+        base:                               q_rep_set_1
+        script_path:                        '{Vars.qiime.path}/parallel_assign_taxonomy_rdp.py'
+        setenv:                             {Vars.qiime.env}
+        redirects:                            
+            --confidence:                   0.5
+            --id_to_taxonomy_fp:            {Vars.reference_files.id_to_taxonomy}
+            --jobs_to_start:                20
+            --rdp_max_memory:               50000
+            --reference_seqs_fp:            {Vars.reference_files.otus}
+    q_filt_align_1:                            
+        module:                             qiime_filter_alignment
+        base:                               q_align_1
+        script_path:                        '{Vars.qiime.path}/filter_alignment.py'
+        setenv:                             {Vars.qiime.env}
+    q_phylo_1:                            
+        module:                             qiime_make_phylogeny
+        base:                               q_filt_align_1
+        script_path:                        '{Vars.qiime.path}/make_phylogeny.py'
+        setenv:                             {Vars.qiime.env}
+    q_mk_otu_1:                            
+        module:                             qiime_make_otu_table
+        base:                            
+        - q_phylo_1
+        - q_tax_asn_1
+        script_path:                        '{Vars.qiime.path}/make_otu_table.py'
+        setenv:                             {Vars.qiime.env}
+        redirects:                            
+            --mapping_fp:                   {Vars.qiime.mapping}
+    q_core_div:                            
+        module:                             qiime_divers
+        base:                               q_mk_otu_1
+        script_path:                        '{Vars.qiime.path}/core_diversity_analyses.py'
+        setenv:                             {Vars.qiime.env}
+        sampling_depth:                     9000
+        redirects:                            
+            --parameter_fp:                 {Vars.qiime.params}
+            --categories:                   Source,Date
+

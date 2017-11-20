@@ -1,0 +1,777 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Microbiology &mdash; NeatSeq_Flow Module Repository 1.1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="NeatSeq_Flow Module Repository 1.1.0 documentation" href="../index.html"/>
+        <link rel="next" title="Preparation and QC" href="PreparationAndQC.html"/>
+        <link rel="prev" title="Metagenomics" href="Metagenomics.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> NeatSeq_Flow Module Repository
+          
+
+          
+            
+            <img src="../_static/logo_Hor.png" class="logo" />
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <p class="caption"><span class="caption-text">Modules</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="BAMConversion.html">BAM Conversion to Other Formats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ChIPseq.html">ChIP-seq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="GenericModule.html">Generic Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="GenomeAssembly.html">Genome Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Mapping.html">Mapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metagenomics.html">Metagenomics</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Microbiology</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#card-rgi"><code class="docutils literal"><span class="pre">CARD_RGI</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requires">Requires</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#output">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parameters-that-can-be-set">Parameters that can be set</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#comments">Comments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lines-for-parameter-file">Lines for parameter file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-cgmlst-and-mlst-typing">Module <code class="docutils literal"><span class="pre">cgMLST_and_MLST_typing</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Requires</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Parameters that can be set</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">Comments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">Lines for parameter file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-roary">Module <code class="docutils literal"><span class="pre">Roary</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id7">Requires</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">Parameters that can be set</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id10">Comments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id11">Lines for parameter file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">References</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#acknowledgments">Acknowledgments</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-snippy">Module <code class="docutils literal"><span class="pre">Snippy</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id13">Requires</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id14">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id15">Parameters that can be set</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id16">Comments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id17">Lines for parameter file</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="PreparationAndQC.html">Preparation and QC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="QIIME.html">QIIME (version 1.9)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SequenceAnnotation.html">Sequence Annotation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SequenceClustering.html">Sequence Clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SequenceSearching.html">Sequence-Searching Related Tasks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TranscriptomeAssembly.html">Transcriptome Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Variants.html">Variant-related Tasks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VariousReportingPrograms.html">Various Reporting Programs</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Workflows</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/Assembly_Indexing_mapping.html">Assembly and Mapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/BLAST_db.html">BLAST on <cite>fasta</cite> files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/BLAST_fasta.html">Assembly and Searching</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/ChIP_seq_bowtie2.html">ChIP-seq analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/Metagenomics.html">Metagenomics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/RNA_seq_Trinity.html">Non-Model Transcriptomics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/RNA_seq_reference.html">Reference-based Transcriptomics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/variant_calling.html">Variant calling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/Clustering.html">Read clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/QIIME_workflow.html">QIIME analysis</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">NeatSeq_Flow Module Repository</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+    <li>Microbiology</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/Module_docs/Microbiology.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="microbiology">
+<h1>Microbiology<a class="headerlink" href="#microbiology" title="Permalink to this headline">¶</a></h1>
+<div class="contents local topic" id="modules-included-in-this-section">
+<p class="topic-title first">Modules included in this section</p>
+<ul class="simple">
+<li><a class="reference internal" href="#card-rgi" id="id18"><code class="docutils literal"><span class="pre">CARD_RGI</span></code></a></li>
+<li><a class="reference internal" href="#module-cgmlst-and-mlst-typing" id="id19">Module <code class="docutils literal"><span class="pre">cgMLST_and_MLST_typing</span></code></a></li>
+<li><a class="reference internal" href="#module-roary" id="id20">Module <code class="docutils literal"><span class="pre">Roary</span></code></a></li>
+<li><a class="reference internal" href="#module-snippy" id="id21">Module <code class="docutils literal"><span class="pre">Snippy</span></code></a></li>
+</ul>
+</div>
+<span class="target" id="module-microbiology.CARD_RGI"></span><div class="section" id="card-rgi">
+<h2><a class="toc-backref" href="#id18"><code class="docutils literal"><span class="pre">CARD_RGI</span></code></a><a class="headerlink" href="#card-rgi" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Menachem Sklarz</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This module was developed as part of a study led by Dr. Jacob Moran Gilad</p>
+</div>
+<p>A module for running CARD RGI:</p>
+<p>RGI is executed on the contigs stored in a Nucleotide fasta file.</p>
+<div class="section" id="requires">
+<h3>Requires<a class="headerlink" href="#requires" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">A nucleotide fasta file in one of the following slots:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fasta.nucl&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&quot;fasta.nucl&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="output">
+<h3>Output<a class="headerlink" href="#output" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">If <code class="docutils literal"><span class="pre">scope</span></code> is set to <code class="docutils literal"><span class="pre">sample</span></code>:</p>
+<blockquote>
+<div><ul>
+<li><p class="first">Puts output files in:</p>
+<blockquote>
+<div><p><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;CARD_RGI.json&quot;]</span></code>
+<code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;CARD_RGI.tsv&quot;]</span></code></p>
+</div></blockquote>
+</li>
+<li><p class="first">Puts index of output files in:</p>
+<blockquote>
+<div><p><code class="docutils literal"><span class="pre">self.sample_data[&quot;CARD_RGI.files_index&quot;]</span></code></p>
+</div></blockquote>
+</li>
+<li><p class="first">If <code class="docutils literal"><span class="pre">merge_script_path</span></code> is specified in parameters, puts the merged file in</p>
+<blockquote>
+<div><p><code class="docutils literal"><span class="pre">self.sample_data[&quot;CARD_RGI.merged_reports&quot;]</span></code></p>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">If <code class="docutils literal"><span class="pre">scope</span></code> is set to <code class="docutils literal"><span class="pre">project</span></code>:</p>
+<blockquote>
+<div><ul>
+<li><p class="first">Puts output files in:</p>
+<blockquote>
+<div><p><code class="docutils literal"><span class="pre">sample_data[&quot;CARD_RGI.json&quot;]</span></code>
+<code class="docutils literal"><span class="pre">sample_data[&quot;CARD_RGI.tsv&quot;]</span></code></p>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="parameters-that-can-be-set">
+<h3>Parameters that can be set<a class="headerlink" href="#parameters-that-can-be-set" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="43%" />
+<col width="29%" />
+<col width="29%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Values</th>
+<th class="head">Comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>JSON2tsv_script</td>
+<td>path</td>
+<td><dl class="first last docutils">
+<dt>The path to the CARD script for converting the JSON output to tsv </dt>
+<dd>(find ‘convertJsonToTSV.py’ in your RGI installation)</dd>
+</dl>
+</td>
+</tr>
+<tr class="row-odd"><td>merge_script_path</td>
+<td>path</td>
+<td><dl class="first last docutils">
+<dt>Path to a script that takes an index of RGI output files (‘–ind’) and a place to put </dt>
+<dd>the output (–output). This script will be executed in the wrapping up stage.
+(Note, the script can take more parameters. These should be passed with the path in 
+the parameter files, e.g. ‘python /path/to/script –param1 val1 –param2 val2’)
+If the parameters is not passed, no action will be taken on the output files.</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="comments">
+<h3>Comments<a class="headerlink" href="#comments" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="lines-for-parameter-file">
+<h3>Lines for parameter file<a class="headerlink" href="#lines-for-parameter-file" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">rgi_inst</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">CARD_RGI</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">spades1</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="n">python</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">rgi</span><span class="o">.</span><span class="n">py</span>
+    <span class="n">qsub_params</span><span class="p">:</span>
+        <span class="o">-</span><span class="n">pe</span><span class="p">:</span> <span class="n">shared</span> <span class="mi">15</span>
+    <span class="n">JSON2tsv_script</span><span class="p">:</span> <span class="n">python</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">convertJsonToTSV</span><span class="o">.</span><span class="n">py</span>
+    <span class="n">merge_script_path</span><span class="p">:</span> <span class="n">Rscript</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">merge_reports</span><span class="o">.</span><span class="n">R</span> <span class="o">--</span><span class="n">variable</span> <span class="n">bit_score</span>
+    <span class="n">orf_to_use</span><span class="p">:</span> <span class="o">-</span><span class="n">x</span>
+    <span class="n">scope</span><span class="p">:</span> <span class="n">sample</span>
+    <span class="n">redirects</span><span class="p">:</span>
+        <span class="o">-</span><span class="n">n</span><span class="p">:</span> <span class="mi">20</span>
+        <span class="o">-</span><span class="n">x</span><span class="p">:</span> <span class="mi">1</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="references">
+<h3>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h3>
+<p>McArthur, A.G., Waglechner, N., Nizam, F., Yan, A., Azad, M.A., Baylay, A.J., Bhullar, K., Canova, M.J., De Pascale, G., Ejim, L. and Kalan, L., 2013. <strong>The comprehensive antibiotic resistance database</strong>. <em>Antimicrobial agents and chemotherapy</em>, 57(7), pp.3348-3357.</p>
+</div>
+</div>
+<span class="target" id="module-Liron.cgMLST_and_MLST_typing_module.cgMLST_and_MLST_typing"></span><div class="section" id="module-cgmlst-and-mlst-typing">
+<h2><a class="toc-backref" href="#id19">Module <code class="docutils literal"><span class="pre">cgMLST_and_MLST_typing</span></code></a><a class="headerlink" href="#module-cgmlst-and-mlst-typing" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Liron Levin</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This module was developed as part of a study led by Dr. Jacob Moran Gilad</p>
+</div>
+<dl class="docutils">
+<dt>SHORT DESCRIPTION</dt>
+<dd>A module for a MLST and cgMLST Typing</dd>
+</dl>
+<div class="section" id="id1">
+<h3>Requires<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><dl class="docutils">
+<dt>Blast results after parsing in: </dt>
+<dd>self.sample_data[&lt;sample&gt;][“blast.parsed”]</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="id2">
+<h3>Output<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><dl class="docutils">
+<dt>Typing results in:</dt>
+<dd>self.sample_data[&lt;sample&gt;][“Typing”]</dd>
+<dt>Merge of typing results in: </dt>
+<dd>self.sample_data[“Typing”]</dd>
+<dt>Files for phyloviz in:</dt>
+<dd>self.sample_data[“phyloviz_MetaData”]
+self.sample_data[“phyloviz_Alleles”]</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="id3">
+<h3>Parameters that can be set<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="43%" />
+<col width="29%" />
+<col width="29%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Values</th>
+<th class="head">Comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>cut_samples_not_in_metadata</td>
+<td>&#160;</td>
+<td>In the final merge file consider only samples found in the Meta-Data file</td>
+</tr>
+<tr class="row-odd"><td>sample_cutoff</td>
+<td>[0-1]</td>
+<td>In the final merge file consider only samples that have at least this fraction of identified alleles</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id4">
+<h3>Comments<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id5">
+<h3>Lines for parameter file<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Step_Name</span><span class="p">:</span>                                   <span class="c1"># Name of this step</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">cgMLST_and_MLST_typing</span>           <span class="c1"># Name of the module to use</span>
+    <span class="n">base</span><span class="p">:</span>                                    <span class="c1"># Name of the step [or list of names] to run after [must be after steps that generates blast.parsed File_Types] </span>
+    <span class="n">script_path</span><span class="p">:</span>                             <span class="c1"># Leave blank</span>
+    <span class="n">metadata</span><span class="p">:</span>                                <span class="c1"># Path to Meta-Data file</span>
+    <span class="n">metadata_samples_ID_field</span><span class="p">:</span>               <span class="c1"># Column name in the Meta-Data file of the samples ID</span>
+    <span class="n">cut_samples_not_in_metadata</span><span class="p">:</span>             <span class="c1"># In the final merge file consider only samples found in the Meta-Data file</span>
+    <span class="n">sample_cutoff</span><span class="p">:</span>                           <span class="c1"># In the final merge file consider only samples that have at least this fraction of identified alleles</span>
+    <span class="n">redirects</span><span class="p">:</span>
+        <span class="o">--</span><span class="n">scheme</span><span class="p">:</span>                            <span class="c1"># Path to the Typing scheme file [Tab delimited]</span>
+        <span class="o">--</span><span class="n">num_of_genes</span><span class="p">:</span>                      <span class="c1"># Number of genes/locus in the scheme</span>
+        <span class="o">--</span><span class="n">cols_to_return</span><span class="p">:</span>                    <span class="c1"># Column names in the scheme file to include in the final Meta-Data file</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id6">
+<h3>References<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<span class="target" id="module-Liron.Roary_module.Roary"></span><div class="section" id="module-roary">
+<h2><a class="toc-backref" href="#id20">Module <code class="docutils literal"><span class="pre">Roary</span></code></a><a class="headerlink" href="#module-roary" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Liron Levin</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This module was developed as part of a study led by Dr. Jacob Moran Gilad</p>
+</div>
+<dl class="docutils">
+<dt>SHORT DESCRIPTION</dt>
+<dd>A module for running Roary on GFF files</dd>
+</dl>
+<div class="section" id="id7">
+<h3>Requires<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><dl class="docutils">
+<dt>for each Sample, GFF file location in:</dt>
+<dd>sample_data[&lt;sample&gt;][“GFF”]</dd>
+<dt>if there is a GFF directory in:</dt>
+<dd>sample_data[“GFF_dir”]
+No new GFF directory will be created and ONLY the GFF files in this directory will be analysed</dd>
+</dl>
+<p>If the search_GFF flag is on GFF files will be searched in the last base name directory</p>
+</div></blockquote>
+</div>
+<div class="section" id="id8">
+<h3>Output<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><dl class="docutils">
+<dt>puts output GFF directory location in the following slots:</dt>
+<dd><blockquote class="first">
+<div>sample_data[“GFF”]</div></blockquote>
+<dl class="last docutils">
+<dt>puts output pan_genome results directory location in the following slots:</dt>
+<dd>sample_data[“pan_genome_results_dir”]</dd>
+<dt>puts output pan_genome presence_absence_matrix file location in the following slots:</dt>
+<dd>sample_data[“presence_absence_matrix”]</dd>
+<dt>puts output pan_genome clustered_proteins file location in the following slots:</dt>
+<dd>sample_data[“clustered_proteins”]</dd>
+<dt>puts output GWAS directory location in the following slot:</dt>
+<dd>sample_data[“GWAS_results_dir”]</dd>
+<dt>puts output Biclustering directory location in the following slot:</dt>
+<dd>sample_data[“Bicluster_results_dir”]</dd>
+<dt>puts output Biclustering cluster file location in the following slot:</dt>
+<dd>sample_data[“Bicluster_clusters”]</dd>
+<dt>puts output Gecko directory location in the following slot:</dt>
+<dd>sample_data[“Gecko_results_dir”]</dd>
+</dl>
+</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="id9">
+<h3>Parameters that can be set<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="43%" />
+<col width="29%" />
+<col width="29%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Values</th>
+<th class="head">Comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>PARAMETER NAME</td>
+<td>POSSIBLE VALUES</td>
+<td>DESCRIPTION</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id10">
+<h3>Comments<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id11">
+<h3>Lines for parameter file<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Step_Name</span><span class="p">:</span>                                   <span class="c1"># Name of this step</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">Roary</span>                            <span class="c1"># Name of the module used</span>
+    <span class="n">base</span><span class="p">:</span>                                    <span class="c1"># Name of the step [or list of names] to run after [must be after a GFF file generator step like Prokka]</span>
+    <span class="n">script_path</span><span class="p">:</span>                             <span class="c1"># Command for running the Roary script </span>
+    <span class="n">env</span><span class="p">:</span>                                     <span class="c1"># env parameters that needs to be in the PATH for running this module</span>
+    <span class="n">qsub_params</span><span class="p">:</span>                             
+        <span class="o">-</span><span class="n">pe</span><span class="p">:</span>                                 <span class="c1"># Number of CPUs to reserve for this analysis</span>
+    <span class="n">virulence_resistance_tag</span><span class="p">:</span>                <span class="c1"># Use the name of the db used in prokka or use &quot;VFDB&quot; if you used the VFDB built-in Prokka module DB </span>
+    <span class="n">search_GFF</span><span class="p">:</span>                              <span class="c1"># Search for GFF files?</span>
+    <span class="n">Bi</span><span class="o">-</span><span class="n">cluster</span><span class="p">:</span>                              <span class="c1"># Do Bi-cluster analysis using the Roary results, if empty or this line dose not exist will not do Bi-cluster analysis </span>
+        <span class="o">--</span><span class="n">Annotation</span><span class="p">:</span>                        <span class="c1"># location of virulence annotation file to use to annotate the clusters or use &quot;VFDB&quot; if you used the VFDB built-in Prokka module DB</span>
+        <span class="o">--</span><span class="n">ID_field</span><span class="p">:</span>                          <span class="c1"># The column name in the MetaData file of the samples IDs</span>
+        <span class="o">--</span><span class="n">cols_to_use</span><span class="p">:</span>                       <span class="c1"># list of the MetaData columns to use to annotate the clusters  example: &#39;&quot;ST&quot;,&quot;CC&quot;,&quot;source&quot;,&quot;host&quot;,&quot;geographic.location&quot;,&quot;Date&quot;&#39;</span>
+        <span class="o">--</span><span class="n">metadata</span><span class="p">:</span>                          <span class="c1"># location of MetaData file to use to annotate the clusters</span>
+    <span class="n">plot</span><span class="p">:</span>                                    <span class="c1"># plot gene presence/absence matrix</span>
+        <span class="nb">format</span><span class="p">:</span>                              <span class="c1"># The gene presence/absence matrix plot output format. example: pdf</span>
+        <span class="n">Clustering_method</span>                    <span class="c1"># The gene presence/absence matrix plot clustering method. example: ward</span>
+    <span class="n">scoary</span><span class="p">:</span>
+        <span class="n">script_path</span><span class="p">:</span>                         <span class="c1"># Command for running the scoary script, if empty or this line dose not exist will not run scoary </span>
+        <span class="n">BH_cutoff</span><span class="p">:</span>                           <span class="c1"># Scoary BH correction for multiple testing cut-off</span>
+        <span class="n">Bonferroni_cutoff</span><span class="p">:</span>                   <span class="c1"># Scoary Bonferroni correction for multiple testing cut-off</span>
+        <span class="n">metadata_file</span><span class="p">:</span>                       <span class="c1"># location of MetaData file to use to create the scoary traits file</span>
+        <span class="n">metadata_samples_ID_field</span><span class="p">:</span>           <span class="c1"># The column name in the MetaData file of the sample&#39;s IDs</span>
+        <span class="n">traits_file</span><span class="p">:</span>                         <span class="c1"># Path to a traits file</span>
+        <span class="n">scoary_traits_to_pars</span><span class="p">:</span>               <span class="c1"># If a traits file is not provided use a list of conditions to create the scoary traits file from MetaData file. example:&quot;source/==&#39;blood&#39;&quot;  &quot;source/==&#39;wound&#39;&quot;</span>
+                                             <span class="c1"># Pairs of field and operator + value to convert to boolean traits: field_name1/op_value1 .. field_nameN/op_valueN Example: &quot;field_1/&gt;=val_1&lt;val_2&quot;    &quot;feild_2/==&#39;str_val&#39;&quot;</span>
+                                             <span class="c1"># A Filter can be used by FILTER_field_name1/FILTER_op_value1&amp;field_name1/op_value1</span>
+                                             <span class="c1"># Note that Gecko can&#39;t run if the Bi-clustering was not run</span>
+    <span class="n">Gecko</span><span class="p">:</span>
+        <span class="n">script_path</span><span class="p">:</span>                         <span class="c1"># Command for running the Gecko script, if empty or this line dose not exist will not run Gecko</span>
+        <span class="o">-</span><span class="n">d</span><span class="p">:</span>                                  <span class="c1"># Parameters for running Gecko</span>
+        <span class="o">-</span><span class="n">s</span><span class="p">:</span>                                  <span class="c1"># Parameters for running Gecko</span>
+        <span class="o">-</span><span class="n">q</span><span class="p">:</span>                                  <span class="c1"># Parameters for running Gecko</span>
+    <span class="n">redirects</span><span class="p">:</span>
+        <span class="o">-</span><span class="n">k</span><span class="p">:</span>                                  <span class="c1"># Parameters for running Roary</span>
+        <span class="o">-</span><span class="n">p</span><span class="p">:</span>                                  <span class="c1"># Parameters for running Roary</span>
+        <span class="o">-</span><span class="n">qc</span><span class="p">:</span>                                 <span class="c1"># Parameters for running Roary</span>
+        <span class="o">-</span><span class="n">s</span><span class="p">:</span>                                  <span class="c1"># Parameters for running Roary</span>
+        <span class="o">-</span><span class="n">v</span><span class="p">:</span>                                  <span class="c1"># Parameters for running Roary</span>
+        <span class="o">-</span><span class="n">y</span><span class="p">:</span>                                  <span class="c1"># Parameters for running Roary</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id12">
+<h3>References<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="acknowledgments">
+<h3>Acknowledgments<a class="headerlink" href="#acknowledgments" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<span class="target" id="module-Liron.Snippy_module.Snippy"></span><div class="section" id="module-snippy">
+<h2><a class="toc-backref" href="#id21">Module <code class="docutils literal"><span class="pre">Snippy</span></code></a><a class="headerlink" href="#module-snippy" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Liron Levin</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This module was developed as part of a study led by Dr. Jacob Moran Gilad</p>
+</div>
+<p>SHORT DESCRIPTION</p>
+<p>A module for running Snippy on fastq files</p>
+<div class="section" id="id13">
+<h3>Requires<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><dl class="docutils">
+<dt>fastq files in at least one of the following slots:</dt>
+<dd>sample_data[&lt;sample&gt;][“fastq.F”]
+sample_data[&lt;sample&gt;][“fastq.R”]
+sample_data[&lt;sample&gt;][“fastq.S”]</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="id14">
+<h3>Output<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><dl class="docutils">
+<dt>puts Results directory location in:</dt>
+<dd>self.sample_data[&lt;sample&gt;][“Snippy”]</dd>
+<dt>puts for each sample the vcf file location in:</dt>
+<dd>self.sample_data[&lt;sample&gt;][“vcf”]</dd>
+<dt>if snippy-core is set to run:</dt>
+<dd><dl class="first last docutils">
+<dt>puts the core Multi-FASTA alignment location in:</dt>
+<dd>self.sample_data[“fasta.nucl”]</dd>
+<dt>puts core vcf file location of all analyzed samples in the following slot:</dt>
+<dd>self.sample_data[“vcf”]</dd>
+</dl>
+</dd>
+<dt>if Gubbins is set to run: </dt>
+<dd><dl class="first last docutils">
+<dt>puts result Tree file location of all analyzed samples in:</dt>
+<dd>self.sample_data[“newick”]</dd>
+<dt>update the core Multi-FASTA alignment in:</dt>
+<dd>self.sample_data[“fasta.nucl”]</dd>
+<dt>and update the core vcf file in the slot:</dt>
+<dd>self.sample_data[“vcf”]</dd>
+</dl>
+</dd>
+<dt>if pars is set to run, puts phyloviz ready to use files in:</dt>
+<dd><dl class="first last docutils">
+<dt>Alleles:</dt>
+<dd>self.sample_data[“phyloviz_Alleles”]</dd>
+<dt>MetaData:</dt>
+<dd>self.sample_data[“phyloviz_MetaData”]</dd>
+</dl>
+</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="id15">
+<h3>Parameters that can be set<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="43%" />
+<col width="29%" />
+<col width="29%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Values</th>
+<th class="head">Comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>PARAMETER NAME</td>
+<td>POSSIBLE VALUES</td>
+<td>DESCRIPTION</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id16">
+<h3>Comments<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id17">
+<h3>Lines for parameter file<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Step_Name</span><span class="p">:</span>                                  <span class="c1"># Name of this step</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">Snippy</span>                          <span class="c1"># Name of the module used</span>
+    <span class="n">base</span><span class="p">:</span>                                   <span class="c1"># Name of the step [or list of names] to run after [must be after a merge step]</span>
+    <span class="n">script_path</span><span class="p">:</span>                            <span class="c1"># Command for running the Snippy script</span>
+    <span class="n">env</span><span class="p">:</span>                                    <span class="c1"># env parameters that needs to be in the PATH for running this module</span>
+    <span class="n">qsub_params</span><span class="p">:</span>
+        <span class="o">-</span><span class="n">pe</span><span class="p">:</span>                                <span class="c1"># Number of CPUs to reserve for this analysis</span>
+    <span class="n">gubbins</span><span class="p">:</span>
+        <span class="n">script_path</span><span class="p">:</span>                        <span class="c1"># Command for running the gubbins script, if empty or this line dose not exist will not run gubbins</span>
+        <span class="o">--</span><span class="n">STR</span><span class="p">:</span>                              <span class="c1"># More redirects arguments for running gubbins</span>
+    <span class="n">pars</span><span class="p">:</span>                                   <span class="c1"># Generate phyloviz ready to use files</span>
+        <span class="o">-</span><span class="n">M</span><span class="p">:</span>                                 <span class="c1"># Location of a MetaData file </span>
+        <span class="o">--</span><span class="n">Cut</span><span class="p">:</span>                              <span class="c1"># Use only Samples found in the metadata file</span>
+        <span class="o">--</span><span class="n">S_MetaData</span><span class="p">:</span>                       <span class="c1"># The name of the samples ID column</span>
+        <span class="o">-</span><span class="n">C</span><span class="p">:</span>                                 <span class="c1"># Use only Samples that has at least this fraction of identified alleles</span>
+    <span class="n">snippy</span><span class="o">-</span><span class="n">core</span><span class="p">:</span>
+        <span class="n">script_path</span><span class="p">:</span>                        <span class="c1"># Command for running the snippy-core script, if empty or this line dose not exist will not run snippy-core</span>
+        <span class="o">--</span><span class="n">noref</span><span class="p">:</span>                            <span class="c1"># Exclude reference </span>
+    <span class="n">redirects</span><span class="p">:</span>
+        <span class="o">--</span><span class="n">cpus</span><span class="p">:</span>                             <span class="c1"># Parameters for running Snippy</span>
+        <span class="o">--</span><span class="n">force</span><span class="p">:</span>                            <span class="c1"># Force overwrite of existing output folder (default OFF)</span>
+        <span class="o">--</span><span class="n">mapqual</span><span class="p">:</span>                          <span class="c1"># Minimum mapping quality to allow</span>
+        <span class="o">--</span><span class="n">mincov</span><span class="p">:</span>                           <span class="c1"># Minimum coverage of variant site</span>
+        <span class="o">--</span><span class="n">minfrac</span><span class="p">:</span>                          <span class="c1"># Minumum proportion for variant evidence</span>
+        <span class="o">--</span><span class="n">reference</span><span class="p">:</span>                        <span class="c1"># Reference Genome location</span>
+        <span class="o">--</span><span class="n">cleanup</span>                           <span class="c1"># Remove all non-SNP files: BAMs, indices etc (default OFF)            </span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="PreparationAndQC.html" class="btn btn-neutral float-right" title="Preparation and QC" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="Metagenomics.html" class="btn btn-neutral" title="Metagenomics" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Menachem Sklarz.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

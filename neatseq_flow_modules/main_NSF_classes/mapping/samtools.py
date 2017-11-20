@@ -69,11 +69,11 @@ Lines for parameter file
             -pe: shared 20
         view: -buh  -q 30 -@ 20 -F 4
         sort: -@ 20
-        flagstat: null
-        index: null
+        flagstat: 
+        index: 
         stats: --remove-dups
-        del_sam: null
-        del_unsorted: null
+        del_sam: 
+        del_unsorted: 
 
  
 References

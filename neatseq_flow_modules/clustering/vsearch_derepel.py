@@ -12,7 +12,7 @@ A module for running vsearch read dereplication:
 
 Performs dereplication on fastq and fasta files.
 
-..Note:: Dereplication with vsearch is not defined on paired end reads.
+.. Note:: Dereplication with vsearch is not defined on paired end reads.
 
     At the moment, this module is defined only for ``fasta.nucl`` or for ``fastq.S``.
 

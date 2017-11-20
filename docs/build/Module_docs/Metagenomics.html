@@ -1,0 +1,762 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Metagenomics &mdash; NeatSeq_Flow Module Repository 1.1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="NeatSeq_Flow Module Repository 1.1.0 documentation" href="../index.html"/>
+        <link rel="next" title="Microbiology" href="Microbiology.html"/>
+        <link rel="prev" title="Mapping" href="Mapping.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> NeatSeq_Flow Module Repository
+          
+
+          
+            
+            <img src="../_static/logo_Hor.png" class="logo" />
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <p class="caption"><span class="caption-text">Modules</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="BAMConversion.html">BAM Conversion to Other Formats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ChIPseq.html">ChIP-seq</a></li>
+<li class="toctree-l1"><a class="reference internal" href="GenericModule.html">Generic Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="GenomeAssembly.html">Genome Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Mapping.html">Mapping</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Metagenomics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#humann2"><code class="docutils literal"><span class="pre">HUMAnN2</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requires">Requires</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#output">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parameters-that-can-be-set">Parameters that can be set</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lines-for-parameter-file">Lines for parameter file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#kaiju"><code class="docutils literal"><span class="pre">kaiju</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Requires</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Parameters that can be set</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">Lines for parameter file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#kraken"><code class="docutils literal"><span class="pre">kraken</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id6">Requires</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">Parameters that can be set</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">Lines for parameter file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id10">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#metaphlan2"><code class="docutils literal"><span class="pre">metaphlan2</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id11">Requires</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id13">Parameters that can be set</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id14">Lines for parameter file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id15">References</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Microbiology.html">Microbiology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PreparationAndQC.html">Preparation and QC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="QIIME.html">QIIME (version 1.9)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SequenceAnnotation.html">Sequence Annotation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SequenceClustering.html">Sequence Clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SequenceSearching.html">Sequence-Searching Related Tasks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TranscriptomeAssembly.html">Transcriptome Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Variants.html">Variant-related Tasks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VariousReportingPrograms.html">Various Reporting Programs</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Workflows</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/Assembly_Indexing_mapping.html">Assembly and Mapping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/BLAST_db.html">BLAST on <cite>fasta</cite> files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/BLAST_fasta.html">Assembly and Searching</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/ChIP_seq_bowtie2.html">ChIP-seq analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/Metagenomics.html">Metagenomics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/RNA_seq_Trinity.html">Non-Model Transcriptomics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/RNA_seq_reference.html">Reference-based Transcriptomics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/variant_calling.html">Variant calling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/Clustering.html">Read clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Workflow_docs/QIIME_workflow.html">QIIME analysis</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">NeatSeq_Flow Module Repository</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+    <li>Metagenomics</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/Module_docs/Metagenomics.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="metagenomics">
+<h1>Metagenomics<a class="headerlink" href="#metagenomics" title="Permalink to this headline">¶</a></h1>
+<div class="contents local topic" id="modules-included-in-this-section">
+<p class="topic-title first">Modules included in this section</p>
+<ul class="simple">
+<li><a class="reference internal" href="#humann2" id="id16"><code class="docutils literal"><span class="pre">HUMAnN2</span></code></a></li>
+<li><a class="reference internal" href="#kaiju" id="id17"><code class="docutils literal"><span class="pre">kaiju</span></code></a></li>
+<li><a class="reference internal" href="#kraken" id="id18"><code class="docutils literal"><span class="pre">kraken</span></code></a></li>
+<li><a class="reference internal" href="#metaphlan2" id="id19"><code class="docutils literal"><span class="pre">metaphlan2</span></code></a></li>
+</ul>
+</div>
+<span class="target" id="module-metagenomics.HUMAnN2"></span><div class="section" id="humann2">
+<h2><a class="toc-backref" href="#id16"><code class="docutils literal"><span class="pre">HUMAnN2</span></code></a><a class="headerlink" href="#humann2" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Menachem Sklarz</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This module was developed as part of a study led by Dr. Jacob Moran Gilad</p>
+</div>
+<p>A module for running <code class="docutils literal"><span class="pre">HUMAnN2</span></code>:</p>
+<div class="section" id="requires">
+<h3>Requires<a class="headerlink" href="#requires" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">fastq files, either forward or single:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fastq.F&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fastq.S&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="output">
+<h3>Output<a class="headerlink" href="#output" title="Permalink to this headline">¶</a></h3>
+<p>self.sample_data[sample][“HUMAnN2.genefamilies.norm”]
+self.sample_data[sample][“HUMAnN2.pathabundance.norm”]</p>
+<ul>
+<li><p class="first">Puts the <code class="docutils literal"><span class="pre">HUMAnN2</span></code> output files in:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[sample][&quot;HUMAnN2.genefamilies&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">self.sample_data[sample][&quot;HUMAnN2.pathabundance&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">self.sample_data[sample][&quot;HUMAnN2.pathcoverage&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">If “renorm_table” is set in params:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[sample][&quot;HUMAnN2.genefamilies.norm&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">self.sample_data[sample][&quot;HUMAnN2.pathabundance.norm&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">If “join_tables” is set in params:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&quot;HUMAnN2.genefamilies&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">self.sample_data[&quot;HUMAnN2.pathabundance&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">self.sample_data[&quot;HUMAnN2.pathcoverage&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">If “join_tables” and “renorm_table” are set in params:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&quot;HUMAnN2.genefamilies.norm&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">self.sample_data[&quot;HUMAnN2.pathabundance.norm&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">self.sample_data[&quot;HUMAnN2.pathcoverage&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="parameters-that-can-be-set">
+<h3>Parameters that can be set<a class="headerlink" href="#parameters-that-can-be-set" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="43%" />
+<col width="29%" />
+<col width="29%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Values</th>
+<th class="head">Comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>renorm_table</td>
+<td>Empty or parameters to pass to <code class="docutils literal"><span class="pre">humann2_renorm_table</span></code></td>
+<td>Runs <code class="docutils literal"><span class="pre">humann2_renorm_table</span></code> on HUMAnN2 outputs with the specified parameters</td>
+</tr>
+<tr class="row-odd"><td>join_tables</td>
+<td>&#160;</td>
+<td>Runs <code class="docutils literal"><span class="pre">humann2_join_tables</span></code> to gather all sample tables.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="lines-for-parameter-file">
+<h3>Lines for parameter file<a class="headerlink" href="#lines-for-parameter-file" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">HUMAnN2_1</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">HUMAnN2</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">trim1</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="p">{</span><span class="n">Vars</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">humann2</span><span class="p">}</span>
+    <span class="n">join_tables</span><span class="p">:</span> 
+    <span class="n">renorm_table</span><span class="p">:</span> <span class="o">--</span><span class="n">units</span> <span class="n">cpm</span> <span class="o">-</span><span class="n">p</span>
+    <span class="n">redirects</span><span class="p">:</span>
+        <span class="o">--</span><span class="n">bowtie2</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bowtie2</span>
+        <span class="o">--</span><span class="n">gap</span><span class="o">-</span><span class="n">fill</span><span class="p">:</span> <span class="n">on</span>
+        <span class="o">--</span><span class="nb">input</span><span class="o">-</span><span class="nb">format</span><span class="p">:</span> <span class="n">fastq</span>
+        <span class="o">--</span><span class="n">metaphlan</span><span class="p">:</span> <span class="p">{</span><span class="n">Vars</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">metaphlan2</span><span class="p">}</span>
+        <span class="o">--</span><span class="n">minpath</span><span class="p">:</span> <span class="n">on</span>
+        <span class="o">--</span><span class="n">nucleotide</span><span class="o">-</span><span class="n">database</span><span class="p">:</span> <span class="p">{</span><span class="n">Vars</span><span class="o">.</span><span class="n">databases</span><span class="o">.</span><span class="n">chocophlan</span><span class="p">}</span>
+        <span class="o">--</span><span class="n">protein</span><span class="o">-</span><span class="n">database</span><span class="p">:</span> <span class="p">{</span><span class="n">Vars</span><span class="o">.</span><span class="n">databases</span><span class="o">.</span><span class="n">uniref</span><span class="p">}</span>
+        <span class="o">--</span><span class="n">threads</span><span class="p">:</span> <span class="mi">30</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="references">
+<h3>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://huttenhower.sph.harvard.edu/humann2">HUMAnN2 home page</a></p>
+</div>
+</div>
+<span class="target" id="module-metagenomics.kaiju"></span><div class="section" id="kaiju">
+<h2><a class="toc-backref" href="#id17"><code class="docutils literal"><span class="pre">kaiju</span></code></a><a class="headerlink" href="#kaiju" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Menachem Sklarz</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This module was developed as part of a study led by Dr. Jacob Moran Gilad</p>
+</div>
+<p>A module for running <code class="docutils literal"><span class="pre">kaiju</span></code>:</p>
+<div class="section" id="id1">
+<h3>Requires<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">fastq files, either paired end or single:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fastq.F&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fastq.R&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fastq.S&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="id2">
+<h3>Output<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">Puts the <code class="docutils literal"><span class="pre">kaiju</span></code> output files in:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;raw_classification&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">If  ‘kaiju2krona’ is set:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;classification&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">If <code class="docutils literal"><span class="pre">ktImportText_path</span></code> parameter was passed, puts the krona reports in</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&quot;krona&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="id3">
+<h3>Parameters that can be set<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="43%" />
+<col width="29%" />
+<col width="29%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Values</th>
+<th class="head">Comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>ktImportText_path</td>
+<td>&#160;</td>
+<td>Path to ktImportText.</td>
+</tr>
+<tr class="row-odd"><td>kaiju2krona</td>
+<td>&#160;</td>
+<td>Path to kaiju2krona. If not specified, will derive it from the <code class="docutils literal"><span class="pre">script_path</span></code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id4">
+<h3>Lines for parameter file<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">kaiju1</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">kaiju</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">trim1</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="p">{</span><span class="n">Vars</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">kaiju</span><span class="p">}</span>
+    <span class="n">kaiju2krona</span><span class="p">:</span> 
+    <span class="n">ktImportText_path</span><span class="p">:</span> <span class="p">{</span><span class="n">Vars</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">ktImportText</span><span class="p">}</span>
+    <span class="n">names_dmp</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">kaijudb</span><span class="o">/</span><span class="n">names</span><span class="o">.</span><span class="n">dmp</span>
+    <span class="n">redirects</span><span class="p">:</span>
+        <span class="o">-</span><span class="n">f</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">kaijudb</span><span class="o">/</span><span class="n">kaiju_db</span><span class="o">.</span><span class="n">fmi</span>
+        <span class="o">-</span><span class="n">t</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">kaijudb</span><span class="o">/</span><span class="n">nodes</span><span class="o">.</span><span class="n">dmp</span>
+        <span class="o">-</span><span class="n">z</span><span class="p">:</span> <span class="mi">40</span>            
+</pre></div>
+</div>
+</div>
+<div class="section" id="id5">
+<h3>References<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<p>Menzel, P., Ng, K.L. and Krogh, A., 2016. <strong>Fast and sensitive taxonomic classification for metagenomics with Kaiju</strong>. Nature communications, 7.</p>
+</div>
+</div>
+<span class="target" id="module-metagenomics.kraken"></span><div class="section" id="kraken">
+<h2><a class="toc-backref" href="#id18"><code class="docutils literal"><span class="pre">kraken</span></code></a><a class="headerlink" href="#kraken" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Menachem Sklarz</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This module was developed as part of a study led by Dr. Jacob Moran Gilad</p>
+</div>
+<p>A module for running <code class="docutils literal"><span class="pre">kraken</span></code>:</p>
+<p>Note that <code class="docutils literal"><span class="pre">kraken</span></code> executable must be in a folder together with <code class="docutils literal"><span class="pre">kraken-translate</span></code> and <code class="docutils literal"><span class="pre">kraken-report</span></code>. This is the default for <code class="docutils literal"><span class="pre">kraken</span></code> installation.</p>
+<p>Pass the full path to the <code class="docutils literal"><span class="pre">kraken</span></code> executable in <code class="docutils literal"><span class="pre">script_path</span></code>.</p>
+<p>Merging of sample kraken reports in done in two ways: with an R script shipped with the module, and with krona. See the section on Parameters that can be set.</p>
+<div class="section" id="id6">
+<h3>Requires<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">fastq files, either paired end or single:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fastq.F&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fastq.R&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fastq.S&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="id7">
+<h3>Output<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">Puts the <code class="docutils literal"><span class="pre">kraken</span></code> output files in:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;raw_classification&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;classification&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;classification_report&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">If <code class="docutils literal"><span class="pre">ktImportTaxonomy_path</span></code> parameter was passed, puts the krona reports in</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&quot;krona&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">If <code class="docutils literal"><span class="pre">merge_kraken_reports</span></code> was passed, puts the merged reports in</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&quot;biom_table&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">self.sample_data[&quot;biom_table_summary&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">self.sample_data[&quot;biom_table_tsv&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="id8">
+<h3>Parameters that can be set<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="43%" />
+<col width="29%" />
+<col width="29%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Values</th>
+<th class="head">Comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>merge_kraken_reports</td>
+<td>&#160;</td>
+<td>If set, will merge the reports with <code class="docutils literal"><span class="pre">merge_kraken_reports.R</span></code>, which is shipped with the module. If <code class="docutils literal"><span class="pre">Rscript</span></code> is not in the path, you will have to use <code class="docutils literal"><span class="pre">setenv</span></code> to add it to the path.</td>
+</tr>
+<tr class="row-odd"><td>ktImportTaxonomy_path</td>
+<td>&#160;</td>
+<td>Path to ktImportTaxonomy. You can additional <code class="docutils literal"><span class="pre">ktImportTaxonomy</span></code> parameters at the end of the path. If not passed, the <code class="docutils literal"><span class="pre">krona</span></code> report will not be built.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id9">
+<h3>Lines for parameter file<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">kraken1</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">kraken</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">trim1</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="p">{</span><span class="n">Vars</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">kraken</span><span class="p">}</span>
+    <span class="n">qsub_params</span><span class="p">:</span>
+        <span class="o">-</span><span class="n">pe</span><span class="p">:</span> <span class="n">shared</span> <span class="mi">20</span>
+    <span class="n">merge_kraken_reports</span><span class="p">:</span>
+    <span class="n">ktImportTaxonomy_path</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">ktImportTaxonomy</span>  <span class="o">-</span><span class="n">u</span>  <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">krona</span><span class="o">.</span><span class="n">sourceforge</span><span class="o">.</span><span class="n">net</span>
+    <span class="n">redirects</span><span class="p">:</span>
+        <span class="o">--</span><span class="n">db</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">kraken_std_db</span>
+        <span class="o">--</span><span class="n">preload</span><span class="p">:</span> 
+        <span class="o">--</span><span class="n">quick</span><span class="p">:</span> 
+        <span class="o">--</span><span class="n">threads</span><span class="p">:</span> <span class="mi">20</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id10">
+<h3>References<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<p>Wood, D.E. and Salzberg, S.L., 2014. <strong>Kraken: ultrafast metagenomic sequence classification using exact alignments</strong>. <em>Genome biology</em>, 15(3), p.R46.</p>
+</div>
+</div>
+<span class="target" id="module-metagenomics.metaphlan2"></span><div class="section" id="metaphlan2">
+<h2><a class="toc-backref" href="#id19"><code class="docutils literal"><span class="pre">metaphlan2</span></code></a><a class="headerlink" href="#metaphlan2" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Menachem Sklarz</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Affiliation:</th><td class="field-body">Bioinformatics core facility</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Organization:</th><td class="field-body">National Institute of Biotechnology in the Negev, Ben Gurion University.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This module was developed as part of a study led by Dr. Jacob Moran Gilad</p>
+</div>
+<p>A module for running <code class="docutils literal"><span class="pre">metaphlan2</span></code>:</p>
+<div class="section" id="id11">
+<h3>Requires<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">fastq files, either paired end or single:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fastq.F&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fastq.R&quot;]</span></code></li>
+<li><code class="docutils literal"><span class="pre">sample_data[&lt;sample&gt;][&quot;fastq.S&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="id12">
+<h3>Output<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">Puts the <code class="docutils literal"><span class="pre">metaphlan2</span></code> output files in:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;raw_classification&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">If</p>
+</li>
+<li><p class="first">If <code class="docutils literal"><span class="pre">ktImportText_path</span></code> parameter was passed, puts the krona reports in</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&quot;krona&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">If <code class="docutils literal"><span class="pre">merge_metaphlan_tables</span></code> was passed, puts the merged reports in</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&quot;merged_metaphlan2&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">If ‘–biom’ is set in <code class="docutils literal"><span class="pre">redirects</span></code>, the biom table is put in:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;biom_table&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">If ‘–bowtie2out’ is set in <code class="docutils literal"><span class="pre">redirects</span></code>, the SAM file is put in:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;sam&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">If  ‘metaphlan2krona_path’ is set:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">self.sample_data[&lt;sample&gt;][&quot;classification&quot;]</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="id13">
+<h3>Parameters that can be set<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="43%" />
+<col width="29%" />
+<col width="29%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Values</th>
+<th class="head">Comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>ktImportText_path</td>
+<td>&#160;</td>
+<td>Path to ktImportText.</td>
+</tr>
+<tr class="row-odd"><td>merge_metaphlan_tables</td>
+<td>&#160;</td>
+<td>Path to merge_metaphlan_tables.py. If not specified, will derive it from the location of <code class="docutils literal"><span class="pre">metaphlan2</span></code></td>
+</tr>
+<tr class="row-even"><td>metaphlan2krona_path</td>
+<td>&#160;</td>
+<td>Path to metaphlan2krona.py</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id14">
+<h3>Lines for parameter file<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">metph1</span><span class="p">:</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">metaphlan2</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">trim1</span>
+    <span class="n">script_path</span><span class="p">:</span> <span class="p">{</span><span class="n">Vars</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">metaphlan2</span><span class="p">}</span>
+    <span class="n">ktImportText_path</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">ktImportText</span>
+    <span class="n">merge_metaphlan_tables</span><span class="p">:</span> 
+    <span class="n">metaphlan2krona_path</span><span class="p">:</span>   <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">metaphlan2krona</span><span class="o">.</span><span class="n">py</span>
+    <span class="n">redirects</span><span class="p">:</span>
+        <span class="o">--</span><span class="n">biom</span><span class="p">:</span> 
+        <span class="o">--</span><span class="n">bowtie2_exe</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bowtie2</span>
+        <span class="o">--</span><span class="n">bowtie2db</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">database</span>
+        <span class="o">--</span><span class="n">bowtie2out</span><span class="p">:</span>
+        <span class="o">--</span><span class="n">input_type</span><span class="p">:</span> <span class="n">fastq</span>
+        <span class="o">--</span><span class="n">mdelim</span><span class="p">:</span> <span class="s1">&#39;;&#39;</span>
+        <span class="o">--</span><span class="n">mpa_pkl</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">mpa_v20_m200</span><span class="o">.</span><span class="n">pkl</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id15">
+<h3>References<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h3>
+<p>Truong, D.T., Franzosa, E.A., Tickle, T.L., Scholz, M., Weingart, G., Pasolli, E., Tett, A., Huttenhower, C. and Segata, N., 2015. <strong>MetaPhlAn2 for enhanced metagenomic taxonomic profiling</strong>. <em>Nature methods</em>, 12(10), pp.902-903.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="Microbiology.html" class="btn btn-neutral float-right" title="Microbiology" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="Mapping.html" class="btn btn-neutral" title="Mapping" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Menachem Sklarz.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

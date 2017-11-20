@@ -42,7 +42,7 @@ Output
 
 
     
-..Note:: When using ``parallel_identify_chimeric_seqs.py``, the module tries to build the scripts appropriately. **It is wise to check the parallel scripts before running them...**
+.. Note:: When using ``parallel_identify_chimeric_seqs.py``, the module tries to build the scripts appropriately. **It is wise to check the parallel scripts before running them...**
   
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
