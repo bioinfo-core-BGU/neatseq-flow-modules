@@ -92,7 +92,7 @@ language = None
 exclude_patterns = []
 
 # 
-autodoc_mock_imports = ["PLC_step","modules.global_defs"]
+autodoc_mock_imports = ["neatseq_flow.PLC_step","neatseq_flow.modules.global_defs"]
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
