@@ -1,8 +1,6 @@
-
-
+===================
 Preparation and QC
-========================================
-
+===================
 
 .. contents:: Modules included in this section
    :local:

@@ -30,12 +30,6 @@ Output
     * ``self.sample_data["phylotree"]``
     
     
-Parameters that can be set
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. csv-table:: 
-    :header: "Parameter", "Values", "Comments"
-    :widths: 15, 10, 10
 
     
 Lines for parameter file

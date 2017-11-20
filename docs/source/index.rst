@@ -54,21 +54,21 @@ Following is a list of modules included in this repository.
    :maxdepth: 2
    :caption: Modules
 
+   Module_docs/PreparationAndQC
+   Module_docs/Mapping
    Module_docs/BAMConversion
    Module_docs/ChIPseq
-   Module_docs/GenericModule
    Module_docs/GenomeAssembly
-   Module_docs/Mapping
+   Module_docs/TranscriptomeAssembly
+   Module_docs/SequenceAnnotation
+   Module_docs/SequenceSearching
+   Module_docs/Variants
    Module_docs/Metagenomics
    Module_docs/Microbiology
-   Module_docs/PreparationAndQC
    Module_docs/QIIME
-   Module_docs/SequenceAnnotation
    Module_docs/SequenceClustering
-   Module_docs/SequenceSearching
-   Module_docs/TranscriptomeAssembly
-   Module_docs/Variants
    Module_docs/VariousReportingPrograms
+   Module_docs/GenericModule
 
 ..   all_modules
    
