@@ -2,35 +2,33 @@
 
 # -*- coding: UTF-8 -*-
 """ 
-Module ``Trim_Galore``
+``Trim_Galore``
 -----------------------
 
 :Authors: Liron Levin
 :Affiliation: Bioinformatics core facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
-
-SHORT DESCRIPTION
+Short Description
+~~~~~~~~~~~~~~~~~~~~~~
     A module for running Trim Galore on fastq files
 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    fastq files in at least one of the following slots:
-        sample_data[<sample>]["fastq.F"]
-        sample_data[<sample>]["fastq.R"]
-        sample_data[<sample>]["fastq.S"]
+    * fastq files in at least one of the following slots:
+        ``sample_data[<sample>]["fastq.F"]``
+        ``sample_data[<sample>]["fastq.R"]``
+        ``sample_data[<sample>]["fastq.S"]``
 
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    puts fastq output files in the following slots:
-        sample_data[<sample>]["fastq.F"]
-        sample_data[<sample>]["fastq.R"]
-        sample_data[<sample>]["fastq.S"]
-    puts unpaired fastq output files in the following slots:
-        sample_data[<sample>]["fastq.F.unpaired"]
-        sample_data[<sample>]["fastq.R.unpaired"]
-
-
+    * puts fastq output files in the following slots:
+        ``sample_data[<sample>]["fastq.F"]``
+        ``sample_data[<sample>]["fastq.R"]``
+        ``sample_data[<sample>]["fastq.S"]``
+    * puts unpaired fastq output files in the following slots:
+        ``sample_data[<sample>]["fastq.F.unpaired"]``
+        ``sample_data[<sample>]["fastq.R.unpaired"]``
 
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -39,11 +37,14 @@ Parameters that can be set
     :header: "Parameter", "Values", "Comments"
     :widths: 15, 10, 10
 
-    "PARAMETER NAME",  "POSSIBLE VALUES", "DESCRIPTION"
+    "",  "", ""
     
 
 Comments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    *  This module was tested on:
+        ``Trim Galore v0.4.2``
+        ``Cutadapt v1.12.1``
 
 
 Lines for parameter file
@@ -61,10 +62,12 @@ Lines for parameter file
             --length:                # Parameters for running Trim Galore
             -q:                      # Parameters for running Trim Galore
 
-    
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+    * Cutadapt:
+        Martin, Marcel. "Cutadapt removes adapter sequences from high-throughput sequencing reads." EMBnet journal 17.1 (2011):pp-10
+    * Trim Galore:
+        Krueger F: Trim Galore. [http://www.bioinformatics.babraham.ac.uk/projects/]
 
 """
 import os
@@ -78,7 +81,7 @@ __version__ = "0.2.0"
 class Step_Trim_Galore(Step):
 
     def step_specific_init(self):
-        self.shell = "bash"      # Can be set to "bash" by inheriting instances
+        self.shell = "csh"      # Can be set to "bash" by inheriting instances
         self.file_tag = "trim_galore.fq"
         if "--output_dir" in self.params["redir_params"] or "-o" in self.params["redir_params"]:
             raise AssertionExcept("You should not give output directory\n")

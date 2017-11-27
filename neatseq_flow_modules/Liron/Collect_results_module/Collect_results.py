@@ -1,7 +1,7 @@
 #!/fastspace/bioinfo_apps/python-2.7_SL6/bin/python
 # -*- coding: UTF-8 -*-
 """ 
-Module ``Collect_results``
+``Collect_results``
 -----------------------
 
 :Authors: Liron Levin
@@ -10,7 +10,8 @@ Module ``Collect_results``
 
 .. Note:: This module was developed as part of a study led by Dr. Jacob Moran Gilad
 
-SHORT DESCRIPTION
+Short Description
+~~~~~~~~~~~~~~~~~~~~~~~~~
     A module to Collect and merge/append results from all base steps directories:
     This module will search for each base step for all the results files with a common name pattern [Regular expression].
     The search will be done within the base step result directories.
@@ -29,7 +30,6 @@ Output
     * ``Will generate file for each of the base steps with the file ending with .merg``
     * Can also generate Excel file with sheet for each base step 
 
-
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -37,12 +37,13 @@ Parameters that can be set
     :header: "Parameter", "Values", "Comments"
     :widths: 15, 10, 10
 
-    "PARAMETER NAME",  "POSSIBLE VALUES", "DESCRIPTION"
+    "",  "", ""
     
 
 Comments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-       
+    *  The following python packages are required:
+        ``pandas``
 
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -65,10 +66,9 @@ Lines for parameter file
             --split_by:                   # Split the data in the columns [index <columns> values] before pivot
             --sep:                        # Columns separator for input file
             -T:                           # Write Transpose output
-    
+
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 """
 import os
@@ -87,7 +87,7 @@ class Step_Collect_results(Step):
             Good place for parameter testing.
             Wrong place for sample data testing
         """
-        self.shell = "bash"      # Can be set to "bash" by inheriting instances
+        self.shell = "csh"      # Can be set to "bash" by inheriting instances
         self.file_tag = ".merg"
         import inspect
         self.module_location=os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))

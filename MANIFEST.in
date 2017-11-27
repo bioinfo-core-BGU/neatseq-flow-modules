@@ -1,0 +1,1 @@
+recursive-include neatseq_flow_modules *.R *.fasta *.tsv

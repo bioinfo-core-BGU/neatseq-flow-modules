@@ -6,15 +6,6 @@ library("optparse")
 library(tools)
 
 
-# paste("Rscript",
-#       "MLST_typing.R",
-#       "--blast",    "StaphAureus/SAM1313.blast.parsed",
-#       "--scheme",   "StaphAureus/SA_MLST_scheme_new..txt",
-#       "--num_of_genes",   "7",
-#       "--output",   "StaphAureus/SAH401.MLST.txt") %>% system
-# paste("Rscript","MLST_typing.R","-h") %>% system
-
-
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
@@ -38,12 +29,6 @@ opt_parser = optparse::OptionParser(usage = "usage: %prog [options]",
                                     option_list=option_list,
                                     epilogue="\n\nAuthor: Menachem Sklarz");
 opt = optparse::parse_args(opt_parser);
-# 
-#  opt$blast = "E:\\levinl\\Koby\\04.Campylobacter_jejuni\\cgMLST\\43379.blast.parsed"
-#  opt$output = "E:\\levinl\\Koby\\04.Campylobacter_jejuni\\cgMLST\\MLST.txt"
-#  opt$num_of_genes = 1343
-#  opt$cols_to_return = "cgST"
-#  opt$scheme = "E:\\levinl\\Koby\\04.Campylobacter_jejuni\\cgMLST\\cgMLST.tsv"
 
 opt$cols_to_return <- strsplit(x = opt$cols_to_return,
                                split = ",") %>% unlist

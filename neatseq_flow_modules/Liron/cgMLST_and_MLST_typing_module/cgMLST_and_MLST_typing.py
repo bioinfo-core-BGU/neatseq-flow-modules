@@ -1,32 +1,34 @@
 #!/fastspace/bioinfo_apps/python-2.7_SL6/bin/python
 
 """ 
-Module ``cgMLST_and_MLST_typing``
+``cgMLST_and_MLST_typing``
 -----------------------
 
 :Authors: Liron Levin
 :Affiliation: Bioinformatics core facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
-.. Note:: This module was developed as part of a study led by Dr. Jacob Moran Gilad
+.. Note:: This module was developed as part of a study led by Dr. Jacob Moran Gilad. The MLST typing R script was created by Menachem Sklarz & Michal Gordon 
 
-SHORT DESCRIPTION
+Short Description
+~~~~~~~~~~~~~~~~~~~~~~~~
     A module for a MLST and cgMLST Typing
+
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Blast results after parsing in: 
-        self.sample_data[<sample>]["blast.parsed"]
+    * Blast results after parsing in: 
+        ``self.sample_data[<sample>]["blast.parsed"]``
 
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Typing results in:
-        self.sample_data[<sample>]["Typing"]
-    Merge of typing results in: 
-        self.sample_data["Typing"]
-    Files for phyloviz in:
-        self.sample_data["phyloviz_MetaData"]
-        self.sample_data["phyloviz_Alleles"]
-        
+    * Typing results in:
+        ``self.sample_data[<sample>]["Typing"]``
+    * Merge of typing results in: 
+        ``self.sample_data["Typing"]``
+    * Files for phyloviz in:
+        ``self.sample_data["phyloviz_MetaData"]``
+        ``self.sample_data["phyloviz_Alleles"]``
+
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -39,7 +41,8 @@ Parameters that can be set
 
 Comments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+    *  The following python packages are required:
+        ``pandas``
 
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -58,8 +61,7 @@ Lines for parameter file
             --scheme:                            # Path to the Typing scheme file [Tab delimited]
             --num_of_genes:                      # Number of genes/locus in the scheme
             --cols_to_return:                    # Column names in the scheme file to include in the final Meta-Data file
-             
-    
+
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -70,7 +72,7 @@ References
 import os
 import sys
 import re
-from neatseq_flow.PLC_step import Step
+from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Liron Levin"
@@ -86,7 +88,7 @@ class Step_cgMLST_and_MLST_typing(Step):
             Good place for parameter testing.
             Wrong place for sample data testing
         """
-        self.shell = "bash"      # Can be set to "bash" by inheriting instances
+        self.shell = "csh"      # Can be set to "bash" by inheriting instances
         self.file_tag = ".MLST.type"
         import inspect
         self.module_location=os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))

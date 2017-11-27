@@ -41,23 +41,10 @@ option_list = list(
 
 opt_parser = optparse::OptionParser(usage = "usage: %prog [options]", 
                                     option_list=option_list,
-                                    epilogue="\n\nAuthor:Liron Levin based on Eliad Nir script");
+                                    epilogue="\n\nAuthor:Liron Levin based on Eliad Levi script");
 opt = optparse::parse_args(opt_parser);
 
 
-# opt$cols_to_use= '"ST","isolation.source","host","geographic.location","year"'
-# opt$Annotation="SN_VFDB_setB_pro.SN_to_metadata.unified_VF_category.clustered.cov_0.7.curated_vfDesc.tsv"
-# opt$Roary_Results="gene_presence_absence.csv"
-# opt$metadata="Acinetobacter_baumannii_MetaData.txt"
-# opt$pAdjustMethod="none"
-# opt$pvalueCutoff=0.05
-# opt$ID_field="Samples"
-# opt$Minimal= 2
-# opt$filter_min=0.05
-# opt$filter_max=0.95
-# opt$thrgene=3
-# opt$thrcond= 2.75
-# opt$noseeds= 100
 print("Input var:",,quote = F)
 print.data.frame(as.data.frame(x = unlist(opt),row.names = names(opt)),right = F,quote = F)
 Annotation_file=opt$Annotation

@@ -1,7 +1,7 @@
 #!/fastspace/bioinfo_apps/python-2.7_SL6/bin/python
 # -*- coding: UTF-8 -*-
 """ 
-Module ``Gassst``
+``Gassst``
 -----------------------
 
 :Authors: Liron Levin
@@ -10,7 +10,8 @@ Module ``Gassst``
 
 .. Note:: This module was developed as part of a study led by Dr. Jacob Moran Gilad
 
-SHORT DESCRIPTION
+Short Description
+~~~~~~~~~~~~~~~~~~~~~~~~~
     A module for executing Gassst on a nucleotide fasta file.
     The search can be either on a sample fasta or on a project-wide fasta.
     It can use the fasta as a database or as a query.
@@ -43,9 +44,13 @@ Parameters that can be set
 
 Comments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Only -d [database] or -i [query] not both
-    The Gassst module will generate blast like output with fields:
-    "qseqid sallseqid qlen slen qstart qend sstart send length evalue sseq"
+    *  This module was tested on:
+        ``Gassst v1.28``
+    *  The following python packages are required:
+        ``pandas``
+    * Only -d [database] or -i [query] not both
+    * The Gassst module will generate blast like output with fields:
+        ```"qseqid sallseqid qlen slen qstart qend sstart send length evalue sseq"``
 
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -68,17 +73,17 @@ Lines for parameter file
             -d:                        # Only -d [database] or -i [query] not both
             -n:                        # Number of CPUs running Gassst
             -p:                        # Minimum percentage of identity. Must be in the interval [0 100]
-    
+
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+    Rizk, Guillaume, and Dominique Lavenier. "GASSST: global alignment short sequence search tool." Bioinformatics 26.20 (2010): 2534-2540.‏
 """
 
 
 import os
 import sys
 import re
-from neatseq_flow.PLC_step import Step
+from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Liron Levin"
@@ -91,7 +96,7 @@ class Step_Gassst(Step):
             Good place for parameter testing.
             Wrong place for sample data testing
         """
-        self.shell = "bash"      # Can be set to "bash" by inheriting instances
+        self.shell = "csh"      # Can be set to "bash" by inheriting instances
         self.file_tag = ".Gassst.out"
         import inspect
         self.module_location=os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))

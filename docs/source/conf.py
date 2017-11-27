@@ -19,7 +19,7 @@ import os
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('../../neatseq_flow_modules'))
-sys.path.append(os.path.abspath('../../../../release_1.0.1'))
+#sys.path.append(os.path.abspath('../../../../release_1.0.1'))
 # sys.path.insert(0, os.path.abspath('../../Modules/Main_NSF_modules'))
 
 # print sys.path

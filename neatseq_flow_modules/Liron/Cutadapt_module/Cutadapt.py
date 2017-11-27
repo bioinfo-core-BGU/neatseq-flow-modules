@@ -2,29 +2,30 @@
 
 # -*- coding: UTF-8 -*-
 """ 
-Module ``Cutadapt``
+``Cutadapt``
 -----------------------
 
 :Authors: Levin Liron
 :Affiliation: Bioinformatics core facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
-
-SHORT DESCRIPTION
+Short Description
+~~~~~~~~~~~~~~~~~~~~~~~~
     A module for running cutadapt on fastqc files
+
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    fastq files in at least one of the following slots:
-        sample_data[<sample>]["fastq.F"]
-        sample_data[<sample>]["fastq.R"]
-        sample_data[<sample>]["fastq.S"]
+    * fastq files in at least one of the following slots:
+        ``sample_data[<sample>]["fastq.F"]``
+        ``sample_data[<sample>]["fastq.R"]``
+        ``sample_data[<sample>]["fastq.S"]``
 
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    puts fastq output files in the following slots:
-        sample_data[<sample>]["fastq.F"]
-        sample_data[<sample>]["fastq.R"]
-        sample_data[<sample>]["fastq.S"]
+    * puts fastq output files in the following slots:
+        ``sample_data[<sample>]["fastq.F"]``
+        ``sample_data[<sample>]["fastq.R"]``
+        ``sample_data[<sample>]["fastq.S"]``
 
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -33,12 +34,13 @@ Parameters that can be set
     :header: "Parameter", "Values", "Comments"
     :widths: 15, 10, 10
 
-    "PARAMETER NAME",  "POSSIBLE VALUES", "DESCRIPTION"
+    "",  "", ""
     
 
 Comments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+    *  This module was tested on:
+        ``Cutadapt v1.12.1``
 
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -57,10 +59,9 @@ Lines for parameter file
             --too-short-output:      # will replace @ with the location of the sample dir  [e.g. @too_short.fq] 
             -a:                      # Use to trim poly A in SE reads [e.g. "A{100} -A T{100}"]
 
-    
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+    Martin, Marcel. "Cutadapt removes adapter sequences from high-throughput sequencing reads." EMBnet. journal 17.1 (2011): pp-10.‏
 
 """
 import os
@@ -77,7 +78,7 @@ class Step_Cutadapt(Step):
     
 
     def step_specific_init(self):
-        self.shell = "bash"      # Can be set to "bash" by inheriting instances
+        self.shell = "csh"      # Can be set to "bash" by inheriting instances
         self.file_tag = ".fq"
 
         if "--output_dir" in self.params["redir_params"] or "-o" in self.params["redir_params"]:

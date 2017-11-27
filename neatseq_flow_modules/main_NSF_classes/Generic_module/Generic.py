@@ -1,38 +1,95 @@
+#!/fastspace/bioinfo_apps/python-2.7_SL6/bin/python
+# -*- coding: UTF-8 -*-
 """ 
-``Generic`` :sup:`*`
------------------------------------------------------------------
+``Generic``
+-----------------------
 
-A class that defines a module for a generic module.
-It enables the user to design new modules that can handle most cases.
+:Authors: Liron Levin
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
-Parameters file arguments:
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+Short Description
+~~~~~~~~~~~~~~~~~~~~~
+
+A generic module that enables the user to design new modules that can handle most cases.
+
+Requires
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* In this module the users define the required file types in the inputs section 
+
+Output
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* In this module the users define the output file types in the outputs section
+* The scope of the output file types is determinant by the module scope
+
+Parameters that can be set
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. csv-table:: 
+    :header: "Parameter", "Values", "Comments"
+    :widths: 15, 10, 10
+
+    "scope",  "sample/project", "The scope of this module could be sample/project, the default is by sample"
+    "shell","csh/bash","Type of shell [csh OR bash]. bash is the default, **only bash can be used in conda environment**"
+    "inputs_last","","The inputs arguments will be at the end of the command"
+
+Comments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    The order of the input/output arguments in the final command 
+    will be according to the order of their appearance in the parameter file.
+    The redirect arguments are always first. 
+
+
+
+Example of usage and implementation of the generic module:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. attention:: 
+
+    
+    .. figure:: Generic_Module_Example.png
+        :align: center
+        :alt: Generic Module Example
+        :figclass: align-left
+    
+    **A generic module is used to generate a BLAST database for each sample and a subsequent generic step queries each database with sequences from an external FASTA file. This example is a typical use of BLAST in many biological scenarios such as searching for virulence/resistance genes (whose sequences are in the external FASTA file) in bacterial genomes**
+
+
+    **A.** Calling a generic module to generate a BLAST database (using makeblastdb) from each sample. This step can be used after (base:) any step that creates a nucleotide FASTA file (File_Type:  ``fasta.nucl``), e.g. after merge (if the raw files are in nucleotide FASTA format) or after a de novo assembly step. The location of the BLAST database for each sample is saved as a blast_db file type (File_Type: blast_db) for downstream use. **B.** Calling a generic module which performs a BLAST search (tblastn) of an external query protein fasta file (``-query`` :  path to query protein fasta file) against the previously generated BLAST data base per sample. This step can be used after the Make_BLAST_DB step (base: Make_BLAST_DB). The user can pass additional parameters directly to the used program in the redirects section (e.g. ``–dbtype``, ``–evalue``, ``-num_descriptions`` etc.). 
+
+
+Lines for parameter file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ::
 
-    Generic_step:                   # Name of this step
+    Step_Name:                      # Name of this step
         module: Generic             # Name of module
-        base:                       # Name of the step [or list of names] to run after [mast be after steps that generates the inputs File_Types] 
+        base:                       # Name of the step [or list of names] to run after [must be after steps that generates the inputs File_Types] 
         script_path:                # Main command for this module
         scope:                      # The scope of this module could be sample/project, the default is by sample
-        shell:                      # Type of shell [csh OR bash]. csh is the default
+        shell:                      # Type of shell [csh OR bash]. bash is the default. only bash can be used in conda environment  
+        inputs_last:                # The inputs arguments will be at the end of the command. [The default is inputs arguments at the beginning of the command] 
         inputs:                     # The inputs for this module
-            STR:                    # Input argument, could be also 'empty#'
+            STR:                    # Input argument, e.g. -i, --input [could be also 'Empty1', 'Empty2'.. for no input argument string] 
                 scope:              # The scope of this input argument could be sample/project
                                     # If the module scope is project and the argument scope is sample:
-                                    # all the samples inputs File_Types of this argument will be listed as: argument File_Type(of sample #) 
+                                    # all the samples inputs File_Types of this argument will be listed as: [input argument] [File_Type(sample#)] e.g. -i sample1.bam -i sample2.bam ... 
                 File_Type:          # The input File_Type could be any File_Type available from previous (in this branch) steps
+                base:               # From which previous step to take the input File_Type. The default is the current step.
                 sep:                # If the module scope is project and the argument scope is sample:  
-                                    # all the samples inputs File_Types of this argument will be listed delimited by sep
-                del:                # Delete this File_Type after the step ends
+                                    #       All the samples inputs File_Types of this argument will be listed delimited by sep. e.g. [sep=,] -i sample1.bam,sample2.bam ... 
+                del:                # Delete the files in the input File_Type after the step ends [use to save space for large files you don't need downstream]
                                     # Will generate empty file with the same name and a suffix of _DELETED
         outputs:                    # The outputs for this module
-            STR:                    # Output argument, the scope of the output arguments is determinant by the module scope
-                                    # could be also 'empty#' OR "No_run" for only entering the file information to output File_Type 
+            STR:                    # Output argument, e.g. -o, --out , the scope of the output arguments is determinant by the module scope
+                                    # could be also 'Empty1', 'Empty2'.. for no output argument string OR 'No_run1', 'No_run2'.. for only entering the file information to output File_Type 
                 File_Type:          # The output File_Type could be any File_Type name for the current branch downstream work 
                                     # If the File_Type exists its content will be override for the current branch downstream work 
-                prefix:             # A prefix for this output argument file name                
-                suffix:             # A suffix for this output argument file name                
+                prefix:             # A prefix for this output argument file name
+                suffix:             # A suffix for this output argument file name
                                     # between prefix and suffix will be the sample name [in sample scope] or the project title [in project scope] 
                 constant_file_name: # Use constant file name for this output argument [ignore prefix and suffix]
                                     # If empty [''] will enter the output directory location
@@ -41,20 +98,19 @@ Parameters file arguments:
             STR:                    # Unique name for the transfer
                 source:
                     File_Type:      # Copy the content of source File_Type to the target File_Type [copy from here]
-                    scope:          # From the scope of scope_in [if scope_in is not specified the default is sample]
+                    scope:          # Copy the source File_Type From this scope [if not specified the default is sample]
+                    base:           # The source step to copy the File_Type from (from previous steps). The default it the current step.
                 target:
                     File_Type:      # Copy the content of source File_Type to the target File_Type [copy to here]
-                    scope:          # From the scope of scope_out [if scope_out is not specified the default is sample]
+                    scope:          # Copy to the target File_Type in this scope [if not specified the default is sample]
         qsub_params:                # Parameters for qsub [number of cpus or memory to reserve etc ]
             STR: 
         redirects:                  # Parameters to pass directly to the command
             STR: 
 
 
-
-
-
 """
+
 
 import os
 import sys
@@ -78,6 +134,7 @@ class Step_Generic(Step):
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
+        
         if len(get_File_Type_data(self.params,["copy_File_Types"]))>0:
             for transfer in self.params["copy_File_Types"]:
                 dif=set(["source","target",]).difference(self.params["copy_File_Types"][transfer].keys())
@@ -86,28 +143,39 @@ class Step_Generic(Step):
                     scope_out=get_File_Type_data(self.params["copy_File_Types"],[transfer,"target","scope"],"sample")
                     File_Type_in=get_File_Type_data(self.params["copy_File_Types"],[transfer,"source","File_Type"],None)
                     File_Type_out=get_File_Type_data(self.params["copy_File_Types"],[transfer,"target","File_Type"],None)
+                    base=get_File_Type_data(self.params["copy_File_Types"],[transfer,"source","base"],None)
                     
+                    source_sample_data=self.sample_data
+                    if base!=None:
+                        if base in self.base_sample_data.keys():
+                            source_sample_data=self.base_sample_data[base]
+                        else:
+                            raise AssertionExcept("The step name %s is not one of the previous steps of the %%s step" % base  % self.step )
+                    else:
+                        base=self.step
+                        
                     if (File_Type_in and File_Type_out)!=None:
                         if "sample" in [scope_in , scope_out]:
                             for sample in self.sample_data["samples"]:
                                 if scope_in =="sample":
-                                    if File_Type_in in self.sample_data[sample].keys():
+                                    if File_Type_in in source_sample_data[sample].keys():
                                         if scope_out=="sample":
-                                            self.sample_data[sample][File_Type_out]=self.sample_data[sample][File_Type_in]
+                                            self.sample_data[sample][File_Type_out]=source_sample_data[sample][File_Type_in]
                                         else:
-                                            self.sample_data[File_Type_out]=self.sample_data[sample][File_Type_in]
+                                            #self.sample_data[File_Type_out]=source_sample_data[sample][File_Type_in]
+                                            raise AssertionExcept("It is not possible to transfer data from SAMPLE level to PROJECT level in transfer name: '%s' " % transfer)
                                     else:
-                                        raise AssertionExcept("The File_Type %s is not found in the SAMPLE level \n\t File_Types available are : %%s" % File_Type_in % self.sample_data[sample].keys() )
+                                        raise AssertionExcept("The File_Type %s is not found in the SAMPLE level  File_Types available are : %%s in step %%%%s" % File_Type_in % source_sample_data[sample].keys() % base)
                                 else:
-                                    if File_Type_in in self.sample_data.keys():
-                                        self.sample_data[sample][File_Type_out]=self.sample_data[File_Type_in]
+                                    if File_Type_in in source_sample_data.keys():
+                                        self.sample_data[sample][File_Type_out]=source_sample_data[File_Type_in]
                                     else:
-                                        raise AssertionExcept("The File_Type %s is not found in the PROJECT level \n\t File_Types available are : %%s" % File_Type_in % self.sample_data.keys() )
+                                        raise AssertionExcept("The File_Type %s is not found in the PROJECT level \n\t File_Types available are : %%s in step %%%%s" % File_Type_in %  source_sample_data.keys() % base )
                         else:
-                            if File_Type_in in self.sample_data.keys():
-                                self.sample_data[File_Type_out]=self.sample_data[File_Type_in]
+                            if File_Type_in in source_sample_data.keys():
+                                self.sample_data[File_Type_out]=source_sample_data[File_Type_in]
                             else:
-                                raise AssertionExcept("The File_Type %s is not found in the PROJECT level \n\t File_Types available are : %%s" % File_Type_in % self.sample_data.keys() )
+                                raise AssertionExcept("The File_Type %s is not found in the PROJECT level \n\t File_Types available are : %%s in step %%%%s" % File_Type_in %  source_sample_data.keys() % base )
                     else:
                         if File_Type_in==None:
                             raise AssertionExcept("The following argument/s are missing or empty in the copy_File_Types section: %s" % "source File_Type")
@@ -132,18 +200,31 @@ class Step_Generic(Step):
         if len(get_File_Type_data(self.params,["inputs"]))>0:
             # Test if the input File_Types exists 
             for inputs in self.params["inputs"].keys():
+                
+                
+                base=get_File_Type_data(self.params["inputs"],[inputs,"base"],None)                
+                inputs_sample_data=self.sample_data
+                if base!=None:
+                    if base in self.base_sample_data.keys():
+                        inputs_sample_data=self.base_sample_data[base]
+                    else:
+                        raise AssertionExcept("The step name %s is not one of the previous steps of the %%s step" % base  % self.step )
+                else:
+                    base=self.step
+                
+                
                 if get_File_Type_data(self.params["inputs"],[inputs,"File_Type"],None)==None: #Test if the user specify a File_Type for the input argument
-                    raise AssertionExcept("You mast specify a File_Type argument in the input parameter: %s " % inputs)
+                    raise AssertionExcept("You must specify a File_Type argument in the input parameter: %s " % inputs)
                 else:  #Test if the File_Type for the input argument exists
                     if get_File_Type_data(self.params["inputs"],[inputs,"scope"])=="project":
-                        if get_File_Type_data(self.params["inputs"],[inputs,"File_Type"]) not in self.sample_data.keys():
-                            raise AssertionExcept("The File_Type %s is not found in the PROJECT level \n\t File_Types available are : %%s" % get_File_Type_data(self.params["inputs"],[inputs,"File_Type"]) % self.sample_data.keys() )
+                        if get_File_Type_data(self.params["inputs"],[inputs,"File_Type"]) not in inputs_sample_data.keys():
+                            raise AssertionExcept("The File_Type %s is not found in the PROJECT level \n\t File_Types available are : %%s in step %%%%s" % get_File_Type_data(self.params["inputs"],[inputs,"File_Type"]) % inputs_sample_data.keys(), base )
                     else:
                         for sample in self.sample_data["samples"]:
-                            if get_File_Type_data(self.params["inputs"],[inputs,"File_Type"]) not in self.sample_data[sample].keys():                            
-                                raise AssertionExcept("The File_Type %s is not found in the SAMPLE level [in sample name %%s] \n\t File_Types available are : %%%%s" % get_File_Type_data(self.params["inputs"],[inputs,"File_Type"]) % sample % self.sample_data[sample].keys())
+                            if get_File_Type_data(self.params["inputs"],[inputs,"File_Type"]) not in inputs_sample_data[sample].keys():                            
+                                raise AssertionExcept("The File_Type %s is not found in the SAMPLE level [in sample name %%s] \n\t File_Types available are : %%%%s in step %%%%%%%%s" % get_File_Type_data(self.params["inputs"],[inputs,"File_Type"]) % sample % inputs_sample_data[sample].keys(), base)
                 if "del" in self.params["inputs"][inputs].keys():
-                    self.write_warning("!!! The file/directory in the input File_Type %s will be DELETED at the end of this step!!! " % get_File_Type_data(self.params["inputs"],[inputs,"File_Type"]))
+                    self.write_warning("!!! The file/directory in the input File_Type %s in step %%s will be DELETED at the end of this step!!! " % get_File_Type_data(self.params["inputs"],[inputs,"File_Type"]) % base)
         
         if len(get_File_Type_data(self.params,["outputs"]))>0:
             # Test if the output File_Types
@@ -167,19 +248,31 @@ class Step_Generic(Step):
         """
         if len(get_File_Type_data(self.params,["inputs"]))>0:
             # Test if the input File_Types exists 
-            for inputs in self.params["inputs"].keys():            
+            for inputs in self.params["inputs"].keys():
+                
+                
+                base=get_File_Type_data(self.params["inputs"],[inputs,"base"],None)                
+                inputs_sample_data=self.sample_data
+                if base!=None:
+                    if base in self.base_sample_data.keys():
+                        inputs_sample_data=self.base_sample_data[base]
+                    else:
+                        raise AssertionExcept("The step name %s is not one of the previous steps of the %%s step" % base  % self.step )
+                else:
+                    base=self.step    
+                    
                 if get_File_Type_data(self.params["inputs"],[inputs,"File_Type"],None)==None: #Test if the user specify a File_Type for the input argument
-                    raise AssertionExcept("You mast specify a File_Type argument in the input parameter: %s " % inputs)
+                    raise AssertionExcept("You must specify a File_Type argument in the input parameter: %s " % inputs)
                 else:  #Test if the File_Type for the input argument exists
                     if get_File_Type_data(self.params["inputs"],[inputs,"scope"])=="project":
-                        if get_File_Type_data(self.params["inputs"],[inputs,"File_Type"]) not in self.sample_data.keys():
-                            raise AssertionExcept("The File_Type %s is not found in the PROJECT level \n\t File_Types available are : %%s" % get_File_Type_data(self.params["inputs"],[inputs,"File_Type"]) % self.sample_data.keys())
+                        if get_File_Type_data(self.params["inputs"],[inputs,"File_Type"]) not in inputs_sample_data.keys():
+                            raise AssertionExcept("The File_Type %s is not found in the PROJECT level \n\t File_Types available are : %%s in step %%%%s" % get_File_Type_data(self.params["inputs"],[inputs,"File_Type"]) % inputs_sample_data.keys(), base)
                     else:
                         for sample in self.sample_data["samples"]:
-                            if get_File_Type_data(self.params["inputs"],[inputs,"File_Type"]) not in self.sample_data[sample].keys():
-                                raise AssertionExcept("The File_Type %s is not found in the SAMPLE level [in sample name %%s] \n\t File_Types available are : %%%%s" % get_File_Type_data(self.params["inputs"],[inputs,"File_Type"]) % sample % self.sample_data[sample].keys() )
+                            if get_File_Type_data(self.params["inputs"],[inputs,"File_Type"]) not in inputs_sample_data[sample].keys():
+                                raise AssertionExcept("The File_Type %s is not found in the SAMPLE level [in sample name %%s] \n\t File_Types available are : %%%%s in step %%%%%%%%s" % get_File_Type_data(self.params["inputs"],[inputs,"File_Type"]) % sample % inputs_sample_data[sample].keys() ,base)
                 if "del" in self.params["inputs"][inputs].keys():
-                    self.write_warning("!!! The file/directory in the input File_Type %s will be DELETED at the end of this step!!! " % get_File_Type_data(self.params["inputs"],[inputs,"File_Type"]))
+                    self.write_warning("!!! The file/directory in the input File_Type %s in step %%s will be DELETED at the end of this step!!! " % get_File_Type_data(self.params["inputs"],[inputs,"File_Type"]),base)
         
         if len(get_File_Type_data(self.params,["outputs"]))>0:
             # Test if the output File_Types
@@ -211,7 +304,7 @@ class Step_Generic(Step):
                 self.script+=line
         pass
         
-
+    
     
     def build_scripts(self):
         """ This is the actual script building function
@@ -237,7 +330,10 @@ class Step_Generic(Step):
             # Name of specific script:
             self.spec_script_name = "_".join([self.step,self.name,sample])
             self.script = ""
-
+            
+            inputs_script = ""
+            outputs_script = ""
+            
             # Make a dir for the current sample:
             sample_dir = self.make_folder_for_sample(sample)
             
@@ -250,28 +346,54 @@ class Step_Generic(Step):
             if len(get_File_Type_data(self.params,["inputs"]))>0:
                 # Adds inputs files
                 for inputs in self.params["inputs"].keys(): 
+                    
+                    
+                    base=get_File_Type_data(self.params["inputs"],[inputs,"base"],None)                
+                    inputs_sample_data=self.sample_data
+                    if base!=None:
+                        if base in self.base_sample_data.keys():
+                            inputs_sample_data=self.base_sample_data[base]
+                        else:
+                            raise AssertionExcept("The step name %s is not one of the previous steps of the %%s step" % base  % self.step )
+                    else:
+                        base=self.step    
+                    
+                    
                     File_Type=""
                     if get_File_Type_data(self.params["inputs"],[inputs,"scope"])=="project":
-                        File_Type=self.sample_data[get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])]
+                        File_Type=inputs_sample_data[get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])]
                     else:
-                        File_Type=self.sample_data[sample][get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])]
-                    if inputs.startswith("empty"):
-                        self.script +="%s   \\\n\t"    % File_Type
+                        File_Type=inputs_sample_data[sample][get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])]
+                    if inputs.startswith("Empty"):
+                        inputs_script +="%s   \\\n\t"    % File_Type
                     else:
-                        self.script +="%s  %%s \\\n\t" % inputs \
+                        inputs_script +="%s  %%s \\\n\t" % inputs \
                                                        % File_Type 
             if len(get_File_Type_data(self.params,["inputs"]))>0:
                 # Generating delete script for input File_Types if specified 
                 del_script=""
                 for inputs in self.params["inputs"].keys():                                       
                     if "del" in self.params["inputs"][inputs].keys():
-                        if get_File_Type_data(self.params["inputs"],[inputs,"scope"])=="project":
-                            self.project_del_script.append("rm -rf %s   \n\n" % self.sample_data[get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])])
-                            self.project_del_script.append("echo > %s_DELETED \n\n" % self.sample_data[get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])].rstrip(os.path.sep))
+                        
+                        
+                        base=get_File_Type_data(self.params["inputs"],[inputs,"base"],None)                
+                        inputs_sample_data=self.sample_data
+                        if base!=None:
+                            if base in self.base_sample_data.keys():
+                                inputs_sample_data=self.base_sample_data[base]
+                            else:
+                                raise AssertionExcept("The step name %s is not one of the previous steps of the %%s step" % base  % self.step )
                         else:
-                            del_script +="rm -rf %s   \n\n" % self.sample_data[sample][get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])]
-                            del_script +="echo > %s_DELETED  \n\n" % self.sample_data[sample][get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])].rstrip(os.path.sep)
-
+                            base=self.step    
+                        
+                        
+                        if get_File_Type_data(self.params["inputs"],[inputs,"scope"])=="project":
+                            self.project_del_script.append("rm -rf %s   \n\n" % inputs_sample_data[get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])])
+                            self.project_del_script.append("echo > %s_DELETED \n\n" % inputs_sample_data[get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])].rstrip(os.path.sep))
+                        else:
+                            del_script +="rm -rf %s   \n\n" % inputs_sample_data[sample][get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])]
+                            del_script +="echo > %s_DELETED  \n\n" % inputs_sample_data[sample][get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])].rstrip(os.path.sep)
+            
             if len(get_File_Type_data(self.params,["outputs"]))>0:
                 # Add output files
                 for outputs in self.params["outputs"].keys(): 
@@ -287,10 +409,10 @@ class Step_Generic(Step):
                         output_filename = "".join([use_dir ,get_File_Type_data(self.params["outputs"],[outputs,"constant_file_name"])])
                     File_Type=""
                     if outputs.startswith("No_run")==False:
-                        if outputs.startswith("empty"):
-                            self.script +="%s   \\\n\t"    % output_filename
+                        if outputs.startswith("Empty"):
+                            outputs_script +="%s   \\\n\t"    % output_filename
                         else:
-                            self.script +="%s  %%s \\\n\t" % outputs \
+                            outputs_script +="%s  %%s \\\n\t" % outputs \
                                                            % output_filename
                     
                     #updating the output File_Types
@@ -300,6 +422,13 @@ class Step_Generic(Step):
                         self.sample_data[sample][File_Type]=(sample_dir + os.path.basename(output_filename))
                         # Stamp the output file
                         self.stamp_file(self.sample_data[sample][File_Type])
+            
+            if "inputs_last" in self.params.keys():
+                self.script+=outputs_script
+                self.script+=inputs_script
+            else:
+                self.script+=inputs_script
+                self.script+=outputs_script
             
             self.script=self.script.rstrip("\\")
             self.script +="\n\n"
@@ -323,7 +452,9 @@ class Step_Generic(Step):
         # Name of specific script:
         self.spec_script_name = "_".join([self.step,self.name,self.sample_data["Title"]])
         self.script = ""
-
+        
+        inputs_script = ""
+        outputs_script = ""
         
         # This line should be left before every new script. It sees to local issues.
         # Use the dir it returns as the base_dir for this step.
@@ -333,43 +464,69 @@ class Step_Generic(Step):
         self.script += self.get_script_const()
         # Adds inputs files
         if len(get_File_Type_data(self.params,["inputs"]))>0:
-            for inputs in self.params["inputs"].keys(): 
+            for inputs in self.params["inputs"].keys():
+                
+                
+                base=get_File_Type_data(self.params["inputs"],[inputs,"base"],None)                
+                inputs_sample_data=self.sample_data
+                if base!=None:
+                    if base in self.base_sample_data.keys():
+                        inputs_sample_data=self.base_sample_data[base]
+                    else:
+                        raise AssertionExcept("The step name %s is not one of the previous steps of the %%s step" % base  % self.step )
+                else:
+                    base=self.step
+                
+                
                 File_Type=""
                 if get_File_Type_data(self.params["inputs"],[inputs,"scope"])=="project":
-                    File_Type=self.sample_data[get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])]
+                    File_Type=inputs_sample_data[get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])]
                 else:
                     if len(get_File_Type_data(self.params["inputs"],[inputs,"sep"]))>0:
                         sep=get_File_Type_data(self.params["inputs"],[inputs,"sep"])
                     else:
-                        if inputs.startswith("empty"):
+                        if inputs.startswith("Empty"):
                             sep=" "
                         else:
                             sep=" \\\n\t"+inputs+"  "
                     for sample in self.sample_data["samples"]:
-                        File_Type+=self.sample_data[sample][get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])]
+                        File_Type+=inputs_sample_data[sample][get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])]
                         File_Type+=sep
                     File_Type=File_Type.strip(sep)
                 
-                if inputs.startswith("empty"):
-                    self.script +="%s   \\\n\t"    % File_Type
+                if inputs.startswith("Empty"):
+                    inputs_script +="%s   \\\n\t"    % File_Type
                 else:
-                    self.script +="%s  %%s \\\n\t" % inputs \
+                    inputs_script +="%s  %%s \\\n\t" % inputs \
                                                    % File_Type
-
-
+        
+        
         
         if len(get_File_Type_data(self.params,["inputs"]))>0:
             # Generating delete script for input File_Types if specified 
             del_script=""
             for inputs in self.params["inputs"].keys():                                       
                 if "del" in self.params["inputs"][inputs].keys():
+                    
+                    
+                    base=get_File_Type_data(self.params["inputs"],[inputs,"base"],None)                
+                    inputs_sample_data=self.sample_data
+                    if base!=None:
+                        if base in self.base_sample_data.keys():
+                            inputs_sample_data=self.base_sample_data[base]
+                        else:
+                            raise AssertionExcept("The step name %s is not one of the previous steps of the %%s step" % base  % self.step )
+                    else:
+                        base=self.step
+                    
+                    
                     if get_File_Type_data(self.params["inputs"],[inputs,"scope"])=="project":
-                        self.project_del_script.append("rm -rf %s   \n\n" % self.sample_data[get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])])
-                        self.project_del_script.append("echo > %s_DELETED \n\n" % self.sample_data[get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])].rstrip(os.path.sep))
+                        self.project_del_script.append("rm -rf %s   \n\n" % inputs_sample_data[get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])])
+                        self.project_del_script.append("echo > %s_DELETED \n\n" % inputs_sample_data[get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])].rstrip(os.path.sep))
                     else:
                         for sample in self.sample_data["samples"]:
-                            del_script +="rm -rf %s   \n\n" % self.sample_data[sample][get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])]
-                            del_script +="echo > %s_DELETED  \n\n" % self.sample_data[sample][get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])].rstrip(os.path.sep)
+                            del_script +="rm -rf %s   \n\n" % inputs_sample_data[sample][get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])]
+                            del_script +="echo > %s_DELETED  \n\n" % inputs_sample_data[sample][get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])].rstrip(os.path.sep)
 
         if len(get_File_Type_data(self.params,["outputs"]))>0:
             # Add output files
@@ -385,10 +542,10 @@ class Step_Generic(Step):
                 else:
                     output_filename = "".join([use_dir ,get_File_Type_data(self.params["outputs"],[outputs,"constant_file_name"])])            
                 if outputs.startswith("No_run")==False:
-                    if outputs.startswith("empty"):
-                        self.script +="%s   \\\n\t"    % output_filename
+                    if outputs.startswith("Empty"):
+                        outputs_script +="%s   \\\n\t"    % output_filename
                     else:
-                        self.script +="%s  %%s \\\n\t" % outputs \
+                        outputs_script +="%s  %%s \\\n\t" % outputs \
                                                        % output_filename
 
                 #updating the output File_Types
@@ -398,6 +555,15 @@ class Step_Generic(Step):
                     self.sample_data[File_Type] = (self.base_dir + os.path.basename(output_filename))
                     # Stamp the output file
                     self.stamp_file(self.sample_data[File_Type])
+                    
+        if "inputs_last" in self.params.keys():
+            self.script+=outputs_script
+            self.script+=inputs_script
+        else:
+            self.script+=inputs_script
+            self.script+=outputs_script
+            
+            
         self.script=self.script.rstrip("\\")
         self.script +="\n\n"
         # Delete the input file/directory if specified, before updating the output File_Types!!! 

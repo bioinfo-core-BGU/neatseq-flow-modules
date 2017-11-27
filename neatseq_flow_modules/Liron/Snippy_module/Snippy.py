@@ -2,7 +2,7 @@
 
 # -*- coding: UTF-8 -*-
 """ 
-Module ``Snippy``
+``Snippy``
 -----------------------
 
 :Authors: Liron Levin
@@ -11,40 +11,40 @@ Module ``Snippy``
 
 .. Note:: This module was developed as part of a study led by Dr. Jacob Moran Gilad
 
-SHORT DESCRIPTION
-
-A module for running Snippy on fastq files
+Short Description
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    A module for running Snippy on fastq files
 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    fastq files in at least one of the following slots:
-        sample_data[<sample>]["fastq.F"]
-        sample_data[<sample>]["fastq.R"]
-        sample_data[<sample>]["fastq.S"]
+    * fastq files in at least one of the following slots:
+        ``sample_data[<sample>]["fastq.F"]``
+        ``sample_data[<sample>]["fastq.R"]``
+        ``sample_data[<sample>]["fastq.S"]``
 
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    puts Results directory location in:
-        self.sample_data[<sample>]["Snippy"]
-    puts for each sample the vcf file location in:
-        self.sample_data[<sample>]["vcf"]
-    if snippy-core is set to run:
-        puts the core Multi-FASTA alignment location in:
-            self.sample_data["fasta.nucl"]
-        puts core vcf file location of all analyzed samples in the following slot:
-            self.sample_data["vcf"]
+    * puts Results directory location in:
+        ``self.sample_data[<sample>]["Snippy"]``
+    * puts for each sample the vcf file location in:
+        ``self.sample_data[<sample>]["vcf"]``
+    if snippy_core is set to run:
+        * puts the core Multi-FASTA alignment location in:
+            ``self.sample_data["fasta.nucl"]``
+        * puts core vcf file location of all analyzed samples in the following slot:
+            ``self.sample_data["vcf"]``
     if Gubbins is set to run: 
-        puts result Tree file location of all analyzed samples in:
-            self.sample_data["newick"]
-        update the core Multi-FASTA alignment in:
-            self.sample_data["fasta.nucl"]
-        and update the core vcf file in the slot:
-            self.sample_data["vcf"]
+        * puts result Tree file location of all analyzed samples in:
+            ``self.sample_data["newick"]``
+        * update the core Multi-FASTA alignment in:
+            ``self.sample_data["fasta.nucl"]``
+        * update the core vcf file in the slot:
+            ``self.sample_data["vcf"]``
     if pars is set to run, puts phyloviz ready to use files in:
-        Alleles:
-            self.sample_data["phyloviz_Alleles"]
-        MetaData:
-            self.sample_data["phyloviz_MetaData"]
+        * Alleles:
+            ``self.sample_data["phyloviz_Alleles"]``
+        * MetaData:
+            ``self.sample_data["phyloviz_MetaData"]``
 
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -53,12 +53,16 @@ Parameters that can be set
     :header: "Parameter", "Values", "Comments"
     :widths: 15, 10, 10
 
-    "PARAMETER NAME",  "POSSIBLE VALUES", "DESCRIPTION"
+    "",  "", ""
     
 
 Comments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+    *  This module was tested on:
+        ``Snippy v3.2``
+        ``gubbins v2.2.0``
+    * For the pars analysis the following python packages are required:
+        ``pandas``
 
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -80,7 +84,7 @@ Lines for parameter file
             --Cut:                              # Use only Samples found in the metadata file
             --S_MetaData:                       # The name of the samples ID column
             -C:                                 # Use only Samples that has at least this fraction of identified alleles
-        snippy-core:
+        snippy_core:
             script_path:                        # Command for running the snippy-core script, if empty or this line dose not exist will not run snippy-core
             --noref:                            # Exclude reference 
         redirects:
@@ -92,7 +96,12 @@ Lines for parameter file
             --reference:                        # Reference Genome location
             --cleanup                           # Remove all non-SNP files: BAMs, indices etc (default OFF)            
 
-
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Snippy:
+        https://github.com/tseemann/snippy
+    gubbins:
+        Croucher N. J., Page A. J., Connor T. R., Delaney A. J., Keane J. A., Bentley S. D., Parkhill J., Harris S.R. "Rapid phylogenetic analysis of large samples of recombinant bacterial whole genome sequences using Gubbins". doi:10.1093/nar/gku1196, Nucleic Acids Research, 2014
 """
 
 
@@ -100,7 +109,7 @@ Lines for parameter file
 import os
 import sys
 import re
-from neatseq_flow.PLC_step import Step
+from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Levin Liron"
@@ -108,7 +117,7 @@ __author__ = "Levin Liron"
 class Step_Snippy(Step):
 
     def step_specific_init(self):
-        self.shell = "bash"      # Can be set to "bash" by inheriting instances
+        self.shell = "csh"      # Can be set to "bash" by inheriting instances
         self.file_tag = ""
         import inspect
         self.module_location=os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))
@@ -135,26 +144,26 @@ class Step_Snippy(Step):
         """
         prefix="core"
         # Make a core snp fasta file of all results:
-        if "snippy-core" in self.params.keys():
-            if type(self.params["snippy-core"])==dict:
-                if self.params["snippy-core"]["script_path"]!=None:
+        if "snippy_core" in self.params.keys():
+            if get_dic_data(self.params,["snippy_core","script_path"])!=None:
+                if self.params["snippy_core"]["script_path"]!=None:
                     # Make a dir for the results file:
                     results_dir = self.make_folder_for_sample("Results")         
                     #Running the file merge script
                     self.script = ""
                     self.script +="cd '%s' \n\n" % results_dir
                     self.script +="env %s  \\\n\t" % self.params["env"]
-                    self.script +="%s  \\\n\t" % self.params["snippy-core"]["script_path"]
-                    for par in self.params["snippy-core"].keys():
+                    self.script +="%s  \\\n\t" % self.params["snippy_core"]["script_path"]
+                    for par in self.params["snippy_core"].keys():
                         if par !="script_path":
                             if len(par)>0:
-                                if self.params["snippy-core"][par]!=None:
+                                if self.params["snippy_core"][par]!=None:
                                     self.script +="%s  %%s \\\n\t" % par \
-                                                                   % self.params["snippy-core"][par]
+                                                                   % self.params["snippy_core"][par]
                                 else:
                                     self.script +="%s  \\\n\t" % par 
                             if par=="--prefix":
-                                prefix=self.params["snippy-core"][par]
+                                prefix=self.params["snippy_core"][par]
                     for sample in self.sample_data["samples"]:
                         self.script +="%s \\\n\t" % self.sample_data[sample]["Snippy"]
                     self.script +="\n\n"
@@ -164,7 +173,7 @@ class Step_Snippy(Step):
 
                     #Run gubbins if gubbins_script_path is given
                     if "gubbins" in self.params.keys():
-                        if type(self.params["gubbins"])==dict:
+                        if get_dic_data(self.params,["gubbins","script_path"])!=None:
                             if self.params["gubbins"]["script_path"]!=None:
                                 # Make a dir for the results file:
                                 Gubbins_results_dir = self.make_folder_for_sample("Gubbins")         
@@ -193,7 +202,7 @@ class Step_Snippy(Step):
                             pars_dir = self.make_folder_for_sample("pars")
                             self.script +="env %s  \\\n\t" % self.params["env"]
                             self.script +="python %s  \\\n\t" % os.path.join(self.module_location,"MLST_parser.py")
-                            if type(self.params["pars"])==dict:
+                            if is_it_dict(self.params["pars"]):
                                 for par in self.params["pars"].keys():
                                     if len(par)>0:
                                         if self.params["pars"][par]!=None:
@@ -258,4 +267,19 @@ class Step_Snippy(Step):
             self.create_low_level_script()
                     
 
+def get_dic_data(dic,category,default=None):
+    try:
+        res=reduce(dict.get, category, dic)
+        if res==None:
+            return default
+        else:
+            return res
+    except:
+        return default
 
+def is_it_dict(dic):
+    try:
+        dic.keys()
+        return True
+    except:
+        return False

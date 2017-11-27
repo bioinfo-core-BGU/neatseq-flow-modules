@@ -1,7 +1,7 @@
 #!/fastspace/bioinfo_apps/python-2.7_SL6/bin/python
 # -*- coding: UTF-8 -*-
 """ 
-Module ``Prokka``
+``Prokka``
 -----------------------
 
 :Authors: Liron Levin
@@ -10,24 +10,25 @@ Module ``Prokka``
 
 .. Note:: This module was developed as part of a study led by Dr. Jacob Moran Gilad
 
-SHORT DESCRIPTION
+Short Description
+~~~~~~~~~~~~~~~~~~~~~
     Runs Prokka on all samples
 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    For each Sample, a fasta.nucl file type [e.g. an assembly result] in:
-        sample_data[sample]["fasta.nucl"]
+    * For each Sample, a fasta.nucl file type [e.g. an assembly result] in:
+        ``sample_data[sample]["fasta.nucl"]``
 
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    For each Sample, puts the location of the Sample's GFF file in:
-        sample_data[sample]["GFF"]
-    For each Sample, puts the location of the Sample's identified genes file in:    
-        sample_data[sample]["fasta.nucl"]
-    For each Sample, puts the location of the Sample's identified genes [translated] file in:    
-        sample_data[sample]["fasta.prot"]
-    if generate_GFF_dir option exist, puts the directory location of all Samples GFFs in:
-        sample_data["GFF_dir"]
+    * For each Sample, puts the location of the Sample's GFF file in:
+        ``sample_data[sample]["GFF"]``
+    * For each Sample, puts the location of the Sample's identified genes file in:    
+        ``sample_data[sample]["fasta.nucl"]``
+    * For each Sample, puts the location of the Sample's identified genes [translated] file in:    
+        ``sample_data[sample]["fasta.prot"]``
+    * if generate_GFF_dir option exist, puts the directory location of all Samples GFFs in:
+        ``sample_data["GFF_dir"]``
 
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -62,10 +63,9 @@ Lines for parameter file
             --kingdom:                          # parameters for running Prokka
             --proteins:                         # Use the location of a protein DB [FASTA] for extra annotation or use "VFDB" to use the module VFDB built-in virulence/resistance DB  
 
-    
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+    Seemann, Torsten. "Prokka: rapid prokaryotic genome annotation." Bioinformatics 30.14 (2014): 2068-2069.‏
 """
 import os
 import sys
@@ -83,7 +83,7 @@ class Step_Prokka(Step):
             Good place for parameter testing.
             Wrong place for sample data testing
         """
-        self.shell = "bash"      # Can be set to "bash" by inheriting instances
+        self.shell = "csh"      # Can be set to "bash" by inheriting instances
         self.file_tag = ".gff"
         import inspect
         self.module_location=os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))

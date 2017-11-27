@@ -1,7 +1,7 @@
 #!/fastspace/bioinfo_apps/python-2.7_SL6/bin/python
 # -*- coding: UTF-8 -*-
 """ 
-Module ``RSEM``
+``RSEM``
 -----------------------
 
 :Authors: Liron Levin
@@ -11,25 +11,26 @@ Module ``RSEM``
 .. Note::
 
 
-SHORT DESCRIPTION
+Short Description
+~~~~~~~~~~~~~~~~~~~~
     A module for running RSEM
 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    fastq file in 
-        self.sample_data[sample]["fastq.F"]
-        self.sample_data[sample]["fastq.R"]
-        self.sample_data[sample]["fastq.S"]
-    or bam file in 
-        self.sample_data[sample]["bam"]
+    * fastq file in 
+        ``self.sample_data[sample]["fastq.F"]``
+        ``self.sample_data[sample]["fastq.R"]``
+        ``self.sample_data[sample]["fastq.S"]``
+    * or bam file in 
+        ``self.sample_data[sample]["bam"]``
 
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    puts output bam files (if the input is fastq) in:
-        self.sample_data[sample]["bam"]
-        self.sample_data[sample]["unsorted_bam"]
-    puts the location of RSEM results in:
-        self.sample_data[sample]["RSEM"]
+    * puts output bam files (if the input is fastq) in:
+        ``self.sample_data[sample]["bam"]``
+        ``self.sample_data[sample]["unsorted_bam"]``
+    * puts the location of RSEM results in:
+        ``self.sample_data[sample]["RSEM"]``
 
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -41,9 +42,12 @@ Parameters that can be set
     "mode",  "transcriptome/genome ", "Is the reference is a genome or a transcriptome?"
     "gff3","None","Use if the mode is genome and the annotation file is in gff3 format"
     "del_unsorted_bam","None","Delete unsorted bam files to save space"
+
 Comments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+    *  This module was tested on:
+        ``RSEM v1.2.25``
+        ``bowtie2 v2.2.6``
 
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -81,7 +85,7 @@ Lines for parameter file
 
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+    Li, Bo, and Colin N. Dewey. "RSEM: accurate transcript quantification from RNA-Seq data with or without a reference genome." BMC bioinformatics 12.1 (2011): 323.‏
 
 """
 
@@ -89,7 +93,7 @@ References
 import os
 import sys
 import re
-from neatseq_flow.PLC_step import Step
+from neatseq_flow.PLC_step import Step,AssertionExcept
 
 __author__ = "Levin Levin"
 
@@ -101,7 +105,7 @@ class Step_RSEM(Step):
             Good place for parameter testing.
             Wrong place for sample data testing
         """
-        self.shell = "bash"      # Can be set to "bash" by inheriting instances
+        self.shell = "csh"      # Can be set to "bash" by inheriting instances
         self.file_tag = ""
         assert "mode"  in self.params.keys() , \
             "you should  provide mode type [transcriptome or genome] in step %s\n" % self.get_step_name()
