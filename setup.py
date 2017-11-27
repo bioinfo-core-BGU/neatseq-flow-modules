@@ -16,7 +16,7 @@ setup(
     platforms           = ["POSIX","Windows"],
     packages            = find_packages(),
     include_package_data= True,  # See  MANIFEST.in
-    data_files          = [('Workflows',['Workflows/Assembly_Indexing_mapping.yaml',
+    data_files          = [('NeatSeq-Flow-Workflows',['Workflows/Assembly_Indexing_mapping.yaml',
                                         'Workflows/BLAST_db.yaml',
                                         'Workflows/BLAST_fasta.yaml',
                                         'Workflows/ChIP_seq_bowtie2.yaml',
@@ -29,7 +29,7 @@ setup(
                                         'Workflows/RNA_seq_reference.yaml',
                                         'Workflows/RNA_seq_Trinity.yaml',
                                         'Workflows/variant_calling.yaml']),
-                            ('Workflows/Sample_sets',['Workflows/sample_sets/ChIP_tabular.nsfs',
+                            ('NeatSeq-Flow-Workflows/Sample_sets',['Workflows/sample_sets/ChIP_tabular.nsfs',
                                                         'Workflows/sample_sets/Fasta.nsfs',
                                                         'Workflows/sample_sets/PE.nsfs',
                                                         'Workflows/sample_sets/PE_ChIP.nsfs',
