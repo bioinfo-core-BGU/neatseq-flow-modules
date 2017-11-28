@@ -4,6 +4,9 @@ Global_params:
     Qsub_path: /path/to/qsub/bin
     Qsub_q: myqueue.q
     module_path:      ../modules_release_1.1.0
+    # conda:
+        # path:
+        # env:
 Description: |
     A pipeline for executing various analyses on metagenomics data
     --------------------------------------------------------------

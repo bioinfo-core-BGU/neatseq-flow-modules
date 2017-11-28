@@ -67,7 +67,9 @@ from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Menachem Sklarz"
-__version__ = "0.2.0"
+__version__ = "1.2.0"
+
+
 class Step_qiime_pick_rep_set(Step):
     """ A class that defines a pipeline step name (=instance).
         Most of the class functions are in the super class "Step"

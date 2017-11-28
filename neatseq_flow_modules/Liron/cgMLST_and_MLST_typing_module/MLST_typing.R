@@ -1,7 +1,33 @@
 # AUTHOR: Menachem Sklarz & Michal Gordon
 
-library(magrittr)
-library(plyr)
+
+
+# Check if required packages are installed:
+if(!(all(c("magrittr") %in% installed.packages()))) {
+    if (Sys.getenv("CONDA_PREFIX")!=""){
+        install.packages("magrittr", dependencies=TRUE,repos = "http://cran.us.r-project.org")
+    } else {
+        cat("The 'magrittr' package is not installed. You must install it for this script to work!")
+        }
+}
+library("magrittr")
+if(!(all(c("plyr") %in% installed.packages()))) {
+    if (Sys.getenv("CONDA_PREFIX")!=""){
+        install.packages("plyr", dependencies=TRUE,repos = "http://cran.us.r-project.org")
+    } else {
+        cat("The 'plyr' package is not installed. You must install it for this script to work!")
+        }
+    
+    
+}
+library("plyr")
+if(!(all(c("optparse") %in% installed.packages()))) {
+    if (Sys.getenv("CONDA_PREFIX")!=""){
+        install.packages("optparse", dependencies=TRUE,repos = "http://cran.us.r-project.org")
+    } else {
+        cat("The 'optparse' package is not installed. You must install it for this script to work!")
+        }
+}
 library("optparse")
 library(tools)
 

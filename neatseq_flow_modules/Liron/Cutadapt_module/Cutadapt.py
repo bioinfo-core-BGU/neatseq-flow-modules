@@ -61,7 +61,7 @@ Lines for parameter file
 
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Martin, Marcel. "Cutadapt removes adapter sequences from high-throughput sequencing reads." EMBnet. journal 17.1 (2011): pp-10.‏
+    Martin, Marcel. "Cutadapt removes adapter sequences from high-throughput sequencing reads." EMBnet. journal 17.1 (2011): pp-10
 
 """
 import os
@@ -72,13 +72,14 @@ from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Liron Levin"
+__version__= "1.2.0"
 
 class Step_Cutadapt(Step):
 
     
 
     def step_specific_init(self):
-        self.shell = "csh"      # Can be set to "bash" by inheriting instances
+        self.shell = "bash"
         self.file_tag = ".fq"
 
         if "--output_dir" in self.params["redir_params"] or "-o" in self.params["redir_params"]:

@@ -24,15 +24,18 @@ Requires
 
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     * puts Results directory location in:
         ``self.sample_data[<sample>]["Snippy"]``
     * puts for each sample the vcf file location in:
         ``self.sample_data[<sample>]["vcf"]``
+        
     if snippy_core is set to run:
         * puts the core Multi-FASTA alignment location in:
             ``self.sample_data["fasta.nucl"]``
         * puts core vcf file location of all analyzed samples in the following slot:
             ``self.sample_data["vcf"]``
+            
     if Gubbins is set to run: 
         * puts result Tree file location of all analyzed samples in:
             ``self.sample_data["newick"]``
@@ -40,6 +43,7 @@ Output
             ``self.sample_data["fasta.nucl"]``
         * update the core vcf file in the slot:
             ``self.sample_data["vcf"]``
+            
     if pars is set to run, puts phyloviz ready to use files in:
         * Alleles:
             ``self.sample_data["phyloviz_Alleles"]``
@@ -113,11 +117,12 @@ from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Levin Liron"
+__version__= "1.2.0"
 
 class Step_Snippy(Step):
 
     def step_specific_init(self):
-        self.shell = "csh"      # Can be set to "bash" by inheriting instances
+        self.shell = "bash"
         self.file_tag = ""
         import inspect
         self.module_location=os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))

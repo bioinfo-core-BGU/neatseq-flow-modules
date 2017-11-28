@@ -1,3 +1,11 @@
+# Check if required packages are installed:
+if(!(all(c("optparse") %in% installed.packages()))) {
+    if (Sys.getenv("CONDA_PREFIX")!=""){
+        install.packages("optparse", dependencies=TRUE,repos = "http://cran.us.r-project.org")
+    } else {
+        cat("The 'optparse' package is not installed. You must install it for this script to work!")
+        }
+}
 library("optparse")
 
 
@@ -71,11 +79,57 @@ if (is.null(Roary_Results_file)){
     print("No Annotation file!!!!")
 }else{
 
+    # Check if required packages are installed:
+    if(!(all(c("eisa") %in% installed.packages()))) {
+        if (Sys.getenv("CONDA_PREFIX")!=""){
+            source("https://bioconductor.org/biocLite.R")
+            biocLite("eisa")
+        } else {
+            cat("The 'eisa' package is not installed. You must install it for this script to work!")
+        }
+        
+    }
     library("eisa")
+
+    if(!(all(c("ExpressionView") %in% installed.packages()))) {
+        if (Sys.getenv("CONDA_PREFIX")!=""){
+            source("https://bioconductor.org/biocLite.R")
+            biocLite("ExpressionView")
+        } else {
+            cat("The 'ExpressionView' package is not installed. You must install it for this script to work!")
+        }
+    }
     library("ExpressionView")
-    library("openxlsx")
-    library("clusterProfiler")
+
+    if(!(all(c("org.Hs.eg.db") %in% installed.packages()))) {
+        if (Sys.getenv("CONDA_PREFIX")!=""){
+            source("https://bioconductor.org/biocLite.R")
+            biocLite("org.Hs.eg.db")
+        } else {
+            cat("The 'org.Hs.eg.db' package is not installed. You must install it for this script to work!")
+        }
+    }
     library("org.Hs.eg.db")
+
+    if(!(all(c("clusterProfiler") %in% installed.packages()))) {
+        if (Sys.getenv("CONDA_PREFIX")!=""){
+            source("https://bioconductor.org/biocLite.R")
+            biocLite("clusterProfiler")
+        } else {
+            cat("The 'clusterProfiler' package is not installed. You must install it for this script to work!")
+        }
+    }
+    library("clusterProfiler")
+
+    if(!(all(c("openxlsx") %in% installed.packages()))) {
+        if (Sys.getenv("CONDA_PREFIX")!=""){
+            install.packages("openxlsx", dependencies=TRUE,repos = "http://cran.us.r-project.org")
+        } else {
+            cat("The 'openxlsx' package is not installed. You must install it for this script to work!")
+        }
+        
+    }
+    library("openxlsx")
 
 
     convert_agregate<-function(df,index,subject,sep){

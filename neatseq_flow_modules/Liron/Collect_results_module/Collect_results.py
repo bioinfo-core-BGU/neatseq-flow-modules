@@ -22,12 +22,12 @@ Short Description
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * Tab delimited files with common name pattern found within the base step data directories:
-    * ``For example files ending with .out``
+    * For example files ending with .out
 
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * Generate merged tab delimited files:
-    * ``Will generate file for each of the base steps with the file ending with .merg``
+    * Will generate file for each of the base steps with the file ending with .merg
     * Can also generate Excel file with sheet for each base step 
 
 Parameters that can be set
@@ -44,11 +44,13 @@ Comments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     *  The following python packages are required:
         ``pandas``
+        ``openpyxl``
 
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ::
+
     Step_Name:                            # Name of this step
         module: Collect_results           # Name of the used module
         base:                             # Name of the step [or list of names] to run after and collect results from [must be after a merge step]
@@ -67,9 +69,6 @@ Lines for parameter file
             --sep:                        # Columns separator for input file
             -T:                           # Write Transpose output
 
-References
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 """
 import os
 import sys
@@ -78,6 +77,7 @@ from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Liron Levin"
+__version__= "1.2.0"
 # Collect and mereg/append results from all base directories
 
 class Step_Collect_results(Step):
@@ -87,7 +87,7 @@ class Step_Collect_results(Step):
             Good place for parameter testing.
             Wrong place for sample data testing
         """
-        self.shell = "csh"      # Can be set to "bash" by inheriting instances
+        self.shell = "bash"
         self.file_tag = ".merg"
         import inspect
         self.module_location=os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))

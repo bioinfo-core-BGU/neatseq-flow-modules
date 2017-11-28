@@ -60,7 +60,8 @@ Comments
         ``Scoary v1.6.11``
         ``Scoary v1.6.9``
         ``Gecko3``
-    * For the Bi_cluster analysis the following R libraries are required:
+    * For the Bi_cluster analysis the following R packages are required:
+        * If using conda environment with R installed the R packages will be automatically installed inside the environment.
         ``optparse``
         ``eisa``
         ``ExpressionView``
@@ -109,7 +110,7 @@ Lines for parameter file
             metadata_file:                       # location of MetaData file to use to create the scoary traits file
             metadata_samples_ID_field:           # The column name in the MetaData file of the sample's IDs
             traits_file:                         # Path to a traits file
-            scoary_traits_to_pars:               # If a traits file is not provided use a list of conditions to create the scoary traits file from MetaData file. example:"source/=='blood'"  "source/=='wound'"
+            traits_to_pars:               # If a traits file is not provided use a list of conditions to create the scoary traits file from MetaData file. example:"source/=='blood'"  "source/=='wound'"
                                                  # Pairs of field and operator + value to convert to boolean traits: field_name1/op_value1 .. field_nameN/op_valueN Example: "field_1/>=val_1<val_2"    "feild_2/=='str_val'"
                                                  # A Filter can be used by FILTER_field_name1/FILTER_op_value1&field_name1/op_value1
                                                  # Note that Gecko can't run if the Bi_clustering was not run
@@ -143,6 +144,7 @@ from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Liron Levin"
+__version__= "1.2.0"
 # Roary on GFF files
 
 class Step_Roary(Step):
@@ -154,7 +156,7 @@ class Step_Roary(Step):
             Good place for parameter testing.
             Wrong place for sample data testing
         """
-        self.shell = "csh"      # Can be set to "bash" by inheriting instances
+        self.shell = "bash"
         self.file_tag = ""
         import inspect
         self.module_location=os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))

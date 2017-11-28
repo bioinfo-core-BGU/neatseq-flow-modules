@@ -8,8 +8,6 @@
 :Affiliation: Bioinformatics core facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
-.. Note::
-
 
 Short Description
 ~~~~~~~~~~~~~~~~~~~~
@@ -96,6 +94,7 @@ import re
 from neatseq_flow.PLC_step import Step,AssertionExcept
 
 __author__ = "Levin Levin"
+__version__= "1.2.0"
 
 
 class Step_RSEM(Step):
@@ -105,7 +104,7 @@ class Step_RSEM(Step):
             Good place for parameter testing.
             Wrong place for sample data testing
         """
-        self.shell = "csh"      # Can be set to "bash" by inheriting instances
+        self.shell = "bash"
         self.file_tag = ""
         assert "mode"  in self.params.keys() , \
             "you should  provide mode type [transcriptome or genome] in step %s\n" % self.get_step_name()

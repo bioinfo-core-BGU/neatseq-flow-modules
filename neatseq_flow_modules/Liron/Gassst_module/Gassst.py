@@ -87,6 +87,7 @@ from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Liron Levin"
+__version__= "1.2.0"
 
 class Step_Gassst(Step):
     
@@ -96,7 +97,7 @@ class Step_Gassst(Step):
             Good place for parameter testing.
             Wrong place for sample data testing
         """
-        self.shell = "csh"      # Can be set to "bash" by inheriting instances
+        self.shell = "bash"
         self.file_tag = ".Gassst.out"
         import inspect
         self.module_location=os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))

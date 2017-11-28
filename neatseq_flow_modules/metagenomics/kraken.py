@@ -90,9 +90,13 @@ import os
 import sys
 from neatseq_flow.PLC_step import Step,AssertionExcept
 
+from pkg_resources import resource_filename
+
 
 __author__ = "Menachem Sklarz"
-__version__ = "0.2.0"
+__version__ = "1.2.0"
+
+
 class Step_kraken(Step):
     """ A class that defines a pipeline step name (=instance).
     """
@@ -124,7 +128,9 @@ class Step_kraken(Step):
         self.make_sample_file_index()   # see definition below
         
         # Get full path to kraken module:
-        kraken_path = os.path.dirname(os.path.realpath(__file__))
+        # kraken_path = os.path.dirname(os.path.realpath(__file__))
+        merge_kraken_reports = resource_filename(__name__, 'merge_kraken_reports.R')
+
         try:
             self.params["merge_kraken_reports"]
         except KeyError:
@@ -132,7 +138,8 @@ class Step_kraken(Step):
             self.script = ""
         else:
             self.script = "# Creating biom files from all kraken reports\n"
-            self.script += "Rscript %s \\\n\t" % (kraken_path + os.sep + "merge_kraken_reports.R")  # self.params["kraken_merge_path"]
+            # self.script += "Rscript %s \\\n\t" % (kraken_path + os.sep + "merge_kraken_reports.R")  # self.params["kraken_merge_path"]
+            self.script += "Rscript %s \\\n\t" % merge_kraken_reports
             self.script += "-f %s \\\n\t" % self.sample_data["kraken_file_index"]
             self.script += "--db %s \\\n\t" % self.params["redir_params"]["--db"]
             self.script += "-o %s\n\n" % self.base_dir
@@ -221,12 +228,16 @@ class Step_kraken(Step):
                 self.write_warning("KRAKEN on mixed PE/SE samples is not defined. Using only PE data!\n")
                 
                 
+            # Find path to kraken scripts
+            kraken_path = os.path.dirname(self.params["script_path"])
+            if kraken_path:
+                kraken_path = kraken_path + os.sep
 
             ######### Step 2, translate raw kraken into useful names
             self.script += "# Create useful kraken output \n\n";
             self.script += "if [ -e %s ]\n" % output_filename;
             self.script += "then\n\t";
-            self.script += os.path.dirname(self.params["script_path"]) + "/kraken-translate \\\n\t\t";
+            self.script += "{kraken_path}kraken-translate \\\n\t\t".format(kraken_path = kraken_path)
             self.script += "--db %s \\\n\t\t" % self.params["redir_params"]["--db"]
 
             self.script += output_filename + " \\\n\t\t";
@@ -237,7 +248,7 @@ class Step_kraken(Step):
             self.script += "# Create kraken report \n\n";
             self.script += "if [ -e %s ]\n" % output_filename
             self.script += "then\n\t";
-            self.script += "%s/kraken-report \\\n\t\t" % os.path.dirname(self.params["script_path"])
+            self.script += "{kraken_path}kraken-report \\\n\t\t".format(kraken_path = kraken_path)
             self.script += "--db %s \\\n\t\t" % self.params["redir_params"]["--db"]
             
             self.script += output_filename + " \\\n\t\t";

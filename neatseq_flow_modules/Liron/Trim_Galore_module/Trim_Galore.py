@@ -51,6 +51,7 @@ Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ::
+
     Step_Name:                       # Name of this step
         module: Trim_Galore          # Name of the module used
         base:                        # Name of the step [or list of names] to run after [must be after a merge step]
@@ -77,11 +78,13 @@ from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Liron Levin"
-__version__ = "0.2.0"
+__version__= "1.2.0"
+
+
 class Step_Trim_Galore(Step):
 
     def step_specific_init(self):
-        self.shell = "csh"      # Can be set to "bash" by inheriting instances
+        self.shell = "bash"
         self.file_tag = "trim_galore.fq"
         if "--output_dir" in self.params["redir_params"] or "-o" in self.params["redir_params"]:
             raise AssertionExcept("You should not give output directory\n")

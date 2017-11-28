@@ -78,7 +78,9 @@ from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Menachem Sklarz"
-__version__ = "0.2.0"
+__version__ = "1.2.0"
+
+
 class Step_clc_assembl(Step):
 
   
