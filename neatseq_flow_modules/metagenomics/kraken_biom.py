@@ -101,7 +101,7 @@ class Step_kraken_biom(Step):
         """ A place to do initiation stages following setting of sample_data
         """
         
-        for sample in self.sample_data["sample"]:
+        for sample in self.sample_data["samples"]:
             if not "classification_report" in self.sample_data[sample]:
                 raise AssertionExcept("Sample does not own a 'classification_report'", sample)
         
