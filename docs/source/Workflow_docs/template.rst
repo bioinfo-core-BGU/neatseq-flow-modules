@@ -7,7 +7,7 @@ Steps:
 DAG
 ~~~
 
-.. image:: Assembly_Indexing_mapping.PNG   (Try savinfg the DAG png with the same name as the .rst file)
+.. image:: Assembly_Indexing_mapping.PNG   (Try saving the DAG png with the same name as the .rst file)
    :alt: Assembly and mapping DAG
 
 Requires

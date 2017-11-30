@@ -15,5 +15,7 @@ Metagenomics
 
 .. automodule:: metagenomics.kraken
 
+.. automodule:: metagenomics.kraken_biom
+
 .. automodule:: metagenomics.metaphlan2
 

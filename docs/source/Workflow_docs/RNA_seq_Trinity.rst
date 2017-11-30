@@ -14,7 +14,7 @@ Steps:
 
 .. attention:: No QC steps are included here, but you should consider adding `trimmomatic` and `FastQC` steps to the workflow.
 
-2. Adding tags required by trinity to the read titles (/1 and /2 for F and R. See `here <https://github.com/trinityrnaseq/trinityrnaseq/wiki/Running-Trinity>`_.
+2. Adding tags required by trinity to the read titles (/1 and /2 for F and R. See `Running-Trinity <https://github.com/trinityrnaseq/trinityrnaseq/wiki/Running-Trinity>`_.
 3. Running ``Trinity``. Trinity must be configured to run on a cluster. The configuration file is passed with ``--grid_conf``.
 4. Mapping of the reads is performed with ``trinity_mapping`` module.
 5. Creating statistical tables is performed with ``trinmap_statistics`` module.
