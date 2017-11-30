@@ -15,7 +15,9 @@ Note that ``kraken`` executable must be in a folder together with ``kraken-trans
 
 Pass the full path to the ``kraken`` executable in ``script_path``.
 
-Merging of sample kraken reports in done in two ways: with an R script shipped with the module, and with krona. See the section on Parameters that can be set.
+Merging of sample kraken reports in done with krona. See the section on Parameters that can be set.
+
+You can follow this module with the ``kraken-biom`` module to create a biom table from the reports.
 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -41,12 +43,6 @@ Output
 
     * ``self.sample_data["krona"]``
 
-* If ``merge_kraken_reports`` was passed, puts the merged reports in 
-
-    * ``self.sample_data["biom_table"]``
-    * ``self.sample_data["biom_table_summary"]``
-    * ``self.sample_data["biom_table_tsv"]``
-
 
     
 Parameters that can be set
@@ -56,7 +52,6 @@ Parameters that can be set
     :header: "Parameter", "Values", "Comments"
     :widths: 15, 10, 10
 
-    "merge_kraken_reports", "", "If set, will merge the reports with ``merge_kraken_reports.R``, which is shipped with the module. If ``Rscript`` is not in the path, you will have to use ``setenv`` to add it to the path."
     "ktImportTaxonomy_path", "", "Path to ktImportTaxonomy. You can additional ``ktImportTaxonomy`` parameters at the end of the path. If not passed, the ``krona`` report will not be built."
 
     
@@ -71,7 +66,6 @@ Lines for parameter file
         script_path: {Vars.paths.kraken}
         qsub_params:
             -pe: shared 20
-        merge_kraken_reports:
         ktImportTaxonomy_path: /path/to/ktImportTaxonomy  -u  http://krona.sourceforge.net
         redirects:
             --db: /path/to/kraken_std_db
@@ -131,31 +125,6 @@ class Step_kraken(Step):
         # kraken_path = os.path.dirname(os.path.realpath(__file__))
         merge_kraken_reports = resource_filename(__name__, 'merge_kraken_reports.R')
 
-        try:
-            self.params["merge_kraken_reports"]
-        except KeyError:
-            self.write_warning("You asked not to merge kraken reports...\n")
-            self.script = ""
-        else:
-            self.script = "# Creating biom files from all kraken reports\n"
-            # self.script += "Rscript %s \\\n\t" % (kraken_path + os.sep + "merge_kraken_reports.R")  # self.params["kraken_merge_path"]
-            self.script += "Rscript %s \\\n\t" % merge_kraken_reports
-            self.script += "-f %s \\\n\t" % self.sample_data["kraken_file_index"]
-            self.script += "--db %s \\\n\t" % self.params["redir_params"]["--db"]
-            self.script += "-o %s\n\n" % self.base_dir
-
-            self.sample_data["biom_table_tsv"] = "".join([self.base_dir,"kraken_biom.count.sum.tsv"])
-            self.sample_data["biom_table_summary"] = "".join([self.base_dir,"kraken_biom.count.sum.biom.summary"])
-            self.sample_data["biom_table"] = "".join([self.base_dir,"kraken_biom.count.sum.biom"])
-        
-            self.stamp_file(self.sample_data["biom_table_tsv"])
-            self.stamp_file(self.sample_data["biom_table_summary"])
-            self.stamp_file(self.sample_data["biom_table"])
-
-        # # Create a qiime slot to store the biom table in case you want downstream analysis with QIIME
-        # if "qiime" not in self.sample_data.keys():
-            # self.sample_data["qiime"] = dict()
-            
         ### Add code to create a unified krona plot
         if "ktImportTaxonomy_path" in self.params.keys():
             self.script += "# Running ktImportTaxonomy to create a krona chart for samples\n"

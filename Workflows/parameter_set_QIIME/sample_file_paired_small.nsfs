@@ -2,12 +2,12 @@ Title   PRJNA351976
 
 
 Sample	SAMN05960467
-Forward	/gpfs0/bioinfo/users/sklarz/QIIME_workshop/PRJNA351976_full_data/SRR4776679_1.fastq.gz
-Reverse	/gpfs0/bioinfo/users/sklarz/QIIME_workshop/PRJNA351976_full_data/SRR4776679_2.fastq.gz
+Forward	/path/to/SRR4776679_1.fastq.gz
+Reverse	/path/to/SRR4776679_2.fastq.gz
 
 
 Sample	SAMN05960474
-Forward	/gpfs0/bioinfo/users/sklarz/QIIME_workshop/PRJNA351976_full_data/SRR4776659_1.fastq.gz
-Reverse	/gpfs0/bioinfo/users/sklarz/QIIME_workshop/PRJNA351976_full_data/SRR4776659_2.fastq.gz
+Forward	/path/to/SRR4776659_1.fastq.gz
+Reverse	/path/to/SRR4776659_2.fastq.gz
 
 

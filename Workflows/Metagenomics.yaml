@@ -16,6 +16,7 @@ Description: |
     Includes two approaches:
     a. Analysis of the raw reads with:
         - kraken
+            - Combining the kraken reports into a biom table. Requires having biom installed as well as kraken-biom (https://github.com/smdabdoub/kraken-biom)
         - metaphlan2
         - kaiju
         - HUMAnN2
@@ -33,6 +34,8 @@ Vars:
         fastqc:         /path/to/fastqc
         trimmo:         /path/to/java -jar /path/to/trimmomatic-0.32.jar
         kraken:         /path/to/kraken
+        kraken_biom:    /path/to/kraken-biom    
+        biom:           /path/to/biom
         kaiju:          /path/to/kaiju_dir/
         metaphlan2:     /path/to/metaphlan2
         bowtie2:        /path/to/bowtie2
@@ -136,13 +139,22 @@ Step_params:
         script_path:        '{Vars.paths.kraken}'
         qsub_params:
             -pe:            shared 20
-        merge_kraken_reports:
         ktImportTaxonomy_path: '{Vars.paths.KronaTools}/bin/ktImportTaxonomy -u  http://krona.sourceforge.net'
         redirects:
             --db:           {Vars.databases.kraken}
             --preload: 
             --quick: 
             --threads:      20
+    kraken_biom1:
+        module:             kraken_biom
+        base:               kraken1
+        script_path:        '{Vars.paths.kraken_biom}'
+        # skip_tsv:
+        biom_path:          '{Vars.paths.biom}'
+        redirects:
+            --max:          D 
+            --min:          S 
+            --gzip:
 # ------------------------------- b. Assembly and analysis of the assembly
     megahit1:
         module:             megahit_assembl
