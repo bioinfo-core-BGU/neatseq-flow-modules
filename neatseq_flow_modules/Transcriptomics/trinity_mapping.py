@@ -190,9 +190,9 @@ class Step_trinity_mapping(Step):
             if "fastq.S" in self.sample_data[sample]:
                 single = self.sample_data[sample]["fastq.S"]
 
-            # Adding single reads to end of left (=forward) reads
-            if single != "" and forward != "":
-                forward = ",".join([forward,single])
+            # # Adding single reads to end of left (=forward) reads
+            # if single != "" and forward != "":
+                # forward = ",".join([forward,single])
 
             
             transcripts = self.sample_data[sample]["fasta.nucl"] \
@@ -224,10 +224,10 @@ class Step_trinity_mapping(Step):
             self.script += "--output_prefix %s \\\n\t" % sample
             if (forward): 
                 self.script += "--left %s \\\n\t"      % forward
-                self.script += "--right %s \n\n"       % reverse
-            elif (single):
-                self.script += "--single %s \n\n"      % single
- 
+                self.script += "--right %s \\\n\t"       % reverse
+            if (single):
+                self.script += "--single %s \\\n\t"      % single
+            self.script = self.script.rstrip("\\\n\t") + "\n\n"
 
             self.sample_data[sample]["bam"] = "{dir}{sample}.{method}.bam".format(dir    = sample_dir, \
                                                                                   sample = sample, \
