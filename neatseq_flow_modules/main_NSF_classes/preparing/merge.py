@@ -282,7 +282,8 @@ class Step_merge(Step):
                     # # Store file in active file for sample:
 
                     self.sample_data[sample][direction_tag] = self.base_dir + fq_fn
-                    self.sample_data[sample]["reference"] = self.sample_data[sample]["REFERENCE"]
+                    if "REFERENCE" in self.sample_data[sample]:
+                        self.sample_data[sample]["reference"] = self.sample_data[sample]["REFERENCE"]
           
                     self.stamp_file(self.sample_data[sample][direction_tag])
 
