@@ -20,7 +20,8 @@ both ``-query`` and ``-db`` must be passed in the redirected parameters. They sh
   
 * **A path** - A path to a ``fasta`` file or ``makeblastdb`` database to use in the parameter as-is.
 
-The type of fasta and database to use are set with the ``querytype`` and ``dbtype`` parameters, respectively. These must be set if the respective parameter (``-query`` or ``-db``) is set to ``sample`` or ``project``.
+The type of fasta and database to use are set with the ``querytype`` and ``dbtype`` parameters, respectively. ``dbtype`` must be set if ``-db`` is set to ``sample`` or ``project``. **``querytype`` must be set regardless.** It will determine the type of blast report (*i.e.* whether it will be stored in ``blast.nucl`` or ``blast.prot``)
+
 
     
 Requires:
@@ -156,13 +157,13 @@ class Step_blast_new(Step):
                 raise AssertionExcept("'dbtype' must be either 'prot' or 'nucl'.")
             else:
                 pass
-        if self.params["redir_params"]["-query"] in ["sample","project"]:
-            if "querytype" not in self.params:
-                raise AssertionExcept("No 'querytype' passed. Please specify the query type to use.")
-            elif self.params["querytype"] not in ["prot","nucl"]:
-                raise AssertionExcept("'querytype' must be either 'prot' or 'nucl'.")
-            else:
-                pass
+        # if self.params["redir_params"]["-query"] in ["sample","project"]:
+        if "querytype" not in self.params:
+            raise AssertionExcept("No 'querytype' passed. Please specify the query type to use. (If external query, define it's type with 'querytype')")
+        elif self.params["querytype"] not in ["prot","nucl"]:
+            raise AssertionExcept("'querytype' must be either 'prot' or 'nucl'.")
+        else:
+            pass
 
         if self.params["redir_params"]["-query"] not in ["sample","project"] and self.params["redir_params"]["-db"] not in ["sample","project"]:
             raise AssertionExcept("At least one of -query and -db must be 'sample' or 'project'. You can't pass two paths.")
@@ -326,6 +327,7 @@ class Step_blast_new(Step):
             
             # Store BLAST result file:
             self.sample_data[sample]["blast"] = (sample_dir + os.path.basename(output_filename))
+            self.sample_data[sample]["blast." + self.params["querytype"]] = self.sample_data[sample]["blast"]
             self.stamp_file(self.sample_data[sample]["blast"])
             
             # Wrapping up function. Leave these lines at the end of every iteration:
@@ -388,6 +390,7 @@ class Step_blast_new(Step):
             
         # Store BLAST result file:
         self.sample_data["blast"] = (self.base_dir + os.path.basename(output_filename))
+        self.sample_data["blast." + self.params["querytype"]] = self.sample_data["blast"]
         self.stamp_file(self.sample_data["blast"])
 
         # Wrapping up function. Leave these lines at the end of every iteration:

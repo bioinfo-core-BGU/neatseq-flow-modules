@@ -26,8 +26,8 @@ Requires
 
 * Tabular BLAST result files in the following slots:
 
-    * ``sample_data[<sample>]["blast.nucl|blast.fasta"]`` if ``scope = sample``
-    * ``sample_data["blast.nucl|blast.fasta"]`` if ``scope = project``
+    * ``sample_data[<sample>]["blast.nucl|blast.prot"]`` if ``scope = sample``
+    * ``sample_data["blast.nucl|blast.prot"]``           if ``scope = project``
 
     
 
@@ -37,7 +37,7 @@ Output
 * Puts the parsed report in:
 
     * ``self.sample_data[<sample>]["blast.parsed"]``  if ``scope = sample``
-    * ``self.sample_data["blast.parsed"]`` if ``scope = project``
+    * ``self.sample_data["blast.parsed"]``            if ``scope = project``
 
     
 

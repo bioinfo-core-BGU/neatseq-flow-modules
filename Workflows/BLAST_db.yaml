@@ -143,3 +143,15 @@ Step_params:
         querytype:          nucl   # Use the 'nucl' output from prokka
         dbtype:             nucl   # Use the 'nucl' output from prokka
 
+    parse_tbl_blst_new:
+        module:             parse_blast
+        base:               blst_genes_asmbl
+        script_path:        {Vars.paths.parse_blast}
+        blast_merge_path:   {Vars.paths.compare_blast_parsed_reports}
+        scope:              sample
+        redirects:
+            --dbtable:      {Vars.databases.gene_list.table}
+            --max_evalue:   1e-7
+            --min_bitscore: 100
+            --names:        '"qseqid sallseqid qlen slen qstart qend sstart send length evalue 
+                            bitscore score pident qframe"'
