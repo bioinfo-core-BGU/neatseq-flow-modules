@@ -172,7 +172,6 @@ fi
            cmd_text = cmd_text)
            
             
-            self.sample_data["biom_table_summary"] = "".join([self.base_dir,biom_table_summary])
             # Store location of the biom_table summary:
             self.sample_data["biom_table_summary"] = "{base_dir}{prefix}.kraken.biom.summary.txt".format(base_dir = self.base_dir,prefix = prefix)
 
