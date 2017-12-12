@@ -126,7 +126,12 @@ class Step_kraken_biom(Step):
 
         
         prefix = self.sample_data["Title"]
-        use_biom_path = "{base_dir}{prefix}.kraken.biom".format(base_dir = use_dir,prefix = prefix)
+        # Decide on ".gz" suffix by whether --gzip is in redirects:
+        dotgz = ".gz" if "--gzip" in self.params["redir_params"] else ""
+
+        use_biom_path = "{base_dir}{prefix}.kraken.biom{suffix}".format(base_dir = use_dir,
+                                                                        prefix = prefix,
+                                                                        suffix = dotgz)
         
         self.script += self.get_script_const()
         self.script += "--output_fp {use_biom_path} \\\n\t".format(use_biom_path = use_biom_path)
@@ -137,7 +142,9 @@ class Step_kraken_biom(Step):
 
         
         # Storing the output file in $samples_hash
-        self.sample_data["kraken_biom"]        = "{base_dir}{prefix}.kraken.biom".format(base_dir = self.base_dir,prefix = prefix)
+        self.sample_data["kraken_biom"]        = "{base_dir}{prefix}.kraken.biom{suffix}".format(base_dir = self.base_dir,
+                                                                                                 prefix = prefix,
+                                                                                                 suffix = dotgz)
         self.sample_data["biom_table"]        = self.sample_data["kraken_biom"]
             
         self.stamp_file(self.sample_data["kraken_biom"])
@@ -184,9 +191,9 @@ fi
             
             cmd_text = """
     {biom_path} convert \\
-        -i {biom}       \\
-        -o {biom_tsv}   \\
-        --to-tsv        \\
+        -i {biom} \\
+        -o {biom_tsv} \\
+        --to-tsv \\
         --header-key taxonomy \\
         --output-metadata-id \"Consensus Lineage\"
 """.format(biom       = "{use_biom_path}".format(use_biom_path = use_biom_path),
