@@ -141,10 +141,45 @@ class Step_kraken_biom(Step):
         self.sample_data["biom_table"]        = self.sample_data["kraken_biom"]
             
         self.stamp_file(self.sample_data["kraken_biom"])
+
+
+
+
+        #######################################################################################
+        ## 
+        ## Step 2: Creating biom table summary
+        
+        # cmd_text = self.get_script_env_path() 
+        if "skip_summary" not in self.params:
+            cmd_text = """
+    {biom_path} summarize-table \\
+        -i {biom} \\
+        -o {biom_summary} 
+""".format(biom       = "{use_biom_path}".format(use_biom_path = use_biom_path),
+            biom_summary  = "{use_biom_path}.summary.txt".format(use_biom_path = use_biom_path),
+            biom_path = self.params["biom_path"])
+           
+            
+            self.script += """
+# Create biom table in table format
+
+if [ -e {biom} ]
+then
+    {cmd_text}
+fi
+
+""".format(biom = "{use_biom_path}".format(use_biom_path = use_biom_path),
+           cmd_text = cmd_text)
+           
+            
+            self.sample_data["biom_table_summary"] = "".join([self.base_dir,biom_table_summary])
+            # Store location of the biom_table summary:
+            self.sample_data["biom_table_summary"] = "{base_dir}{prefix}.kraken.biom.summary.txt".format(base_dir = self.base_dir,prefix = prefix)
+
             
         ################################################################################################
         ## 
-        ## Step 2: Creating biom table in table format
+        ## Step 3: Creating biom table in table format
         
         if "skip_tsv" not in self.params:
             
@@ -170,8 +205,8 @@ fi
 """.format(biom = "{use_biom_path}".format(use_biom_path = use_biom_path),
            cmd_text = cmd_text)
             
-        # Store location of the tsv biom_table:
-        self.sample_data["biom_table_tsv"] = "{base_dir}{prefix}.kraken.biom.tsv".format(base_dir = self.base_dir,prefix = prefix)
+            # Store location of the tsv biom_table:
+            self.sample_data["biom_table_tsv"] = "{base_dir}{prefix}.kraken.biom.tsv".format(base_dir = self.base_dir,prefix = prefix)
 
 
         

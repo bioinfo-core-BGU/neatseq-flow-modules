@@ -37,7 +37,7 @@ Parameters that can be set
     :header: "Parameter", "Values", "Comments"
     :widths: 15, 10, 10
 
-    "scope", "project | sample", "Indicates whether to use a project or sample bowtie2 index."
+    "scope", "project | sample", "Indicates whether to use a project or sample contigs file."
     "compare_mode", "", "If 'scope' is 'sample', specifies wether to analyse each sample separately or to create a single comparison report for all samples."
 
 Lines for parameter file
