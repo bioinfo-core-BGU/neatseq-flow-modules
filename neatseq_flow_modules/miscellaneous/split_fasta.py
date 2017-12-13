@@ -67,7 +67,6 @@ Lines for parameter file
 import os
 import sys
 from neatseq_flow.PLC_step import Step,AssertionExcept
-from astropy.vo import samp
 
 
 __author__ = "Menachem Sklarz"
