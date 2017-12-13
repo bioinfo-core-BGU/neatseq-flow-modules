@@ -364,7 +364,7 @@ class Step_Generic(Step):
                         File_Type=inputs_sample_data[get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])]
                     else:
                         File_Type=inputs_sample_data[sample][get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])]
-                    if inputs.startswith("Empty"):
+                    if inputs.startswith("Empty".lower()):
                         inputs_script +="%s   \\\n\t"    % File_Type
                     else:
                         inputs_script +="%s  %%s \\\n\t" % inputs \
@@ -409,7 +409,7 @@ class Step_Generic(Step):
                         output_filename = "".join([use_dir ,get_File_Type_data(self.params["outputs"],[outputs,"constant_file_name"])])
                     File_Type=""
                     if outputs.startswith("No_run")==False:
-                        if outputs.startswith("Empty"):
+                        if outputs.startswith("Empty".lower()):
                             outputs_script +="%s   \\\n\t"    % output_filename
                         else:
                             outputs_script +="%s  %%s \\\n\t" % outputs \
@@ -485,7 +485,7 @@ class Step_Generic(Step):
                     if len(get_File_Type_data(self.params["inputs"],[inputs,"sep"]))>0:
                         sep=get_File_Type_data(self.params["inputs"],[inputs,"sep"])
                     else:
-                        if inputs.startswith("Empty"):
+                        if inputs.startswith("Empty".lower()):
                             sep=" "
                         else:
                             sep=" \\\n\t"+inputs+"  "
@@ -494,7 +494,7 @@ class Step_Generic(Step):
                         File_Type+=sep
                     File_Type=File_Type.strip(sep)
                 
-                if inputs.startswith("Empty"):
+                if inputs.startswith("Empty".lower()):
                     inputs_script +="%s   \\\n\t"    % File_Type
                 else:
                     inputs_script +="%s  %%s \\\n\t" % inputs \
@@ -542,7 +542,7 @@ class Step_Generic(Step):
                 else:
                     output_filename = "".join([use_dir ,get_File_Type_data(self.params["outputs"],[outputs,"constant_file_name"])])            
                 if outputs.startswith("No_run")==False:
-                    if outputs.startswith("Empty"):
+                    if outputs.startswith("Empty".lower()):
                         outputs_script +="%s   \\\n\t"    % output_filename
                     else:
                         outputs_script +="%s  %%s \\\n\t" % outputs \

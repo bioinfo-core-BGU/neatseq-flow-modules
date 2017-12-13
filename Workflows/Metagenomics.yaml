@@ -4,9 +4,8 @@ Global_params:
     Qsub_path: /path/to/qsub/bin
     Qsub_q: myqueue.q
     module_path:      ../modules_release_1.1.0
-    # conda:
-        # path:
-        # env:
+    conda:
+        path:   /gpfs0/bioinfo/apps/Miniconda2/Miniconda_v4.3.21/envs/NeatSeq_Flow
 Description: |
     A pipeline for executing various analyses on metagenomics data
     --------------------------------------------------------------
@@ -77,6 +76,10 @@ Step_params:
         todo:           LEADING:20 TRAILING:20
         redirects:
             -threads:   20
+        conda:
+            path: 
+            # env:        ENV_NAME
+
     fqc_trim1:
         module:         fastqc_html
         base:           trim1

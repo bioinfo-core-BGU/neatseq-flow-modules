@@ -4,3 +4,5 @@ not_for_publication
 docs/build/**
 dist
 NeatSeq_Flow_modules.egg-info
+.project
+.pydevproject
