@@ -121,7 +121,10 @@ class Step_add_trinity_tags(Step):
                     
                     # self.script += self.get_script_const()
                     ""
-                    self.script += "awk '{ if (NR%%4==1) { gsub(\" \",\"_\"); print $0\"%(tag)s\" } else { print } }' \\\n\t" % {"tag" : {"R":"/2","F":"/1","S":""}[direction[0]]}
+                    if self.params["script_path"]:
+                        self.script += self.params["script_path"]
+                    else:
+                        self.script += "awk '{ if (NR%%4==1) { gsub(\" .*\",\"\"); print $0\"%(tag)s\" } else { print } }' \\\n\t" % {"tag" : {"R":"/2","F":"/1","S":""}[direction[0]]}
                     self.script += "%s \\\n\t" % self.sample_data[sample][file_slot]
                     self.script += "> %s\n\n" % (use_dir + fq_fn)
 
