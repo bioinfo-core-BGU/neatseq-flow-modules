@@ -72,7 +72,7 @@ Lines for parameter file
             --grid_exec:        "{Vars.paths.hpc_cmds_GridRunner} --grid_conf {Vars.paths.SGE_Trinity_conf} -c" 
             --grid_node_CPU:    40 
             --grid_node_max_memory 80G 
-            --max_memory        80G 
+            --max_memory:        80G 
             --seqType:          fq
             --min_kmer_cov:     2
             --full_cleanup:
@@ -102,7 +102,6 @@ class Step_trinity_new(Step):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = ".Trinity.fasta"
         
-        sys.exit("NOT FUNCTIONAL!!! You have to find the exact name of the output fasta file.")
         
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
@@ -205,13 +204,12 @@ class Step_trinity_new(Step):
         
 
         # Store results to fasta and assembly slots:
-        self.sample_data["fasta.nucl"] = "{dir}{ossep}{basename}{filetag}".format(dir=self.base_dir,
-                                                                            ossep=os.sep,
-                                                                            basename=output_basename,
-                                                                            filetag=self.file_tag) 
+        self.sample_data["fasta.nucl"] = os.path.join(self.base_dir,
+                                                        output_basename,
+                                                        "Trinity.fasta") 
         self.sample_data[self.get_step_step() + ".contigs"] = self.sample_data["fasta.nucl"]
 
-        self.stamp_file(self.sample_data[self.get_step_step() + ".contigs"])
+        self.stamp_file(self.sample_data["fasta.nucl"])
 
        
         # Move all files from temporary local dir to permanent base_dir
@@ -244,7 +242,7 @@ class Step_trinity_new(Step):
             # "output directory must contain the word 'trinity' as a safety precaution, given that auto-deletion can take place."
             output_basename = "{title}_trinity".format(title = sample)
 
-            self.script += "--output %s \\\n\t" % os.sep.join(use_dir,output_basename)
+            self.script += "--output %s \\\n\t" % os.path.join(use_dir,output_basename)
             
             if "fastq.F" in self.sample_data[sample].keys():
                 self.script += "--left %s \\\n\t" % self.sample_data[sample]["fastq.F"]
@@ -256,14 +254,13 @@ class Step_trinity_new(Step):
             self.script = self.script.rstrip("\\\n\t") + "\n\n"
 
             # Store results to fasta and assembly slots:
-            self.sample_data[sample]["fasta.nucl"] = "{dir}{ossep}{basename}{filetag}".format(dir=sample_dir,
-                                                                            ossep=os.sep,
-                                                                            basename=output_basename,
-                                                                            filetag=self.file_tag) 
-                                                        sample_dir + "Trinity.fasta"
-            self.sample_data[sample][self.get_step_step() + ".contigs"] = sample_dir + "Trinity.fasta"
+            self.sample_data[sample]["fasta.nucl"] = os.path.join(sample_dir,
+                                                                    output_basename,
+                                                                    "Trinity.fasta") 
 
-            self.stamp_file(self.sample_data[sample][self.get_step_step() + ".contigs"])
+            self.sample_data[sample][self.get_step_step() + ".contigs"] = self.sample_data[sample]["fasta.nucl"]
+
+            self.stamp_file(self.sample_data[sample]["fasta.nucl"])
 
                 
             # Wrapping up function. Leave these lines at the end of every iteration:

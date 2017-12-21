@@ -164,6 +164,9 @@ awk -v seqs="$SEQPERFRAG" 'BEGIN {{n_seq=0; file_cnt=1;}} /^>/ {{ if(n_seq%seqs=
             # Each iteration must define the following class variables:
                 # spec_script_name
                 # script
+            new_sample_list = list()
+            new_sample_dict = dict()
+            
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
                 
                 # Name of specific script:
@@ -177,6 +180,28 @@ awk -v seqs="$SEQPERFRAG" 'BEGIN {{n_seq=0; file_cnt=1;}} /^>/ {{ if(n_seq%seqs=
                 # Use the dir it returns as the base_dir for this step.
                 use_dir = self.local_start(sample_dir)
 
+            
+                self.script = """
+FASTA={sample_fasta}
+SEQPERFRAG=$[$(grep -c "^>" $FASTA)/$[{subsample_num}-1]]
+awk -v seqs="$SEQPERFRAG" 'BEGIN {{n_seq=0; file_cnt=1;}} /^>/ {{ if(n_seq%seqs==0){{file=sprintf("{use_dir}{sample}.subsample%d.fa",file_cnt); file_cnt++; }} print >> file; n_seq++; next;}} {{ print >> file; }}' < $FASTA
+
+""".format(sample_fasta = self.sample_data[sample][self.params["type"]],
+           sample = sample,
+                subsample_num = self.params["subsample_num"],
+                use_dir = use_dir)
+    
+                # self.sample_data["samples.old"] = self.sample_data["samples"]
+                # self.sample_data["samples"] = ["subsample{num}".format(num=num) for num in range(1,self.params["subsample_num"]+1)]
+                
+                new_sample_list.append(["{sample}.subsample{num}".format(sample=sample, num=num) for num in range(1,self.params["subsample_num"]+1)])            
+                    
+                # CONTINUE HERE
+                for sample in new_sample_list:      # Getting list of samples out of samples_hash
+                    self.sample_data[sample] = dict()
+                    self.sample_data[sample][self.params["type"]] = "{use_dir}{sample}.fa".format(use_dir=self.base_dir,sample=sample)
+                    self.stamp_file(self.sample_data[sample][self.params["type"]])
+                    
                     
                 # Wrapping up function. Leave these lines at the end of every iteration:
                 self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)

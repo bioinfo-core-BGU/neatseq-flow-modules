@@ -43,7 +43,7 @@ Step_params:
         base:               merge1
         script_path: 
     trinity1:
-        module:             trinity
+        module:             trinity  #_new
         base:               trin_tags1
         script_path:        '{Vars.paths.Trinity}/Trinity'
         qsub_params:

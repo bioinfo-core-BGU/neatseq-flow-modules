@@ -110,6 +110,12 @@ class Step_STAR_builder(Step):
                     self.sample_data[sample]["fasta.nucl"]
                 except KeyError:
                     raise AssertionExcept("Sample does not have a nucl fasta defined. Can't build index\n", sample)
+        else:
+            try:
+                self.sample_data["fasta.nucl"]
+            except KeyError:
+                raise AssertionExcept("Project does not have a nucl fasta defined. Can't build index\n")
+        
 
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
