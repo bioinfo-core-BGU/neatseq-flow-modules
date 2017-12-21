@@ -211,7 +211,37 @@ class Step_trinity_new(Step):
 
         self.stamp_file(self.sample_data["fasta.nucl"])
 
-       
+
+        #######################################################################################
+        ## 
+        ## Step 2: Create gene_to_trans_map
+        
+        # cmd_text = self.get_script_env_path() 
+        if "skip_gene_to_trans_map" not in self.params:
+            cmd_text = """
+    {script_path} \\
+        {transcriptome} \\
+        > {map} 
+""".format(transcriptome = "%s%s%s%s" % (use_dir, os.sep, self.sample_data["Title"], self.file_tag),\
+           script_path   = os.path.join(os.path.dirname(os.path.normpath(self.params["script_path"])) , \
+                                          "util/support_scripts/get_Trinity_gene_to_trans_map.pl"),\
+           map           = "%s%s%s%s.gene_trans_map" % (use_dir, os.sep, self.sample_data["Title"], self.file_tag))
+           
+            
+            self.script += """
+# Create summary of biom table for use in rarefaction later
+
+if [ -e {transcriptome} ]
+then
+	{cmd_text}
+fi
+""".format(transcriptome = "%s%s%s%s" % (use_dir, os.sep, self.sample_data["Title"], self.file_tag),\
+           cmd_text = cmd_text)
+           
+            
+            self.sample_data["gene_to_trans_map"] = "%s%s%s%s.gene_trans_map" % (self.base_dir, os.sep, self.sample_data["Title"], self.file_tag)
+            self.stamp_file(self.sample_data["gene_to_trans_map"])
+              
         # Move all files from temporary local dir to permanent base_dir
         self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
      
@@ -262,7 +292,38 @@ class Step_trinity_new(Step):
 
             self.stamp_file(self.sample_data[sample]["fasta.nucl"])
 
+
+            #######################################################################################
+            ## 
+            ## Step 2: Create gene_to_trans_map
+            
+            # cmd_text = self.get_script_env_path() 
+            if "skip_gene_to_trans_map" not in self.params:
+                cmd_text = """
+        {script_path} \\
+            {transcriptome} \\
+            > {map} 
+""".format(transcriptome = use_dir + "Trinity.fasta",\
+           script_path   = os.sep.join([os.path.split(os.path.normpath(self.params["script_path"]))[0] , \
+                                          "util/support_scripts/get_Trinity_gene_to_trans_map.pl"]),\
+           map           = use_dir + "Trinity.fasta.gene_trans_map")
+           
+            
+            self.script += """
+# Create summary of biom table for use in rarefaction later
+
+if [ -e {transcriptome} ]
+then
+	{cmd_text}
+fi
+""".format(transcriptome = use_dir + "Trinity.fasta",\
+           cmd_text = cmd_text)
+           
                 
+                self.sample_data[sample]["gene_to_trans_map"] = "%s%s%s.gene_trans_map" % (sample_dir, os.sep, self.file_tag)
+                self.stamp_file(self.sample_data[sample]["gene_to_trans_map"])
+           
+                                
             # Wrapping up function. Leave these lines at the end of every iteration:
             self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)
 
