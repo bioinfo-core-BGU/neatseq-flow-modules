@@ -309,12 +309,12 @@ fi
            map           = use_dir + "Trinity.fasta.gene_trans_map")
            
             
-            self.script += """
+                self.script += """
 # Create summary of biom table for use in rarefaction later
 
 if [ -e {transcriptome} ]
 then
-	{cmd_text}
+    {cmd_text}
 fi
 """.format(transcriptome = use_dir + "Trinity.fasta",\
            cmd_text = cmd_text)
