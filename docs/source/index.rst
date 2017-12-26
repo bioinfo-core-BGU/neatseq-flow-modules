@@ -68,6 +68,7 @@ Following is a list of modules included in this repository.
    Module_docs/QIIME
    Module_docs/SequenceClustering
    Module_docs/VariousReportingPrograms
+   Module_docs/Miscellaneous
    Module_docs/GenericModule
 
 ..   all_modules

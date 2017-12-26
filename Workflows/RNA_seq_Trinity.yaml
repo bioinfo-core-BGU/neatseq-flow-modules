@@ -88,3 +88,12 @@ Step_params:
         base:               STAR_bld_ind
         script_path:        {Vars.paths.STAR}
         scope:              project
+    manage_types1:
+        module:             manage_types
+        base:               STAR_bld_ind
+        script_path:        
+        scope:              project
+        operation:          cp
+        type:               trinity.contigs
+        type_trg:           trinity.contigs2
+#        scope_trg:          sample

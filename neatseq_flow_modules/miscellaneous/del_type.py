@@ -69,7 +69,7 @@ class Step_del_type(Step):
         if self.params["scope"] == "sample":
             for sample in self.sample_data["samples"]:
                 if type2del not in self.sample_data[sample]:
-                    raise AssertionExcept("type %s does not exist for project." % type2del)
+                    raise AssertionExcept("type %s does not exist for sample." % type2del, sample)
                 else:
                     del self.sample_data[sample][type2del]
         elif self.params["scope"] == "project":
