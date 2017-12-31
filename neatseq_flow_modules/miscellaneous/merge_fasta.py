@@ -1,12 +1,14 @@
 # -*- coding: UTF-8 -*-
 """ 
-``merge_project``
+``merge_fasta``
 ------------------------
 
 
 :Authors: Menachem Sklarz
 :Affiliation: Bioinformatics core facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
+
+.. Attention:: This module replaces the ``merge_project`` module. It will be one of a collection of ``merge_XXX`` modules.
 
 
 A module for merging sample `fasta` files into a single project wide `fasta` file.
@@ -48,7 +50,7 @@ Lines for parameter file
 ::
 
     merge_proj:
-        module:         merge_project
+        module:         merge_fasta
         base:           merge1
         script_path:    cat
         type:           fasta.nucl
@@ -66,7 +68,7 @@ from neatseq_flow.PLC_step import Step,AssertionExcept
 __author__ = "Menachem Sklarz"
 __version__ = "1.1.0"
 
-class Step_merge_project(Step):
+class Step_merge_fasta(Step):
    
     
     def step_specific_init(self):

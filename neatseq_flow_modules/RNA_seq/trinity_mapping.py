@@ -89,10 +89,12 @@ class Step_trinity_mapping(Step):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = "trin_mapping"
         
+        # if "--est_method" not in self.params["redir_params"]:
+            # raise AssertionExcept("You must pass an --est_method to trin_mapping: One of 'RSEM','eXpress','kallisto','salmon'\n")
         if "--aln_method" not in self.params["redir_params"]:
-            raise AssertionExcept("You must pass an --aln_method to trin_mapping\n")
-        self.params["aln_method"] = self.params["redir_params"]["--aln_method"]
-        del self.params["redir_params"]["--aln_method"]
+            # raise AssertionExcept("You must pass an --aln_method to trin_mapping\n")
+            self.params["aln_method"] = self.params["redir_params"]["--aln_method"]
+            del self.params["redir_params"]["--aln_method"]
         
         if "scope" not in self.params:
             raise AssertionExcept("Please specify a 'scope': Either 'sample' or 'project'.")
@@ -120,15 +122,16 @@ class Step_trinity_mapping(Step):
         else:
             raise AssertionExcept("'scope' must be either 'sample' or 'project'.")
 
-
-        if self.params["aln_method"] not in ["bowtie", "bowtie2"]:
-            self.write_warning("--aln_method is not bowtie or bowtie2. Will ignore it's value and pass a sample BAM file.")
-            for sample in self.sample_data["samples"]:
-                if "bam" not in self.sample_data[sample]:
-                    raise AssertionExcept("It seems there is no BAM file for the sample.", sample)
-                
-
-        
+        if "aln_method" in self.params:
+            if self.params["aln_method"] == None:
+                self.write_warning("--aln_method is null. Will use a sample BAM file.")
+                for sample in self.sample_data["samples"]:
+                    if "bam" not in self.sample_data[sample]:
+                        raise AssertionExcept("It seems there is no BAM file for the sample.", sample)
+            elif self.params["aln_method"] not in ["bowtie", "bowtie2"]:
+                self.write_warning("--aln_method is not empty, 'bowtie' or 'bowtie2'. Make sure it is a legitimate value.")
+            else:
+                pass
         
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
@@ -140,7 +143,9 @@ class Step_trinity_mapping(Step):
         """ Add script to run BEFORE all other steps
         """
   
-        if self.params["scope"] == "project" and self.params["aln_method"] in ["bowtie", "bowtie2"]:
+        if all([self.params["scope"] == "project",  \
+                "aln_method" in self.params,        \
+                self.params["aln_method"] in ["bowtie", "bowtie2"]]):
             
             self.script = ""
 
@@ -199,12 +204,14 @@ class Step_trinity_mapping(Step):
                 if self.params["scope"] == "sample" \
                 else  self.sample_data["fasta.nucl"]
                 
-                
-            if self.params["scope"] == "sample":  # For sample scope assembly, add prep_reference per sample.
+
+            if all([self.params["scope"] == "sample",   \
+                    "aln_method" in self.params,        \
+                    self.params["aln_method"] in ["bowtie", "bowtie2"]]):
                 self.script += "# Preperaing the reference for analysis:\n\n"
                 self.script += self.get_script_const()
                 self.script += "--aln_method %s \\\n\t"   % self.params["aln_method"]
-                self.script += "--transcripts %s \\\n\t"   % transcripts
+                self.script += "--transcripts %s \n\n"   % transcripts
                 self.script += "--prep_reference \n\n"
 
                 

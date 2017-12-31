@@ -124,10 +124,10 @@ class Step_manage_types(Step):
             type_trg = self.params["type_trg"]
             
             if self.params["scope"] == "sample":
-                if type_src not in self.sample_data[sample]:
-                    raise AssertionExcept("'type' does not exist in sample!",sample)
                 if self.params["scope_trg"] == "sample":
                     for sample in self.sample_data["samples"]:
+                        if type_src not in self.sample_data[sample]:
+                            raise AssertionExcept("'type' does not exist in sample!",sample)
                         if type_trg in self.sample_data[sample]:
                             self.write_warning("type %s exists in sample. Overwriting!" % type_trg, sample)
                         self.sample_data[sample][type_trg] = self.sample_data[sample][type_src]
@@ -135,9 +135,9 @@ class Step_manage_types(Step):
                             del self.sample_data[sample][type_src]
 
                 else:  # scope_trg=project
-                    self.write_warning("Copying type from sample to project should be done with caution!" % type_trg, sample)
+                    self.write_warning("Copying type from sample to project should be done with caution!")
                     if type_trg in self.sample_data:
-                        self.write_warning("type %s exists in project. Overwriting!" % type_trg, sample)
+                        self.write_warning("type %s exists in project. Overwriting!" % type_trg)
                     for sample in self.sample_data["samples"]:
                         self.sample_data[type_trg] = self.sample_data[sample][type_src]
                         if self.params["operation"] == "mv":

@@ -150,6 +150,33 @@ class Step_blast_new(Step):
         """ A place to do initiation stages following setting of sample_data
         """
         
+        
+        # Store output format
+        outfmt_txt = ["pairwise", "query-anchored showing identities", "query-anchored no identities", "flat query-anchored, show identities", "flat query-anchored, no identities", "XML Blast output", "tabular", "tabular with comment lines", "Text ASN.1", "Binary ASN.1", "Comma-separated values", "BLAST archive format (ASN.1)"]
+        if "-outfmt" in self.params["redir_params"]:
+            if isinstance(self.params["redir_params"]["-outfmt"], str):
+                num_type = re.search("[\'\"]*(\d+)",self.params["redir_params"]["-outfmt"])
+                try:
+                    
+                    blast_type_num = int(num_type.groups()[0])
+                    if not 0 <= blast_type_num <= 18:
+                        raise AssertionExcept("-outfmt must be between 0 and 18\n")
+                    self.outfmt = blast_type_num
+                except:
+                    raise
+            elif isinstance(self.params["redir_params"]["-outfmt"], int):
+                if not 0 < self.params["redir_params"]["-outfmt"] < 18:
+                    raise AssertionExcept("-outfmt must be between 0 and 18\n")
+                self.outfmt = self.params["redir_params"]["-outfmt"]
+            else:
+                raise AssertionExcept("Unrecognized -outfmt format")
+        else:
+            self.outfmt = 0
+        
+        self.outfmt_txt = outfmt_txt[self.outfmt]
+
+        
+        
         if self.params["redir_params"]["-db"] in ["sample","project"]:
             if "dbtype" not in self.params:
                 raise AssertionExcept("No 'dbtype' passed. Please specify the db type to use.")
@@ -183,6 +210,7 @@ class Step_blast_new(Step):
         del self.params["redir_params"]["-query"]
         
         
+        
     def step_sample_initiation_bysample(self):
         """ A place to do initiation stages following setting of sample_data
             This set of tests is performed for sample-level BLAST
@@ -204,6 +232,13 @@ class Step_blast_new(Step):
                 if "blastdb." + self.params["dbtype"] not in self.sample_data:
                     raise AssertionExcept("No blastdb of type %s in project. Did you run makeblastdb module with project scope?" % self.params["dbtype"])
             
+       
+            self.sample_data[sample]["blast.outfmt"]     = self.outfmt
+            self.sample_data[sample]["blast.outfmt.txt"] = self.outfmt_txt
+
+        
+        
+        
 
     def step_sample_initiation_byproject(self):
         """ A place to do initiation stages following setting of sample_data
@@ -218,7 +253,9 @@ class Step_blast_new(Step):
             if "blastdb." + self.params["dbtype"] not in self.sample_data:
                 raise AssertionExcept("No blastdb of type %s in project. Did you run makeblastdb module with project scope?" % self.params["dbtype"])
                    
-        
+        self.sample_data["blast.outfmt"]     = self.outfmt
+        self.sample_data["blast.outfmt.txt"] = self.outfmt_txt
+
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
@@ -392,6 +429,8 @@ class Step_blast_new(Step):
         self.sample_data["blast"] = (self.base_dir + os.path.basename(output_filename))
         self.sample_data["blast." + self.params["querytype"]] = self.sample_data["blast"]
         self.stamp_file(self.sample_data["blast"])
+
+
 
         # Wrapping up function. Leave these lines at the end of every iteration:
         self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)

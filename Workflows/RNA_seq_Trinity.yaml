@@ -64,7 +64,7 @@ Step_params:
         setenv:             PATH "{Vars.paths.bowtie2}:{Vars.paths.RSEM}:{Vars.paths.samtools}:$PATH"
         redirects:
             --est_method:   RSEM
-            --aln_method:   bowtie2
+            --aln_method:   
             --trinity_mode:
             --seqType:      fq
 
