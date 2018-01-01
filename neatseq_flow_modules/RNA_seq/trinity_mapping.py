@@ -91,7 +91,7 @@ class Step_trinity_mapping(Step):
         
         # if "--est_method" not in self.params["redir_params"]:
             # raise AssertionExcept("You must pass an --est_method to trin_mapping: One of 'RSEM','eXpress','kallisto','salmon'\n")
-        if "--aln_method" not in self.params["redir_params"]:
+        if "--aln_method" in self.params["redir_params"]:
             # raise AssertionExcept("You must pass an --aln_method to trin_mapping\n")
             self.params["aln_method"] = self.params["redir_params"]["--aln_method"]
             del self.params["redir_params"]["--aln_method"]

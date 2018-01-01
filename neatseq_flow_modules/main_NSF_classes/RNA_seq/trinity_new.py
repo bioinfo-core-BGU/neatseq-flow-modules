@@ -71,7 +71,7 @@ Lines for parameter file
         redirects:
             --grid_exec:        "{Vars.paths.hpc_cmds_GridRunner} --grid_conf {Vars.paths.SGE_Trinity_conf} -c" 
             --grid_node_CPU:    40 
-            --grid_node_max_memory 80G 
+            --grid_node_max_memory: 80G 
             --max_memory:        80G 
             --seqType:          fq
             --min_kmer_cov:     2
