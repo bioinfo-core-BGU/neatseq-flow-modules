@@ -6,7 +6,7 @@
 :Affiliation: Bioinformatics core facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
-A module for managinf file type without script creation.
+A module for managing file type without script creation.
 
 Supports adding, deleting, copying and moving file types.
 
@@ -89,20 +89,27 @@ class Step_manage_types(Step):
         if self.params["operation"] == "del":
         
             if "type" not in self.params:
-                raise AssertionExcept("You must pass a 'type2del' param!")
-            type2del = self.params["type"]
-
+                raise AssertionExcept("You must pass a 'type' param!")
+            type2del_list = self.params["type"]
+            
+            
+            if not isinstance(type2del_list, list):
+                type2del_list = [type2del]
+            
+            
             if self.params["scope"] == "sample":
                 for sample in self.sample_data["samples"]:
-                    if type2del not in self.sample_data[sample]:
-                        raise AssertionExcept("type %s does not exist for project." % type2del)
-                    else:
-                        del self.sample_data[sample][type2del]
+                    for type2del in type2del_list:
+                        if type2del not in self.sample_data[sample]:
+                            self.write_warning("type %s does not exist for project." % type2del)
+                        else:
+                            del self.sample_data[sample][type2del]
             elif self.params["scope"] == "project":
-                if type2del not in self.sample_data:
-                    raise AssertionExcept("type %s does not exist for project." % type2del)
-                else:
-                    del self.sample_data[type2del]
+                for type2del in type2del_list:
+                    if type2del not in self.sample_data:
+                        self.write_warning("type %s does not exist for project." % type2del)
+                    else:
+                        del self.sample_data[type2del]
             else:
                 pass
 ##  ---------------- mv and cp ----------------------
