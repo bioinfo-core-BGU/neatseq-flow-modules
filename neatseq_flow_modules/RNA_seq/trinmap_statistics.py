@@ -126,8 +126,10 @@ class Step_trinmap_statistics(Step):
                 self.script += "%s \\\n\t" % self.sample_data[sample][type2use] 
             except:
                 raise AssertionExcept("file type %s does not exist for sample." % type2use, sample)
-        # self.script += " \\\n\t".join([self.sample_data[sample]["fastq"]["mapping"][type2use] for sample in self.sample_data["samples"]])
-
+        
+        self.script.rstrip("\\\n\t")
+        self.script += "\n\n"
+        
         
         # Storing all output files even though probably not very useful downstream...
         self.sample_data["counts.matrix"] = os.sep.join([self.base_dir, "%s.counts.matrix" % prefix])

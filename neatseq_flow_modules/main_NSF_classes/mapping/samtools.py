@@ -191,7 +191,9 @@ class Step_samtools(Step):
                     self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)
                     self.create_low_level_script()
                     continue
-               
+                self.script += self.add_exit_status_check()
+                
+                
             # The following can be merged into the main 'view' section
             if "filter_by_tag" in self.params.keys():
             
@@ -206,6 +208,8 @@ class Step_samtools(Step):
                 self.script += "-o %s \\\n\t" % (use_dir + filtered_name)
                 self.script += "- \n\n" 
 
+                self.script += self.add_exit_status_check()
+                
                 # If user requires than unsorted bam be removed:
                 if "del_unfiltered" in self.params.keys():
                     self.script += "###########\n# Removing unfiltered BAM\n#----------------\n"
@@ -236,6 +240,9 @@ class Step_samtools(Step):
                     self.script += "%s \\\n\t" % self.params["sort"]
                 self.script += "-o %s \\\n\t" % (use_dir + sort_name)
                 self.script += "%s\n\n" % (bam_name)
+                
+                self.script += self.add_exit_status_check()
+
                 # Storing sorted bam in 'bam' slot and unsorted bam in unsorted_bam slot
                 self.sample_data[sample]["unsorted_bam"] = sample_dir + os.path.basename(bam_name)
                 self.sample_data[sample]["bam"] = sample_dir + sort_name
@@ -254,14 +261,16 @@ class Step_samtools(Step):
                     self.script += "%s \\\n\t" % self.params["index"]
                 self.script += "%s\n\n" % (use_dir + bam_name)
                 self.sample_data[sample]["index"] = sample_dir + index_name
-        
+                self.script += self.add_exit_status_check()
+
             if "flagstat" in self.params.keys():
                 self.script += "###########\n# Calculating BAM statistics:\n#----------------\n"
                 self.script += "%s flagstat \\\n\t" % self.get_script_env_path()
                 self.script += "%s \\\n\t" % (use_dir + bam_name)
                 self.script += "> %s.flagstat \n\n" % (use_dir + bam_name)
                 self.sample_data[sample]["flagstat"] = "%s%s.flagstat" % (sample_dir, bam_name)
-        
+                self.script += self.add_exit_status_check()
+
             if "stats" in self.params.keys():
                 self.script += "###########\n# Calculating BAM statistics:\n#----------------\n"
                 self.script += "%s stats \\\n\t" % self.get_script_env_path()
@@ -270,7 +279,8 @@ class Step_samtools(Step):
                 self.script += "%s \\\n\t" % (use_dir + bam_name)
                 self.script += "> %s.stats \n\n" % (use_dir + bam_name)
                 self.sample_data[sample]["stats"] = "%s%s.stats" % (sample_dir, bam_name)
-                
+                self.script += self.add_exit_status_check()
+
             if "idxstats" in self.params.keys():
                 self.script += "###########\n# Calculating index statistics (idxstats):\n#----------------\n"
                 self.script += "%s idxstats \\\n\t" % self.get_script_env_path()
@@ -279,7 +289,8 @@ class Step_samtools(Step):
                 self.script += "> %s.idxstat.tab \n\n" % (use_dir + bam_name)
                 self.sample_data[sample]["stats"] = "%s%s.stats" % (sample_dir, bam_name)
                 self.sample_data[sample]["idxstats"] = "%s%s.idxstat.tab" % (sample_dir, bam_name)
-                
+                self.script += self.add_exit_status_check()
+
                 
             if "del_sam" in self.params.keys() and "sam" in self.sample_data[sample]:
                 self.script += "###########\n# Removing SAM\n#----------------\n\n"
