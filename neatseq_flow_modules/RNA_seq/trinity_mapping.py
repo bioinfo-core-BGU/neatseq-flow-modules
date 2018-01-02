@@ -240,6 +240,23 @@ class Step_trinity_mapping(Step):
                 
             self.script = self.script.rstrip("\\\n\t") + "\n\n"
 
+            # When passing bam, the prefix is automatically set to the est_method! (Their bug...) 
+            # If output_prefix is passed, it causes an error.
+            # However, this causes problems with the statistics module.
+            # Therefore:
+            # Moving the files to files with sample names
+
+            if self.params["aln_method"] == "bam":
+                self.script += """
+mv {sample_dir}{est_meth}.genes.results {sample_dir}{sample}.genes.results
+
+mv {sample_dir}{est_meth}.isoforms.results {sample_dir}{sample}.isoforms.results
+
+""".format(sample_dir = use_dir,
+            est_meth = self.params["redir_params"]["--est_method"],
+            sample = sample)
+            
+            
             if self.params["aln_method"] not in ["bam",None]:
                 self.sample_data[sample]["bam"] = "{dir}{sample}.{method}.bam".format(dir    = sample_dir, \
                                                                                       sample = sample, \
@@ -250,12 +267,8 @@ class Step_trinity_mapping(Step):
             
             self.sample_data[sample]["reference"] = transcripts
             
-            if self.params["aln_method"] != "bam":  # When passing bam, the prefix is automatically set to the est_method! (Their bug...) If output_prefix is passed, it causes an error.
-                self.sample_data[sample]["genes.results"] = "%s%s.genes.results" % (sample_dir,sample)
-                self.sample_data[sample]["isoforms.results"] = "%s%s.isoforms.results" % (sample_dir,sample)
-            else:
-                self.sample_data[sample]["genes.results"] = "%s%s.genes.results" % (sample_dir,self.params["redir_params"]["--est_method"])
-                self.sample_data[sample]["isoforms.results"] = "%s%s.isoforms.results" % (sample_dir,self.params["redir_params"]["--est_method"])
+            self.sample_data[sample]["genes.results"] = "%s%s.genes.results" % (sample_dir,sample)
+            self.sample_data[sample]["isoforms.results"] = "%s%s.isoforms.results" % (sample_dir,sample)
             
             self.stamp_file(self.sample_data[sample]["genes.results"])
             self.stamp_file(self.sample_data[sample]["isoforms.results"])

@@ -67,54 +67,54 @@ Step_params:
         # scope:              sample
         # operation:          del
         # type:               fastq.S
-    # trinmap_bwt2_build:
-        # module:             bowtie2_builder
-        # base:               trinity1
-        # script_path:        '{Vars.paths.bowtie2}/bowtie2-build'
-        # scope:              project
-    # trinmap_bowtie2:
-        # module:             bowtie2_mapper
-        # base:               trinmap_bwt2_build
-        # script_path:        '{Vars.paths.bowtie2}/bowtie2'
-        # get_map_log:
-        # scope:              project
-        # redirects:
-            # -p:             10
-            # -q: 
-            # --no-mixed:
-            # --no-discordant:
-            # --gbar:         1000
-            # --end-to-end:
-            # -q:
-            # -X:             800
-        # qsub_params:
-            # -pe:            shared 10
+    trinmap_bwt2_build:
+        module:             bowtie2_builder
+        base:               trinity1
+        script_path:        '{Vars.paths.bowtie2}/bowtie2-build'
+        scope:              project
+    trinmap_bowtie2:
+        module:             bowtie2_mapper
+        base:               trinmap_bwt2_build
+        script_path:        '{Vars.paths.bowtie2}/bowtie2'
+        get_map_log:
+        scope:              project
+        redirects:
+            -p:             10
+            -q: 
+            --no-mixed:
+            --no-discordant:
+            --gbar:         1000
+            --end-to-end:
+            -q:
+            -X:             800
+        qsub_params:
+            -pe:            shared 10
 
-    # trinmap_sam_bwt2:
-        # module:             samtools
-        # base:               trinmap_bowtie2
-        # script_path:        '{Vars.paths.samtools}/samtools'
-        # qsub_params:
-            # -pe:            shared 20
-        # view:               -b -@ 20 
-        # sort:               -@ 20
-        # flagstat: 
-        # index: 
-        # stats:              
-        # del_sam: 
-        # del_unsorted: 
+    trinmap_sam_bwt2:
+        module:             samtools
+        base:               trinmap_bowtie2
+        script_path:        '{Vars.paths.samtools}/samtools'
+        qsub_params:
+            -pe:            shared 20
+        view:               -b -@ 20 
+        sort:               -@ 20
+        flagstat: 
+        index: 
+        stats:              
+        del_sam: 
+        del_unsorted: 
 ######################
 
     trin_map1:
         module:             trinity_mapping
-        base:               trinity1
+        base:               trinmap_sam_bwt2
         script_path:        '{Vars.paths.Trinity}/util/align_and_estimate_abundance.pl'
         sample_list:        [Sample1,Sample2]
         scope:              project
         setenv:             PATH "{Vars.paths.bowtie2}:{Vars.paths.RSEM}:{Vars.paths.samtools}:$PATH"
         redirects:
-            --est_method:   kallisto  #RSEM
-            --aln_method:   bowtie2
+            --est_method:   RSEM
+            --aln_method:   bam
             --trinity_mode:
             --seqType:      fq
 
