@@ -32,6 +32,10 @@ Parameters that can be set
     
 .. Note:: If you don't pass ``scope_trg`` or ``type_trg``, they will be assumed to be the same and ``scope`` and ``type``, respectively. However, you **MUST** pass at least one of them!
 
+.. Attention:: The operations do **NOT** operate on the actual files! They only modify internal file types index.
+
+.. Tip:: For ``del`` operations, you can pass a list of types to remove. 
+
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -99,6 +99,10 @@ class Step_samtools(Step):
     def step_specific_init(self):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
 
+        if "type2use" in self.params:
+            if not isinstance(self.params["type2use"],str) or self.params["type2use"] not in ["sam","bam"]:
+                raise AssertionExcept("'type2use' must be either 'sam' or 'bam'")
+                
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
@@ -106,7 +110,12 @@ class Step_samtools(Step):
         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
 
             # Check that a sam or bam exists
-            if "bam" in self.sample_data[sample]:
+            if "bam" in self.sample_data[sample] and "sam" in self.sample_data[sample]:
+                if "type2use" in self.params:
+                    self.file2use = self.params["type2use"]
+                else:
+                    raise AssertionExcept("Both BAM and SAM file types exist for sample. Specify which one to use with 'type2use'.\n", sample)
+            elif "bam" in self.sample_data[sample]:
                 self.file2use = "bam"
             elif "sam" in self.sample_data[sample]:
                 self.file2use = "sam"

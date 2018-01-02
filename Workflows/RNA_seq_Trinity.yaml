@@ -109,6 +109,7 @@ Step_params:
         module:             trinity_mapping
         base:               trinity1
         script_path:        '{Vars.paths.Trinity}/util/align_and_estimate_abundance.pl'
+        sample_list:        [Sample1,Sample2]
         scope:              project
         setenv:             PATH "{Vars.paths.bowtie2}:{Vars.paths.RSEM}:{Vars.paths.samtools}:$PATH"
         redirects:

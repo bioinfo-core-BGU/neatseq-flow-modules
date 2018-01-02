@@ -89,8 +89,8 @@ class Step_trinity_mapping(Step):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = "trin_mapping"
         
-        # if "--est_method" not in self.params["redir_params"]:
-            # raise AssertionExcept("You must pass an --est_method to trin_mapping: One of 'RSEM','eXpress','kallisto','salmon'\n")
+        if "--est_method" not in self.params["redir_params"]:
+            raise AssertionExcept("You must pass an --est_method to trin_mapping.\n")
         if "--aln_method" in self.params["redir_params"]:
             # raise AssertionExcept("You must pass an --aln_method to trin_mapping\n")
             self.params["aln_method"] = self.params["redir_params"]["--aln_method"]
@@ -228,7 +228,8 @@ class Step_trinity_mapping(Step):
                 
             self.script += "--transcripts %s \\\n\t"   % transcripts
             self.script += "--output_dir %s \\\n\t"    % use_dir
-            self.script += "--output_prefix %s \\\n\t" % sample
+            if self.params["aln_method"] != "bam":  # When passing bam, the prefix is automatically set to the est_method! (Their bug...) If output_prefix is passed, it causes an error.
+                self.script += "--output_prefix %s \\\n\t" % sample
             if (forward): 
                 self.script += "--left %s \\\n\t"      % forward
                 self.script += "--right %s \\\n\t"       % reverse
@@ -249,8 +250,12 @@ class Step_trinity_mapping(Step):
             
             self.sample_data[sample]["reference"] = transcripts
             
-            self.sample_data[sample]["genes.results"] = "%s%s.genes.results" % (sample_dir,sample)
-            self.sample_data[sample]["isoforms.results"] = "%s%s.isoforms.results" % (sample_dir,sample)
+            if self.params["aln_method"] != "bam":  # When passing bam, the prefix is automatically set to the est_method! (Their bug...) If output_prefix is passed, it causes an error.
+                self.sample_data[sample]["genes.results"] = "%s%s.genes.results" % (sample_dir,sample)
+                self.sample_data[sample]["isoforms.results"] = "%s%s.isoforms.results" % (sample_dir,sample)
+            else:
+                self.sample_data[sample]["genes.results"] = "%s%s.genes.results" % (sample_dir,self.params["redir_params"]["--est_method"])
+                self.sample_data[sample]["isoforms.results"] = "%s%s.isoforms.results" % (sample_dir,self.params["redir_params"]["--est_method"])
             
             self.stamp_file(self.sample_data[sample]["genes.results"])
             self.stamp_file(self.sample_data[sample]["isoforms.results"])
