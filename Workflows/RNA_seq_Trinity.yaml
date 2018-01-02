@@ -34,6 +34,8 @@ Vars:
         RSEM:               /path/to/rsem/bin               # Path to dir containing rsem scripts 
         samtools:           /path/to/samtools-1.3/bin       # Path to dir containing samtools executable
         STAR:               /path/to/STAR                   # Path to STAR executable
+        bowtie2:            /path/to/bowtie2/
+        samtools:           /path/to/samtools
 Step_params:
     merge1:
         module:             merge
@@ -56,6 +58,53 @@ Step_params:
             --grid_conf:    {Vars.paths.SGE_Trinity_conf}
             --min_kmer_cov: 2
             --seqType:      fq
+            
+######################
+    # rm_readsS:
+        # module:             manage_types
+        # base:               trinity1
+        # script_path:        
+        # scope:              sample
+        # operation:          del
+        # type:               fastq.S
+    # trinmap_bwt2_build:
+        # module:             bowtie2_builder
+        # base:               trinity1
+        # script_path:        '{Vars.paths.bowtie2}/bowtie2-build'
+        # scope:              project
+    # trinmap_bowtie2:
+        # module:             bowtie2_mapper
+        # base:               trinmap_bwt2_build
+        # script_path:        '{Vars.paths.bowtie2}/bowtie2'
+        # get_map_log:
+        # scope:              project
+        # redirects:
+            # -p:             10
+            # -q: 
+            # --no-mixed:
+            # --no-discordant:
+            # --gbar:         1000
+            # --end-to-end:
+            # -q:
+            # -X:             800
+        # qsub_params:
+            # -pe:            shared 10
+
+    # trinmap_sam_bwt2:
+        # module:             samtools
+        # base:               trinmap_bowtie2
+        # script_path:        '{Vars.paths.samtools}/samtools'
+        # qsub_params:
+            # -pe:            shared 20
+        # view:               -b -@ 20 
+        # sort:               -@ 20
+        # flagstat: 
+        # index: 
+        # stats:              
+        # del_sam: 
+        # del_unsorted: 
+######################
+
     trin_map1:
         module:             trinity_mapping
         base:               trinity1
@@ -63,8 +112,8 @@ Step_params:
         scope:              project
         setenv:             PATH "{Vars.paths.bowtie2}:{Vars.paths.RSEM}:{Vars.paths.samtools}:$PATH"
         redirects:
-            --est_method:   RSEM
-            --aln_method:   
+            --est_method:   kallisto  #RSEM
+            --aln_method:   bowtie2
             --trinity_mode:
             --seqType:      fq
 

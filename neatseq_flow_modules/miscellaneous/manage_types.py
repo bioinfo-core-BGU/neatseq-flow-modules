@@ -28,6 +28,7 @@ Parameters that can be set
     "type","",   "The type on which to perform the operation. For 'mv' and 'cp' this is the source type"
     "scope_trg","project|sample",   "The destination scope for 'mv' and 'cp' operations"
     "type_trg","",   "The destination type for 'mv' and 'cp' operations"
+    "path","",   "For 'add' operation, the value to insert in the file type."
     
 .. Note:: If you don't pass ``scope_trg`` or ``type_trg``, they will be assumed to be the same and ``scope`` and ``type``, respectively. However, you **MUST** pass at least one of them!
 

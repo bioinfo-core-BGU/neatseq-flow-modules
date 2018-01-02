@@ -95,6 +95,8 @@ class Step_trinity_mapping(Step):
             # raise AssertionExcept("You must pass an --aln_method to trin_mapping\n")
             self.params["aln_method"] = self.params["redir_params"]["--aln_method"]
             del self.params["redir_params"]["--aln_method"]
+        else:
+            self.params["aln_method"] = None
         
         if "scope" not in self.params:
             raise AssertionExcept("Please specify a 'scope': Either 'sample' or 'project'.")
@@ -122,16 +124,11 @@ class Step_trinity_mapping(Step):
         else:
             raise AssertionExcept("'scope' must be either 'sample' or 'project'.")
 
-        if "aln_method" in self.params:
-            if self.params["aln_method"] == None:
-                self.write_warning("--aln_method is null. Will use a sample BAM file.")
-                for sample in self.sample_data["samples"]:
-                    if "bam" not in self.sample_data[sample]:
-                        raise AssertionExcept("It seems there is no BAM file for the sample.", sample)
-            elif self.params["aln_method"] not in ["bowtie", "bowtie2"]:
-                self.write_warning("--aln_method is not empty, 'bowtie' or 'bowtie2'. Make sure it is a legitimate value.")
-            else:
-                pass
+        # If "bam" required as input method, make sure a bam exists for all samples:
+        if self.params["aln_method"] == "bam":
+            for sample in self.sample_data["samples"]:
+                if "bam" not in self.sample_data[sample]:
+                    raise AssertionExcept("It seems there is no BAM file for the sample.", sample)
         
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
@@ -144,8 +141,7 @@ class Step_trinity_mapping(Step):
         """
   
         if all([self.params["scope"] == "project",  \
-                "aln_method" in self.params,        \
-                self.params["aln_method"] in ["bowtie", "bowtie2"]]):
+                self.params["aln_method"] not in ["bam", None]]):
             
             self.script = ""
 
@@ -157,7 +153,7 @@ class Step_trinity_mapping(Step):
             self.script += "--transcripts %s \\\n\t"   % self.sample_data["fasta.nucl"]
             self.script += "--prep_reference \n\n"
         else:
-            self.script = ""
+            pass
 
             
          
@@ -182,6 +178,7 @@ class Step_trinity_mapping(Step):
             use_dir = self.local_start(sample_dir)
             
 
+            
             # Procedure for preparing 
             # Repeating procedure as done in trinity step:
             # If both F and R reads exist, adding them to forward and reverse
@@ -207,7 +204,7 @@ class Step_trinity_mapping(Step):
 
             if all([self.params["scope"] == "sample",   \
                     "aln_method" in self.params,        \
-                    self.params["aln_method"] in ["bowtie", "bowtie2"]]):
+                    self.params["aln_method"] not in ["bam", None]]):
                 self.script += "# Preperaing the reference for analysis:\n\n"
                 self.script += self.get_script_const()
                 self.script += "--aln_method %s \\\n\t"   % self.params["aln_method"]
@@ -221,10 +218,13 @@ class Step_trinity_mapping(Step):
             #  - This is done with preliminary script (see create_spec_preliminary_script())
             self.script += self.get_script_const()
             
-            if self.params["aln_method"] in ["bowtie", "bowtie2"]:
-                self.script += "--aln_method %s \\\n\t"   % self.params["aln_method"]
-            else:
+            if self.params["aln_method"] == "bam":
                 self.script += "--aln_method %s \\\n\t"   % self.sample_data[sample]["bam"]  # Checked above. BAM must exist.
+            elif self.params["aln_method"] == None:
+                pass
+            else:
+                self.script += "--aln_method %s \\\n\t"   % self.params["aln_method"]
+
                 
             self.script += "--transcripts %s \\\n\t"   % transcripts
             self.script += "--output_dir %s \\\n\t"    % use_dir
@@ -232,21 +232,20 @@ class Step_trinity_mapping(Step):
             if (forward): 
                 self.script += "--left %s \\\n\t"      % forward
                 self.script += "--right %s \\\n\t"       % reverse
-            if (single):
+            elif (single):
                 self.script += "--single %s \\\n\t"      % single
+            else:
+                pass # No reads. This should be caught above...
+                
             self.script = self.script.rstrip("\\\n\t") + "\n\n"
 
-            self.sample_data[sample]["bam"] = "{dir}{sample}.{method}.bam".format(dir    = sample_dir, \
-                                                                                  sample = sample, \
-                                                                                  method = self.params["aln_method"])
-            
-            # It is possible to pass a bam file instead of alignment method. 
-            # This option is not covered here yet...
-            if self.params["aln_method"] in ["bowtie", "bowtie2"]:
+            if self.params["aln_method"] not in ["bam",None]:
+                self.sample_data[sample]["bam"] = "{dir}{sample}.{method}.bam".format(dir    = sample_dir, \
+                                                                                      sample = sample, \
+                                                                                      method = self.params["aln_method"])
                 self.sample_data[sample]["mapper"] = "trinity/%s" % self.params["aln_method"]
-            else:
-                self.sample_data[sample]["mapper"] = "Unknown"
-            
+
+                
             
             self.sample_data[sample]["reference"] = transcripts
             
@@ -255,7 +254,8 @@ class Step_trinity_mapping(Step):
             
             self.stamp_file(self.sample_data[sample]["genes.results"])
             self.stamp_file(self.sample_data[sample]["isoforms.results"])
-            self.stamp_file(self.sample_data[sample]["bam"])
+            if self.params["aln_method"]:
+                self.stamp_file(self.sample_data[sample]["bam"])
 
            
             # Move all files from temporary local dir to permanent base_dir
