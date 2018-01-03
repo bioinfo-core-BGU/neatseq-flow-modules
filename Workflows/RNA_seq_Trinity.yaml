@@ -114,7 +114,8 @@ Step_params:
         setenv:             PATH "{Vars.paths.bowtie2}:{Vars.paths.RSEM}:{Vars.paths.samtools}:$PATH"
         redirects:
             --est_method:   RSEM
-            --aln_method:   bam
+            --aln_method:   bowtie2
+            --output_prefix:        # Pass to add output_prefix. This is for older versions of trinity...
             --trinity_mode:
             --seqType:      fq
 

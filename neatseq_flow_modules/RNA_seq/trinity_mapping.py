@@ -42,6 +42,7 @@ Parameters that can be set
     :header: "Parameter", "Values", "Comments"
 
     "scope", "sample|project", "Set if project-wide fasta slot should be used"
+    "redirects: --output_prefix", "", "Set whether --output_prefix should be defined in scripts. This is for older versions "
     
     
 Lines for parameter file
@@ -101,8 +102,15 @@ class Step_trinity_mapping(Step):
         if "scope" not in self.params:
             raise AssertionExcept("Please specify a 'scope': Either 'sample' or 'project'.")
         
+        # Depends on version if this is accepted
+        if "--output_prefix" in self.params["redir_params"]:
+            self.params["output_prefix"] = True
+            del self.params["redir_params"]["--output_prefix"]
+        else:
+            self.params["output_prefix"] = False
         
-        for redir2remove in ["--transcripts", "--output_dir", "--output_prefix", "--left", "--right", "--single", "--prep_reference"]:
+            
+        for redir2remove in ["--transcripts", "--output_dir", "--left", "--right", "--single", "--prep_reference"]:
             if redir2remove in self.params["redir_params"]:
                 del self.params["redir_params"][redir2remove]
                 self.write_warning("You are not supposed to specify %s in redirects. We set it automatically" % redir2remove)
@@ -228,7 +236,7 @@ class Step_trinity_mapping(Step):
                 
             self.script += "--transcripts %s \\\n\t"   % transcripts
             self.script += "--output_dir %s \\\n\t"    % use_dir
-            if self.params["aln_method"] != "bam":  # When passing bam, the prefix is automatically set to the est_method! (Their bug...) If output_prefix is passed, it causes an error.
+            if self.params["aln_method"] != "bam" and self.params["output_prefix"]:  # When passing bam, the prefix is automatically set to the est_method! (Their bug...) If output_prefix is passed, it causes an error.
                 self.script += "--output_prefix %s \\\n\t" % sample
             if (forward): 
                 self.script += "--left %s \\\n\t"      % forward
@@ -246,7 +254,7 @@ class Step_trinity_mapping(Step):
             # Therefore:
             # Moving the files to files with sample names
 
-            if self.params["aln_method"] == "bam":
+            if self.params["aln_method"] == "bam" or not self.params["output_prefix"]:
                 self.script += """
 mv {sample_dir}{est_meth}.genes.results {sample_dir}{sample}.genes.results
 

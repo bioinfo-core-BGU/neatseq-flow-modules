@@ -1,0 +1,1 @@
+~/AppData/Local/Continuum/miniconda2/Scripts/sphinx-build.exe -b html source/ build/
