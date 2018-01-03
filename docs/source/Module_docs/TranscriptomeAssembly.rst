@@ -11,9 +11,9 @@ Transcriptome Assembly
 
 .. automodule:: main_NSF_classes.RNA_seq.add_trinity_tags
 
-.. automodule:: Transcriptomics.trinity_mapping
+.. automodule:: RNA_seq.trinity_mapping
 
-.. automodule:: Transcriptomics.trinmap_statistics
+.. automodule:: RNA_seq.trinmap_statistics
 
 .. automodule:: Liron.RSEM_module.RSEM
 
