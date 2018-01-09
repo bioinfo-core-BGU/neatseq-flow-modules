@@ -239,8 +239,8 @@ fi
            cmd_text = cmd_text)
            
             
-            self.sample_data["gene_to_trans_map"] = "%s.gene_trans_map" % os.path.join(self.base_dir, output_basename,"Trinity.fasta")
-            self.stamp_file(self.sample_data["gene_to_trans_map"])
+            self.sample_data["gene_trans_map"] = "%s.gene_trans_map" % os.path.join(self.base_dir, output_basename,"Trinity.fasta")
+            self.stamp_file(self.sample_data["gene_trans_map"])
               
         # Move all files from temporary local dir to permanent base_dir
         self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
@@ -320,8 +320,8 @@ fi
            cmd_text = cmd_text)
            
                 
-                self.sample_data[sample]["gene_to_trans_map"] = os.path.join(sample_dir,output_basename,"Trinity.fasta.gene_trans_map") 
-                self.stamp_file(self.sample_data[sample]["gene_to_trans_map"])
+                self.sample_data[sample]["gene_trans_map"] = os.path.join(sample_dir,output_basename,"Trinity.fasta.gene_trans_map") 
+                self.stamp_file(self.sample_data[sample]["gene_trans_map"])
            
                                 
             # Wrapping up function. Leave these lines at the end of every iteration:

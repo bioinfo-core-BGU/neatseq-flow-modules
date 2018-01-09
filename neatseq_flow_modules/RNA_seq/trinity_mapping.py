@@ -138,6 +138,39 @@ class Step_trinity_mapping(Step):
                 if "bam" not in self.sample_data[sample]:
                     raise AssertionExcept("It seems there is no BAM file for the sample.", sample)
         
+        # Dealing with gene_trans_map:
+        if self.params["scope"] == "project":
+            if "--gene_trans_map" in self.params["redir_params"]:
+                if self.params["redir_params"]["--gene_trans_map"]:  # If value was passed
+                    self.sample_data["gene_trans_map"] = self.params["redir_params"]["--gene_trans_map"]
+                else:  # If passed empty, use internal:
+                    if "gene_trans_map" in self.sample_data:
+                        self.params["redir_params"]["--gene_trans_map"] = self.sample_data["gene_trans_map"]
+                    else:
+                        raise AssertionExcept("Expecting 'gene_trans_map' in project but none found.\n")
+
+            elif "--trinity_mode" in self.params["redir_params"]:
+                self.sample_data["gene_trans_map"] = "%s.gene_trans_map" % self.sample_data["fasta.nucl"]
+            else:
+                pass
+        else: # sample scope
+            if "--gene_trans_map" in self.params["redir_params"]:
+                if self.params["redir_params"]["--gene_trans_map"]:  # If value was passed
+                    for sample in self.sample_data["samples"]:
+                        self.sample_data[sample]["gene_trans_map"] = self.params["redir_params"]["--gene_trans_map"]
+                else:  # If passed empty, use internal:
+                    if "gene_trans_map" in self.sample_data:
+                        self.params["redir_params"]["--gene_trans_map"] = self.sample_data[sample]["gene_trans_map"]
+                    else:
+                        raise AssertionExcept("Expecting 'gene_trans_map' in sample but none found.\n", sample)
+
+            elif "--trinity_mode" in self.params["redir_params"]:
+                self.sample_data[sample]["gene_trans_map"] = "%s.gene_trans_map" % self.sample_data[sample]["fasta.nucl"]
+            else:
+                pass
+        
+         
+         
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
@@ -160,11 +193,11 @@ class Step_trinity_mapping(Step):
             self.script += "--aln_method %s \\\n\t"   % self.params["aln_method"]
             self.script += "--transcripts %s \\\n\t"   % self.sample_data["fasta.nucl"]
             self.script += "--prep_reference \n\n"
+            
         else:
             pass
 
-            
-         
+
 
     def build_scripts(self):
         

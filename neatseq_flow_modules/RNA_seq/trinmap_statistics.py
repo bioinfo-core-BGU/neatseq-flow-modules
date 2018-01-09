@@ -118,12 +118,32 @@ class Step_trinmap_statistics(Step):
 
         self.script += self.get_script_const()
         # In new version, --gene_trans_map is compulsory! Adding
+        # If not passed:
+            # If one exists, use it. 
+            # Otherwise, specify "none"
+        # If passed:
+            # If with value, use the value and set project "gene_trans_map" to value
+            # Otherwise, use existing
         if "--gene_trans_map" not in self.params["redir_params"]:
             if "gene_trans_map" not in self.sample_data:
                 self.script += "--gene_trans_map none \\\n\t"
             else:
-                self.script += "--gene_trans_map %s \\\n\t" % self.sample_data["gene_trans_map"]
-
+                if "gene_trans_map" in self.sample_data:
+                    self.script += "--gene_trans_map %s \\\n\t" % self.sample_data["gene_trans_map"]
+                else:
+                    raise AssertionExcept("Expecting 'gene_trans_map' in project but none found")
+        else:
+            if self.params["redir_params"]["--gene_trans_map"]:
+                self.script += "--gene_trans_map %s \\\n\t" % self.params["redir_params"]["--gene_trans_map"]
+                self.sample_data["gene_trans_map"] = self.params["redir_params"]["--gene_trans_map"]
+            else:
+                if "gene_trans_map" in self.sample_data:
+                    self.script += "--gene_trans_map %s \\\n\t" % self.sample_data["gene_trans_map"]
+                else:
+                    raise AssertionExcept("Expecting 'gene_trans_map' in project but none found")
+            
+            
+            
         self.script += "--out_prefix %s \\\n\t" % os.sep.join([use_dir, prefix])
         # type2use is 'genes.results' or 'isoforms.results'. This is used to then select the correct slot from "mapping"
         type2use = "isoforms.results" if "use_isoforms" in self.params.keys() else "genes.results"
