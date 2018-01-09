@@ -192,7 +192,7 @@ class Step_trinity_new(Step):
         # "output directory must contain the word 'trinity' as a safety precaution, given that auto-deletion can take place."
         output_basename = "{title}_trinity".format(title = self.sample_data["Title"])
         # The results will be put in data/step_name/name/Title
-        self.script += "--output %s \\\n\t" % os.sep.join([use_dir, output_basename])
+        self.script += "--output %s \\\n\t" % os.path.join(use_dir, output_basename)
             
         #add if single or paired!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if (forward): 
@@ -222,10 +222,10 @@ class Step_trinity_new(Step):
     {script_path} \\
         {transcriptome} \\
         > {map} 
-""".format(transcriptome = "%s%s%s%s" % (use_dir, os.sep, self.sample_data["Title"], self.file_tag),\
+""".format(transcriptome = os.path.join(use_dir, output_basename,"Trinity.fasta"),\
            script_path   = os.path.join(os.path.dirname(os.path.normpath(self.params["script_path"])) , \
                                           "util/support_scripts/get_Trinity_gene_to_trans_map.pl"),\
-           map           = "%s%s%s%s.gene_trans_map" % (use_dir, os.sep, self.sample_data["Title"], self.file_tag))
+           map           = "%s.gene_trans_map" % os.path.join(use_dir, output_basename,"Trinity.fasta"))
            
             
             self.script += """
@@ -235,11 +235,11 @@ if [ -e {transcriptome} ]
 then
 	{cmd_text}
 fi
-""".format(transcriptome = "%s%s%s%s" % (use_dir, os.sep, self.sample_data["Title"], self.file_tag),\
+""".format(transcriptome = os.path.join(use_dir, output_basename,"Trinity.fasta"),\
            cmd_text = cmd_text)
            
             
-            self.sample_data["gene_to_trans_map"] = "%s%s%s%s.gene_trans_map" % (self.base_dir, os.sep, self.sample_data["Title"], self.file_tag)
+            self.sample_data["gene_to_trans_map"] = "%s.gene_trans_map" % os.path.join(self.base_dir, output_basename,"Trinity.fasta")
             self.stamp_file(self.sample_data["gene_to_trans_map"])
               
         # Move all files from temporary local dir to permanent base_dir
@@ -303,10 +303,10 @@ fi
         {script_path} \\
             {transcriptome} \\
             > {map} 
-""".format(transcriptome = use_dir + "Trinity.fasta",\
+""".format(transcriptome = os.path.join(use_dir,output_basename,"Trinity.fasta"),\
            script_path   = os.sep.join([os.path.split(os.path.normpath(self.params["script_path"]))[0] , \
                                           "util/support_scripts/get_Trinity_gene_to_trans_map.pl"]),\
-           map           = use_dir + "Trinity.fasta.gene_trans_map")
+           map           = os.path.join(use_dir,output_basename,"Trinity.fasta.gene_trans_map"))
            
             
                 self.script += """
@@ -320,7 +320,7 @@ fi
            cmd_text = cmd_text)
            
                 
-                self.sample_data[sample]["gene_to_trans_map"] = "%s%s%s.gene_trans_map" % (sample_dir, os.sep, self.file_tag)
+                self.sample_data[sample]["gene_to_trans_map"] = os.path.join(sample_dir,output_basename,"Trinity.fasta.gene_trans_map") 
                 self.stamp_file(self.sample_data[sample]["gene_to_trans_map"])
            
                                 

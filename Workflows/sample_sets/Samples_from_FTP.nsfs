@@ -1,0 +1,13 @@
+Title       Example_WF_From_the_manuscript
+
+
+#SampleID	Type	Path
+Sample1	Forward	../../dsdsdsd/rererer.fastq.gz     ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR453/SRR453031/SRR453031_1.fastq.gz
+Sample1	Reverse	/xcxcxc/rererer.fastq.gz     ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR453/SRR453031/SRR453031_2.fastq.gz
+Sample1	Nucleotide	ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/284/535/GCF_000284535.1_ASM28453v1/GCF_000284535.1_ASM28453v1_genomic.fna.gz
+Sample2	Forward	ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR453/SRR453032/SRR453032_1.fastq.gz
+Sample2	Reverse	ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR453/SRR453032/SRR453032_2.fastq.gz
+Sample2	Nucleotide	ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/284/535/GCF_000284535.1_ASM28453v1/GCF_000284535.1_ASM28453v1_genomic.fna.gz
+Sample3	Forward	ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR453/SRR453033/SRR453033_1.fastq.gz
+Sample3	Reverse	ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR453/SRR453033/SRR453033_2.fastq.gz
+Sample3	Nucleotide	ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/284/535/GCF_000284535.1_ASM28453v1/GCF_000284535.1_ASM28453v1_genomic.fna.gz

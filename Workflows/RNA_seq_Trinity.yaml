@@ -50,7 +50,7 @@ Step_params:
         script_path:        '{Vars.paths.Trinity}/Trinity'
         qsub_params:
             -pe:            shared 20
-        scope:              project
+        scope:              sample
         redirects:
             --CPU:          20
             --JM:           140G
@@ -71,13 +71,13 @@ Step_params:
         module:             bowtie2_builder
         base:               trinity1
         script_path:        '{Vars.paths.bowtie2}/bowtie2-build'
-        scope:              project
+        scope:              sample
     trinmap_bowtie2:
         module:             bowtie2_mapper
         base:               trinmap_bwt2_build
         script_path:        '{Vars.paths.bowtie2}/bowtie2'
         get_map_log:
-        scope:              project
+        scope:              sample
         redirects:
             -p:             10
             -q: 
@@ -110,7 +110,7 @@ Step_params:
         base:               trinmap_sam_bwt2
         script_path:        '{Vars.paths.Trinity}/util/align_and_estimate_abundance.pl'
         sample_list:        [Sample1,Sample2]
-        scope:              project
+        scope:              sample
         setenv:             PATH "{Vars.paths.bowtie2}:{Vars.paths.RSEM}:{Vars.paths.samtools}:$PATH"
         redirects:
             --est_method:   RSEM
@@ -124,7 +124,7 @@ Step_params:
         base:               trin_map1
         script_path:        '{Vars.paths.Trinity}/util/abundance_estimates_to_matrix.pl'
         # use_isoforms:          # use isoforms results. Remove to use genes results
-        scope:              project
+        scope:              sample
         redirects:
             --est_method:   RSEM
         # stop_and_show:
@@ -133,18 +133,32 @@ Step_params:
         module:             STAR_builder
         base:               trinity1
         script_path:        {Vars.paths.STAR}
-        scope:              project
+        scope:              sample
     STAR_map:
         module:             STAR_mapper
         base:               STAR_bld_ind
         script_path:        {Vars.paths.STAR}
-        scope:              project
+        scope:              sample
     manage_types1:
         module:             manage_types
         base:               STAR_bld_ind
         script_path:        
-        scope:              project
+        scope:              sample
         operation:          cp
         type:               trinity.contigs
         type_trg:           trinity.contigs2
 #        scope_trg:          sample
+
+    BUSCO1:
+        module:             BUSCO
+        base:               trinity1
+        script_path:        /gpfs0/bioinfo/apps/Miniconda2/Miniconda_v4.3.21/bin/BUSCO.py
+        scope:              sample
+        redirects:
+            --mode:         transcriptome
+            --lineage:      /gpfs0/bioinfo/databases/BUSCO/embryophyta_odb9
+            --cpu:          65
+            --force:
+            --restart:
+        qsub_params:
+            -pe:            shared 65
