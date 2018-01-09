@@ -58,6 +58,11 @@ Step_params:
             --grid_conf:    {Vars.paths.SGE_Trinity_conf}
             --min_kmer_cov: 2
             --seqType:      fq
+    get_trans_map:
+        module:             Trinity_gene_to_trans_map
+        base:               trinity1
+        script_path:        get_XXXXX
+        scope:              project
             
 ######################
     # rm_readsS:
@@ -69,7 +74,7 @@ Step_params:
         # type:               fastq.S
     trinmap_bwt2_build:
         module:             bowtie2_builder
-        base:               trinity1
+        base:               get_trans_map
         script_path:        '{Vars.paths.bowtie2}/bowtie2-build'
         scope:              project
     trinmap_bowtie2:
@@ -164,8 +169,3 @@ Step_params:
             -pe:            shared 65
             
             
-    get_trans_map:
-        module:             Trinity_gene_to_trans_map
-        base:               trinity1
-        script_path:        get_XXXXX
-        scope:              project

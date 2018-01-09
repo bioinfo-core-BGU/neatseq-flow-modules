@@ -117,6 +117,13 @@ class Step_trinmap_statistics(Step):
         prefix = self.sample_data["Title"]
 
         self.script += self.get_script_const()
+        # In new version, --gene_trans_map is compulsory! Adding
+        if "--gene_trans_map" not in self.params["redir_params"]:
+            if "gene_trans_map" not in self.sample_data:
+                self.script += "--gene_trans_map none \\\n\t"
+            else:
+                self.script += "--gene_trans_map %s \\\n\t" % self.sample_data["gene_trans_map"]
+
         self.script += "--out_prefix %s \\\n\t" % os.sep.join([use_dir, prefix])
         # type2use is 'genes.results' or 'isoforms.results'. This is used to then select the correct slot from "mapping"
         type2use = "isoforms.results" if "use_isoforms" in self.params.keys() else "genes.results"
