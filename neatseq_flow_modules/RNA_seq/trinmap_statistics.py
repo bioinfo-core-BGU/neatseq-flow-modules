@@ -41,6 +41,7 @@ Parameters that can be set
     :header: "Parameter", "Values", "Comments"
 
     "use_isoforms", "", "Use 'isoforms.results' matrix. If not passed, use 'genes.results'"
+    "redirects: --gene_trans_map", "path or empty", "If empty, use internal gene_trans_map. If path, use path as gene_trans_map for all samples."
     
     
 Lines for parameter file

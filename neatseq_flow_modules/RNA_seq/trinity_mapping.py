@@ -29,7 +29,7 @@ Requires
 Output:
 ~~~~~~~~~~~~~
 
-* Puts BAM output files in the following slots:
+* Puts output files in the following slots:
         
     * ``sample_data[<sample>]["bam"]``
     * ``sample_data[<sample>]["isoforms.results"]``
@@ -43,6 +43,8 @@ Parameters that can be set
 
     "scope", "sample|project", "Set if project-wide fasta slot should be used"
     "redirects: --output_prefix", "", "Set whether --output_prefix should be defined in scripts. This is for older versions "
+    "redirects: --gene_trans_map", "path or empty", "If empty, use internal gene_trans_map. If path, use path as gene_trans_map for all samples."
+    "redirects: --trinity_mode", "", "If set, will create a gene_trans_map for each sample and store it as sample gene_trans_map"
     
     
 Lines for parameter file
