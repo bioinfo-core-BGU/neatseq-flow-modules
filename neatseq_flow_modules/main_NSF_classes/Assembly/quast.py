@@ -14,6 +14,12 @@ QUAST is executed on the fasta file along the following lines:
 * If 'scope' is specified, the appropriate fasta will be used. An error will occur if the fasta does not exist.
 * If 'scope' is not specified, if a project-wide fasta exists, it will be used. Otherwise, sample-wise fasta files will be used. If none exist, an error will occur.
 
+.. Note:: With ``compare_mode``, you tell the module to run **quast** on multiple assemblies. This is done in one of three ways:
+
+    * If ``scope`` is sample and a single base step defined, will compare between the samples.
+    * If ``scope`` is sample and there is more than one base step defined, will compare between the assemblies found in the base steps for each sample separately.
+    * If ``scope`` is project, will compare between the assemblies found in the base steps at the project level.
+
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -50,10 +56,10 @@ Lines for parameter file
         module: quast
         base: spades1
         script_path: /path/to/quast.py
-        compare_mode: null
+        compare_mode: 
         scope: project
         redirects:
-            --fast: null
+            --fast: 
 
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -67,6 +73,7 @@ import os
 import sys
 import re
 from neatseq_flow.PLC_step import Step,AssertionExcept
+from pprint import pprint as pp
 
 
 __author__ = "Menachem Sklarz"
@@ -150,11 +157,18 @@ class Step_quast(Step):
             HOWEVER, DON'T FORGET TO CHANGE THE CLASS NAME AND THE FILENAME!
         """
         
+
+        # Two options: 
+        # 1. If a single base, compare between samples.
+        # 2. If more than one base, compare for each sample         
+        
+        multiple_bases = len(self.params["base"]) > 1
         
         if self.params["scope"] == "sample": # Requested for mega-assembly
 
-            if "compare_mode" in self.params.keys():    # Compare sample assemblies
-            
+            if "compare_mode" in self.params.keys() and not multiple_bases:    # Compare sample assemblies
+                print "in here: multiple_bases"
+                print multiple_bases
                 # Name of specific script:
                 self.spec_script_name = "_".join([self.step,self.name,self.sample_data["Title"]])
                 self.script = ""
@@ -168,8 +182,9 @@ class Step_quast(Step):
                 # output_filename = "".join([use_dir , sample , self.file_tag])
 
                 self.script += self.get_script_const()
-
                 # All other parameters are redirected!
+                
+
                 self.script += "--output-dir %s \\\n\t" % use_dir
                 self.script += "--labels %s \\\n\t" % ",".join(self.sample_data["samples"])
                 
@@ -192,6 +207,8 @@ class Step_quast(Step):
                 self.create_low_level_script()
 
             else:       # Separate quast run for each sample
+                print "in here: multiple_bases:"
+                print multiple_bases
                 for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
                     
                     # Name of specific script:
@@ -215,7 +232,17 @@ class Step_quast(Step):
                     self.script += "--output-dir %s \\\n\t" % sample_dir
                     
                     # Input file:
-                    self.script += "%s \n\n" % self.sample_data[sample]["fasta.nucl"]
+                    # self.script += "%s \n\n" % self.sample_data[sample]["fasta.nucl"]
+                    if multiple_bases and "compare_mode" in self.params.keys():   # More than one base
+                        self.script += "--labels %s \\\n\t" % ",".join(self.params["base"])
+                        for base in self.params["base"]:
+                            print base
+                            try:
+                                self.script += "%s \\\n\t" % self.base_sample_data[base][sample]["fasta.nucl"]
+                            except:
+                                raise AssertionExcept("'fasta.nucl' file for sample not found in base %s" % base, sample)
+                    else:
+                        self.script += "%s \n\n" % self.sample_data[sample]["fasta.nucl"]
                     
 
                 
@@ -248,8 +275,20 @@ class Step_quast(Step):
             # All other parameters are redirected!
             self.script += "--output-dir %s \\\n\t" % use_dir
             
+            
             # Input file:
-            self.script += "%s \n\n" % self.sample_data["fasta.nucl"]
+            if multiple_bases and "compare_mode" in self.params.keys():   # More than one base
+                self.script += "--labels %s \\\n\t" % ",".join(self.params["base"])
+                pp( self.params["base"])
+                for base in self.params["base"]:
+                    print base
+                    pp(self.base_sample_data[base].keys())
+                    try:
+                        self.script += "%s \\\n\t" % self.base_sample_data[base]["fasta.nucl"]
+                    except:
+                        raise AssertionExcept("'fasta.nucl' file not found in base %s" % base)
+            else:
+                self.script += "%s \n\n" % self.sample_data["fasta.nucl"]
             
 
         

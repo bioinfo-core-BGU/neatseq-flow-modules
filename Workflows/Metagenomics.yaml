@@ -227,4 +227,22 @@ Step_params:
         redirects:
             -n:             20
             -x:             1
-    
+
+
+
+    spades2:
+        module:             spades_assembl
+        base:               trim1
+        script_path:        {Vars.paths.spades}
+        scope:              sample
+        redirects:
+            --meta:
+
+    quast_all:
+        module:             quast
+        base:               [spades1,spades2]
+        script_path:        {Vars.paths.quast}
+        scope:              sample
+        compare_mode:
+        redirects:
+            --min-contig:   100
