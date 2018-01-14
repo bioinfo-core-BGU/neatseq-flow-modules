@@ -291,41 +291,26 @@ class Step_samtools(Step):
                 self.script += self.add_exit_status_check()
             # Adding code for fastq or fasta extraction from bam:
             for type in (set(self.params.keys()) & set(["fasta","fastq"])):
-                self.script += """###########\n# Extracting fastq files from BAM:\n#----------------\n
-{samtools_path} fastq {fastq_params} \\
-	-1   {fastq_F}    \\
-	-2   {fastq_R}    \\
-	-s   {fastq_S}    \\
-	-0   {fastq_W}    \\
-	--i1 {indexes_F}  \\
-	--i2 {indexes_R}  \\
-	{bam}
-
-                """.format( samtools_path = self.get_script_env_path(),
-                            fastq_params  = self.params[type],
-                            bam           = (use_dir + bam_name),
-                            fastq_F       = (use_dir + bam_name + ".F." + type),
-                            fastq_R       = (use_dir + bam_name + ".R." + type),
-                            fastq_S       = (use_dir + bam_name + ".S." + type),
-                            fastq_W       = (use_dir + bam_name + ".W." + type),
-                            indexes_F     = (use_dir + bam_name + ".indF." + type),
-                            indexes_R     = (use_dir + bam_name + ".indR." + type),
-                )
+                self.script += """###########\n# Extracting fastq files from BAM:\n#----------------\n"""
+                self.script += "{samtools_path} \\\n\t".format(samtools_path = self.get_script_env_path())
+                self.script += "{command} {params} \\\n\t".format(command = type, params = self.params[type])
+                if "fastq.F" in self.sample_data[sample]:
+                    self.script += "-1  {readsF} \\\n\t".format(readsF = (use_dir + bam_name + ".F." + type))
+                    self.script += "-2  {readsR} \\\n\t".format(readsR = (use_dir + bam_name + ".R." + type))
+                else:
+                    self.script += "-s  {readsS} \\\n\t".format(readsS = (use_dir + bam_name + ".S." + type))
+                # -0 and mixed paired-single not supported yet
+                self.script += "{bam} \\\n\t".format(bam = (use_dir + bam_name))
                 
-                
-                self.sample_data[sample]["%s.F"    % type] = "%s%s.F.%s" % (sample_dir, bam_name   , type)   
-                self.sample_data[sample]["%s.R"    % type] = "%s%s.R.%s" % (sample_dir, bam_name   , type)   
-                self.sample_data[sample]["%s.S"    % type] = "%s%s.S.%s" % (sample_dir, bam_name   , type)   
-                self.sample_data[sample]["%s.W"    % type] = "%s%s.W.%s" % (sample_dir, bam_name   , type)   
-                self.sample_data[sample]["%sind.F" % type] = "%s%s.indF.%s" % (sample_dir, bam_name, type)
-                self.sample_data[sample]["%sind.R" % type] = "%s%s.indR.%s" % (sample_dir, bam_name, type)
-                
-                self.stamp_file(self.sample_data[sample]["%s.F"    % type] )
-                self.stamp_file(self.sample_data[sample]["%s.R"    % type] )
-                self.stamp_file(self.sample_data[sample]["%s.S"    % type] )
-                self.stamp_file(self.sample_data[sample]["%s.W"    % type] )
-                self.stamp_file(self.sample_data[sample]["%sind.F" % type] )
-                self.stamp_file(self.sample_data[sample]["%sind.R" % type] )
+                # Storing and Stamping files
+                if "fastq.F" in self.sample_data[sample]:
+                    self.sample_data[sample]["%s.F"    % type] = "%s%s.F.%s" % (sample_dir, bam_name   , type)   
+                    self.sample_data[sample]["%s.R"    % type] = "%s%s.R.%s" % (sample_dir, bam_name   , type)   
+                    self.stamp_file(self.sample_data[sample]["%s.F"    % type] )
+                    self.stamp_file(self.sample_data[sample]["%s.R"    % type] )
+                else:
+                    self.sample_data[sample]["%s.S"    % type] = "%s%s.S.%s" % (sample_dir, bam_name   , type)   
+                    self.stamp_file(self.sample_data[sample]["%s.S"    % type] )
                 
                 self.script += self.add_exit_status_check()
 
