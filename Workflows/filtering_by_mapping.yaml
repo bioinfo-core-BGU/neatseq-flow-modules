@@ -36,6 +36,7 @@ Vars:
         bowtie2:        /path/to/bowtie2
         samtools:       /path/to/samtools
         java:           /path/to/java
+        multiqc:        /path/to/multiQC
     reference:
         fasta:          /path/to/fasta
         chrom_sizes:    /path/to/chrom.sizes
@@ -105,3 +106,9 @@ Step_params:
         fasta:          -t -F 4
         del_sam: 
         del_unsorted: 
+    MultQC_rRNA_filt:
+        module:         Multiqc_single_base
+        base:           [sam2bam,bwt2_map]
+        script_path:    {Vars.paths.multiqc}        
+        redirects:
+            --interactive:
