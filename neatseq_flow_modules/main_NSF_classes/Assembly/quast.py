@@ -49,12 +49,40 @@ Parameters that can be set
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+1. A quast report for each sample separately: 
 
 ::
 
     quast1:
         module: quast
         base: spades1
+        script_path: /path/to/quast.py
+        scope: sample
+        redirects:
+            --fast: 
+
+2. A quast report comparing the sample assemblies: 
+
+::
+
+    quast1:
+        module: quast
+        base: spades1
+        script_path: /path/to/quast.py
+        compare_mode: 
+        scope: sample
+        redirects:
+            --fast: 
+
+3. A quast report comparing the project assemblies from different stages of the analysis: 
+
+::
+
+    quast1:
+        module: quast
+        base: 
+            - spades1
+            - megahit1
         script_path: /path/to/quast.py
         compare_mode: 
         scope: project
@@ -167,8 +195,8 @@ class Step_quast(Step):
         if self.params["scope"] == "sample": # Requested for mega-assembly
 
             if "compare_mode" in self.params.keys() and not multiple_bases:    # Compare sample assemblies
-                print "in here: multiple_bases"
-                print multiple_bases
+                # print "in here: multiple_bases"
+                # print multiple_bases
                 # Name of specific script:
                 self.spec_script_name = "_".join([self.step,self.name,self.sample_data["Title"]])
                 self.script = ""
@@ -207,8 +235,8 @@ class Step_quast(Step):
                 self.create_low_level_script()
 
             else:       # Separate quast run for each sample
-                print "in here: multiple_bases:"
-                print multiple_bases
+                # print "in here: multiple_bases:"
+                # print multiple_bases
                 for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
                     
                     # Name of specific script:
@@ -236,7 +264,7 @@ class Step_quast(Step):
                     if multiple_bases and "compare_mode" in self.params.keys():   # More than one base
                         self.script += "--labels %s \\\n\t" % ",".join(self.params["base"])
                         for base in self.params["base"]:
-                            print base
+                            # print base
                             try:
                                 self.script += "%s \\\n\t" % self.base_sample_data[base][sample]["fasta.nucl"]
                             except:

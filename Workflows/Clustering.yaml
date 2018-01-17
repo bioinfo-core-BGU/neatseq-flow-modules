@@ -35,7 +35,7 @@ Step_params:
         redirects:
             --id:       0.85  
     merge_proj:
-        module:         merge_project
+        module:         merge_fasta
         base:           derepel1
         script_path:    cat
         type:           fasta.nucl

@@ -196,6 +196,9 @@ class Step_trinity_mapping(Step):
             self.script += "--transcripts %s \\\n\t"   % self.sample_data["fasta.nucl"]
             self.script += "--prep_reference \n\n"
             
+            self.add_exit_status_check()
+
+            
         else:
             pass
 
@@ -254,6 +257,8 @@ class Step_trinity_mapping(Step):
                 self.script += "--transcripts %s \n\n"   % transcripts
                 self.script += "--prep_reference \n\n"
 
+                self.add_exit_status_check()
+
                 
         
             # Create script and write to SCRPT
@@ -283,6 +288,9 @@ class Step_trinity_mapping(Step):
                 
             self.script = self.script.rstrip("\\\n\t") + "\n\n"
 
+            
+            self.add_exit_status_check()
+            
             # When passing bam, the prefix is automatically set to the est_method! (Their bug...) 
             # If output_prefix is passed, it causes an error.
             # However, this causes problems with the statistics module.

@@ -25,6 +25,7 @@ Vars:
         STAR:               /path/to/STAR           # Path to STAR executable
         megahit:            /path/to/megahit
         quast:              /path/to/quast
+        fastqc_sum_script:  Rscript /path/to/fastqc_sum.R 
     dirs:   
         trimmo:             /path/to/trimmomatic
 Step_params:
@@ -35,6 +36,7 @@ Step_params:
         module:             fastqc_html
         base:               merge1
         script_path:        {Vars.paths.fastqc}
+        sum_script:         {Vars.paths.fastqc_sum_script}
         qsub_params:
             -pe:            shared 15
         redirects:
@@ -55,6 +57,7 @@ Step_params:
         module:             fastqc_html
         base:               trim1
         script_path:        {Vars.paths.fastqc}
+        sum_script:         {Vars.paths.fastqc_sum_script}
         qsub_params:
             -pe:            shared  15
         redirects:

@@ -156,9 +156,8 @@ class Step_Trinity_gene_to_trans_map(Step):
         output_basefn = "%s.gene_trans_map" % os.path.basename(self.sample_data["fasta.nucl"])
         
         self.script = """
-{script_path} \\
-    {transcriptome} \\
-    > {map} 
+{script_path}{transcriptome} \\
+	> {map} 
 """.format(transcriptome = "%s" % self.sample_data["fasta.nucl"],
            script_path   = self.get_script_const(),
            map           = os.path.join(use_dir, output_basefn))
@@ -192,8 +191,8 @@ class Step_Trinity_gene_to_trans_map(Step):
             output_basefn = "%s.gene_trans_map" % os.path.basename(self.sample_data[sample]["fasta.nucl"])
             
             self.script = """
-{script_path} {transcriptome} \\
-    > {map} 
+{script_path}{transcriptome} \\
+	> {map} 
 """.format(transcriptome = "%s" % self.sample_data[sample]["fasta.nucl"],
            script_path   = self.get_script_const(),
            map           = os.path.join(use_dir, output_basefn))

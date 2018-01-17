@@ -6,3 +6,5 @@ dist
 NeatSeq_Flow_modules.egg-info
 .project
 .pydevproject
+cp_to_main.bat
+my_backup_log.txt

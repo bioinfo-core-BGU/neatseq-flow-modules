@@ -292,7 +292,7 @@ class Step_samtools(Step):
             # Adding code for fastq or fasta extraction from bam:
             for type in (set(self.params.keys()) & set(["fasta","fastq"])):
                 self.script += """###########\n# Extracting fastq files from BAM:\n#----------------\n"""
-                self.script += "{samtools_path} \\\n\t".format(samtools_path = self.get_script_env_path())
+                self.script += self.get_script_env_path()
                 self.script += "{command} {params} \\\n\t".format(command = type, params = self.params[type])
                 if "fastq.F" in self.sample_data[sample]:
                     self.script += "-1  {readsF} \\\n\t".format(readsF = (use_dir + bam_name + ".F." + type))
@@ -300,7 +300,7 @@ class Step_samtools(Step):
                 else:
                     self.script += "-s  {readsS} \\\n\t".format(readsS = (use_dir + bam_name + ".S." + type))
                 # -0 and mixed paired-single not supported yet
-                self.script += "{bam} \\\n\t".format(bam = (use_dir + bam_name))
+                self.script += "{bam} \n\n".format(bam = (use_dir + bam_name))
                 
                 # Storing and Stamping files
                 if "fastq.F" in self.sample_data[sample]:

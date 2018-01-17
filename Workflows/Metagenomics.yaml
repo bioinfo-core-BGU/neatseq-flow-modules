@@ -77,7 +77,7 @@ Step_params:
         redirects:
             -threads:   20
         conda:
-            path: 
+            # path: 
             # env:        ENV_NAME
 
     fqc_trim1:
