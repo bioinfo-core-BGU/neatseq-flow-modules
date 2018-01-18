@@ -79,38 +79,18 @@ if (is.null(Roary_Results_file)){
     print("No Annotation file!!!!")
 }else{
 
+
+
     # Check if required packages are installed:
-    if(!(all(c("eisa") %in% installed.packages()))) {
+    if(!(all(c("hgu95av2.db") %in% installed.packages()))) {
         if (Sys.getenv("CONDA_PREFIX")!=""){
             source("https://bioconductor.org/biocLite.R")
-            biocLite("eisa")
+            biocLite("hgu95av2.db")
         } else {
-            cat("The 'eisa' package is not installed. You must install it for this script to work!")
-        }
-        
-    }
-    library("eisa")
-
-    if(!(all(c("ExpressionView") %in% installed.packages()))) {
-        if (Sys.getenv("CONDA_PREFIX")!=""){
-            source("https://bioconductor.org/biocLite.R")
-            biocLite("ExpressionView")
-        } else {
-            cat("The 'ExpressionView' package is not installed. You must install it for this script to work!")
+            cat("The 'hgu95av2.db' package is not installed. You must install it for this script to work!")
         }
     }
-    library("ExpressionView")
-
-    if(!(all(c("org.Hs.eg.db") %in% installed.packages()))) {
-        if (Sys.getenv("CONDA_PREFIX")!=""){
-            source("https://bioconductor.org/biocLite.R")
-            biocLite("org.Hs.eg.db")
-        } else {
-            cat("The 'org.Hs.eg.db' package is not installed. You must install it for this script to work!")
-        }
-    }
-    library("org.Hs.eg.db")
-
+    library("hgu95av2.db")
     if(!(all(c("clusterProfiler") %in% installed.packages()))) {
         if (Sys.getenv("CONDA_PREFIX")!=""){
             source("https://bioconductor.org/biocLite.R")
@@ -120,6 +100,33 @@ if (is.null(Roary_Results_file)){
         }
     }
     library("clusterProfiler")
+
+    
+    
+    if(!(all(c("ExpressionView") %in% installed.packages()))) {
+        if (Sys.getenv("CONDA_PREFIX")!=""){
+            source("https://bioconductor.org/biocLite.R")
+            biocLite("ExpressionView")
+        } else {
+            cat("The 'ExpressionView' package is not installed. You must install it for this script to work!")
+        }
+    }
+    library("ExpressionView")
+    
+    if(!(all(c("eisa") %in% installed.packages()))) {
+        if (Sys.getenv("CONDA_PREFIX")!=""){
+            source("https://bioconductor.org/biocLite.R")
+            biocLite("eisa",suppressUpdates=TRUE,ask=FALSE,siteRepos=c("http://cran.us.r-project.org"))
+        } else {
+            cat("The 'eisa' package is not installed. You must install it for this script to work!")
+        }
+        
+    }
+    library("eisa")
+    
+
+
+
 
     if(!(all(c("openxlsx") %in% installed.packages()))) {
         if (Sys.getenv("CONDA_PREFIX")!=""){
@@ -334,10 +341,10 @@ if (is.null(Roary_Results_file)){
     # Read files
 
     Roary_data =read.csv(Roary_Results_file,
-                        header=TRUE , row.names=1, as.is=TRUE)
+                        header=TRUE , row.names=1, as.is=TRUE, check.names = FALSE)
     metadata =read.delim(metadata_file,
-                         header=TRUE , as.is=TRUE)
-
+                         header=TRUE , as.is=TRUE, check.names = FALSE)
+    
     row.names(metadata)=metadata[,metadata_sample_field]
 
     if (is.na(metadata_select_fileds)){
@@ -345,14 +352,13 @@ if (is.null(Roary_Results_file)){
     }else{
       metadata_select_fileds=unlist(lapply(X =stringi::stri_split(metadata_select_fileds,regex ="," ),FUN = function(x)  stringr::str_trim(gsub('"','',gsub("'",'',x))))  )
     }
-
+    
     metadata_select_fileds=metadata_select_fileds[metadata_select_fileds %in% colnames(metadata)]
     if (length(metadata_select_fileds)>0){
       metadata=subset.data.frame(x = metadata,select=metadata_select_fileds )
     }
-
-
-
+    
+    Sys.setenv(R_ZIPCMD="zip")
 
     Annotation_data = as.data.frame(read.delim(Annotation_file,
                                           header=TRUE , row.names=2, as.is=TRUE))
@@ -362,10 +368,11 @@ if (is.null(Roary_Results_file)){
     Roary_matrix[Roary_matrix[,]]=1
     Roary_matrix.mean=apply(X =Roary_matrix,MARGIN = c(1),FUN =mean)
     Roary_matrix_filter=Roary_matrix[(Roary_matrix.mean>Roary_filter_min)&(Roary_matrix.mean<Roary_filter_max),]
-
+    
+    
     Roary_data$VFG=lapply(X =Roary_data$Annotation,FUN = function(x) unlist(stringr::str_extract_all(string = x,pattern = "VFG[0-9]+")))
-    sub_Roary_data=subset.data.frame(x = Roary_data,subset = !S4Vectors::isEmpty(Roary_data$VFG),select = c('VFG','Annotation','No..isolates'))
-    sub_Roary_data$No..isolates=sub_Roary_data$No..isolates/max(sub_Roary_data$No..isolates)
+    sub_Roary_data=subset.data.frame(x = Roary_data,subset = !S4Vectors::isEmpty(Roary_data$VFG),select = c('VFG','Annotation','No. isolates'))
+    sub_Roary_data$'No. isolates'=sub_Roary_data$'No. isolates'/max(sub_Roary_data$'No. isolates')
     sub_Roary_data$vfclass=lapply(X =sub_Roary_data$VFG,FUN = function(x) unique(as.vector(na.exclude( Annotation_data[unlist(x),"vfclass"]))))
 
     Roary_matrix_filter=Roary_matrix_filter[row.names(Roary_matrix_filter) %in% row.names(sub_Roary_data),] 
@@ -373,14 +380,19 @@ if (is.null(Roary_Results_file)){
 
     # Slice meta data according to results table
     names=intersect(colnames(Roary_matrix_filter) , rownames(metadata))
+
     Roary_matrix_filter=Roary_matrix_filter[,names]
+    metadata=subset.data.frame(x = metadata,rownames(metadata) %in%  names)
+    metadata$LIRON.temp=""
     metadata=metadata[names,]
+    metadata$LIRON.temp=NULL
 
     # Assert that the results table match the meta data in number and order of features and samples
     stopifnot(all(rownames(sub_Roary_data_filter) == rownames(Roary_matrix_filter)))
     stopifnot(all(rownames(metadata)  == colnames(Roary_matrix_filter)))
 
     # Create the proper annotation structures
+
     MetaFeature = new("AnnotatedDataFrame", data=sub_Roary_data_filter)
     MetaSample  = new("AnnotatedDataFrame", data=metadata)
 

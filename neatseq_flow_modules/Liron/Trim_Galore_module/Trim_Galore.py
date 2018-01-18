@@ -170,7 +170,9 @@ class Step_Trim_Galore(Step):
                     # TODO: use existing                     
                     for key in self.params["redir_params"].keys():
                         if key not in ["--paired","--retain_unpaired"]:
-                            self.script += "%s %s \\\n\t" % (key,self.params["redir_params"][key])               
+                            self.script += "%s %s \\\n\t" % (key,self.params["redir_params"][key]) 
+                    if "cutadapt_path" in self.params.keys():
+                        self.script += "--path_to_cutadapt %s \\\n\t" % self.params["cutadapt_path"] 
                     self.script += "%s \\\n\t" % self.sample_data[sample]["fastq.S"]
                     self.script += "-o %s \\\n\t" % use_dir 
                     #Generate log file:

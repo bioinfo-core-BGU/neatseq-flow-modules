@@ -237,7 +237,11 @@ class Step_Roary(Step):
         # Creating the plots
         if "plot" in self.params.keys():
             if "Roary_matrix_plot.py" in os.listdir(self.module_location):
-                self.script +="env %s  \\\n" % self.params["env"]
+                if "env" in self.params.keys():
+                    if self.shell=="bash":
+                        self.script +="export env %s  \\\n\t" % self.params["env"]
+                    else:
+                        self.script +="env %s  \\\n\t" % self.params["env"]
                 self.script += "python  %s \\\n\t"  % os.path.join(self.module_location,"Roary_matrix_plot.py")
                 if is_it_dict(self.params["plot"]):
                     if "format" in self.params["plot"].keys():
@@ -272,7 +276,11 @@ class Step_Roary(Step):
                             if "traits_to_pars" in self.params["scoary"].keys():
                                 # Creating the result dir
                                 GWAS_dir = self.make_folder_for_sample("GWAS")
-                                self.script +="env %s  \\\n" % self.params["env"]
+                                if "env" in self.params.keys():
+                                    if self.shell=="bash":
+                                        self.script +="export env %s  \\\n\t" % self.params["env"]
+                                    else:
+                                        self.script +="env %s  \\\n\t" % self.params["env"]
                                 self.script +="python %s \\\n\t"  % os.path.join(self.module_location,"Traits_Parser.py")
                                 self.script +=" -M %s \\\n\t"  % self.params["scoary"]["metadata_file"]
                                 self.script +=" -O %s \\\n\t"  % GWAS_dir
@@ -287,7 +295,11 @@ class Step_Roary(Step):
                         else:
                             raise AssertionExcept("The file %s is not found in the Roary module directory" % "Traits_Parser.py" )
                     if len(scoary_traits_file)>0:
-                        self.script +="env %s  \\\n" % self.params["env"]
+                        if "env" in self.params.keys():
+                            if self.shell=="bash":
+                                self.script +="export env %s  \\\n\t" % self.params["env"]
+                            else:
+                                self.script +="env %s  \\\n\t" % self.params["env"]
                         self.script += "%s \\\n\t"  % self.params["scoary"]["script_path"]
                         self.script += " -o %s \\\n\t"  % GWAS_dir
                         self.script += " -g %s \\\n\t"  % gene_presence_absence_file_loc
@@ -312,7 +324,11 @@ class Step_Roary(Step):
                 # Make a dir for the results file:
                 bicluster_results_dir = self.make_folder_for_sample("Bicluster")         
                 #Running the bicluster script
-                self.script +="env %s  \\\n" % self.params["env"]
+                if "env" in self.params.keys():
+                    if self.shell=="bash":
+                        self.script +="export env %s  \\\n\t" % self.params["env"]
+                    else:
+                        self.script +="env %s  \\\n\t" % self.params["env"]
                 self.script += "Rscript  %s \\\n\t"  % os.path.join(self.module_location,"Biclustering.R")
                 temp_self_script=""
                 if is_it_dict(self.params["Bi_cluster"]):
@@ -349,23 +365,29 @@ class Step_Roary(Step):
                 if "Gecko" in self.params.keys():
                     if is_it_dict(self.params["Gecko"]):
                         if "script_path" in self.params["Gecko"].keys():  
-                            if self.params["Gecko"]["script_path"]!=None:
+                            if (self.params["Gecko"]["script_path"]!=None)&(self.params["Gecko"]["script_path"]!=''):
                                 if "GFF2Gecko3.py" in os.listdir(self.module_location):
                                     Bicluster_clusters=self.sample_data["Bicluster_clusters"] 
-                                    gene_presence_absence_file_loc=self.sample_data["presence_absence_matrix"]
                                     # Make a dir for the results file:
                                     Gecko_results_dir = self.make_folder_for_sample("Gecko")         
                                     #Running the GFF2Gecko3 script
-                                    self.script +="env %s  \\\n" % self.params["env"]
+                                    if "env" in self.params.keys():
+                                        if self.shell=="bash":
+                                            self.script +="export env %s  \\\n\t" % self.params["env"]
+                                        else:
+                                            self.script +="env %s  \\\n\t" % self.params["env"]
                                     self.script += "python  %s \\\n\t"  % os.path.join(self.module_location,"GFF2Gecko3.py")
                                     if "-p" in self.params["redir_params"]:
                                         self.script += "-P  %s \\\n\t"  % self.params["redir_params"]["-p"]
                                     self.script += "-D  %s \\\n\t"  % GFF_dir
-                                    self.script += "-C  %s \\\n\t"  % gene_presence_absence_file_loc
+                                    self.script += "-C  %s \\\n\t"  % self.sample_data["pan_genome_clustered_proteins"]
                                     self.script += "-B  %s \\\n\t"  % Bicluster_clusters
                                     self.script += "-o  %s \n\n"    % os.path.join(Gecko_results_dir,"Gecko.cog")
-                                    
-                                    self.script +="env %s  \\\n" % self.params["env"]
+                                    if "env" in self.params.keys():
+                                        if self.shell=="bash":
+                                            self.script +="export env %s  \\\n\t" % self.params["env"]
+                                        else:
+                                            self.script +="env %s  \\\n\t" % self.params["env"]
                                     temp_self_script=""
                                     Gecko_pars=list()
                                     for par in self.params["Gecko"].keys():
@@ -375,11 +397,12 @@ class Step_Roary(Step):
                                             elif par=="-out":
                                                 self.write_warning("The '-out' parameter in the Roary Gecko analysis is ignored")
                                             elif len(par)>0:
-                                                if self.params["Gecko"][par]!=None:
-                                                    temp_self_script +="%s  %%s \\\n\t" % par \
-                                                                                   % self.params["Gecko"][par]
-                                                else:
-                                                    temp_self_script +="%s  \\\n\t" % par 
+                                                if par!="script_path":
+                                                    if self.params["Gecko"][par]!=None:
+                                                        temp_self_script +="%s  %%s \\\n\t" % par \
+                                                                                       % self.params["Gecko"][par]
+                                                    else:
+                                                        temp_self_script +="%s  \\\n\t" % par 
                                             
                                       
                                     self.script +="%s  \\\n\t" % self.params["Gecko"]["script_path"]
@@ -405,7 +428,7 @@ class Step_Roary(Step):
                                 else:
                                     raise AssertionExcept("The file %s is not found in the Roary module directory" % "GFF2Gecko3.py" )
                             else:
-                                raise AssertionExcept("No %s running command found" % "Gecko" )
+                                self.write_warning("No %s running command found! will not run! " % "Gecko" )
             else:
                 raise AssertionExcept("The file %s is not found in the Roary module directory" % "Biclustering.R" )
 

@@ -67,6 +67,8 @@ files=filter(lambda x:len(re.findall(".gff$",x)) ,os.listdir(args.DIR))
 Bar_wide=20
 pool = Pool(processes=args.processes)
 num_tasks=len(files)
+if args.processes>num_tasks:
+    args.processes=num_tasks
 g=pool.imap_unordered(partial(run_on_GFF,args=args,clusters=clusters ), files,int(num_tasks/args.processes))
 print "START:"
 sys.stdout.write("\r[{}] {:.0f}%".format("#" * 0 + "-" * (Bar_wide - 0),0))

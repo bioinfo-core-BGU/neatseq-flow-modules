@@ -43,7 +43,7 @@ option_list = list(
               help="Number f genes (= number of columns after first ST column which represent genes) (default: 7)", metavar="character"),
   make_option(c("-o", "--output"), type="character", default=NULL, 
               help="Path to output file (default=<blast_input>.MLST)", metavar="character"),
-  make_option(c("-c", "--cols_to_return"), type="character", default = "ST", 
+  make_option(c("-c", "--Type_col_name"), type="character", default = NULL, 
               help="Columns in the scheme table to return", metavar="character"),
   make_option(c("-F", "--Find_close_match"), type="character", default = "N", 
               help="whether to show the closest allele match? (Y/N)", metavar="character")
@@ -56,7 +56,7 @@ opt_parser = optparse::OptionParser(usage = "usage: %prog [options]",
                                     epilogue="\n\nAuthor: Menachem Sklarz");
 opt = optparse::parse_args(opt_parser);
 
-opt$cols_to_return <- strsplit(x = opt$cols_to_return,
+opt$Type_col_name <- strsplit(x = opt$Type_col_name,
                                split = ",") %>% unlist
 
 # REad mlst scheme
@@ -64,7 +64,13 @@ mlst <- read.delim(opt$scheme,
                    he = T,
                    stringsAsFactors = F)
 
-gene_names = names(mlst)[2:(opt$num_of_genes+1)]
+gene_names = names(mlst)
+print(gene_names)
+for (i in opt$Type_col_name){
+    gene_names=gene_names[gene_names != i]
+    }
+print(gene_names) 
+opt$num_of_genes=length(gene_names)
 
 #seting the default in status new column
 mlst[dim(mlst)[1]+1,"Status"]=''

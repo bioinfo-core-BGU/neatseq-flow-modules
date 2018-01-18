@@ -66,8 +66,7 @@ Lines for parameter file
         sample_cutoff:                           # In the final merge file consider only samples that have at least this fraction of identified alleles
         redirects:
             --scheme:                            # Path to the Typing scheme file [Tab delimited]
-            --num_of_genes:                      # Number of genes/locus in the scheme
-            --cols_to_return:                    # Column names in the scheme file to include in the final Meta-Data file
+            --Type_col_name:                     # Column/s name/s in the scheme file of the typing results
 
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -102,8 +101,7 @@ class Step_cgMLST_and_MLST_typing(Step):
         
         assert "--scheme" in self.params["redir_params"] or "-s" in self.params["redir_params"], \
             "In %s:\tYou must redirect a '--scheme' parameter.\n" % self.get_step_name()
-        assert "--num_of_genes" in self.params["redir_params"] or "-n" in self.params["redir_params"], \
-            "In %s:\tYou must redirect a '--num_of_genes' parameter.\n" % self.get_step_name()
+        
           
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
@@ -155,11 +153,11 @@ class Step_cgMLST_and_MLST_typing(Step):
                         if "cut_samples_not_in_metadata" in self.params.keys():
                             self.script += " --Cut  \\\n\t" 
                 self.script += " -F %s \\\n\t" % merge_file
-                if "--cols_to_return" in self.params["redir_params"]:
+                if "--Type_col_name" in self.params["redir_params"]:
                     #Non allelic fields in the Merged file
-                    self.script += " --Non_allelic '%s','%%s' \\\n\t" % 'Sample,Status,Percentage_of_missing_genes' % self.params["redir_params"]["--cols_to_return"]
+                    self.script += " --Non_allelic '%s,%%s' \\\n\t" % 'Sample,Status,Percentage_of_missing_genes' % self.params["redir_params"]["--Type_col_name"]
                     #Fields in the merge file to move to the metadata file
-                    self.script += " --Fields '%s','%%s' \\\n\t" % 'Status,Percentage_of_missing_genes' % self.params["redir_params"]["--cols_to_return"]
+                    self.script += " --Fields '%s,%%s' \\\n\t" % 'Status,Percentage_of_missing_genes' % self.params["redir_params"]["--Type_col_name"]
                 self.script += " -O %s \n\n" % pars_dir
                 self.sample_data["phyloviz_MetaData"]=os.path.join(pars_dir,"New_MetaData.tab")
                 self.sample_data["phyloviz_Alleles"]=os.path.join(pars_dir,"New_Merged_cut.tab")
