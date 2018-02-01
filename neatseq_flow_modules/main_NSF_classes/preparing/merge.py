@@ -95,17 +95,13 @@ from neatseq_flow.PLC_step import Step,AssertionExcept
 
 from  neatseq_flow.modules.global_defs import ZIPPED_EXTENSIONS, ARCHIVE_EXTENSIONS, KNOWN_FILE_EXTENSIONS
 
+import yaml
+
 
 
 __author__ = "Menachem Sklarz"
 __version__ = "1.1.0"
 
-
-
-# A dict for conversion of types of sample data to positions in fasta structure:
-fasta_types_dict = {"Nucleotide":"fasta.nucl","Protein":"fasta.prot"}
-sam_bam_dict     = {"SAM":"sam", "BAM":"bam", "REFERENCE":"reference"}
-vcf_dict         = {"VCF":"vcf","G.VCF":"g.vcf"}
 
 class Step_merge(Step):
     
@@ -113,10 +109,66 @@ class Step_merge(Step):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = "merge"
         
-        
+        # Load YAML of file type stored in merge_file_types.yml
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),"merge_file_types.yml"),"r") as fileh:
+            try:
+                self.default_src_trg_map = yaml.load("".join(fileh.readlines()),  Loader=yaml.SafeLoader)
+            except yaml.YAMLError, exc:
+                if hasattr(exc, 'problem_mark'):
+                    mark = exc.problem_mark
+                    print "Error position: (%s:%s)" % (mark.line+1, mark.column+1)
+                    print mark.get_snippet()
+                raise AssertionExcept("Error loading file types index 'merge_file_types.yml'")
+            except:
+                raise AssertionExcept("Error loading file types index 'merge_file_types.yml'")
+            
+    
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
+        
+        src = set()
+        # Get list of existing file types in samples file:
+        for sample in self.sample_data["samples"]:
+            src = src | set(self.sample_data[sample].keys())
+        if "src" not in self.params:
+            src = list(src)
+            src.remove("type")
+            self.params["src"] = src
+        else: # Check that all src's exist somewhere in sample_data:
+            if not set(self.params["src"]) < src:
+                raise AssertionExcept("The following types in 'src' do not exist in samples file: %s. " % " ".join(list(set(self.params["src"]) - src)))
+            
+        # If script_path is not a list or is a list of length 1, extend it to length of src
+        if not isinstance(self.params["script_path"],list) or len(self.params["script_path"])==1:
+            self.params["script_path"] = [self.params["script_path"] for elem in self.params["src"]]
+        
+        # If pipe is defined, is not a list or is a list of length 1, extend it to length of src
+        if "pipe" in self.params:
+            if not isinstance(self.params["pipe"],list) or len(self.params["pipe"])==1:
+                self.params["pipe"] = [self.params["pipe"] for elem in self.params["src"]]
+            else:
+                if not len(self.params["pipe"])==len(self.params["src"]):
+                    raise AssertionExcept("pipe list must be the same length as src list!")
+
+        
+        # Create trg list
+        if "trg" not in self.params:
+            if not set(self.params["src"]) < set(self.default_src_trg_map.keys()):
+                raise AssertionExcept("The following types in 'src' are not recognized: %s. Please use explicit 'trg' list in merge" % " ".join(list(set(self.params["src"]) - set(self.default_src_trg_map.keys()))))
+            self.params["trg"] = [self.default_src_trg_map[src][0] for src in self.params["src"]]
+            
+        if "ext" not in self.params:
+            if not set(self.params["src"]) < set(self.default_src_trg_map.keys()):
+                raise AssertionExcept("The following types in 'src' are not recognized: %s. Please use explicit 'ext' list." % " ".join(list(set(self.params["src"]) - set(self.default_src_trg_map.keys()))))
+            self.params["ext"] = [self.default_src_trg_map[src][1] if len(self.default_src_trg_map[src])>1 else src for src in self.params["src"]]
+            
+            
+            
+        if not len(self.params["script_path"])==len(self.params["src"])==len(self.params["trg"])==len(self.params["ext"]):
+            raise AssertionExcept("script_path, src, trg and ext lists, if defined, must all have the same lengths!")
+        
+        
         
         pass
         
@@ -138,41 +190,31 @@ class Step_merge(Step):
             # General comment: If there is a parallel routine for each direction (forward, reverse), add this loop	
             # if  in self.sample_data[sample].keys():
 
-            # Loop over all **existing** Forward, Reverse and Single slots:
-            # The filter returns a list of keys in sample_data that are in the list ["Forward","Reverse","Single"]
-            for direction in filter(lambda x: x in ["Forward","Reverse","Single"], self.sample_data[sample].keys()):
-                self.script = ""
-                direction_tag = direction[0] # Get first letter in direction
-                # Name of specific script:
-                self.spec_script_name = "_".join([self.step,self.name,sample,direction_tag]) 
+            # for type_i in range(len(self.params["src"])):
+            for src_type in self.params["src"]:
+                # Get index of src. Will be used to extract equivalent trg, script_path and ext.
+                type_i = self.params["src"].index(src_type)
+                # src_type = self.params["src"][type_i]
+                
+                # src_type not defined for this sample. Move on.
+                if src_type not in self.sample_data[sample]:
+                    continue
+                    
+                self.spec_script_name = "_".join([self.step,self.name,sample,src_type]) 
                 
                 # This line should be left before every new script. It sees to local issues.
                 # Use the dir it returns as the base_dir for this step.
                 use_dir = self.local_start(self.base_dir)
+                
+                fq_fn = ".".join([sample, src_type, self.file_tag,self.params["ext"][type_i]])          #The filename containing the end result. Used both in script and to set reads in $sample_params
 
-                
-                # Get all unique extensions of files in direction:
-                extensions = list(set([os.path.splitext(fn)[1] for fn in self.sample_data[sample][direction]]))
 
-                
-                # Find file extension of first input file and remove extra period at the begining of extension (note the [1:] at the end.):
-                extension = os.path.splitext(self.sample_data[sample][direction][0])[1][1:]
-                # Remove zip extension:
-                if "." + extension in ZIPPED_EXTENSIONS:
-                    # Get last extension before the '.gz', and remove the leading period (note the [1:] at the end.)
-                    extension = os.path.splitext(os.path.splitext(self.sample_data[sample][direction][0])[0])[1][1:]
-                if "." + extension not in KNOWN_FILE_EXTENSIONS:
-                    raise AssertionExcept("One of the files has a really weird extension (%s). Make sure this is not a mistake, or update KNOWN_FILE_EXTENSIONS or ZIPPED_EXTENSIONS in global_def.py\n" % extension, sample)
-                
-                fq_fn = ".".join([sample, direction_tag, self.file_tag,extension])          #The filename containing the end result. Used both in script and to set reads in $sample_params
-
-                
-                self.script += self.params["script_path"] + " \\\n\t"
+                self.script += self.params["script_path"][type_i] + " \\\n\t"
                 # The following line concatenates all the files in the direction separated by a " "
-                self.script += " ".join(self.sample_data[sample][direction]) 
+                self.script += " ".join(self.sample_data[sample][src_type]) 
                 self.script += " \\\n\t"
                 if "pipe" in self.params:
-                    self.script += "| {pipe} \\\n\t".format(pipe = self.params["pipe"])
+                    self.script += "| {pipe} \\\n\t".format(pipe = self.params["pipe"][type_i])
                 self.script += "> %s%s \n\n"  % (use_dir, fq_fn)
 
                 # Move all files from temporary local dir to permanent base_dir
@@ -180,174 +222,10 @@ class Step_merge(Step):
 
                 
                 # Store file in active file for sample:
-                self.sample_data[sample]["fastq." + direction_tag] = self.base_dir + fq_fn
+                self.sample_data[sample][self.params["trg"][type_i]] = self.base_dir + fq_fn
                 
-                self.stamp_file(self.sample_data[sample]["fastq." + direction_tag])
+                self.stamp_file(self.sample_data[sample][self.params["trg"][type_i]])
                 
                 
                 self.create_low_level_script()
-            
-            # Merging files in "fasta" dict in sample_data (genomes etc.)
-            # Loop over all **existing** fasta slots:
-            # The filter returns a list of keys in sample_data that are in the keys of dict "fasta_types_dict"
-            for direction in filter(lambda x: x in fasta_types_dict.keys(), self.sample_data[sample].keys()):
-                self.script = ""
-                direction_tag = fasta_types_dict[direction]
                 
-                # Name of specific script:
-                self.spec_script_name = "_".join([self.step,self.name,sample,direction_tag]) 
-                
-                # This line should be left before every new script. It sees to local issues.
-                # Use the dir it returns as the base_dir for this step.
-                use_dir = self.local_start(self.base_dir)
-
-
-                # Get all unique extensions of files in direction:
-                extensions = list(set([os.path.splitext(fn)[1] for fn in self.sample_data[sample][direction]]))
-                
-                # Find file extension of first input file and remove extra period at the begining of extension (note the [1:] at the end.):
-                extension = os.path.splitext(self.sample_data[sample][direction][0])[1][1:]
-                # Remove zip extension:
-                if "."+extension in ZIPPED_EXTENSIONS:
-                    # Get last extension before the '.gz', and remove the leading period (note the [1:] at the end.)
-                    extension = os.path.splitext(os.path.splitext(self.sample_data[sample][direction][0])[0])[1][1:]
-                if "."+extension not in KNOWN_FILE_EXTENSIONS:
-                    raise AssertionExcept("One of the files in sample has a really weird extension (%s). \n\tMake sure this is not a mistake, or update KNOWN_FILE_EXTENSIONS\n" % extension, sample)
-                
-
-                fq_fn = ".".join([sample, direction_tag,self.file_tag,extension])          #The filename containing the end result. Used both in script and to set reads in $sample_params
-
-                # You have to add "use existing" functionality
-                self.script += self.params["script_path"] + " \\\n\t"
-                # The following line concatenates all the files in the direction separated by a " "
-                self.script += " ".join(self.sample_data[sample][direction]) 
-                self.script += " \\\n\t"
-                if "pipe" in self.params:
-                    self.script += "| {pipe} \\\n\t".format(pipe = self.params["pipe"])
-                self.script += "> %s%s \n\n"  % (use_dir, fq_fn)
-
-                
-                # # Store file in active file for sample:
-                self.sample_data[sample][direction_tag] = self.base_dir + fq_fn
-      
-                self.stamp_file(self.sample_data[sample][direction_tag])
-
-                                    
-                # Move all files from temporary local dir to permanent base_dir
-                self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
-
-                self.create_low_level_script()
-
-            for direction in filter(lambda x: x in sam_bam_dict.keys(), self.sample_data[sample].keys()):
-                    # Do not attempt merging the single reference permitted:
-                    if direction == "REFERENCE":
-                        continue
-                        
-                    self.script = ""
-                    direction_tag = sam_bam_dict[direction]
-                    
-                    # Name of specific script:
-                    self.spec_script_name = "_".join([self.step,self.name,sample,direction_tag]) 
-                    
-                    # This line should be left before every new script. It sees to local issues.
-                    # Use the dir it returns as the base_dir for this step.
-                    use_dir = self.local_start(self.base_dir)
-
-
-                    # Get all unique extensions of files in direction:
-                    extensions = list(set([os.path.splitext(fn)[1] for fn in self.sample_data[sample][direction]]))
-                    
-                    # Find file extension of first input file and remove extra period at the begining of extension (note the [1:] at the end.):
-                    extension = os.path.splitext(self.sample_data[sample][direction][0])[1][1:]
-                    # Remove zip extension:
-                    if "."+extension in ZIPPED_EXTENSIONS:
-                        # Get last extension before the '.gz', and remove the leading period (note the [1:] at the end.)
-                        extension = os.path.splitext(os.path.splitext(self.sample_data[sample][direction][0])[0])[1][1:]
-                    if "."+extension not in KNOWN_FILE_EXTENSIONS:
-                        raise AssertionExcept("One of the files in sample has a really weird extension (%s). \n\tMake sure this is not a mistake, or update KNOWN_FILE_EXTENSIONS\n" % extension, sample)
-                    
-
-                    fq_fn = ".".join([sample, direction_tag,self.file_tag,extension])          #The filename containing the end result. Used both in script and to set reads in $sample_params
-
-                    # You have to add "use existing" functionality
-                    self.script += self.params["script_path"] + " \\\n\t"
-                    # The following line concatenates all the files in the direction separated by a " "
-                    self.script += " ".join(self.sample_data[sample][direction]) 
-                    self.script += " \\\n\t"
-                    if "pipe" in self.params:
-                        self.script += "| {pipe} \\\n\t".format(pipe = self.params["pipe"])
-                    self.script += " > %s%s \n\n"  % (use_dir, fq_fn)
-
-                    
-                    # # Store file in active file for sample:
-
-                    self.sample_data[sample][direction_tag] = self.base_dir + fq_fn
-                    if "REFERENCE" in self.sample_data[sample]:
-                        self.sample_data[sample]["reference"] = self.sample_data[sample]["REFERENCE"]
-          
-                    self.stamp_file(self.sample_data[sample][direction_tag])
-
-
-                                        
-                    # Move all files from temporary local dir to permanent base_dir
-                    self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
-
-                    self.create_low_level_script()
-                    
-                    
-            for direction in filter(lambda x: x in vcf_dict.keys(), self.sample_data[sample].keys()):
-                    # Do not attempt merging the single reference permitted:
-                    print direction
-                        
-                    self.script = ""
-                    direction_tag = vcf_dict[direction]
-                    
-                    # Name of specific script:
-                    self.spec_script_name = "_".join([self.step,self.name,sample,direction_tag]) 
-                    
-                    # This line should be left before every new script. It sees to local issues.
-                    # Use the dir it returns as the base_dir for this step.
-                    use_dir = self.local_start(self.base_dir)
-
-
-                    # Get all unique extensions of files in direction:
-                    extensions = list(set([os.path.splitext(fn)[1] for fn in self.sample_data[sample][direction]]))
-                    
-                    # Find file extension of first input file and remove extra period at the begining of extension (note the [1:] at the end.):
-                    extension = os.path.splitext(self.sample_data[sample][direction][0])[1][1:]
-                    # Remove zip extension:
-                    if "."+extension in ZIPPED_EXTENSIONS:
-                        # Get last extension before the '.gz', and remove the leading period (note the [1:] at the end.)
-                        extension = os.path.splitext(os.path.splitext(self.sample_data[sample][direction][0])[0])[1][1:]
-                    
-                    #===========================================================
-                    # if "."+extension not in KNOWN_FILE_EXTENSIONS:
-                    #     raise AssertionExcept("One of the files in sample has a really weird extension (%s). \n\tMake sure this is not a mistake, or update KNOWN_FILE_EXTENSIONS\n" % extension, sample)
-                    # 
-                    #===========================================================
-
-                    fq_fn = ".".join([sample, direction_tag,self.file_tag,extension])          #The filename containing the end result. Used both in script and to set reads in $sample_params
-
-                    # You have to add "use existing" functionality
-                    self.script += self.params["script_path"] + " \\\n\t"
-                    # The following line concatenates all the files in the direction separated by a " "
-                    self.script += " ".join(self.sample_data[sample][direction]) 
-                    self.script += " \\\n\t"
-                    if "pipe" in self.params:
-                        self.script += "| {pipe} \\\n\t".format(pipe = self.params["pipe"])
-                    self.script += " > %s%s \n\n"  % (use_dir, fq_fn)
-
-                    
-                    # # Store file in active file for sample:
-
-                    self.sample_data[sample][direction_tag] = self.base_dir + fq_fn
-          
-                    self.stamp_file(self.sample_data[sample][direction_tag])
-
-
-                                        
-                    # Move all files from temporary local dir to permanent base_dir
-                    self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
-
-                    self.create_low_level_script()
-            

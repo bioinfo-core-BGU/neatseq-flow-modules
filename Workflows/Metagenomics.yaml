@@ -5,7 +5,8 @@ Global_params:
     Qsub_q: myqueue.q
     module_path:      ../modules_release_1.1.0
     conda:
-        path:   /gpfs0/bioinfo/apps/Miniconda2/Miniconda_v4.3.21/envs/NeatSeq_Flow
+        path:   /gpfs0/bioinfo/apps/Miniconda2/Miniconda_v4.3.21/bin
+        env:    NeatSeq_Flow
 Description: |
     A pipeline for executing various analyses on metagenomics data
     --------------------------------------------------------------
