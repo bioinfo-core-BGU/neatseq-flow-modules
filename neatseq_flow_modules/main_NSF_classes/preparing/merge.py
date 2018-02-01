@@ -196,6 +196,10 @@ class Step_merge(Step):
                 type_i = self.params["src"].index(src_type)
                 # src_type = self.params["src"][type_i]
                 
+                # Initializing empty script:
+                self.script = ""
+                
+                
                 # src_type not defined for this sample. Move on.
                 if src_type not in self.sample_data[sample]:
                     continue
