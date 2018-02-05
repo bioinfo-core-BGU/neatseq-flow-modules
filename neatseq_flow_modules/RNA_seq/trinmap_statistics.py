@@ -104,16 +104,19 @@ class Step_trinmap_statistics(Step):
         if "--gene_trans_map" not in self.params["redir_params"]:
             if "gene_trans_map" in self.sample_data:
                 self.params["redir_params"]["--gene_trans_map"] = self.sample_data["gene_trans_map"]
+                self.use_gene_trans_map = True
             else:
                 self.params["redir_params"]["--gene_trans_map"] = "none"
+                self.use_gene_trans_map = False
                     
         else:  # --gene_trans_map is defined in redir_params
             if self.params["redir_params"]["--gene_trans_map"] == None:
                 raise AssertionExcept("You passed --gene_trans_map with no value. Please specify path or 'none'")
             elif self.params["redir_params"]["--gene_trans_map"] == "none":
-                pass
+                self.use_gene_trans_map = False
             else:
                 self.sample_data["gene_trans_map"] = self.params["redir_params"]["--gene_trans_map"]
+                self.use_gene_trans_map = True
             
                 
             
@@ -160,29 +163,22 @@ class Step_trinmap_statistics(Step):
         if not "version" in self.params or self.params["version"].lower() == "new":
 
         # Storing all output files even though probably not very useful downstream...
-            self.sample_data["counts.matrix"] = os.sep.join([self.base_dir, "%s.counts.matrix" % prefix])
-            self.sample_data["not_cross_norm.fpkm.tmp"] = os.sep.join([self.base_dir, "%s.not_cross_norm.fpkm.tmp" % prefix])
-            self.sample_data["not_cross_norm.fpkm.tmp.TMM_info.txt"] = os.sep.join([self.base_dir, "%s.not_cross_norm.fpkm.tmp.TMM_info.txt" % prefix])
-            self.sample_data["TMM.fpkm.matrix"] = os.sep.join([self.base_dir, "%s.TMM.fpkm.matrix" % prefix])
-
-            self.stamp_file(self.sample_data["counts.matrix"])
-            self.stamp_file(self.sample_data["not_cross_norm.fpkm.tmp"])
-            self.stamp_file(self.sample_data["not_cross_norm.fpkm.tmp.TMM_info.txt"])
-            self.stamp_file(self.sample_data["TMM.fpkm.matrix"])
-
+            self.sample_data["isoform.raw_counts"] = os.sep.join([self.base_dir,  "%s.isoform.counts.matrix" % prefix])
+            self.sample_data["isoform.norm_counts"] = os.sep.join([self.base_dir, "%s.isoform.TPM.not_cross_norm" % prefix])
+            
+            self.stamp_file(self.sample_data["isoform.raw_counts"] )
+            self.stamp_file(self.sample_data["isoform.norm_counts"])
+            
+            
+            if(self.use_gene_trans_map):  # True when --gene_trans_map is not "none"
+                self.sample_data["gene.raw_counts"] = os.sep.join([self.base_dir,  "%s.gene.counts.matrix" % prefix])
+                self.sample_data["gene.norm_counts"] = os.sep.join([self.base_dir, "%s.gene.TPM.not_cross_norm" % prefix])
+                self.stamp_file(self.sample_data["gene.raw_counts"] )
+                self.stamp_file(self.sample_data["gene.norm_counts"])
+            
         
         else:
-            # Storing all output files even though probably not very useful downstream...
-            self.sample_data["counts.matrix"] = os.sep.join([self.base_dir, "%s.counts.matrix" % prefix])
-            self.sample_data["not_cross_norm.fpkm.tmp"] = os.sep.join([self.base_dir, "%s.not_cross_norm.fpkm.tmp" % prefix])
-            self.sample_data["not_cross_norm.fpkm.tmp.TMM_info.txt"] = os.sep.join([self.base_dir, "%s.not_cross_norm.fpkm.tmp.TMM_info.txt" % prefix])
-            self.sample_data["TMM.fpkm.matrix"] = os.sep.join([self.base_dir, "%s.TMM.fpkm.matrix" % prefix])
-
-            self.stamp_file(self.sample_data["counts.matrix"])
-            self.stamp_file(self.sample_data["not_cross_norm.fpkm.tmp"])
-            self.stamp_file(self.sample_data["not_cross_norm.fpkm.tmp.TMM_info.txt"])
-            self.stamp_file(self.sample_data["TMM.fpkm.matrix"])
-
+            self.write_warning("Not storing output files for old version of trinity. If required, load the appropriate files with a 'manage_types' module")
 
        
         # Move all files from temporary local dir to permanent base_dir

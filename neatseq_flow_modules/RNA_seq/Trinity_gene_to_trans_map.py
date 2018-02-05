@@ -6,7 +6,7 @@
 :Affiliation: Bioinformatics core facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
-A class that defines a module for RNA_seq assembly using the `Trinity assembler`_.
+A class that defines a module for the RNA_seq assembly using the `Trinity assembler`_.
 
 .. _Trinity assembler: https://github.com/trinityrnaseq/trinityrnaseq/wiki
  
