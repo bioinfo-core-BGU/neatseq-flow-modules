@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``trinity``
+``trinmap_statistics``
 -----------------------------------------------------------------
 :Authors: Menachem Sklarz
 :Affiliation: Bioinformatics core facility
@@ -41,7 +41,7 @@ Parameters that can be set
     :header: "Parameter", "Values", "Comments"
 
     "use_isoforms", "", "Use 'isoforms.results' matrix. If not passed, use 'genes.results'"
-    "redirects: --gene_trans_map", "path or empty", "If empty, use internal gene_trans_map. If path, use path as gene_trans_map for all samples."
+    "redirects: --gene_trans_map", "path or 'none'", "If path, use path as gene_trans_map for all samples. If 'none', does not produce gene level estimates. **In order to use an internal gene_trans_map, do not pass this parameter!**"
     
     
 Lines for parameter file
@@ -94,6 +94,29 @@ class Step_trinmap_statistics(Step):
             Here you should do testing for dependency output. These will NOT exist at initiation of this instance. They are set only following sample_data updating
         """
 
+        # In new version, --gene_trans_map is compulsory! Adding
+        # If not passed:
+            # If one exists, use it. 
+            # Otherwise, specify "none"
+        # If passed:
+            # If with value, use the value and set project "gene_trans_map" to value
+            # Otherwise, use existing
+        if "--gene_trans_map" not in self.params["redir_params"]:
+            if "gene_trans_map" in self.sample_data:
+                self.params["redir_params"]["--gene_trans_map"] = self.sample_data["gene_trans_map"]
+            else:
+                self.params["redir_params"]["--gene_trans_map"] = "none"
+                    
+        else:  # --gene_trans_map is defined in redir_params
+            if self.params["redir_params"]["--gene_trans_map"] == None:
+                raise AssertionExcept("You passed --gene_trans_map with no value. Please specify path or 'none'")
+            elif self.params["redir_params"]["--gene_trans_map"] == "none":
+                pass
+            else:
+                self.sample_data["gene_trans_map"] = self.params["redir_params"]["--gene_trans_map"]
+            
+                
+            
         
         
         
@@ -118,32 +141,7 @@ class Step_trinmap_statistics(Step):
         prefix = self.sample_data["Title"]
 
         self.script += self.get_script_const()
-        # In new version, --gene_trans_map is compulsory! Adding
-        # If not passed:
-            # If one exists, use it. 
-            # Otherwise, specify "none"
-        # If passed:
-            # If with value, use the value and set project "gene_trans_map" to value
-            # Otherwise, use existing
-        if "--gene_trans_map" not in self.params["redir_params"]:
-            if "gene_trans_map" not in self.sample_data:
-                self.script += "--gene_trans_map none \\\n\t"
-            else:
-                if "gene_trans_map" in self.sample_data:
-                    self.script += "--gene_trans_map %s \\\n\t" % self.sample_data["gene_trans_map"]
-                else:
-                    raise AssertionExcept("Expecting 'gene_trans_map' in project but none found")
-        else:
-            if self.params["redir_params"]["--gene_trans_map"]:
-                self.script += "--gene_trans_map %s \\\n\t" % self.params["redir_params"]["--gene_trans_map"]
-                self.sample_data["gene_trans_map"] = self.params["redir_params"]["--gene_trans_map"]
-            else:
-                if "gene_trans_map" in self.sample_data:
-                    self.script += "--gene_trans_map %s \\\n\t" % self.sample_data["gene_trans_map"]
-                else:
-                    raise AssertionExcept("Expecting 'gene_trans_map' in project but none found")
-            
-            
+
             
         self.script += "--out_prefix %s \\\n\t" % os.sep.join([use_dir, prefix])
         # type2use is 'genes.results' or 'isoforms.results'. This is used to then select the correct slot from "mapping"
@@ -159,16 +157,31 @@ class Step_trinmap_statistics(Step):
         self.script += "\n\n"
         
         
-        # Storing all output files even though probably not very useful downstream...
-        self.sample_data["counts.matrix"] = os.sep.join([self.base_dir, "%s.counts.matrix" % prefix])
-        self.sample_data["not_cross_norm.fpkm.tmp"] = os.sep.join([self.base_dir, "%s.not_cross_norm.fpkm.tmp" % prefix])
-        self.sample_data["not_cross_norm.fpkm.tmp.TMM_info.txt"] = os.sep.join([self.base_dir, "%s.not_cross_norm.fpkm.tmp.TMM_info.txt" % prefix])
-        self.sample_data["TMM.fpkm.matrix"] = os.sep.join([self.base_dir, "%s.TMM.fpkm.matrix" % prefix])
+        if not "version" in self.params or self.params["version"].lower() == "new":
 
-        self.stamp_file(self.sample_data["counts.matrix"])
-        self.stamp_file(self.sample_data["not_cross_norm.fpkm.tmp"])
-        self.stamp_file(self.sample_data["not_cross_norm.fpkm.tmp.TMM_info.txt"])
-        self.stamp_file(self.sample_data["TMM.fpkm.matrix"])
+        # Storing all output files even though probably not very useful downstream...
+            self.sample_data["counts.matrix"] = os.sep.join([self.base_dir, "%s.counts.matrix" % prefix])
+            self.sample_data["not_cross_norm.fpkm.tmp"] = os.sep.join([self.base_dir, "%s.not_cross_norm.fpkm.tmp" % prefix])
+            self.sample_data["not_cross_norm.fpkm.tmp.TMM_info.txt"] = os.sep.join([self.base_dir, "%s.not_cross_norm.fpkm.tmp.TMM_info.txt" % prefix])
+            self.sample_data["TMM.fpkm.matrix"] = os.sep.join([self.base_dir, "%s.TMM.fpkm.matrix" % prefix])
+
+            self.stamp_file(self.sample_data["counts.matrix"])
+            self.stamp_file(self.sample_data["not_cross_norm.fpkm.tmp"])
+            self.stamp_file(self.sample_data["not_cross_norm.fpkm.tmp.TMM_info.txt"])
+            self.stamp_file(self.sample_data["TMM.fpkm.matrix"])
+
+        
+        else:
+            # Storing all output files even though probably not very useful downstream...
+            self.sample_data["counts.matrix"] = os.sep.join([self.base_dir, "%s.counts.matrix" % prefix])
+            self.sample_data["not_cross_norm.fpkm.tmp"] = os.sep.join([self.base_dir, "%s.not_cross_norm.fpkm.tmp" % prefix])
+            self.sample_data["not_cross_norm.fpkm.tmp.TMM_info.txt"] = os.sep.join([self.base_dir, "%s.not_cross_norm.fpkm.tmp.TMM_info.txt" % prefix])
+            self.sample_data["TMM.fpkm.matrix"] = os.sep.join([self.base_dir, "%s.TMM.fpkm.matrix" % prefix])
+
+            self.stamp_file(self.sample_data["counts.matrix"])
+            self.stamp_file(self.sample_data["not_cross_norm.fpkm.tmp"])
+            self.stamp_file(self.sample_data["not_cross_norm.fpkm.tmp.TMM_info.txt"])
+            self.stamp_file(self.sample_data["TMM.fpkm.matrix"])
 
 
        

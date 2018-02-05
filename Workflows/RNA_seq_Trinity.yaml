@@ -36,83 +36,44 @@ Vars:
         STAR:               /path/to/STAR                   # Path to STAR executable
         bowtie2:            /path/to/bowtie2/
         samtools:           /path/to/samtools
+        hpc_cmds_GridRunner:    /path/to/hpc_cmds_GridRunner.pl
+        BUSCO:              /path/to/BUSCO.py
+    databases:
+        BUSCO:              /path/to/BUSCO/dataset
+
 Step_params:
-    merge1:
+    Merge:
         module:             merge
         script_path:        {Vars.paths.merge}
-    trin_tags1:
+    Trinity_tags:
         module:             add_trinity_tags
-        base:               merge1
+        base:               Merge
         script_path: 
-    trinity1:
-        module:             trinity  #_new
-        base:               trin_tags1
+    Trinity_assembl:
+        module:             trinity_new
+        base:               Trinity_tags
         script_path:        '{Vars.paths.Trinity}/Trinity'
         qsub_params:
             -pe:            shared 20
         scope:              project
         redirects:
-            --CPU:          20
-            --JM:           140G
-            --full_cleanup: 
-            --grid_conf:    {Vars.paths.SGE_Trinity_conf}
-            --min_kmer_cov: 2
-            --seqType:      fq
-    # get_trans_map:
-        # module:             Trinity_gene_to_trans_map
-        # base:               trinity1
-        # script_path:        get_XXXXX
-        # scope:              project
+            --grid_exec:        '"{Vars.paths.hpc_cmds_GridRunner} --grid_conf {Vars.paths.SGE_Trinity_conf} -c"'
+            --seqType:          fq
+            --min_kmer_cov:     2
+            # --full_cleanup:
             
-######################
-    # rm_readsS:
-        # module:             manage_types
-        # base:               trinity1
-        # script_path:        
-        # scope:              project
-        # operation:          del
-        # type:               fastq.S
-    trinmap_bwt2_build:
-        module:             bowtie2_builder
-        base:               trinity1        #get_trans_map
-        script_path:        '{Vars.paths.bowtie2}/bowtie2-build'
+    Get_Trans_Map:
+        module:             Trinity_gene_to_trans_map
+        base:               Trinity_assembl
+        script_path:        '{Vars.paths.Trinity}/util/support_scripts/get_Trinity_gene_to_trans_map.pl'
         scope:              project
-    trinmap_bowtie2:
-        module:             bowtie2_mapper
-        base:               trinmap_bwt2_build
-        script_path:        '{Vars.paths.bowtie2}/bowtie2'
-        get_map_log:
-        scope:              project
-        redirects:
-            -p:             10
-            -q: 
-            --no-mixed:
-            --no-discordant:
-            --gbar:         1000
-            --end-to-end:
-            -q:
-            -X:             800
-        qsub_params:
-            -pe:            shared 10
+            
 
-    trinmap_sam_bwt2:
-        module:             samtools
-        base:               trinmap_bowtie2
-        script_path:        '{Vars.paths.samtools}/samtools'
-        qsub_params:
-            -pe:            shared 20
-        view:               -b -@ 20 
-        sort:               -@ 20
-        flagstat: 
-        index: 
-        stats:              
-        del_sam: 
-        del_unsorted: 
 ######################
 
-    trin_map1:
+    Trinity_Map:
         module:             trinity_mapping
-        base:               trinmap_sam_bwt2
+        base:               Get_Trans_Map
         script_path:        '{Vars.paths.Trinity}/util/align_and_estimate_abundance.pl'
         sample_list:        [Sample1,Sample2]
         scope:              project
@@ -125,44 +86,27 @@ Step_params:
             # --trinity_mode:
             --seqType:      fq
 
-    trin_map_stats:
+    Trinity_Map_Stats:
         module:             trinmap_statistics
-        base:               trin_map1
+        base:               Trinity_Map
         script_path:        '{Vars.paths.Trinity}/util/abundance_estimates_to_matrix.pl'
         # use_isoforms:          # use isoforms results. Remove to use genes results
         scope:              project
         redirects:
             --est_method:   RSEM
+            # --gene_trans_map:   
         # stop_and_show:
 
-    STAR_bld_ind:
-        module:             STAR_builder
-        base:               trinity1
-        script_path:        {Vars.paths.STAR}
-        scope:              project
-    STAR_map:
-        module:             STAR_mapper
-        base:               STAR_bld_ind
-        script_path:        {Vars.paths.STAR}
-        scope:              project
-    manage_types1:
-        module:             manage_types
-        base:               STAR_bld_ind
-        script_path:        
-        scope:              project
-        operation:          cp
-        type:               trinity.contigs
-        type_trg:           trinity.contigs2
-#        scope_trg:          project
+
 
     BUSCO1:
         module:             BUSCO
-        base:               trinity1
-        script_path:        /gpfs0/bioinfo/apps/Miniconda2/Miniconda_v4.3.21/bin/BUSCO.py
+        base:               Trinity_assembl
+        script_path:        {Vars.paths.BUSCO} 
         scope:              project
         redirects:
             --mode:         transcriptome
-            --lineage:      /gpfs0/bioinfo/databases/BUSCO/embryophyta_odb9
+            --lineage:      {Vars.databases.BUSCO}
             --cpu:          65
             --force:
             --restart:

@@ -9,7 +9,7 @@
 A class that defines a module for RNA_seq assembly using the `Trinity assembler`_.
 
 
-.. Note:: This module was tested on release 2.5.x. It should also work with 2.4.x 
+.. Attention:: This module was tested on release 2.5.x. It should also work with 2.4.x 
     
     For old versions of Trinity, you might need to use ``trinity`` module.
     
