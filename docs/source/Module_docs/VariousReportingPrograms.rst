@@ -16,4 +16,4 @@ Various Reporting Programs
 
 .. automodule:: Liron.Collect_results_module.Collect_results
 
-
+.. automodule:: Reports.BUSCO

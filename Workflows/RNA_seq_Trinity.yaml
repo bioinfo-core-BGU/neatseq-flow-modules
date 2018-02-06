@@ -38,8 +38,21 @@ Vars:
         samtools:           /path/to/samtools
         hpc_cmds_GridRunner:    /path/to/hpc_cmds_GridRunner.pl
         BUSCO:              /path/to/BUSCO.py
+        filter_trinity_by_counts:   /path/to/filter_trinity_by_counts.R
+# -------- Trinotate
+        TransDecoder:       /path/to/Trinity/TransDecoder-v5.0.2/TransDecoder.LongOrfs
+        Trinotate:          /path/to/Trinity/Trinotate-v3.1.1/Trinotate    
+        hmmscan:            /path/to/HMMER/HMMER_v3.1b1/bin/hmmscan
+        hmm:                /path/to/HMMER/HMMER_v3.1b1/bin
+        blast:              /path/to/BLAST/ncbi-blast-2.7.1+/bin
+        blastp:             /path/to/BLAST/ncbi-blast-2.7.1+/bin/blastp
+        blastn:             /path/to/BLAST/ncbi-blast-2.7.1+/bin/blastn        
     databases:
         BUSCO:              /path/to/BUSCO/dataset
+        trinotate:
+            sprot:          /gpfs0/bioinfo/databases/Trinity/Trinotate_v3.1.1/uniprot_sprot_blastdb/sprot
+            pfam:           /gpfs0/bioinfo/databases/Trinity/Trinotate_v3.1.1/PFAM/Pfam-A.hmm
+            sqlitedb:       /gpfs0/bioinfo/databases/Trinity/Trinotate_v3.1.1/Trinotate.sqlite        
 
 Step_params:
     Merge:
@@ -65,6 +78,7 @@ Step_params:
     Get_Trans_Map:
         module:             Trinity_gene_to_trans_map
         base:               Trinity_assembl
+        SKIP:
         script_path:        '{Vars.paths.Trinity}/util/support_scripts/get_Trinity_gene_to_trans_map.pl'
         scope:              project
             
@@ -79,11 +93,12 @@ Step_params:
         scope:              project
         setenv:             PATH "{Vars.paths.bowtie2}:{Vars.paths.RSEM}:{Vars.paths.samtools}:$PATH"
         redirects:
-            --est_method:   RSEM
-            --aln_method:   bowtie2
-            --output_prefix:        # Pass to add output_prefix. This is for older versions of trinity...
+            --est_method:   rsem
+            --aln_method:   bowtie
+            # --output_prefix:        # Pass to add output_prefix. This is for older versions of trinity...
             # --gene_trans_map:
             # --trinity_mode:
+            --coordsort_bam:
             --seqType:      fq
 
     Trinity_Map_Stats:
@@ -96,6 +111,29 @@ Step_params:
             --est_method:   RSEM
             # --gene_trans_map:   
         # stop_and_show:
+
+    filter_fasta:                   # Name of this step
+        module:             Generic             # Name of module
+        base:               Trinity_Map_Stats
+        script_path:        {Vars.paths.filter_trinity_by_counts}
+        scope:              project
+        shell:              bash                   
+        inputs:                     # The inputs for this module
+            --counts:                    # Input argument, could be also 'empty#'
+                scope:      project
+                File_Type:  isoform.norm_counts
+            --FASTA:
+                scope:      project
+                File_Type:  fasta.nucl
+        outputs:                    
+            --output:                    
+                File_Type:   fasta.nucl
+                suffix:      .filtered.fasta       # A suffix for this output argument file name    
+        redirects:
+            --grouping:     /gpfs0/bioinfo/users/sklarz/trinity_trial/07.Sample_grouping.txt
+            --min_count:    1
+            --min_sample:   2 
+            --min_groups:   1
 
 
 
@@ -114,3 +152,76 @@ Step_params:
             -pe:            shared 65
             
             
+
+# ----------------------------------------------------------------
+# Trinotate pipeline:
+    # To save time, split into small subsamples
+    Split_Fasta:
+        module:             split_fasta
+        base:               Trinity_assembl
+        script_path:
+        scope:              project
+        type:               nucl
+        subsample_num:      4
+
+    trino_blastx_sprot_highExpr:
+        module:             blast_new
+        base:               Split_Fasta
+        script_path:        '{Vars.paths.blast}/blastx'
+        querytype:          nucl
+        redirects:
+            -query:         sample
+            -db:            {Vars.databases.trinotate.sprot}
+            -max_target_seqs: 1
+            -num_threads:   1
+            -outfmt:        6
+    trino_Transdecode_highExpr:
+        module:             TransDecoder
+        base:               Split_Fasta
+        script_path:        {Vars.paths.TransDecoder}
+        scope:              sample
+    trino_blastp_sprot_highExpr:
+        module:             blast_new
+        base:               trino_Transdecode_highExpr
+        script_path:        {Vars.paths.blastp}
+        querytype:          prot
+        redirects:
+            -query:         sample
+            -db:            {Vars.databases.trinotate.sprot}
+            -max_target_seqs: 1
+            -num_threads:   1
+            -outfmt:        6
+    trino_hmmscan1_highExpr:
+        module:             hmmscan
+        base:               trino_Transdecode_highExpr
+        script_path:        {Vars.paths.hmmscan}
+        scope:              sample
+        type:               prot
+        output_type:        domtblout  # one of tblout (parseable table of per-sequence hits to file), domtblout (parseable table of per-domain hits to file) and pfamtblout (table of hits and domains in Pfam format)
+        hmmdb:              {Vars.databases.trinotate.pfam}
+        qsub_params:
+            -q:             bioinfo.q
+            # -pe:            shared 10
+        redirects:
+            --cpu:          1
+    trino_merge_blast_highExpr:
+        module:             merge_table
+        base:               [trino_blastp_sprot_highExpr,trino_blastx_sprot_highExpr]
+        script_path:        
+        type:               [blast.prot,blast.nucl,transcripts.fasta.nucl,fasta.prot]
+        # header:             5
+    trino_merge_hmm_highExpr:
+        module:             merge_table
+        base:               trino_hmmscan1_highExpr
+        script_path:        
+        type:               hmmscan.prot
+        header:             3
+    trino_Trinotate1_highExpr:
+        module:             Trinotate
+        base:               
+                            - trino_merge_blast_highExpr
+                            - trino_merge_hmm_highExpr
+        script_path:        {Vars.paths.Trinotate}
+        scope:              project
+        sqlitedb:           {Vars.databases.trinotate.sqlitedb}
+        cp_sqlitedb:        

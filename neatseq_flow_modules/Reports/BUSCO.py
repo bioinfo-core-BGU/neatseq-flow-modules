@@ -9,15 +9,26 @@
 A class that defines a module for running ``BUSCO``.
 
 
-
-
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    
+* fasta files in one of the following slots for sample-wise BUSCO:
+
+    * ``sample_data[<sample>]["fasta.nucl"]``
+    * ``sample_data[<sample>]["fasta.prot"]``
+
+* or fasta files in one of the following slots for project-wise BUSCO:
+
+    * ``sample_data["fasta.nucl"]``
+    * ``sample_data["fasta.prot"]``
     
 Output:
 ~~~~~~~~~~~~~
 
+* Stores output directory in:
 
+    * self.sample_data[<sample>]["BUSCO"] (``scope = sample``)
+    * self.sample_data["BUSCO"] (``scope = project``)
 
 Parameters that can be set        
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -25,14 +36,25 @@ Parameters that can be set
 .. csv-table:: 
     :header: "Parameter", "Values", "Comments"
 
-    
+    "scope", "``sample`` | ``project``, "Use sample of project scope fasta file."
     
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ::
 
-
+    BUSCO1:
+        module:             BUSCO
+        base:               Trinity_assembl
+        script_path:        {Vars.paths.BUSCO} 
+        scope:              project
+        redirects:
+            --mode:         transcriptome
+            --lineage:      {Vars.databases.BUSCO}
+            --cpu:          65
+            --force:
+            --restart:
+            
 
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -63,14 +85,6 @@ class Step_BUSCO(Step):
         if "scope" not in self.params:
             raise AssertionExcept("Please specify a 'scope': Either 'sample' or 'project'.")
         
-        # Depends on version if this is accepted
-        if "--output_prefix" in self.params["redir_params"]:
-            self.params["output_prefix"] = True
-            del self.params["redir_params"]["--output_prefix"]
-        else:
-            self.params["output_prefix"] = False
-        
-            
         for redir2remove in ["-i", "--in", "-o", "--out", "-t", "--tmp"]:
             if redir2remove in self.params["redir_params"]:
                 del self.params["redir_params"][redir2remove]
@@ -203,7 +217,7 @@ You must specify a 'mode':
         
 
             # Store results to fasta and assembly slots:
-            self.sample_data["BUSCO"] = os.path.join(sample_dir,"run_%s" % sample)
+            self.sample_data[sample]["BUSCO"] = os.path.join(sample_dir,"run_%s" % sample)
 
             # Move all files from temporary local dir to permanent base_dir
             self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)

@@ -37,10 +37,11 @@ if __name__ == "__main__":
         if "Inference" in roary.columns:
             roary_info=roary[["Inference"]].copy()
             roary.drop(["Inference"], axis=1, inplace=True)
-            VF=roary_info[roary_info.applymap(lambda x: options.tag.upper() in x.upper()).values].index
+            print roary_info
+            VF=roary_info[roary_info.applymap(lambda x: options.tag.upper() in str(x).upper()).values].index
         else:
             roary_info=roary[["Annotation"]].copy()
-            VF=roary_info[roary_info.applymap(lambda x: options.tag.upper() in x.upper()).values].index
+            VF=roary_info[roary_info.applymap(lambda x: options.tag.upper() in str(x).upper()).values].index
     else:
         VF=[]
         

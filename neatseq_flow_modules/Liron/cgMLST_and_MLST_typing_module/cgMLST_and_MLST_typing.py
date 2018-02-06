@@ -41,14 +41,16 @@ Parameters that can be set
 
 Comments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    *  The following python packages are required:
-        ``pandas``
-    *  The following R packages are required:
-        * If using conda environment with R installed the R packages will be automatically installed inside the environment.
-        ``magrittr``
-        ``plyr``
-        ``optparse``
-        ``tools``
+
+*  The following python packages are required:
+    * ``pandas``
+*  The following R packages are required:
+    * ``magrittr``
+    * ``plyr``
+    * ``optparse``
+    * ``tools``
+
+.. Note:: If using conda environment with R installed the R packages will be automatically installed inside the environment.
         
         
 Lines for parameter file
@@ -66,7 +68,7 @@ Lines for parameter file
         sample_cutoff:                           # In the final merge file consider only samples that have at least this fraction of identified alleles
         redirects:
             --scheme:                            # Path to the Typing scheme file [Tab delimited]
-            --Type_col_name:                     # Column/s name/s in the scheme file of the typing results
+            --Type_col_name:                     # Column/s name/s in the scheme file that are not locus names
 
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

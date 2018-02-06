@@ -127,10 +127,11 @@ class Step_Trim_Galore(Step):
             use_dir = self.local_start(self.base_dir)
             
             for direction in self.sample_data[sample]["type"]:    # Iterate over Forward and single, if they exist in sample_data
-                # Add 'env' and 'script_path':
-                self.script += self.get_script_env_path()
 
                 if direction == "PE":
+                    # Add 'env' and 'script_path':
+                    self.script += self.get_script_env_path()
+                    
                     # Here we do the script constructing for paired end
                     # Define target filenames:
                     basename_F = os.path.basename(self.sample_data[sample]["fastq.F"])
@@ -160,6 +161,9 @@ class Step_Trim_Galore(Step):
                     self.script += "-o %s \n\n" % use_dir 
                     
                 elif direction=="SE":
+                    # Add 'env' and 'script_path':
+                    self.script += self.get_script_env_path()
+                    
                     # Here we do the script constructing for single end
                     # Define target filenames:
                     basename_S = os.path.basename(self.sample_data[sample]["fastq.S"])

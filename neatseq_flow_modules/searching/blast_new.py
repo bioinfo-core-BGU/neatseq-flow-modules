@@ -69,10 +69,10 @@ Parameters that can be set
 .. csv-table:: 
     :header: "Parameter", "Values", "Comments"
     :widths: 5,10,10
-
-    "dbtype", "sample|project", "If scope=sample and you want to use internal fasta and database, this will tell "
+    
+    "dbtype", "nucl|prot", "Helps the module decide which blastdb to use."
     "querytype", "nucl|prot", "Helps the module decide which fasta file to use."
-    "-query | -db", "``sample``|``project``|<Path to fasta or BLAST index>", "Redirected compulsory parameters. Set to ``sample`` for sample-scope files, to ``project`` for project-scope files, or to a path for an external file."
+    "redirects: -query | -db", "sample|project|<Path to fasta or BLAST index>", "Redirected compulsory parameters. Set to ``sample`` for sample-scope files, to ``project`` for project-scope files, or to a path for an external file."
 
 .. Note:: You can't set both ``-db`` and ``-query`` to external files. One of them at least has to be ``sample`` or ``project``.
 

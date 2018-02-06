@@ -6,35 +6,24 @@
 :Affiliation: Bioinformatics core facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
-A class that defines a module for the RNA_seq assembly using the `Trinity assembler`_.
+A class that defines a module for creating a gene vs. transcript map for a Trinity based assembly.
 
-.. _Trinity assembler: https://github.com/trinityrnaseq/trinityrnaseq/wiki
- 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     
-    * ``fastq`` files in at least one of the following slots:
+    * ``fasta`` files in at least one of the following slots:
         
-        * ``sample_data[<sample>]["fastq.F"]``
-        * ``sample_data[<sample>]["fastq.R"]``
-        * ``sample_data[<sample>]["fastq.S"]``
-
+        * ``sample_data[<sample>]["fasta.nucl"]``  (if ``scope = sample``)
+        * ``sample_data["fasta.nucl"]``  (if ``scope = project``)
     
 Output:
 ~~~~~~~~~~~~~
 
-    * puts ``fasta`` output files in the following slots:
+    * puts gene to trans map in:
         
-        * for sample-wise assembly:
-        
-            * ``sample_data[<sample>]["fasta.nucl"]``
-            * ``sample_data[<sample>]["Trinity.contigs"]``
-        
-        * for project-wise assembly:
-        
-            * ``sample_data["fasta.nucl"]``
-            * ``sample_data["Trinity.contigs"]``
-
+        * ``sample_data[<sample>]["gene_trans_map"]``  (if ``scope = sample``)
+        * ``sample_data["gene_trans_map"]``  (if ``scope = project``)
+            
                 
 Parameters that can be set        
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -42,8 +31,7 @@ Parameters that can be set
 .. csv-table:: 
     :header: "Parameter", "Values", "Comments"
 
-    "scope", "sample|project", "Create one assembly for all samples or one assembly per sample."
-    "skip_gene_to_trans_map", "", "Set to skip executing get_Trinity_gene_to_trans_map.pl on assembly"
+    "scope", "sample|project", "Use sample or project scope assembly."
     
     
 Lines for parameter file
@@ -51,21 +39,10 @@ Lines for parameter file
 
 ::
 
-    trinity1:
+    Gene_Trans_Map:
         module:     trinity
-        base:       trin_tags1
-        script_path: /path/to/Trinity
-        qsub_params:
-            node:      sge213
-            -pe:       shared 20
-        # skip_gene_to_trans_map:
-        redirects:
-            --grid_conf:        /path/to/SGE_Trinity_conf.txt
-            --CPU:              20
-            --seqType:          fq
-            --JM:               140G
-            --min_kmer_cov:     2
-            --full_cleanup:
+        base:       Trinity_gene_to_trans_map
+        script_path: /path/to/Trinity/util/support_scripts/get_Trinity_gene_to_trans_map.pl
 
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

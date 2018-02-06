@@ -40,11 +40,11 @@ option_list = list(
   make_option(c("-s", "--scheme"), type="character", default=NULL, 
               help="Path to tab-delimited MLST scheme WITH TITLE LINE.", metavar="character"),
   make_option(c("-n", "--num_of_genes"), type="numeric", default=7, 
-              help="Number f genes (= number of columns after first ST column which represent genes) (default: 7)", metavar="character"),
+              help="Number of genes  (default: 7)", metavar="character"),
   make_option(c("-o", "--output"), type="character", default=NULL, 
               help="Path to output file (default=<blast_input>.MLST)", metavar="character"),
   make_option(c("-c", "--Type_col_name"), type="character", default = NULL, 
-              help="Columns in the scheme table to return", metavar="character"),
+              help="Columns in the scheme that are not locus names", metavar="character"),
   make_option(c("-F", "--Find_close_match"), type="character", default = "N", 
               help="whether to show the closest allele match? (Y/N)", metavar="character")
 ); 
@@ -94,49 +94,55 @@ blast_raw<-blast_raw[intersect(blast_raw$Gene,gene_names),]
 if (length(blast_raw$Gene) < opt$num_of_genes){
  
   #sending erorr
-  non_existing_allel <- setdiff(gene_names,blast_raw$Gene)
+  missing_genes <- setdiff(gene_names,blast_raw$Gene)
   write(sprintf("Genes %s not found",
-                paste(non_existing_allel,
+                paste(missing_genes,
                       collapse = " ")), 
         file = stderr())
   
   mlst["Status"]=sprintf("Genes %s not found",
-                         paste(non_existing_allel,
+                         paste(missing_genes,
                                collapse = " "))
-  mlst["Percentage_of_missing_genes"]=length(non_existing_allel)/opt$num_of_genes
-  # Removing non-perfectly matching alleles
-  blast <- blast_raw[(blast_raw$pident==100 & blast_raw$coverage==100),]
+  mlst["Percentage_of_missing_genes"]=length(missing_genes)/opt$num_of_genes
   
-  # Finding genes in scheme not found perfectly in sample
-  non_existing_allel <- setdiff(blast_raw$Gene,blast$Gene)
-  if (length(non_existing_allel) > 0) {
+  blast_raw[missing_genes,"Gene"]=missing_genes
+  blast_raw[missing_genes,"pident"]=100
+  blast_raw[missing_genes,"coverage"]=100
+  blast_raw[missing_genes,"Number"]='N'
+  
+  # # Removing non-perfectly matching alleles
+  # blast <- blast_raw[(blast_raw$pident==100 & blast_raw$coverage==100),]
+  # # Finding genes in scheme not found perfectly in sample
+  # non_existing_allel <- setdiff(blast_raw$Gene,blast$Gene)
+  # if (length(non_existing_allel) > 0) {
     
-    write(sprintf("Genes %s not found perfectly",
-                  paste(non_existing_allel,
-                        collapse = " ")), 
-          file = stderr())
-    #informing the not perfect match in the status column 
-    mlst["Status"]=paste( mlst[dim(mlst)[1],"Status"] , sprintf("Genes %s not found perfectly",
-                           paste(non_existing_allel,
-                                 collapse = " ")),sep=" / ")
-  }
-  if (opt$Find_close_match=='Y'){
-      #adding new line in the scheme
-      mlst[dim(mlst)[1],blast_raw$Gene]=blast_raw[blast_raw$Gene,"Number"]
-  }else{
-    #adding new line in the scheme
-    mlst[dim(mlst)[1],blast$Gene]=blast[blast$Gene,"Number"]
-    #adding new alleles to the scheme
-    mlst[dim(mlst)[1],non_existing_allel]=sapply(X = blast_raw[non_existing_allel,"sseq"]  , FUN = function(x) paste("New_Allele=",stringi::stri_replace_all(str = x,replacement ='',regex = '-') ,sep = "")) 
-    }
-  write.table(x         = mlst[dim(mlst)[1],,drop=F] , 
-              file      = opt$output,
-              sep       = "\t",
-              row.names = F,
-              quote     = F,
-              col.names = T)
+    # write(sprintf("Genes %s not found perfectly",
+                  # paste(non_existing_allel,
+                        # collapse = " ")), 
+          # file = stderr())
+    # #informing the not perfect match in the status column 
+    # mlst["Status"]=paste( mlst[dim(mlst)[1],"Status"] , sprintf("Genes %s not found perfectly",
+                           # paste(non_existing_allel,
+                                 # collapse = " ")),sep=" / ")
+  # }
+  # if (opt$Find_close_match=='Y'){
+      # #adding new line in the scheme
+      # mlst[dim(mlst)[1],blast_raw$Gene]=blast_raw[blast_raw$Gene,"Number"]
+  # }else{
+    # #adding new line in the scheme
+    # mlst[dim(mlst)[1],blast$Gene]=blast[blast$Gene,"Number"]
+    # #adding new alleles to the scheme
+    # mlst[dim(mlst)[1],non_existing_allel]=sapply(X = blast_raw[non_existing_allel,"sseq"]  , FUN = function(x) paste("New_Allele=",stringi::stri_replace_all(str = x,replacement ='',regex = '-') ,sep = "")) 
+    # }
+  # write.table(x         = mlst[dim(mlst)[1],,drop=F] , 
+              # file      = opt$output,
+              # sep       = "\t",
+              # row.names = F,
+              # quote     = F,
+              # col.names = T)
   
-  } else {
+  } 
+if (TRUE) {
     # Removing non-perfectly matching alleles
     blast <- blast_raw[(blast_raw$pident==100 & blast_raw$coverage==100),]
     
@@ -145,88 +151,88 @@ if (length(blast_raw$Gene) < opt$num_of_genes){
     non_existing_allel <- setdiff(gene_names,blast$Gene)
     if (length(non_existing_allel) > 0) {
  
-      write(sprintf("Genes %s not found perfectly",
-                    paste(non_existing_allel,
-                          collapse = " ")), 
-            file = stderr())
-    #informing the not perfect match in the status column 
-    mlst["Status"]=sprintf("Genes %s not found perfectly",
-                           paste(non_existing_allel,
-                                 collapse = " "))
+          write(sprintf("Genes %s not found perfectly",
+                        paste(non_existing_allel,
+                              collapse = " ")), 
+                file = stderr())
+        #informing the not perfect match in the status column 
+        mlst["Status"]=sprintf("Genes %s not found perfectly",
+                               paste(non_existing_allel,
+                                     collapse = " "))
+        
+        if (opt$Find_close_match=='Y'){
+            #going back before the identity cutoff 
+            blast <- blast_raw
+        }else{
+          #going back before the identity cutoff 
+          blast <- blast_raw
+          #adding new alleles to the scheme
+          blast[non_existing_allel,"Number"]=sapply(X = blast_raw[non_existing_allel,"sseq"]  , FUN = function(x) paste("New_Allele=",stringi::stri_replace_all(str = x,replacement ='',regex = '-') ,sep = "")) 
+        }
     
-    if (opt$Find_close_match=='Y'){
-        #going back before the identity cutoff 
-        blast <- blast_raw
+    }
+
+
+
+               
+    if ((dim(mlst)[1]-1)>0){
+        MLST_num <- sapply(X      = 1:(dim(mlst)[1]-1), 
+                          FUN    = function(x) all(mlst[x,gene_names]  ==blast[gene_names,"Number"])  ) 
     }else{
-      #going back before the identity cutoff 
-      blast <- blast_raw
+        MLST_num=0
+    }
+
+
+    if(sum(MLST_num) == 0) {
+      
+      write("Allele combination not found in scheme", file = stderr())
+      mlst[dim(mlst)[1],blast$Gene]=blast[blast$Gene,"Number"]
       #adding new alleles to the scheme
-      blast[non_existing_allel,"Number"]=sapply(X = blast_raw[non_existing_allel,"sseq"]  , FUN = function(x) paste("New_Allele=",stringi::stri_replace_all(str = x,replacement ='',regex = '-') ,sep = "")) 
+      mlst[dim(mlst)[1],non_existing_allel]=sapply(X = blast_raw[non_existing_allel,"sseq"]  , FUN = function(x) paste("New_Allele=",stringi::stri_replace_all(str = x,replacement ='',regex = '-') ,sep = "")) 
+      if (mlst[dim(mlst)[1],"Status"]=="OK") {
+          mlst["Status"]="Allele combination not found in scheme"
+      } else {
+          mlst["Status"]=paste( mlst[dim(mlst)[1],"Status"] , sprintf("Allele combination not found in scheme"),
+                                sep=" / ")                                                                      
+      }
+      
+      
+      mlst["Sample"]=sample
+      write.table(x         = mlst[dim(mlst)[1],,drop=F] , 
+                  file      = opt$output,
+                  sep       = "\t",
+                  row.names = F,
+                  quote     = F,
+                  col.names = T)
+      
+    } else if(sum(MLST_num) > 1) {
+      write("Allele combination appears more than once in scheme", file = stderr())
+      mlst[dim(mlst)[1],blast$Gene]=blast[blast$Gene,"Number"]
+      if (mlst[dim(mlst)[1],"Status"]=="OK") {
+        mlst["Status"]="Allele combination appears more than once in scheme"
+      }else {
+        mlst["Status"]=paste( mlst[dim(mlst)[1],"Status"] , sprintf("Allele combination appears more than once in scheme"),
+                              sep=" / ")                                                                      
+      }
+      
+      mlst["Sample"]=sample
+      write.table(x         = mlst[dim(mlst)[1],,drop=F] , 
+                  file      = opt$output,
+                  sep       = "\t",
+                  row.names = F,
+                  quote     = F,
+                  col.names = T)
+    } else {
+      if (mlst[dim(mlst)[1],"Status"]!="OK") {
+        write("Found the closest allele combination", file = stderr())
+        mlst["Status"]=paste( mlst[dim(mlst)[1],"Status"] , sprintf("Found the closest allele combination"),
+                              sep=" / ")  
+      }
+      write.table(x         = mlst[which(MLST_num),,drop=F] , 
+                  file      = opt$output,
+                  sep       = "\t",
+                  row.names = F,
+                  quote     = F,
+                  col.names = T)
     }
-    
-    }
-
-
-
-           
-if ((dim(mlst)[1]-1)>0){
-    MLST_num <- sapply(X      = 1:(dim(mlst)[1]-1), 
-                      FUN    = function(x) all(mlst[x,gene_names]  ==blast[gene_names,"Number"])  ) 
-}else{
-    MLST_num=0
-}
-
-
-if(sum(MLST_num) == 0) {
-  
-  write("Allele combination not found in scheme", file = stderr())
-  mlst[dim(mlst)[1],blast$Gene]=blast[blast$Gene,"Number"]
-  #adding new alleles to the scheme
-  mlst[dim(mlst)[1],non_existing_allel]=sapply(X = blast_raw[non_existing_allel,"sseq"]  , FUN = function(x) paste("New_Allele=",stringi::stri_replace_all(str = x,replacement ='',regex = '-') ,sep = "")) 
-  if (mlst[dim(mlst)[1],"Status"]=="OK") {
-      mlst["Status"]="Allele combination not found in scheme"
-  } else {
-      mlst["Status"]=paste( mlst[dim(mlst)[1],"Status"] , sprintf("Allele combination not found in scheme"),
-                            sep=" / ")                                                                      
-  }
-  
-  
-  mlst["Sample"]=sample
-  write.table(x         = mlst[dim(mlst)[1],,drop=F] , 
-              file      = opt$output,
-              sep       = "\t",
-              row.names = F,
-              quote     = F,
-              col.names = T)
-  
-} else if(sum(MLST_num) > 1) {
-  write("Allele combination appears more than once in scheme", file = stderr())
-  mlst[dim(mlst)[1],blast$Gene]=blast[blast$Gene,"Number"]
-  if (mlst[dim(mlst)[1],"Status"]=="OK") {
-    mlst["Status"]="Allele combination appears more than once in scheme"
-  }else {
-    mlst["Status"]=paste( mlst[dim(mlst)[1],"Status"] , sprintf("Allele combination appears more than once in scheme"),
-                          sep=" / ")                                                                      
-  }
-  
-  mlst["Sample"]=sample
-  write.table(x         = mlst[dim(mlst)[1],,drop=F] , 
-              file      = opt$output,
-              sep       = "\t",
-              row.names = F,
-              quote     = F,
-              col.names = T)
-} else {
-  if (mlst[dim(mlst)[1],"Status"]!="OK") {
-    write("Found the closest allele combination", file = stderr())
-    mlst["Status"]=paste( mlst[dim(mlst)[1],"Status"] , sprintf("Found the closest allele combination"),
-                          sep=" / ")  
-  }
-  write.table(x         = mlst[which(MLST_num),,drop=F] , 
-              file      = opt$output,
-              sep       = "\t",
-              row.names = F,
-              quote     = F,
-              col.names = T)
-}
 }

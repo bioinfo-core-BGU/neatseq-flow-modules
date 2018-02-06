@@ -60,6 +60,7 @@ Following is a list of modules included in this repository.
    Module_docs/ChIPseq
    Module_docs/GenomeAssembly
    Module_docs/TranscriptomeAssembly
+   Module_docs/TranscriptomeAnnotation
    Module_docs/SequenceAnnotation
    Module_docs/SequenceSearching
    Module_docs/Variants

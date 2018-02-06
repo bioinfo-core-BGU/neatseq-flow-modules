@@ -54,7 +54,7 @@ Lines for parameter file
         module:             trinmap_statistics
         base:               trin_map1
         script_path:        /path/to/abundance_estimates_to_matrix.pl
-        use_isoforms:       
+        use_genes:       
         redirects:
             --est_method:   RSEM
 
@@ -83,8 +83,8 @@ class Step_trinmap_statistics(Step):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = "trin_stats"
         
-        if "use_isoforms" not in self.params:
-            self.write_warning("'use_isoforms' not passed. Using 'genes.results' matrix")
+        if "use_genes" not in self.params:
+            self.write_warning("'use_genes' not passed. Using 'isoforms.results' matrix")
         # if self.params["use_isoforms"] not in ['genes.results' , 'isoforms.results']:
             # raise AssertionExcept("'use_isoforms' can be either 'genes.results' or 'isoforms.results'")
         
@@ -148,7 +148,7 @@ class Step_trinmap_statistics(Step):
             
         self.script += "--out_prefix %s \\\n\t" % os.sep.join([use_dir, prefix])
         # type2use is 'genes.results' or 'isoforms.results'. This is used to then select the correct slot from "mapping"
-        type2use = "isoforms.results" if "use_isoforms" in self.params.keys() else "genes.results"
+        type2use = "genes.results" if "use_genes" in self.params.keys() else "isoforms.results"
         
         for sample in self.sample_data["samples"]:
             try:
@@ -156,7 +156,7 @@ class Step_trinmap_statistics(Step):
             except:
                 raise AssertionExcept("file type %s does not exist for sample." % type2use, sample)
         
-        self.script.rstrip("\\\n\t")
+        self.script = self.script.rstrip("\\\n\t")
         self.script += "\n\n"
         
         

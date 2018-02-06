@@ -12,35 +12,37 @@
 
 Short Description
 ~~~~~~~~~~~~~~~~~~~
-    A module for running Roary on GFF files
+
+A module for running Roary on GFF files
     
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    * for each Sample, GFF file location in:
-        ``sample_data[<sample>]["GFF"]``
-    * if there is a GFF directory in:
-        ``sample_data["GFF_dir"]``
-        No new GFF directory will be created and ONLY the GFF files in this directory will be analysed
-    * If the search_GFF flag is on GFF files will be searched in the last base name directory
+
+* For each Sample, GFF file location in:
+    * ``sample_data[<sample>]["GFF"]``
+* If there is a GFF directory in the following slot, no new GFF directory will be created and ONLY the GFF files in this directory will be analysed.
+    * ``sample_data["GFF_dir"]``
+* If the search_GFF flag is on GFF files will be searched in the last base name directory
 
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    * puts output GFF directory location in the following slots:
-        ``sample_data["GFF"]``
-    * puts output pan_genome results directory location in the following slots:
-        ``sample_data["pan_genome_results_dir"]``
-    * puts output pan_genome presence_absence_matrix file location in the following slots:
-        ``sample_data["presence_absence_matrix"]``
-    * puts output pan_genome clustered_proteins file location in the following slots:
-        ``sample_data["clustered_proteins"]``
-    * puts output GWAS directory location in the following slot:
-        ``sample_data["GWAS_results_dir"]``
-    * puts output Biclustering directory location in the following slot:
-        ``sample_data["Bicluster_results_dir"]``
-    * puts output Biclustering cluster file location in the following slot:
-        ``sample_data["Bicluster_clusters"]``
-    * puts output Gecko directory location in the following slot:
-        ``sample_data["Gecko_results_dir"]``
+    
+* puts output GFF directory location in the following slots:
+    * ``sample_data["GFF"]``
+* puts output pan_genome results directory location in the following slots:
+    * ``sample_data["pan_genome_results_dir"]``
+* puts output pan_genome presence_absence_matrix file location in the following slots:
+    * ``sample_data["presence_absence_matrix"]``
+* puts output pan_genome clustered_proteins file location in the following slots:
+    * ``sample_data["clustered_proteins"]``
+* puts output GWAS directory location in the following slot:
+    * ``sample_data["GWAS_results_dir"]``
+* puts output Biclustering directory location in the following slot:
+    * ``sample_data["Bicluster_results_dir"]``
+* puts output Biclustering cluster file location in the following slot:
+    * ``sample_data["Bicluster_clusters"]``
+* puts output Gecko directory location in the following slot:
+    * ``sample_data["Gecko_results_dir"]``
 
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -54,31 +56,34 @@ Parameters that can be set
 
 Comments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    *  This module was tested on:
-        ``Roary v3.10.2``
-        ``Roary v1.006924``
-        ``Scoary v1.6.11``
-        ``Scoary v1.6.9``
-        ``Gecko3``
-    * For the Bi_cluster analysis the following R packages are required:
-        * If using conda environment with R installed the R packages will be automatically installed inside the environment.
-        ``optparse``
-        ``eisa``
-        ``ExpressionView``
-        ``openxlsx``
-        ``clusterProfiler``
-        ``org.Hs.eg.db``
-    * To plot the pan-genome matrix the following python packages are required:
-        ``pandas``
-        ``patsy``
-        ``seaborn``
-        ``matplotlib``
-        ``numpy``
-        ``scipy``
-    * For the scoary analysis the following python packages are required:
-        ``pandas``
-    * For the Gecko analysis the following python packages are required:
-        ``pandas``
+
+*  This module was tested on:
+    * ``Roary v3.10.2``
+    * ``Roary v1.006924``
+    * ``Scoary v1.6.11``
+    * ``Scoary v1.6.9``
+    * ``Gecko3``
+* For the Bi_cluster analysis the following R packages are required:
+    * ``optparse``
+    * ``eisa``
+    * ``ExpressionView``
+    * ``openxlsx``
+    * ``clusterProfiler``
+    * ``org.Hs.eg.db``
+* To plot the pan-genome matrix the following python packages are required:
+    * ``pandas``
+    * ``patsy``
+    * ``seaborn``
+    * ``matplotlib``
+    * ``numpy``
+    * ``scipy``
+* For the scoary analysis the following python packages are required:
+    * ``pandas``
+* For the Gecko analysis the following python packages are required:
+    * ``pandas``
+    
+.. Note:: If using conda environment with R installed, the R packages will be automatically installed inside the environment.
+
 
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -129,12 +134,10 @@ Lines for parameter file
 
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    * Roary program:
-        Page, Andrew J., et al. "Roary: rapid large-scale prokaryote pan genome analysis." Bioinformatics 31.22 (2015): 3691-3693.‏
-    * Scoary program:
-        Brynildsrud, Ola, et al. "Rapid scoring of genes in microbial pan-genome-wide association studies with Scoary." Genome biology 17.1 (2016): 238.‏
-    * Gecko program:
-        Winter, Sascha, et al. "Finding approximate gene clusters with Gecko 3." Nucleic acids research 44.20 (2016): 9600-9610.‏
+
+    * **Roary program**: Page, Andrew J., et al. "Roary: rapid large-scale prokaryote pan genome analysis." Bioinformatics 31.22 (2015): 3691-3693.‏
+    * **Scoary program**: Brynildsrud, Ola, et al. "Rapid scoring of genes in microbial pan-genome-wide association studies with Scoary." Genome biology 17.1 (2016): 238.‏
+    * **Gecko program**: Winter, Sascha, et al. "Finding approximate gene clusters with Gecko 3." Nucleic acids research 44.20 (2016): 9600-9610.‏
 
 """
 import os

@@ -140,7 +140,7 @@ class Step_Gubbins(Step):
 
 
             if "pars" in self.params.keys(): 
-                if "Gubbins_parser.py" in os.listdir(self.module_location):
+                if "MLST_parser.py" in os.listdir(self.module_location):
                     # Make a dir for the parsed files:
                     pars_dir = self.make_folder_for_sample("pars")
                     if "env" in self.params.keys():
@@ -148,7 +148,7 @@ class Step_Gubbins(Step):
                             self.script +="export env %s  \\\n\t" % self.params["env"]
                         else:
                             self.script +="env %s  \\\n\t" % self.params["env"]
-                    self.script +="python %s  \\\n\t" % os.path.join(self.module_location,"Gubbins_parser.py")
+                    self.script +="python %s  \\\n\t" % os.path.join(self.module_location,"MLST_parser.py")
                     if is_it_dict(self.params["pars"]):
                         for par in self.params["pars"].keys():
                             if len(par)>0:
@@ -163,7 +163,7 @@ class Step_Gubbins(Step):
                     self.sample_data["phyloviz_Alleles"]= os.path.join(pars_dir,"phyloviz_Alleles.tab")  
                     self.sample_data["phyloviz_MetaData"]= os.path.join(pars_dir,"phyloviz_MetaData.tab")  
                 else:
-                    raise AssertionExcept("The file %s is not found in the Snippy module directory" % "Gubbins_parser.py" )
+                    raise AssertionExcept("The file %s is not found in the Snippy module directory" % "MLST_parser.py" )
 
         
         

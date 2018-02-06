@@ -20,3 +20,4 @@ Sequence-Searching Related Tasks
 
 .. automodule:: Liron.Gassst_module.Gassst
 
+.. automodule:: searching.hmmscan

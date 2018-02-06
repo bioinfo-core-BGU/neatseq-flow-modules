@@ -11,8 +11,9 @@ Miscellaneous Modules
 
 .. automodule:: miscellaneous.manage_types
 
-.. automodule:: miscellaneous.del_type
+.. automodule:: miscellaneous.merge_table
 
+.. automodule:: miscellaneous.split_fasta
 
 
 

@@ -8,7 +8,9 @@
 :Affiliation: Bioinformatics core facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
-A module for merging sample tables into a single project wide table. The table can be with or without a header line.
+A module for merging sample tables into a single project wide table. The table can be with or without a header line. 
+
+Can be used for merging fasta and fastq files as well.
 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -36,7 +38,8 @@ Parameters that can be set
     :header: "Parameter", "Values", "Comments"
 
     "type", "", "A file type that exists in all samples."
-    "script_path", "cat", "This must be *cat*. Do not change it..."
+    "script_path", "", "Leave blank"
+    "header","","The number of header lines each table has. The header will be used for the complete table and all other headers will be removed. If there is no header line, set to 0 or leave out completely. **If not specified but not set, will default to 1!**"
 
 
 
@@ -48,8 +51,9 @@ Lines for parameter file
     merge_blast_tables:
         module:         merge_table
         base:           merge1
-        script_path:    cat
+        script_path:    
         type:           [blast,blast.prot]
+        header:         1
 
 
 """

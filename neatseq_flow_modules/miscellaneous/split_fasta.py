@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``merge_project``
+``split_fasta``
 ------------------------
 
 
@@ -9,15 +9,16 @@
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
 
-A module for merging sample `fasta` files into a single project wide `fasta` file.
+A module for splitting `fasta` files into parts.
+
+Convenient for parallelizing processes on the cluster. You can take a project wide fasta file (such as a transcriptome), split it into sub-fasta files, and run various processes on the sub-files.
+
+The parts can then be combined with ``merge_table`` module, which can concatenate any type of file.
+
+.. Attention:: This module is not defined on the sample scope, yet. It will only take a project wide fasta and split it into pieces, each one in a new ``subsample``. The original set of samples will be overridden for the rest of the branch. (However, you can get them back by using one of the upstream instances as first base.
 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-* A `fasta` file in one of the following slots (scope = "sample"):
-
-    * ``sample_data[<sample>]["fasta.nucl"]``
-    * ``sample_data[<sample>]["fasta.prot"]``
 
 * A `fasta` file in one of the following slots (scope = "project"):
 
@@ -29,15 +30,11 @@ Requires
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* Puts output files in the following slots (scope = "sample"):
+* Puts output files in the following slots:
         
     * ``sample_data[<sample>]["fasta.nucl"]``
     * ``sample_data[<sample>]["fasta.prot"]``
 
-* Puts output files in the following slots (scope = "project"):
-
-    * ``sample_data["fasta.nucl"]``
-    * ``sample_data["fasta.prot"]``
 
 
 Parameters that can be set
@@ -46,7 +43,8 @@ Parameters that can be set
 .. csv-table:: Parameters that can be set:
     :header: "Parameter", "Values", "Comments"
 
-    
+    "type", "nucl|prot", "The type of fasta file to split"
+    "subsample_num", "", "Number of fragments"
     
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -55,9 +53,10 @@ Lines for parameter file
 
     split_fasta1:
         module:         split_fasta
-        base:           merge1
-        script_path:    cat
-        type:           fasta.nucl
+        base:           Trinity1
+        script_path:    
+        type:           nucl
+        subsample_num:      4
 
 
 """
@@ -147,7 +146,8 @@ awk -v seqs="$SEQPERFRAG" 'BEGIN {{n_seq=0; file_cnt=1;}} /^>/ {{ if(n_seq%seqs=
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
                 self.sample_data[sample] = dict()
                 self.sample_data[sample][self.params["type"]] = "{use_dir}{sample}.fa".format(use_dir=self.base_dir,sample=sample)
-                self.stamp_file(self.sample_data[sample][self.params["type"]])
+                # Stamping the files takes a long time. Cancelling for the time being
+                # self.stamp_file(self.sample_data[sample][self.params["type"]])
                 
 
                 

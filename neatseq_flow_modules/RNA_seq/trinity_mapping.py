@@ -8,6 +8,8 @@
 
 A class that defines a module for running ``align_and_estimate_abundance.pl`` on a Trinity assembly and the raw reads.
 
+Tested on versions 2.4.0 and 2.5.0 of Trinity.
+
 See the script documentation `here <https://github.com/trinityrnaseq/trinityrnaseq/wiki/Trinity-Transcript-Quantification#estimating-transcript-abundance>`_.
 
 
@@ -32,6 +34,7 @@ Output:
 * Puts output files in the following slots:
         
     * ``sample_data[<sample>]["bam"]``
+    * ``sample_data[<sample>]["unsorted_bam"]``  (If ``--coordsort_bam`` is passed in redirects)
     * ``sample_data[<sample>]["isoforms.results"]``
     * ``sample_data[<sample>]["genes.results"]``
 
@@ -42,8 +45,7 @@ Parameters that can be set
     :header: "Parameter", "Values", "Comments"
 
     "scope", "sample|project", "Set if project-wide fasta slot should be used"
-    "redirects: --output_prefix", "", "Set whether --output_prefix should be defined in scripts. This is for older versions "
-    "redirects: --gene_trans_map", "path or empty", "If empty, use internal gene_trans_map. If path, use path as gene_trans_map for all samples."
+    "redirects: --gene_trans_map", "path or empty", "If empty, use internal gene_trans_map. If path, use path as gene_trans_map for all samples. If not passed, performs analysis on isoform level only"
     "redirects: --trinity_mode", "", "If set, will create a gene_trans_map for each sample and store it as sample gene_trans_map"
     
     
@@ -55,7 +57,7 @@ Lines for parameter file
     trin_map1:
         module:               trinity_mapping
         base:                 trinity1
-        script_path:          /fastspace/bioinfo_apps/trinityrnaseq_r20140717/util/align_and_estimate_abundance.pl
+        script_path:          {Vars.paths.align_and_estimate_abundance}
         redirects:
             --est_method:     RSEM
             --aln_method:     bowtie
@@ -92,24 +94,29 @@ class Step_trinity_mapping(Step):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = "trin_mapping"
         
+
         if "--est_method" not in self.params["redir_params"]:
             raise AssertionExcept("You must pass an --est_method to trin_mapping.\n")
+
+        # Is used below... 
+        self.est_method = self.params["redir_params"]["--est_method"]
+        if self.est_method == "kallisto":
+            raise AssertionExcept("Method 'kallisto' is not defined yet!")
+            # To define, find out what the per isoform and per gene output files are named and fill the names in the dictionary called file_suffix_ind, below.
+        
         if "--aln_method" in self.params["redir_params"]:
             # raise AssertionExcept("You must pass an --aln_method to trin_mapping\n")
             self.params["aln_method"] = self.params["redir_params"]["--aln_method"]
             del self.params["redir_params"]["--aln_method"]
         else:
             self.params["aln_method"] = None
-        
+
+            
+        if not self.params["aln_method"] and self.est_method.lower() in ["rsem","express"]: 
+            raise AssertionExcept("For RSEM and eXpress, you must supply an 'aln_method' parameter")
+
         if "scope" not in self.params:
             raise AssertionExcept("Please specify a 'scope': Either 'sample' or 'project'.")
-        
-        # Depends on version if this is accepted
-        if "--output_prefix" in self.params["redir_params"]:
-            self.params["output_prefix"] = True
-            del self.params["redir_params"]["--output_prefix"]
-        else:
-            self.params["output_prefix"] = False
         
             
         for redir2remove in ["--transcripts", "--output_dir", "--left", "--right", "--single", "--prep_reference"]:
@@ -134,6 +141,8 @@ class Step_trinity_mapping(Step):
         else:
             raise AssertionExcept("'scope' must be either 'sample' or 'project'.")
 
+
+        
         # If "bam" required as input method, make sure a bam exists for all samples:
         if self.params["aln_method"] == "bam":
             for sample in self.sample_data["samples"]:
@@ -143,6 +152,7 @@ class Step_trinity_mapping(Step):
         # Dealing with gene_trans_map:
         if self.params["scope"] == "project":
             if "--gene_trans_map" in self.params["redir_params"]:
+                self.use_gene_trans_map = True
                 if self.params["redir_params"]["--gene_trans_map"]:  # If value was passed
                     self.sample_data["gene_trans_map"] = self.params["redir_params"]["--gene_trans_map"]
                 else:  # If passed empty, use internal:
@@ -153,10 +163,12 @@ class Step_trinity_mapping(Step):
 
             elif "--trinity_mode" in self.params["redir_params"]:
                 self.sample_data["gene_trans_map"] = "%s.gene_trans_map" % self.sample_data["fasta.nucl"]
+                self.use_gene_trans_map = True
             else:
-                pass
+                self.use_gene_trans_map = False
         else: # sample scope
             if "--gene_trans_map" in self.params["redir_params"]:
+                self.use_gene_trans_map = True
                 if self.params["redir_params"]["--gene_trans_map"]:  # If value was passed
                     for sample in self.sample_data["samples"]:
                         self.sample_data[sample]["gene_trans_map"] = self.params["redir_params"]["--gene_trans_map"]
@@ -168,8 +180,9 @@ class Step_trinity_mapping(Step):
 
             elif "--trinity_mode" in self.params["redir_params"]:
                 self.sample_data[sample]["gene_trans_map"] = "%s.gene_trans_map" % self.sample_data[sample]["fasta.nucl"]
+                self.use_gene_trans_map = True
             else:
-                pass
+                self.use_gene_trans_map = False
         
          
          
@@ -196,7 +209,6 @@ class Step_trinity_mapping(Step):
             self.script += "--transcripts %s \\\n\t"   % self.sample_data["fasta.nucl"]
             self.script += "--prep_reference \n\n"
             
-            self.add_exit_status_check()
 
             
         else:
@@ -206,6 +218,21 @@ class Step_trinity_mapping(Step):
 
     def build_scripts(self):
         
+        
+        file_suffix_ind = {
+            "rsem": {
+                "isoforms": "RSEM.isoforms.results",
+                "genes":    "RSEM.genes.results"},
+            "salmon": {
+                "isoforms": "quant.sf",
+                "genes":    "quant.sf.genes"},
+            "kallisto": {
+                "isoforms": "",
+                "genes":    ""    },
+            "express": {
+                "isoforms": "results.xprs",
+                "genes":    "results.xprs.genes"}
+        }
         
         # Loop over samples and concatenate read files to $forward and $reverse respectively
         # add check if paired or single !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -254,10 +281,9 @@ class Step_trinity_mapping(Step):
                 self.script += "# Preperaing the reference for analysis:\n\n"
                 self.script += self.get_script_const()
                 self.script += "--aln_method %s \\\n\t"   % self.params["aln_method"]
-                self.script += "--transcripts %s \n\n"   % transcripts
+                self.script += "--transcripts %s \\\n\t"   % transcripts
                 self.script += "--prep_reference \n\n"
 
-                self.add_exit_status_check()
 
                 
         
@@ -276,8 +302,6 @@ class Step_trinity_mapping(Step):
                 
             self.script += "--transcripts %s \\\n\t"   % transcripts
             self.script += "--output_dir %s \\\n\t"    % use_dir
-            if self.params["aln_method"] != "bam" and self.params["output_prefix"]:  # When passing bam, the prefix is automatically set to the est_method! (Their bug...) If output_prefix is passed, it causes an error.
-                self.script += "--output_prefix %s \\\n\t" % sample
             if (forward): 
                 self.script += "--left %s \\\n\t"      % forward
                 self.script += "--right %s \\\n\t"       % reverse
@@ -288,51 +312,47 @@ class Step_trinity_mapping(Step):
                 
             self.script = self.script.rstrip("\\\n\t") + "\n\n"
 
-            
-            self.add_exit_status_check()
-            
-            # When passing bam, the prefix is automatically set to the est_method! (Their bug...) 
-            # If output_prefix is passed, it causes an error.
-            # However, this causes problems with the statistics module.
-            # Therefore:
-            # Moving the files to files with sample names
+            # Stroing files:
+            mv_data = {"dir" : use_dir, 
+                       "src" : file_suffix_ind[self.est_method.lower()]["isoforms"],
+                       "trg" : ".".join([sample,file_suffix_ind[self.est_method.lower()]["isoforms"]])}
 
-            if self.params["aln_method"] == "bam" or not self.params["output_prefix"]:
-                self.script += """
-mv {sample_dir}{est_meth}.genes.results {sample_dir}{sample}.genes.results
+            self.script += "mv {dir}{src} {dir}{trg}\n".format(**mv_data)
+            self.sample_data[sample]["isoforms.results"] = "{dir}{trg}".format(**mv_data)
+            self.stamp_file(self.sample_data[sample]["isoforms.results"])
 
-mv {sample_dir}{est_meth}.isoforms.results {sample_dir}{sample}.isoforms.results
+            if self.use_gene_trans_map:  # Produce gene files:
+                mv_data["src"] = file_suffix_ind[self.est_method.lower()]["genes"]
+                mv_data["trg"] = ".".join([sample,file_suffix_ind[self.est_method.lower()]["genes"]])
+                self.script += "mv {dir}{src} {dir}{trg}\n".format(**mv_data)
+                self.sample_data[sample]["genes.results"] = "{dir}{trg}".format(**mv_data)
+                self.stamp_file(self.sample_data[sample]["genes.results"])
 
-""".format(sample_dir = use_dir,
-            est_meth = self.params["redir_params"]["--est_method"],
-            sample = sample)
             
-            
-            if self.params["aln_method"] not in ["bam",None]:
-                self.sample_data[sample]["bam"] = "{dir}{sample}.{method}.bam".format(dir    = sample_dir, \
-                                                                                      sample = sample, \
-                                                                                      method = self.params["aln_method"])
-                self.sample_data[sample]["mapper"] = "trinity/%s" % self.params["aln_method"]
+            # Store bam files
+            if self.est_method.lower() in ["rsem","express"]: 
+                self.sample_data[sample]["bam"] = "{dir}{method}.bam".format(dir    = sample_dir, \
+                                                                             method = self.params["aln_method"])
+                self.stamp_file(self.sample_data[sample]["bam"])
+
+                self.sample_data[sample]["mapper"] = "%s" % self.params["aln_method"]
+                if "--coordsort_bam" in self.params["redir_params"]:
+                    self.sample_data[sample]["unsorted_bam"] = self.sample_data[sample]["bam"]
+                    self.stamp_file(self.sample_data[sample]["unsorted_bam"])
+                    self.sample_data[sample]["bam"] = "{dir}{method}.csorted.bam".format(dir    = sample_dir, \
+                                                                             method = self.params["aln_method"])
+                    self.stamp_file(self.sample_data[sample]["bam"])
+
 
                 
             
             self.sample_data[sample]["reference"] = transcripts
             
-            self.sample_data[sample]["genes.results"] = "%s%s.genes.results" % (sample_dir,sample)
-            self.sample_data[sample]["isoforms.results"] = "%s%s.isoforms.results" % (sample_dir,sample)
             
-            self.stamp_file(self.sample_data[sample]["genes.results"])
-            self.stamp_file(self.sample_data[sample]["isoforms.results"])
-            if self.params["aln_method"]:
-                self.stamp_file(self.sample_data[sample]["bam"])
-
            
             # Move all files from temporary local dir to permanent base_dir
             self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
          
-                
-            
-            
             self.create_low_level_script()
                         
                 

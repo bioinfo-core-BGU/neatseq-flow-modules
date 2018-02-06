@@ -23,6 +23,8 @@ parser.add_argument('--Cut', action='store_true', default=False,
                     help='Use only samples with metadata information')
 parser.add_argument('--FASTA', action='store_true', default=False,
                     help='The input is a FASTA file')
+parser.add_argument('--Polymorphic_sites_only', action='store_true', default=False,
+                    help='Filter Non Polymorphic Sites from fasta input file')
 args = parser.parse_args()
 Fields=[]
 if args.Fields != None:
@@ -51,9 +53,11 @@ if args.FASTA:
     data=pd.DataFrame.from_records(msa)
     data.index=map(lambda x:msa[int(x)].id,list(data.index))
     data=data.drop(data.columns[data.apply(lambda x: len(re.findall("[- N]",x.sum().upper()))>0 ,axis=0)],axis=1)
+    if args.Polymorphic_sites_only:
+        data=data.drop(data.columns[data.apply(lambda x: len(list(set(x.sum().upper())))==1   ,axis=0)],axis=1)
     temp_data=data
 else:
-    temp_data = pd.read_csv(args.F, sep='\t',index_col=False)
+    temp_data = pd.read_csv(args.F, sep='\t',index_col=False, encoding="ISO-8859-1")
     temp_data=temp_data.set_index(args.S_Merged,drop=False).copy()
 
 for j in temp_data.index:
@@ -66,7 +70,7 @@ for j in temp_data.index:
 
 temp_data.index=map(lambda x:str(x),temp_data.index)
 if (args.M != None)&(args.Cut):
-    MetaData = pd.read_csv(args.M , sep='\t',index_col=False)
+    MetaData = pd.read_csv(args.M , sep='\t',index_col=False, encoding="ISO-8859-1")
     MetaData=MetaData.set_index(args.S_MetaData,drop=False).copy()
     MetaData.index=map(lambda x:str(x),MetaData.index)
     flag=1
@@ -110,18 +114,24 @@ def drop(data,fields,op=1):
     return data
 
 new_temp_data=cut_col(cut_rows(temp_data, args.C ,args.Non_allelic),args.Non_allelic)
-m=new_temp_data.columns
-m=drop(m,args.Non_allelic,0).copy()
-g=new_temp_data.groupby(list(m[:]))
-new_temp_data["Index"]=''
+if args.FASTA:
+    new_temp_data['seq']=new_temp_data.apply(lambda x: x.sum().upper()  ,axis=1)
+    g=new_temp_data.groupby('seq')
+    new_temp_data=new_temp_data.drop(new_temp_data.columns[new_temp_data.columns=='seq'],axis=1)
+else:
+    m=new_temp_data.columns
+    m=drop(m,args.Non_allelic,0).copy()
+    g=new_temp_data.groupby(list(m[:]))
+    new_temp_data["Index"]=''
 num=1
+
 for i in g:
     new_temp_data.loc[i[1].index,"Index"]=str(num)
     num=num+1
 
 if args.M != None:
     if flag!=1:
-        MetaData = pd.read_csv(args.M , sep='\t',index_col=False)
+        MetaData = pd.read_csv(args.M , sep='\t',index_col=False, encoding="ISO-8859-1")
         MetaData=MetaData.set_index(args.S_MetaData,drop=False).copy()
         MetaData.index=map(lambda x:str(x),MetaData.index)
     MetaData=MetaData.join(new_temp_data["Index"])
@@ -138,9 +148,21 @@ else:
             if field in temp_data.columns:
                 MetaData=MetaData.join(temp_data[field],lsuffix='_Old')
 
-MetaData.to_csv(os.path.join(args.O,'New_MetaData.tab'), sep='\t',float_format="%g",index=True) 
+
+def isnumber(str):
+    if str==str:
+        try:
+            float(str)
+            return True
+        except ValueError:
+            return False
+    else:
+        return False
+
+
+MetaData.to_csv(os.path.join(args.O,'phyloviz_MetaData.tab'), sep='\t',index=True,float_format='%g')
 new_temp_data=new_temp_data.set_index("Index").copy()
 
 #new_temp_data=drop(new_temp_data,args.Non_allelic).copy()
-new_temp_data.to_csv(os.path.join(args.O, 'New_Merged_cut.tab'), sep='\t',index=True,float_format="%g")
+new_temp_data.applymap(lambda x: int(float(x)) if isnumber(x)  else x).to_csv(os.path.join(args.O, 'phyloviz_Alleles.tab'), sep='\t',index=True,float_format='%.0f')
 
