@@ -62,10 +62,9 @@ else:
 
 for j in temp_data.index:
     for i in temp_data.columns:
-        if type(temp_data.loc[j,i])==str:
-            if temp_data.loc[j,i].startswith("New_Allele="):
-                temp_data.loc[temp_data.loc[:,i]==temp_data.loc[j,i],i]=i+"_"+str(j)
-
+        if str(temp_data.loc[j,i]).startswith("New_Allele="):
+            temp_data.loc[temp_data.loc[:,i]==temp_data.loc[j,i],i]=i+"_"+str(j)
+temp_data.to_csv('test.csv',sep='\t')
 
 
 temp_data.index=map(lambda x:str(x),temp_data.index)

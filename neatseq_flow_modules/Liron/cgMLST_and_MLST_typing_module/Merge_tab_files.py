@@ -3,7 +3,7 @@ import argparse
 import pandas as pd
 STRING_TYPES = (basestring, unicode, bytes)
 parser = argparse.ArgumentParser(description='Merge tabular files')
-parser.add_argument('-D', type=str,dest='directory',
+parser.add_argument('-D', type=str,dest='directory', nargs='+',
                     help='Location to search')
 parser.add_argument('-R', dest='Regular', type=str,
                     help='Regular Expression')
@@ -24,9 +24,11 @@ parser.add_argument('--split_by', type=str,dest='split_by',
 parser.add_argument('--Excel', dest='Excel', action='store_true',default=False,
                     help='Collect all results to one Excel file')
 parser.add_argument('--sep', dest='sep', type=str,default="\t",
-                    help='Columns seperator for input file')
+                    help='Columns separator for input file')
 parser.add_argument('-T', dest='Trans', action='store_true',default=False,
-                    help='whrite Transpose output')
+                    help='write Transpose output')
+parser.add_argument('--ignore_shared_col', dest='ignore', action='store_true',default=False,
+                    help='Ignore shared columns when merging using the --Merge_by option')
 args = parser.parse_args()
 
 if args.header:
@@ -50,7 +52,10 @@ def find_files(directory, Query):
                 
     return file_name
 index=False
-files=find_files(directory, Query)
+files=[]
+for Dir in directory:
+    files += find_files(Dir, Query)
+
 if args.Excel:
     if len(files)>0:
         print str(len(files))+" files were found"
@@ -78,7 +83,7 @@ if args.Excel:
 
 else:
     if args.MetaData!=None:
-        files=[args.MetaData]+files
+        files=files+[args.MetaData]
     if len(files)>0:
         print str(len(files))+" files were found"
         flag=0
@@ -101,7 +106,16 @@ else:
                 else:
                     try:
                         if args.merge_by!=None:
-                            Data=Data.merge(temp_data, on=args.merge_by[0] ,how='outer',suffixes=('', "["+re.sub(Query,"",os.path.split(file_name)[-1]) +"]"))
+                            if args.MetaData==file_name:
+                                temp_temp_data=Data.copy()
+                                Data=temp_data.copy()
+                                temp_data=temp_temp_data.copy()
+                            if args.ignore:
+                                Data=Data.merge(temp_data, on=args.merge_by[0] ,how='outer',suffixes=('_REMOVE_X', '_REMOVE_Y'))
+                                
+                                Data=Data[filter(lambda x: ((str(x).endswith('_REMOVE_X'))|(str(x).endswith('_REMOVE_Y')))==False, Data.columns )].copy()
+                            else:
+                                Data=Data.merge(temp_data, on=args.merge_by[0] ,how='outer',suffixes=('', "["+re.sub(Query,"",os.path.split(file_name)[-1]) +"]"))
                         else:
                             Data=Data.merge(temp_data, on=None ,how='outer',suffixes=('', "["+re.sub(Query,"",os.path.split(file_name)[-1]) +"]"))
                     except:

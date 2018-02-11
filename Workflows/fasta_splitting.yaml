@@ -79,3 +79,13 @@ Step_params:
             -max_target_seqs: 20
             -num_threads:   10
             -outfmt:        '"6 qseqid sallseqid qlen slen qstart qend sstart send length evalue bitscore score pident qframe"'
+    manage_types1:
+        module:             manage_types
+        base:               trinity1
+        script_path:        
+        scope:              [project,sample,sample,project]
+        operation:          [mv,del,mv,add]
+        type:               [fasta.nucl,fasta.nucl,fastq.F,yoohoo]
+        type_trg:           [GGGGGGG, None ,FFFFFFF,None]
+        scope_trg:          sample
+        path:               /path.to.yoohoo    

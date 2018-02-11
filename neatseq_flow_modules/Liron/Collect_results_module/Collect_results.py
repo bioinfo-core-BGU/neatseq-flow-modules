@@ -126,7 +126,21 @@ class Step_Collect_results(Step):
         
         if self.params["script_path"]!=None:    
             #Collect_results main command
-            for base in self.get_base_step_list():
+            if "--Excel" in self.params["redir_params"]:
+                for base in self.get_base_step_list():
+                    if "env" in self.params.keys():
+                        self.script +="env %s  \\\n" % self.params["env"]
+                    self.script += "%s \\\n\t"  % self.params["script_path"]
+                    for par in self.params["redir_params"]:
+                        if par not in ["-D","-O"]:
+                            if self.params["redir_params"][par]!=None:
+                                self.script += "%s %%s \\\n\t"  % par \
+                                                                % self.params["redir_params"][par]
+                            else:
+                                self.script += "%s  \\\n\t"  % par 
+                    self.script += "-D %s \\\n\t" % base.base_dir
+                    self.script += "-O %s \n\n" % os.sep.join([use_dir.rstrip(os.sep),"Collected_results.xlsx"])
+            else:
                 if "env" in self.params.keys():
                     self.script +="env %s  \\\n" % self.params["env"]
                 self.script += "%s \\\n\t"  % self.params["script_path"]
@@ -137,12 +151,12 @@ class Step_Collect_results(Step):
                                                             % self.params["redir_params"][par]
                         else:
                             self.script += "%s  \\\n\t"  % par 
-                self.script += "-D %s \\\n\t" % base.base_dir
-                if "--Excel" in self.params["redir_params"]:
-                    self.script += "-O %s \n\n" % os.sep.join([use_dir.rstrip(os.sep),"Collected_results.xlsx"])
-                else:
-                    self.script += "-O %s \n\n" % os.sep.join([use_dir.rstrip(os.sep),base.name+self.file_tag])
-        
+                self.script += "-D "
+                for base in self.get_base_step_list():
+                    self.script += " %s " % base.base_dir
+                self.script += " \\\n\t"
+                self.script += "-O %s \n\n" % os.sep.join([use_dir.rstrip(os.sep),self.name+self.file_tag])
+    
         # Wrapping up function. Leave these lines at the end of every iteration:
         self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)
                   

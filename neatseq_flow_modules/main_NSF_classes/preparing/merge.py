@@ -133,7 +133,8 @@ class Step_merge(Step):
             src = src | set(self.sample_data[sample].keys())
         if "src" not in self.params:
             src = list(src)
-            src.remove("type")
+            if "type" in src: 
+                src.remove("type")   # 'type' is the type of sample (PE, etc.)
             self.params["src"] = src
         else: # Check that all src's exist somewhere in sample_data:
             if not set(self.params["src"]) < src:
@@ -192,13 +193,12 @@ class Step_merge(Step):
 
             # for type_i in range(len(self.params["src"])):
             for src_type in self.params["src"]:
+            
+                self.script = ""
+                
                 # Get index of src. Will be used to extract equivalent trg, script_path and ext.
                 type_i = self.params["src"].index(src_type)
                 # src_type = self.params["src"][type_i]
-                
-                # Initializing empty script:
-                self.script = ""
-                
                 
                 # src_type not defined for this sample. Move on.
                 if src_type not in self.sample_data[sample]:
