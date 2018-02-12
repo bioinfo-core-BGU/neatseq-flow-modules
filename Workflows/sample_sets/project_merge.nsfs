@@ -1,0 +1,27 @@
+Title	PE_tabular_projData # yoogooo		
+# Title	title2 # yoogooo		
+# yoogooo			
+			
+#Type	Path	lane	
+TYP1	/path/to/reference.fasta		
+TYP2	/path/to/reference.faa# yoogooo		
+# yoogooo			
+			
+#SAMPLEID	TYPE	PATH    LANE	
+Sample1	Forward	Sample1_F1.fastq.gz	1
+Sample1	Forward	Sample1_F2.fastq.gz	2# yoogooo
+Sample1	Reverse	Sample1_R1.fastq.gz	1
+Sample1	Reverse	Sample1_R2.fastq.gz	2
+Sample2	Forward	Sample2_F1.fastq.gz	1
+Sample2	Forward	Sample2_R1.fastq.gz	1
+Sample2	Reverse	Sample2_F2.fastq.gz	2
+Sample2	Reverse	Sample2_R2.fastq.gz	2
+# yoogooo			
+# yoogooo			
+# yoogooo			
+			
+Sample_Control	Sample1:Sample2# yoogooo		
+# Sample_Control	Sample3:Sample4# yoogooo		
+# yoogooo			
+			
+# yoogooo			

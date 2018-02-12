@@ -142,10 +142,9 @@ class Step_manage_types(Step):
             required_len = len(self.params[list_params[0]])
             for i in str_params:
                 self.params[i] = self.params[i] * required_len
-        print "yoohoo:\n"
-        pp(dict(self.params))
-        # sys.exit()
-        
+
+                
+                
         # Now all lists are same length. Can perform operation per index of list "operation"
         for oper_ind in range(len(self.params["operation"])):
             

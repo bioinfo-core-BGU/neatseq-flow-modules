@@ -81,7 +81,7 @@ class Step_makeblastdb(Step):
             Wrong place for sample data testing
         """
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
-        self.file_tag = ".makeblastdb.out"
+        self.file_tag = "makeblastdb.out"
 
         # Checking this once and then applying to each sample:
         if not "-dbtype" in self.params["redir_params"]:
@@ -179,19 +179,19 @@ class Step_makeblastdb(Step):
 
          
             # Define output filename 
-            output_filename = "".join([use_dir , sample , self.file_tag])
+            output_filename = ".".join([sample, self.name, self.file_tag])
             blastdb_title = os.path.basename(output_filename)
 
             self.script += self.get_script_const()
-            self.script += "-out %s \\\n\t" % output_filename
+            self.script += "-out {dir}{fn} \\\n\t".format(dir= use_dir, fn=output_filename)
             self.script += "-in %s \\\n\t" % self.sample_data[sample]["fasta." + self.dbtype]
             self.script += "-title %s \\\n\t" % blastdb_title
             self.script += "-logfile %s \n\n" % "%s.log" % output_filename
 
             
                 
-            self.sample_data[sample]["blastdb." + self.dbtype] = (sample_dir + os.path.basename(output_filename))
-            self.sample_data[sample]["blastdb." + self.dbtype + ".log"] = "%s.log" % (sample_dir + os.path.basename(output_filename))
+            self.sample_data[sample]["blastdb." + self.dbtype] = (sample_dir + output_filename)
+            self.sample_data[sample]["blastdb." + self.dbtype + ".log"] = "{dir}{fn}.log".format(dir= sample_dir, fn=output_filename)
 
             self.sample_data[sample]["blastdb"] = self.sample_data[sample]["blastdb." + self.dbtype]
             
@@ -237,19 +237,19 @@ class Step_makeblastdb(Step):
 
      
         # Define output filename 
-        output_filename = "".join([use_dir , self.sample_data["Title"] , self.file_tag])
+        output_filename = ".".join([self.sample_data["Title"], self.name, self.file_tag])
         blastdb_title = os.path.basename(output_filename)
 
         self.script += self.get_script_const()
-        self.script += "-out %s \\\n\t" % output_filename
+        self.script += "-out {dir}{fn} \\\n\t".format(dir= use_dir, fn=output_filename)
         self.script += "-in %s \\\n\t" % self.sample_data["fasta." + self.dbtype]
         self.script += "-title %s \\\n\t" % blastdb_title
         self.script += "-logfile %s.log \n\n" % output_filename
 
         
             
-        self.sample_data["blastdb." + self.dbtype] = (self.base_dir + os.path.basename(output_filename))
-        self.sample_data["blastdb." + self.dbtype + ".log"] = "%s.log" % (self.base_dir + os.path.basename(output_filename))
+        self.sample_data["blastdb." + self.dbtype] = (self.base_dir + output_filename)
+        self.sample_data["blastdb." + self.dbtype + ".log"] = "{dir}{fn}.log".format(dir= self.base_dir, fn=output_filename)
         
         self.sample_data["blastdb"] = self.sample_data["blastdb." + self.dbtype]
         # self.stamp_dir_files(self.base_dir)

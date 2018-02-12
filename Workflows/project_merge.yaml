@@ -1,0 +1,28 @@
+Global_params:
+    Default_wait: 10
+    Qsub_opts: -V -cwd
+    Qsub_path: /path/to/qsub/bin
+    Qsub_q: queue.q
+    module_path:      ../modules_release_1.1.0
+
+Step_params:
+    merge1:
+        module:             merge
+        script_path:        [cat,cat,gzip -cd, gzip -cd]
+        src:                [TYP1,TYP2,Forward,Reverse]
+        # pipe:               yoohooo_pipe
+        trg:                [typ1,typ2,fastq.F,fastq.R]
+        ext:                [ttt,ttt,fastq,fastq]
+        scope:              [project,project,sample,sample]
+    
+    trim1:
+        module: trimmo
+        base: merge1
+        script_path: /path/trimmoma
+        qsub_params:
+            -pe: shared 20
+            node: [node1]
+            queue:  queue.q
+        todo: LEADING:20 TRAILING:20
+        redirects:
+            -threads: 20

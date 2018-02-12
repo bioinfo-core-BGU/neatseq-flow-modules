@@ -97,6 +97,7 @@ from  neatseq_flow.modules.global_defs import ZIPPED_EXTENSIONS, ARCHIVE_EXTENSI
 
 import yaml
 
+from pprint import pprint as pp
 
 
 __author__ = "Menachem Sklarz"
@@ -127,10 +128,27 @@ class Step_merge(Step):
         """ A place to do initiation stages following setting of sample_data
         """
         
+######################################
+
+
+
+        for param_list in ["script_path","src","trg","ext","pipe","scope"]:
+            if param_list in self.params:
+                if not isinstance(self.params[param_list], list):
+                    self.params[param_list] = re.split(pattern="\s*,\s*", string=self.params[param_list])
+        if "scope" in self.params:
+            if any(map(lambda x: x not in ["sample", "project"], self.params["scope"])):
+                raise AssertionExcept("'scope' param must be 'sample' or 'project'")
+        
+######################################
+                
+
         src = set()
         # Get list of existing file types in samples file:
         for sample in self.sample_data["samples"]:
             src = src | set(self.sample_data[sample].keys())
+        if "project_data" in self.sample_data:
+            src = src | set(self.sample_data["project_data"].keys())
         if "src" not in self.params:
             src = list(src)
             if "type" in src: 
@@ -139,18 +157,7 @@ class Step_merge(Step):
         else: # Check that all src's exist somewhere in sample_data:
             if not set(self.params["src"]) < src:
                 raise AssertionExcept("The following types in 'src' do not exist in samples file: %s. " % " ".join(list(set(self.params["src"]) - src)))
-            
-        # If script_path is not a list or is a list of length 1, extend it to length of src
-        if not isinstance(self.params["script_path"],list) or len(self.params["script_path"])==1:
-            self.params["script_path"] = [self.params["script_path"] for elem in self.params["src"]]
         
-        # If pipe is defined, is not a list or is a list of length 1, extend it to length of src
-        if "pipe" in self.params:
-            if not isinstance(self.params["pipe"],list) or len(self.params["pipe"])==1:
-                self.params["pipe"] = [self.params["pipe"] for elem in self.params["src"]]
-            else:
-                if not len(self.params["pipe"])==len(self.params["src"]):
-                    raise AssertionExcept("pipe list must be the same length as src list!")
 
         
         # Create trg list
@@ -163,15 +170,42 @@ class Step_merge(Step):
             if not set(self.params["src"]) < set(self.default_src_trg_map.keys()):
                 raise AssertionExcept("The following types in 'src' are not recognized: %s. Please use explicit 'ext' list." % " ".join(list(set(self.params["src"]) - set(self.default_src_trg_map.keys()))))
             self.params["ext"] = [self.default_src_trg_map[src][1] if len(self.default_src_trg_map[src])>1 else src for src in self.params["src"]]
+
+        if "scope" not in self.params:
+            self.params["scope"] = ["sample" for src in self.params["src"]]
+        
             
-            
-            
-        if not len(self.params["script_path"])==len(self.params["src"])==len(self.params["trg"])==len(self.params["ext"]):
-            raise AssertionExcept("script_path, src, trg and ext lists, if defined, must all have the same lengths!")
+        # Check all lists have len 1 or same length
+        active_params = set(["script_path","src","trg","ext","pipe","scope"]) & set(self.params.keys())
+        
+        # Get those params with len>1 (i.e., lists)
+        list_params = filter(lambda x: len(self.params[x])>1, active_params)
+        str_params =  filter(lambda x: len(self.params[x])==1, active_params)
         
         
+        if len(set(map(lambda x: len(self.params[x]), list_params))) > 1:
+            raise AssertionExcept("More than one list with len>1 specified! (%s)" % ", ".join(list_params))
+
+        if list_params:
+            required_len = len(self.params[list_params[0]])
+            for i in str_params:
+                self.params[i] = self.params[i] * required_len
+
+                
+        # Check 'src's exist in 'scope's:
+        for src_ind in range(len(self.params["src"])):
+            src = self.params["src"][src_ind]
+            scope = self.params["scope"][src_ind]
+            if scope=="sample":
+                for sample in self.sample_data["samples"]:
+                    if src not in self.sample_data[sample]:
+                        raise AssertionExcept("Type '{src}' does not exist for sample '{smp}'!".format(src=src,smp=sample))
+            elif scope=="project":
+                if src not in self.sample_data["project_data"]:
+                    raise AssertionExcept("Type '{src}' does not exist in project data!".format(src=src))
+            else:
+                pass
         
-        pass
         
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
@@ -184,41 +218,89 @@ class Step_merge(Step):
         
         
 
-        # Each iteration must define the following class variables:
-            # spec_script_name
-            # script
-        for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-            # General comment: If there is a parallel routine for each direction (forward, reverse), add this loop	
-            # if  in self.sample_data[sample].keys():
+        for scope_ind in range(len(self.params["scope"])):
+            src = self.params["src"][scope_ind]
+            scope = self.params["scope"][scope_ind]
+            trg = self.params["trg"][scope_ind]
+            ext = self.params["ext"][scope_ind]
+            script_path = self.params["script_path"][scope_ind]
 
-            # for type_i in range(len(self.params["src"])):
-            for src_type in self.params["src"]:
-            
+            if scope == "sample":
+                # Each iteration must define the following class variables:
+                    # spec_script_name
+                    # script
+                for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
+                    # General comment: If there is a parallel routine for each direction (forward, reverse), add this loop	
+                    # if  in self.sample_data[sample].keys():
+
+                    # for type_i in range(len(self.params["src"])):
+                
+                    self.script = ""
+                    
+                    # Get index of src. Will be used to extract equivalent trg, script_path and ext.
+                    # type_i = self.params["src"].index(src_type)
+                    # src_type = self.params["src"][type_i]
+                    
+                    # src_type not defined for this sample. Move on.
+                    if src not in self.sample_data[sample]:
+                        continue
+                        
+                    self.spec_script_name = "_".join([self.step,self.name,sample,src]) 
+                    
+                    # This line should be left before every new script. It sees to local issues.
+                    # Use the dir it returns as the base_dir for this step.
+                    use_dir = self.local_start(self.base_dir)
+                    
+                    fq_fn = ".".join([sample, src, self.file_tag,ext])          #The filename containing the end result. Used both in script and to set reads in $sample_params
+
+
+                    self.script += script_path + " \\\n\t"
+                    # The following line concatenates all the files in the direction separated by a " "
+                    self.script += " ".join(self.sample_data[sample][src]) 
+                    self.script += " \\\n\t"
+                    if "pipe" in self.params:
+                        self.script += "| {pipe} \\\n\t".format(pipe = self.params["pipe"][scope_ind])
+                    self.script += "> %s%s \n\n"  % (use_dir, fq_fn)
+
+                    # Move all files from temporary local dir to permanent base_dir
+                    self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
+
+                    
+                    # Store file in active file for sample:
+                    self.sample_data[sample][trg] = self.base_dir + fq_fn
+                    
+                    self.stamp_file(self.sample_data[sample][trg])
+                    
+                    
+                    self.create_low_level_script()
+                    
+            elif scope == "project":
+
                 self.script = ""
                 
                 # Get index of src. Will be used to extract equivalent trg, script_path and ext.
-                type_i = self.params["src"].index(src_type)
+                # type_i = self.params["src"].index(src_type)
                 # src_type = self.params["src"][type_i]
                 
                 # src_type not defined for this sample. Move on.
-                if src_type not in self.sample_data[sample]:
+                if src not in self.sample_data["project_data"]:
                     continue
                     
-                self.spec_script_name = "_".join([self.step,self.name,sample,src_type]) 
-                
+                self.spec_script_name = "_".join([self.step,self.name,self.sample_data["Title"],src])
+
                 # This line should be left before every new script. It sees to local issues.
                 # Use the dir it returns as the base_dir for this step.
                 use_dir = self.local_start(self.base_dir)
                 
-                fq_fn = ".".join([sample, src_type, self.file_tag,self.params["ext"][type_i]])          #The filename containing the end result. Used both in script and to set reads in $sample_params
+                fq_fn = ".".join([self.sample_data["Title"], src, self.file_tag,ext])          #The filename containing the end result. Used both in script and to set reads in $sample_params
 
 
-                self.script += self.params["script_path"][type_i] + " \\\n\t"
+                self.script += script_path + " \\\n\t"
                 # The following line concatenates all the files in the direction separated by a " "
-                self.script += " ".join(self.sample_data[sample][src_type]) 
+                self.script += " ".join(self.sample_data["project_data"][src]) 
                 self.script += " \\\n\t"
                 if "pipe" in self.params:
-                    self.script += "| {pipe} \\\n\t".format(pipe = self.params["pipe"][type_i])
+                    self.script += "| {pipe} \\\n\t".format(pipe = self.params["pipe"][scope_ind])
                 self.script += "> %s%s \n\n"  % (use_dir, fq_fn)
 
                 # Move all files from temporary local dir to permanent base_dir
@@ -226,9 +308,9 @@ class Step_merge(Step):
 
                 
                 # Store file in active file for sample:
-                self.sample_data[sample][self.params["trg"][type_i]] = self.base_dir + fq_fn
+                self.sample_data[trg] = self.base_dir + fq_fn
                 
-                self.stamp_file(self.sample_data[sample][self.params["trg"][type_i]])
+                self.stamp_file(self.sample_data[trg])
                 
                 
                 self.create_low_level_script()
