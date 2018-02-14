@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``kraken``
+``centrifuge``
 --------------------------------
 
 :Authors: Menachem Sklarz
@@ -9,15 +9,13 @@
 
 .. Note:: This module was developed as part of a study led by Dr. Jacob Moran Gilad
 
-A module for running ``kraken``:
+A module for running ``centrifuge``:
 
-Note that ``kraken`` executable must be in a folder together with ``kraken-translate`` and ``kraken-report``. This is the default for ``kraken`` installation. 
+Pass the full path to the ``centrifuge`` executable in ``script_path``.
 
-Pass the full path to the ``kraken`` executable in ``script_path``.
+Merging of sample centrifuge reports in done with krona. See the section on Parameters that can be set.
 
-Merging of sample kraken reports in done with krona. See the section on Parameters that can be set.
-
-You can follow this module with the ``kraken-biom`` module to create a biom table from the reports.
+.. CHECK THIS WORKS!! You can follow this module with the ``kraken-biom`` module to create a biom table from the reports.
 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -33,13 +31,13 @@ Requires
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* Puts the ``kraken`` output files in:  
+* Puts the ``centrifuge`` output files in:  
 
     * ``self.sample_data[<sample>]["raw_classification"]``
     * ``self.sample_data[<sample>]["classification"]``
     * ``self.sample_data[<sample>]["classification_report"]``
     
-    * If ``ktImportTaxonomy_path`` parameter was passed, puts the krona reports in 
+* If ``ktImportTaxonomy_path`` parameter was passed, puts the krona reports in 
 
     * ``self.sample_data["krona"]``
 
@@ -60,28 +58,28 @@ Lines for parameter file
 
 ::
 
-    kraken1:
-        module: kraken
-        base: trim1
-        script_path: {Vars.paths.kraken}
+    Centrifuge:
+        module:         centrifuge
+        base:           trim1
+        script_path:    {Vars.paths.centrifuge}
         qsub_params:
-            -pe: shared 20
+            -pe:        shared 20
         ktImportTaxonomy_path: /path/to/ktImportTaxonomy  -u  http://krona.sourceforge.net
         redirects:
-            --db: /path/to/kraken_std_db
+            --db:       /path/to/centrifuge_db
             --preload: 
             --quick: 
-            --threads: 20
+            --threads:  20
 
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Wood, D.E. and Salzberg, S.L., 2014. **Kraken: ultrafast metagenomic sequence classification using exact alignments**. *Genome biology*, 15(3), p.R46.
+Kim, D., Song, L., Breitwieser, F. P., & Salzberg, S. L. (2016). **Centrifuge: rapid and sensitive classification of metagenomic sequences**. *Genome research*, 26(12), 1721-1729.
+
 
 """
 
 
-import os
-import sys
+import os, sys, re
 from neatseq_flow.PLC_step import Step,AssertionExcept
 
 from pkg_resources import resource_filename
@@ -91,7 +89,7 @@ __author__ = "Menachem Sklarz"
 __version__ = "1.2.0"
 
 
-class Step_kraken(Step):
+class Step_centrifuge(Step):
     """ A class that defines a pipeline step name (=instance).
     """
     
@@ -101,12 +99,12 @@ class Step_kraken(Step):
             Wrong place for sample data testing
         """
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
-        self.file_tag = ".kraken.out"
+        self.file_tag = ".centrifuge.out"
 
             
         # Checking this once and then applying to each sample:
-        if "--db" not in self.params["redir_params"].keys():
-            raise AssertionExcept("--db not set.\n")
+        if "-x" not in self.params["redir_params"].keys():
+            raise AssertionExcept("You didn't pass a database with -x in redirects.\n")
 
             
         
@@ -123,22 +121,28 @@ class Step_kraken(Step):
         
         # Get full path to kraken module:
         # kraken_path = os.path.dirname(os.path.realpath(__file__))
-        merge_kraken_reports = resource_filename(__name__, 'merge_kraken_reports.R')
+        merge_centrifuge_reports = resource_filename(__name__, 'merge_centrifuge_reports.R')
 
         ### Add code to create a unified krona plot
         if "ktImportTaxonomy_path" in self.params.keys():
-            self.script += "# Running ktImportTaxonomy to create a krona chart for samples\n"
-            self.script += "%s \\\n\t" % self.params["ktImportTaxonomy_path"]
-            self.script += "-o %s \\\n\t" % (self.base_dir + self.sample_data["Title"] + "_krona_report.html")
-            self.script += "-q 1 \\\n\t"
-            self.script += "-t 2 \\\n\t"
             
+            sample_files = ""
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-                self.script += "%s.forKrona,%s \\\n\t" % (self.sample_data[sample]["raw_classification"],sample)
-            # Remove final \\\n\t
-            self.script = self.script.rstrip("\\\n\t")
-            self.script += "\n\n"
+                sample_files += "%s.forKrona,%s \\\n\t" % (self.sample_data[sample]["raw_classification"],sample)
+            self.script = """
+# Running ktImportTaxonomy to create a krona chart for samples
+{ktImportTaxonomy_path} \\
+    -o {output_fn}%s \\
+    -q 1 \\
+    -t 2 \\
+    {sample_files}
+""".format(ktImportTaxonomy_path=self.params["ktImportTaxonomy_path"],
+           output_fn = (self.base_dir + self.sample_data["Title"] + "_krona_report.html"),
+           sample_files = sample_files)
+            
+            self.script = re.sub("\\\\\s*$","\n\n",self.script)
 
+            
             self.sample_data["krona"] = self.base_dir + "krona_report.html"
     
             self.stamp_file(self.sample_data["krona"])
@@ -154,9 +158,6 @@ class Step_kraken(Step):
         
     
         
-        if "--preload" not in self.params["redir_params"].keys():
-            self.write_warning("Not setting --preload, but it IS recommended...\n")
-
         # Each iteration must define the following class variables:
             # spec_script_name
             # script
@@ -179,7 +180,7 @@ class Step_kraken(Step):
             output_filename = "".join([use_dir , sample , self.file_tag])
         
         
-            ######### Step 1, run kraken itself
+            ######### Step 1, run centrifuge itself
             # Create script and write to SCRPT
             # Add parameters passed to main script by user:
             # If the following params are not supplied by the user, add the defaults...
@@ -187,54 +188,49 @@ class Step_kraken(Step):
             self.script += self.get_script_const()
             # self.script += "%s \\\n\t" % self.params["script_path"]
             # self.script += self.get_redir_parameters_script()
-            self.script += "--output %s \\\n\t" % output_filename
+            self.script += "-S %s \\\n\t" % output_filename
 
-            if "PE" in self.sample_data[sample]["type"]:
-                self.script += "--paired \\\n\t%s \\\n\t%s \n\n" % (self.sample_data[sample]["fastq.F"],self.sample_data[sample]["fastq.R"])
-            elif "SE" in self.sample_data[sample]["type"]:
-                self.script += "%s \n\n" % self.sample_data[sample]["fastq.S"]
-            else:
-                self.write_warning("KRAKEN on mixed PE/SE samples is not defined. Using only PE data!\n")
+            if "fastq.F" in self.sample_data[sample]:
+                self.script += "-1 {m1} \\\n\t-2 {m2} \\\n\t".format(
+                                    m1=self.sample_data[sample]["fastq.F"],
+                                    m2=self.sample_data[sample]["fastq.R"])
+            if "fastq.S" in self.sample_data[sample]:
+                self.script += "-U {r} \n\n".format(r=self.sample_data[sample]["fastq.S"])
+            self.script = re.sub("\\\\\n$","\n\n",self.script)
                 
-                
-            # Find path to kraken scripts
-            kraken_path = os.path.dirname(self.params["script_path"])
-            if kraken_path:
-                kraken_path = kraken_path + os.sep
+            # Find path to centrifuge scripts
+            centrifuge_path = os.path.dirname(self.params["script_path"])
+            if centrifuge_path:
+                centrifuge_path = centrifuge_path + os.sep
 
-            ######### Step 2, translate raw kraken into useful names
-            self.script += "# Create useful kraken output \n\n";
-            self.script += "if [ -e %s ]\n" % output_filename;
-            self.script += "then\n\t";
-            self.script += "{kraken_path}kraken-translate \\\n\t\t".format(kraken_path = kraken_path)
-            self.script += "--db %s \\\n\t\t" % self.params["redir_params"]["--db"]
+            ######### Step 2, translate raw centrifuge into useful names
+            kreport_params = (self.params["redir_params"]["centrifuge-kreport"] if "centrifuge-kreport" in self.params else "") + " \\\n\t"
+            self.script += """
+# Create useful centrifuge output 
+if [ -e {centrifuge_out} ]
+then
+{centrifuge_path}centrifuge-kreport \\
+    -x {db} \\
+    {params} \\
+    {centrifuge_out} > \\
+    > {centrifuge_out}.report
+fi
+""".format(centrifuge_path = centrifuge_path, 
+            centrifuge_out = output_filename,
+            params        = kreport_params,
+            db            = self.params["redir_params"]["-x"])
 
-            self.script += output_filename + " \\\n\t\t";
-            self.script += "> %s.labels \n\n" % output_filename
-            self.script += "fi \n\n";
-
-            ######### Step 3, create report from kraken output (=tabular report similar to metaphlan and QIIME):
-            self.script += "# Create kraken report \n\n";
-            self.script += "if [ -e %s ]\n" % output_filename
-            self.script += "then\n\t";
-            self.script += "{kraken_path}kraken-report \\\n\t\t".format(kraken_path = kraken_path)
-            self.script += "--db %s \\\n\t\t" % self.params["redir_params"]["--db"]
-            
-            self.script += output_filename + " \\\n\t\t";
-            self.script += "> %s.report \n\n" % output_filename
-            self.script += "fi \n\n";
-    
-            ######### Step 4, create krona report:
+            ######### Step 3, create krona report:
             if "ktImportTaxonomy_path" in self.params.keys():
                 self.script += """
 # Create file for ktImportTaxonomy
-if [ -e %(krak_out)s ]
+if [ -e {centrifuge_out} ]
 then
-    cut -f 2,3 %(krak_out)s \\
-        > %(krak_out)s.forKrona
+    cut -f 1,3 {centrifuge_out} \\
+        > {centrifuge_out}.forKrona
 fi
 
-""" % {"krak_out":output_filename}
+""".format(centrifuge_out = output_filename)
     
             # Storing the output file in $samples_hash
             self.sample_data[sample]["raw_classification"]        = "%s" % (sample_dir + os.path.basename(output_filename))
@@ -254,13 +250,13 @@ fi
 
                     
     def make_sample_file_index(self):
-        """ Make file containing samples and target file names for use by kraken analysis R script
+        """ Make file containing samples and target file names for use by centrifuge analysis R script
         """
         
-        with open(self.base_dir + "kraken_files_index.txt", "w") as index_fh:
-            index_fh.write("Sample\tkraken_report\n")
+        with open(self.base_dir + "centrifuge_files_index.txt", "w") as index_fh:
+            index_fh.write("Sample\tcentrifuge_report\n")
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
                 index_fh.write("%s\t%s\n" % (sample,self.sample_data[sample]["classification_report"]))
                 
-        self.sample_data["kraken_file_index"] = self.base_dir + "kraken_files_index.txt"
+        self.sample_data["centrifuge_file_index"] = self.base_dir + "centrifuge_files_index.txt"
         

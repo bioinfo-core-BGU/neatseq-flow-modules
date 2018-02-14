@@ -35,6 +35,7 @@ Vars:
         trimmo:         /path/to/java -jar /path/to/trimmomatic-0.32.jar
         kraken:         /path/to/kraken
         kraken_biom:    /path/to/kraken-biom    
+        centrifuge:     /path/to/centrifuge
         biom:           /path/to/biom
         kaiju:          /path/to/kaiju_dir/
         metaphlan2:     /path/to/metaphlan2
@@ -54,6 +55,7 @@ Vars:
             chocophlan: /path/to/HUMAnN2_v0.11.1/databases/chocophlan
             uniref:     /path/to/HUMAnN2_v0.11.1/databases/uniref
         kraken:         /path/to/kraken_std_db
+        centrifuge:     /path/to/centrifuge_db
 Step_params:
 # ---------------------------- Merge, QC and trimming
     merge1:
@@ -159,6 +161,20 @@ Step_params:
             --max:          D 
             --min:          S 
             --gzip:
+    Centrifuge:
+        module:             centrifuge
+        base:               trim1
+        script_path:        '{Vars.paths.centrifuge}'
+        qsub_params:
+            -pe:            shared 20
+        ktImportTaxonomy_path: '{Vars.paths.KronaTools}/bin/ktImportTaxonomy -u  http://krona.sourceforge.net'
+        redirects:
+            -x:           {Vars.databases.centrifuge}
+            --threads:      20
+            -q:
+            -t:
+            --met-stderr:
+
 # ------------------------------- b. Assembly and analysis of the assembly
     megahit1:
         module:             megahit_assembl

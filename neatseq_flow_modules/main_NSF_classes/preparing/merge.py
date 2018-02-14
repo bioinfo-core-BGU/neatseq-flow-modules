@@ -155,7 +155,7 @@ class Step_merge(Step):
                 src.remove("type")   # 'type' is the type of sample (PE, etc.)
             self.params["src"] = src
         else: # Check that all src's exist somewhere in sample_data:
-            if not set(self.params["src"]) < src:
+            if not set(self.params["src"]) <= src:
                 raise AssertionExcept("The following types in 'src' do not exist in samples file: %s. " % " ".join(list(set(self.params["src"]) - src)))
         
 
