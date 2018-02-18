@@ -10,8 +10,8 @@ Sample2	Reverse	/path/to/Sample2_R1.fastq.gz 1
 Sample2	Forward	/path/to/Sample2_F2.fastq.gz 2
 Sample2	Reverse	/path/to/Sample2_R2.fastq.gz 2
 
-Sample_Control   Sample1:Sample2
-# Sample_Control   Sample2_anti:Sample2_input
+Sample_Control	Sample1:Sample2
+# Sample_Control	Sample2_anti:Sample2_input
 
 
 

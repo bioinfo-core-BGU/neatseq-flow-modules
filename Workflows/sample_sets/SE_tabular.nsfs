@@ -1,0 +1,13 @@
+Title	Single_end_project
+
+#SampleID	Type	Path	lane
+Sample1	Single	/path/to/Sample1.fastq.gz 1
+Sample1	Single	/path/to/Sample1.fastq.gz 2
+Sample2	Single	/path/to/Sample2.fastq.gz 1
+Sample2	Single	/path/to/Sample2.fastq.gz 1
+Sample3	Single	/path/to/Sample3.fastq.gz 1
+Sample3	Single	/path/to/Sample3.fastq.gz 1
+
+
+
+

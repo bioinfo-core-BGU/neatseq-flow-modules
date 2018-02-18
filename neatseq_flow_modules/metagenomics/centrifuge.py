@@ -204,7 +204,7 @@ class Step_centrifuge(Step):
                 centrifuge_path = centrifuge_path + os.sep
 
             ######### Step 2, translate raw centrifuge into useful names
-            kreport_params = (self.params["centrifuge-kreport"] if "centrifuge-kreport" in self.params else "") + " \\\n\t"
+            kreport_params = ((self.params["centrifuge-kreport"] + " \\\n\t") if "centrifuge-kreport" in self.params else "") 
             self.script += """
 # Create useful centrifuge output 
 if [ -e {centrifuge_out} ]

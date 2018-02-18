@@ -81,7 +81,7 @@ class Step_split_fasta(Step):
         if "type" not in self.params:
             raise AssertionExcept("Please supply a 'type' parameter: 'nucl' or 'prot'")
         if self.params["type"] not in ["nucl","prot"]:
-                raise AssertionExcept("'type' parameter must be 'nucl' or 'prot'")
+            raise AssertionExcept("'type' parameter must be 'nucl' or 'prot'")
         if "scope" not in self.params:
             raise AssertionExcept("Please supply a 'scope' parameter: 'sample' or 'project'")
         if self.params["scope"] not in ["sample","project"]:

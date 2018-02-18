@@ -192,6 +192,7 @@ class Step_quast(Step):
         
         multiple_bases = len(self.params["base"]) > 1
         
+        
         if self.params["scope"] == "sample": # Requested for mega-assembly
 
             if "compare_mode" in self.params.keys() and not multiple_bases:    # Compare sample assemblies
@@ -258,6 +259,7 @@ class Step_quast(Step):
 
                     # All other parameters are redirected!
                     self.script += "--output-dir %s \\\n\t" % sample_dir
+                    
                     
                     # Input file:
                     # self.script += "%s \n\n" % self.sample_data[sample]["fasta.nucl"]

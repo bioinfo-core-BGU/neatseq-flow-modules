@@ -7,85 +7,110 @@
 :Affiliation: Bioinformatics core facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
-A module for merging <and unzipping> fastqc and fasta files
+A module for merging and staging files from the sample file into **NeatSeq-Flow**. 
+
+Can be used in two modes: 
+
+**The basic mode**
+    is used when the sample file includes only sample-scope entries or only project-scope entries, and the file types are a subset of the list of recognized types. In this case, all you need to supply is the ``script_path`` (note below on legitimate ``script_path`` values). If the files are project-scope, you also need to set ``scope`` to ``project``. 
+    
+    You have to make sure that all your files are zipped or unzipped, so that they can all be concatenated with the same shell command. *i.e.* with the basic mode **you cannot** have both zipped and unzipped files, or files zipped with ``zip`` and ``gzip``. 
+    
+**The advanced mode**
+    is used when the basic mode can't be used. It enables merging files from sample and project scope, including files not in the recognized list. It also enables mixing zipped and unzipped files. 
+    
+    In this mode, you have to define 4 lists: ``script_path``, ``src``, ``trg``, ``scope`` and ``ext``. For each file type in the sample file, you should have an entry in the ``src`` list. The other lists should apply to the equivalent entry in ``src``. ``trg`` is the target file type for the merged files, ``script_path`` is the shell command to use to merge the source type, ``scope`` is the scope for which the source type is defined and ``ext`` is the suffix to append to the merged filenames. Strings are expanded to the length of ``src`` list, so if ``script_path`` is the same for all source types, it is enough to specify it once. 
+    
+    If ``src`` is not passed, it is extracted from the list of types in the sample file. If an unrecognised source type is used, **NeatSeq-Flow** will demand you define the ``trg`` list as well. 
+    
+    The advanced mode is experimental, and documentation will hopefully improve as we gain experience with it.
+
+.. Note:: **Definition of ``script_path`` in the ``merge`` module**: ``script_path`` should be a shell program that receives a list of files and produces one single output file **to the standard error**. Examples of such programs are ``cat`` for text files and ``gzip -cd`` for gzipped files. Other types of compressed files should have such a command as well. 
+
 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* A list of fastq files in the following slots:
+For the basic mode:
 
-    * ``sample_data[<sample>]["Forward"]``
-    * ``sample_data[<sample>]["Reverse"]``
-    * ``sample_data[<sample>]["Single"]``
+* A list of files of the following types, either in ``[<sample>]`` or in ``[project_data]``:
 
-* or a list of fasta files in the following slots:
 
-    * ``sample_data[<sample>]["Nucleotide"]``
-    * ``sample_data[<sample>]["Protein"]``
-    
-* or a list of BAM/SAM files in the following slots:
+.. csv-table:: File types recognized by **NeatSeq-Flow**
+    :header: "Source", "Target"
 
-    * ``sample_data[<sample>]["SAM"]``
-    * ``sample_data[<sample>]["BAM"]``
-    * ``sample_data[<sample>]["REFERENCE"]`` - The reference fasta used to align the reads in the BAM/SAM files.
-    
-* or a list of VCF files in the following slots:
+    "Forward",      "fastq.F"
+    "Reverse",      "fastq.R"
+    "Single",       "fastq.S"
+    "Nucleotide",   "fasta.nucl"
+    "Protein",      "fasta.prot"
+    "SAM",          "sam"
+    "BAM",          "bam"
+    "REFERENCE",    "reference"
+    "VCF",          "vcf"
+    "G.VCF",        "g.vcf"
 
-    * ``sample_data[<sample>]["VCF"]``
-    * ``sample_data[<sample>]["G.VCF"]``
-    
+
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* puts fastq output files in the following slots:
+* Merged files of the types in the table above are placed in slots according to the types in the 2nd column of the table. 
 
-    * ``sample_data[<sample>]["fastq.F"|"fastq.R"|"fastq.S"]``
-        
-* puts fasta output files in the following slots:
-    
-    * ``sample_data[<sample>]["fasta.nucl"|"fasta.prot"]``
-
-* puts SAM/BAM output files in the following slots:
-    
-    * ``sample_data[<sample>]["sam|bam|reference"]``
-
-* puts VCF and G.VCF output files in the following slots:
-    
-    * ``sample_data[<sample>]["vcf|g.vcf"]``
-
-.. note:: In the *merge* parameters, set the *script_path* parameter according to the type of raw files you've got. 
-    e.g., if they are gzipped, it should be ``gzip -cd``, etc.
-
-.. attention:: If you want to do something more complex with the combined files, you can use the ``pipe`` parameter to send extra commands to be piped on the files after the main command. **This is an experimental feature and should be used with care**.
+.. attention:: If you want to do something more complex with the combined files, you can use the ``pipe`` parameter to send extra commands to be piped on the files after the main command. **This is an experimental feature and should be used with care**. 
 
     e.g.: You can get files from a remote location by setting ``script_path`` to ``curl`` and ``pipe`` to ``gzip -cd``. This will download the files with curl, unzip them and concatenate them into the target file.  In the sample file, specify remote URLs instead of local pathes. **This will work only for one file per sample**.
-    
-    
+
+    As of version 1.3.0, ``pipe`` can be a list of the same length as ``src`` and it we be treated like the other lists describe above.
+
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. csv-table:: 
     :header: "Parameter", "Values", "Comments"
-    :widths: 15, 10, 10
+    :widths: 10, 20, 70
 
+    "script_path", "", "The shell command to use for merging the source files."
+    "src", "", "A list of source file types as the appear in the sample file."
+    "trg", "", "A list of target file type for the merged files."
+    "scope", "sample | project", "The scope at which each of the sources can be found."
+    "ext", "", "The suffix to append to the merged filename."
     "pipe", "", "Additional commands to be piped on the files before writing to file."
 
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-::
+Basic mode, gzipped files::
 
     merge1:
         module: merge
         script_path: gzip -cd
 
-::
+Basic mode, remote files::
 
     merge1:
         module: merge
         script_path: curl
         pipe:  gzip -cd
+
+Advanced mode, mixture of types and scopes::
+
+    merge1:
+        module:         merge
+        src:            [UR1, UR2]
+        script_path:    [gzip -cd, cat]
+        scope:          [sample,project]
+        trg:            [unrecognised1, unrecognised2]
+        ext:            [ur1,ur2]
+
         
+Advanced mode, single source type that exists both in sample and project::
+
+    merge1:
+        module:         merge
+        script_path:    cat 
+        scope:          [sample,project]
+        
+
 """
 
 import os
@@ -206,7 +231,14 @@ class Step_merge(Step):
             else:
                 pass
         
-        
+        # pp(self.params["src"])
+        # pp(self.params["trg"])
+        # pp(self.params["ext"])
+        # pp(self.params["scope"])
+        # sys.exit()
+
+
+
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
