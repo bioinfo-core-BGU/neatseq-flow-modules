@@ -3,9 +3,9 @@ Miscellaneous Modules
 ========================================
 
 
-.. .. contents:: Modules included in this section
-..    :local:
-..    :depth: 1
+.. contents:: Modules included in this section
+   :local:
+   :depth: 1
 
 
 

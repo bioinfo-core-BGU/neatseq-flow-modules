@@ -19,3 +19,5 @@ Metagenomics
 
 .. automodule:: metagenomics.metaphlan2
 
+.. automodule:: metagenomics.centrifuge
+
