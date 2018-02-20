@@ -3,8 +3,8 @@ Title	PE_tabular_projData # yoogooo
 # yoogooo			
 			
 #Type	Path	lane	
-TYP1	/path/to/reference.fasta		
-TYP2	/path/to/reference.faa# yoogooo		
+TYP1	/path/to/reference.fasta
+TYP2	/path/to/reference.fa   # yoogooo
 # yoogooo			
 			
 #SAMPLEID	TYPE	PATH    LANE	

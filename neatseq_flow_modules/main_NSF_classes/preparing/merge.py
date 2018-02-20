@@ -27,6 +27,31 @@ Can be used in two modes:
 
 .. Note:: **Definition of ``script_path`` in the ``merge`` module**: ``script_path`` should be a shell program that receives a list of files and produces one single output file **to the standard error**. Examples of such programs are ``cat`` for text files and ``gzip -cd`` for gzipped files. Other types of compressed files should have such a command as well. 
 
+.. Tip:: **NeatSeq-Flow** attempts to guess the ``script_path`` and ``pipe`` values based on the input file extensions. For this to work, leave the ``script_path`` and ``pipe`` lists empty and make sure all files from the same source have the same extensions (*e.g.* all gzipped files should have *.gz* as file extension). 
+
+    If you want **NeatSeq-Flow** to guess only some of the ``script_path`` values, set them to `null`, *e.g.* if ``src`` is ``[Single,TYP1]`` and ``script_path`` is ``[null,cat]``, then the ``script_path`` for *Single* will be guessed and the ``script_path`` for *TYP1* will be set to *cat*.
+
+    The following extensions are recognized:
+
+    .. csv-table:: File extensions recognized by **NeatSeq-Flow**
+        :header: "Extension", "``script_path``", "``pipe``"
+        :widths: 20,20,60
+        
+        ".fasta", "cat",""
+        ".faa", "cat",""
+        ".fna", "cat",""
+        ".txt", "cat",""
+        ".csv", "cat",""
+        ".fastq", "cat",""
+        ".fa", "cat",""
+        ".fq", "cat",""
+        ".gz", "gzip -cd", ""
+        ".zip", "echo", 'xargs -d " " -I % sh -c "unzip -p %"'
+        ".bz2","bzip -cd",""
+        ".dsrc2","echo", 'xargs -d " " -I % sh -c "dsrc2 d -s %"'
+        ".dsrc","echo", 'xargs -d " " -I % sh -c "dsrc d -s %"'
+        
+
 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -148,6 +173,19 @@ class Step_merge(Step):
             except:
                 raise AssertionExcept("Error loading file types index 'merge_file_types.yml'")
             
+        # Load YAML of script_paths stored in merge_script_path_types.yml
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),"merge_script_path_types.yml"),"r") as fileh:
+            try:
+                self.script_path_map = yaml.load("".join(fileh.readlines()),  Loader=yaml.SafeLoader)
+            except yaml.YAMLError, exc:
+                if hasattr(exc, 'problem_mark'):
+                    mark = exc.problem_mark
+                    print "Error position: (%s:%s)" % (mark.line+1, mark.column+1)
+                    print mark.get_snippet()
+                raise AssertionExcept("Error loading script_path index 'merge_script_path_types.yml'")
+            except:
+                raise AssertionExcept("Error loading script_path index 'merge_script_path_types.yml'")
+            
     
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
@@ -156,18 +194,35 @@ class Step_merge(Step):
 ######################################
 
 
-
+        # For each of these params. If they exist and are not lists, convert them into a list by splitting by comma. If not comma separated, will return a list of length 1.
+        # 5 options for user to pass:
+        # 1. A list
+        # 2. An empty list
+        # 3. A string
+        # 4. Not passed
+        # 5. Passed empty
         for param_list in ["script_path","src","trg","ext","pipe","scope"]:
             if param_list in self.params:
                 if not isinstance(self.params[param_list], list):
-                    self.params[param_list] = re.split(pattern="\s*,\s*", string=self.params[param_list])
+                    if self.params[param_list]:  # 3. A string
+                        self.params[param_list] = re.split(pattern="\s*,\s*", string=self.params[param_list])
+                    else: # 5. If passed empty, convert to list of single None
+                        self.params[param_list] = [None]
+                else:
+                    if not self.params[param_list]:  # 2. An empty list
+                        self.params[param_list] = [None]
+                    else:  # 1. A populated list. Leave as is 
+                        pass
+            else: # 4. If not passed by user, creating list with None. This is so that pipe can be populated by automatic file extension recognition
+                self.params[param_list] = [None]
+        # Require scope to be sample or project:
         if "scope" in self.params:
             if any(map(lambda x: x not in ["sample", "project"], self.params["scope"])):
                 raise AssertionExcept("'scope' param must be 'sample' or 'project'")
         
 ######################################
                 
-
+  
         src = set()
         # Get list of existing file types in samples file:
         for sample in self.sample_data["samples"]:
@@ -199,7 +254,7 @@ class Step_merge(Step):
         if "scope" not in self.params:
             self.params["scope"] = ["sample" for src in self.params["src"]]
         
-            
+        
         # Check all lists have len 1 or same length
         active_params = set(["script_path","src","trg","ext","pipe","scope"]) & set(self.params.keys())
         
@@ -215,28 +270,62 @@ class Step_merge(Step):
             required_len = len(self.params[list_params[0]])
             for i in str_params:
                 self.params[i] = self.params[i] * required_len
-
-                
+            
+   
         # Check 'src's exist in 'scope's:
+        # TODO: Try guessing script_path
         for src_ind in range(len(self.params["src"])):
             src = self.params["src"][src_ind]
             scope = self.params["scope"][src_ind]
+            script_path = self.params["script_path"][src_ind]
             if scope=="sample":
                 for sample in self.sample_data["samples"]:
                     if src not in self.sample_data[sample]:
                         raise AssertionExcept("Type '{src}' does not exist for sample '{smp}'!".format(src=src,smp=sample))
+                # Guessing script_path:
+                # Get file extensions:
+                if not script_path:  # Is none - try geussing
+                    # src_exts is defined as follows: For each sample in samples list, get the list of file extensions. Creates a list of lists.
+                    src_exts = [[os.path.splitext(filename)[1] for filename in self.sample_data[sample][src]] for sample in self.sample_data["samples"]]
+                    # Flatten the list of lists, and uniqify:
+                    src_exts = list(set([item for sublist in src_exts for item in sublist]))
+    
+                    if len(src_exts)>1:
+                        raise AssertionExcept("More than one file extension in source '{src}' ({ext}). Can't guess 'script_path'".format(src=src, ext=", ".join(src_exts)))
+                    # Convert set to string:
+                    src_exts = src_exts[0]
+                    if src_exts not in self.script_path_map.keys():
+                        raise AssertionExcept("Unidentified extension in source '{src}' ({ext}). Can't guess 'script_path'".format(src=src, ext=src_exts))
+                    else:
+                        if isinstance(self.script_path_map[src_exts],list):
+                            self.params["script_path"][src_ind] = self.script_path_map[src_exts][0]
+                            self.params["pipe"][src_ind] = self.script_path_map[src_exts][1]
+                        else:
+                            self.params["script_path"][src_ind] = self.script_path_map[src_exts]
+                        
             elif scope=="project":
                 if src not in self.sample_data["project_data"]:
-                    raise AssertionExcept("Type '{src}' does not exist in project data!".format(src=src))
+                    raise AssertionExcept("Type '{src}' does not exist in project data!".format(src=src, ext=src_exts))
+                # Guessing script_path:
+                # Get file extensions:
+                if not script_path:  # Is none - try geussing
+                    src_exts = list(set([os.path.splitext(filename)[1] for filename in self.sample_data["project_data"][src]]))
+                    if len(src_exts)>1:
+                        raise AssertionExcept("More than one file extension in source '{src}' for project ({ext}). Can't guess 'script_path'".format(src=src, ext=", ".join(src_exts)))
+                    # Convert set to string:
+                    src_exts = src_exts[0]
+                    if src_exts not in self.script_path_map.keys():
+                        raise AssertionExcept("Unidentified extension in source '{src}' for project ({ext}). Can't guess 'script_path'".format(src=src, ext=src_exts))
+                    else:
+                        if isinstance(self.script_path_map[src_exts],list):
+                            self.params["script_path"][src_ind] = self.script_path_map[src_exts][0]
+                            self.params["pipe"][src_ind] = self.script_path_map[src_exts][1]
+                        else:
+                            self.params["script_path"][src_ind] = self.script_path_map[src_exts]
+                                    
             else:
                 pass
         
-        # pp(self.params["src"])
-        # pp(self.params["trg"])
-        # pp(self.params["ext"])
-        # pp(self.params["scope"])
-        # sys.exit()
-
 
 
     def create_spec_wrapping_up_script(self):
@@ -290,7 +379,7 @@ class Step_merge(Step):
                     # The following line concatenates all the files in the direction separated by a " "
                     self.script += " ".join(self.sample_data[sample][src]) 
                     self.script += " \\\n\t"
-                    if "pipe" in self.params:
+                    if self.params["pipe"][scope_ind]:  #"pipe" in self.params:
                         self.script += "| {pipe} \\\n\t".format(pipe = self.params["pipe"][scope_ind])
                     self.script += "> %s%s \n\n"  % (use_dir, fq_fn)
 
@@ -331,7 +420,7 @@ class Step_merge(Step):
                 # The following line concatenates all the files in the direction separated by a " "
                 self.script += " ".join(self.sample_data["project_data"][src]) 
                 self.script += " \\\n\t"
-                if "pipe" in self.params:
+                if self.params["pipe"][scope_ind]:  #"pipe" in self.params:
                     self.script += "| {pipe} \\\n\t".format(pipe = self.params["pipe"][scope_ind])
                 self.script += "> %s%s \n\n"  % (use_dir, fq_fn)
 
