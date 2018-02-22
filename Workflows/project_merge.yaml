@@ -10,10 +10,10 @@ Step_params:
         module:             merge
         script_path:        #[stam, null,null,null]
         src:                [TYP1,TYP2,Forward,Reverse]
-        pipe:               [stam_pipe, null,null,null]
-        trg:                [typ1,typ2,fastq.F,fastq.R]
-        ext:                [ttt,ttt,fastq,fastq]
-        scope:              [project,project,sample,sample]
+        # pipe:               [stam_pipe, null,null,null]
+        trg:                [typ1,typ2,null,null]
+        ext:                [ttt,ttt,null,null]
+        scope:              #[project,project,sample,sample]
     
     trim1:
         module: trimmo

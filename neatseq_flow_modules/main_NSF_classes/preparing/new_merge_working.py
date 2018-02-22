@@ -193,115 +193,111 @@ class Step_merge(Step):
         
 ######################################
 
+        # If 'src' is uder-defined, get all lists from user. 
+        if "src" not in self.params or not self.params["src"]:
+            # Require all other lists (script_path and pipe can be guessed):
+            for param_list in ["trg","ext","scope"]:
+                if param_list in self.params and self.params[param_list]:
+                    raise AssertionExcept("You did not pass 'src'. Please do not set 'trg', 'ext' and 'scope'. They will be set automatically")
 
+        # For each of these params. If they exist and are not lists, convert them into a list by splitting by comma. If not comma separated, will return a list of length 1.
+        # 5 options for user to pass:
+        # 1. A list
+        # 2. An empty list
+        # 3. A string
+        # 4. Not passed
+        # 5. Passed empty
+        for param_list in ["script_path","src","trg","ext","pipe","scope"]:
+            if param_list in self.params:
+                if isinstance(self.params[param_list], list):
+                    if not self.params[param_list]:  # 2. An empty list
+                        print param_list
+                        print self.params[param_list]
+                        self.params[param_list] = [None]
+                    else:  # 1. A populated list. Leave as is 
+                        pass
+                else:
+                    if self.params[param_list]:  # 3. A string
+                        self.params[param_list] = re.split(pattern="\s*,\s*", string=self.params[param_list])
+                    else: # 5. If passed empty, convert to list of single None
+                        self.params[param_list] = [None]
+            else: # 4. If not passed by user, creating list with None. This is so that pipe can be populated by automatic file extension recognition
+                self.params[param_list] = [None]
+        
+        # Require scope to be sample or project:
+        if self.params["scope"] != [None]:
+            if any(map(lambda x: x not in ["sample", "project"], self.params["scope"])):
+                raise AssertionExcept("'scope' param must be 'sample' or 'project'")
+        
+######################################
 
-        # Getting list of possible src values. 
-        # Used for creating src or testing src list passed by user
+        # Getting list of possible src values. Used for creating src or testing src list passed by user
         src = set()
         # Get list of existing file types in samples file:
         for sample in self.sample_data["samples"]:
             src = src | set(self.sample_data[sample].keys())
         if "project_data" in self.sample_data:
             src = src | set(self.sample_data["project_data"].keys())
-
-        # If 'src' is NOT user-defined:
-        if "src" not in self.params or not self.params["src"]:
-            """ 1. Check that 'trg' is no other lists were passed (except script_path and pipe)
-                2. Create 'src'
-                3. Create other lists:
-                    a. trg, ext ans scope : [None] * len(src)
-                    b. script_path, pipe: 
-                        i. require string or none
-                        ii. [value] * len(src)
-            """
-            # # 1. Require all other lists (script_path and pipe can be guessed):
-            # for param_list in ["trg","ext","scope"]:
-                # if param_list in self.params and self.params[param_list]:
-                    # raise AssertionExcept("You did not pass 'src'. Please do not set 'trg', 'ext' and 'scope'. They will be set automatically")
             
-            # 2. Create 'src' 
+        # If 'src' not passed, is set here:
+        if self.params["src"] == [None]:
             src = list(src)
             if "type" in src: 
                 src.remove("type")   # 'type' is the type of sample (PE, etc.)
             self.params["src"] = src
-            
-            # 3. Create other lists:
-            for param in ["trg","script_path","ext","pipe","scope"]:
-                if param in self.params and self.params[param]:  # list is defined!
-                    if param in ['trg','ext','scope']:
-                        raise AssertionExcept("'src' not specified. Please do not specify '%s'." %param)
-                    else:  # Param is script_path or pipe
-                        if isinstance(self.params[param], str):
-                            self.params[param] = re.split(pattern="\s*,\s*", string=self.params[param])
-                            
-                        if isinstance(self.params[param], list):
-                            if len(self.params[param])>1:
-                                raise AssertionExcept("'src' not specified. Please do not specify '%s' as list (only string values are accepted)." %param)
-                            else:
-                                self.params[param] = self.params[param] * len(self.params["src"])
-                        else:
-                            raise AssertionExcept("Unrecognized value for '%s'" % param)
-                           
-                else: # 4. If not passed by user, creating list with None. This is so that pipe can be populated by automatic file extension recognition
-                    self.params[param] = [None] * len(self.params["src"])
-            
-            
-        else: # 'src' is user-defined
-            for param in ["trg","script_path","ext","pipe","scope"]:
-                if param in self.params and self.params[param]:  # list is defined!
+        # If 'src' IS passed, check that all src's exist somewhere in sample_data:
+        else: 
+            print src
+            if not set(self.params["src"]) <= src:
+                raise AssertionExcept("The following types in 'src' do not exist in samples file: %s. " % " ".join(list(set(self.params["src"]) - src)))
 
-                    if isinstance(self.params[param], str):
-                        self.params[param] = re.split(pattern="\s*,\s*", string=self.params[param])
-                    if isinstance(self.params[param], list):
-                        if len(self.params[param])==1:
-                            self.params[param] = self.params[param] * len(self.params["src"])
-                        elif len(self.params[param]) == len(self.params["src"]):
-                            pass
-                        else:
-                            raise AssertionExcept("Parameter '%s' must be a single value or a list the length of 'src'. Set null in places to be determined automatically.")
-                    else: # param is not a string or a list. What is it???
-                        raise AssertionExcept("Unrecognized format in '%s'" % param)
+        pp(self.params["trg"])
+        sys.exit()
+        # Create trg list
+        if self.params["trg"] == [None]:
+            if not set(self.params["src"]) < set(self.default_src_trg_map.keys()):
+                raise AssertionExcept("The following types in 'src' are not recognized: %s. Please use explicit 'trg' list in merge" % " ".join(list(set(self.params["src"]) - set(self.default_src_trg_map.keys()))))
+            self.params["trg"] = [self.default_src_trg_map[src][0] for src in self.params["src"]]
+
+        if self.params["ext"] == [None]:
+            if not set(self.params["src"]) < set(self.default_src_trg_map.keys()):
+                raise AssertionExcept("The following types in 'src' are not recognized: %s. Please use explicit 'ext' list." % " ".join(list(set(self.params["src"]) - set(self.default_src_trg_map.keys()))))
+            self.params["ext"] = [self.default_src_trg_map[src][1] if len(self.default_src_trg_map[src])>1 else src for src in self.params["src"]]
+
+        # Scope list not passed. Guessing:
+        if self.params["scope"] == [None]:
+            self.params["scope"] = []
+            for src in self.params["src"]:
+                if all([src in self.sample_data[x].keys() for x in self.sample_data["samples"]]):
+                    self.params["scope"] += ["sample"]
+                elif src in self.sample_data["project_data"]:
+                    self.params["scope"] += ["project"]
                 else:
-                    self.params[param] = [None] * len(self.params["src"])
-
-                    
-        # #---------------------------------------
-        # for param in ["script_path","src","trg","ext","pipe","scope"]:
-            # print param
-            # pp(self.params[param])
-        # #---------------------------------------
-        # sys.exit()
+                    raise AssertionExcept("{src} does not exist in all samples or in project. Make sure sample file is correct, or pass 'scope' explicitly.".format(src=src))
         
-                    
-        # For each src in the list of sources:
-        for src_ind in range(len(self.params["src"])):  
+        
+        # Check all lists have len 1 or same length
+        active_params = set(["script_path","src","trg","ext","pipe","scope"]) & set(self.params.keys())
+        
+        # Get those params with len>1 (i.e., lists)
+        list_params = filter(lambda x: len(self.params[x])>1, active_params)
+        str_params =  filter(lambda x: len(self.params[x])==1, active_params)
+        
+        
+        if len(set(map(lambda x: len(self.params[x]), list_params))) > 1:
+            raise AssertionExcept("More than one list with len>1 specified! (%s)" % ", ".join(list_params))
+
+        if list_params:
+            required_len = len(self.params[list_params[0]])
+            for i in str_params:
+                self.params[i] = self.params[i] * required_len
+            
+   
+        # Check 'src's exist in 'scope's:
+        for src_ind in range(len(self.params["src"])):
             src = self.params["src"][src_ind]
             scope = self.params["scope"][src_ind]
             script_path = self.params["script_path"][src_ind]
-            trg = self.params["trg"][src_ind]
-            ext = self.params["ext"][src_ind]
-
-            # Guessing 'trg'
-            if not trg:
-                if src not in self.default_src_trg_map.keys():
-                    raise AssertionExcept("The following 'src' is  not recognized: %s. Please use explicit 'trg' list in merge" % src)
-                self.params["trg"][src_ind] = self.default_src_trg_map[src][0] 
-                # Guessing 'ext'
-            if ext == None:
-                if src not in self.default_src_trg_map.keys():
-                    raise AssertionExcept("The following 'src' is  not recognized: %s. Please use explicit 'ext' list in merge" % src)
-                self.params["ext"][src_ind] = self.default_src_trg_map[src][1] 
-            
-            # Guessing scope if None
-            if not scope:
-                if all([src in self.sample_data[x].keys() for x in self.sample_data["samples"]]):
-                    self.params["scope"][src_ind] = "sample"
-                elif src in self.sample_data["project_data"]:
-                    self.params["scope"][src_ind] = "project"
-                else:
-                    raise AssertionExcept("{src} does not exist in all samples or in project. Make sure sample file is correct, or pass 'scope' explicitly.".format(src=src))
-            scope = self.params["scope"][src_ind]
-            # Testing scope and guessing 'script_path':
             if scope=="sample":
                 for sample in self.sample_data["samples"]:
                     if src not in self.sample_data[sample]:
@@ -348,16 +344,19 @@ class Step_merge(Step):
                             self.params["script_path"][src_ind] = self.script_path_map[src_exts]
                                     
             else:
-                raise AssertionExcept("'scope' must be either 'sample' or 'project'")
+                pass
+        
 
-                    
-
-        # #---------------------------------------
-        # for param in ["script_path","src","trg","ext","pipe","scope"]:
-            # print param
-            # pp(self.params[param])
-        # #---------------------------------------
+        #---------------------------------------
+        for param_list in ["script_path","src","trg","ext","pipe","scope"]:
+            print param_list
+            pp(self.params[param_list])
+        #---------------------------------------
+        
+        # pp(self.params)
         # sys.exit()
+
+        
 
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
