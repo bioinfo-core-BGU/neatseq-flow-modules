@@ -1,0 +1,59 @@
+name: Microbe-Flow
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+# Deps of Neatseq_Flow
+  - python=2.7   # or 2.7
+  - pyyaml
+  - pandas
+
+# Deps of Microbe-Flow
+  - patsy
+  - seaborn
+  - matplotlib
+  - numpy
+  - scipy
+  - openpyxl
+  
+# R:
+# Deps of Neatseq_Flow
+  - r-base
+  - r-htmlwidgets
+  - r-diagrammer=0.9.2
+  - r-optparse
+# Deps of Microbe-Flow
+  - bioconductor-clusterprofiler 
+  - r-ape
+  - bioconductor-ggtree 
+  - r-XML
+  - r-magrittr
+  - r-plyr
+  - r-dplyr=0.7.4
+  - gfortran_linux-64
+  - gxx_linux-64
+
+
+  
+# Software
+  - fastqc 
+  - Trim-Galore
+  - cutadapt
+  - Kraken
+  - Snippy
+  - Spades
+  - Quast
+  - rgi=3.1.1
+  - Prokka
+  - roary
+  - scoary
+  - multiqc 
+  - bwa=0.7.12
+  - zip
+  - blast
+
+  #Neatseq_Flow
+  - pip:
+    - git+https://github.com/bioinfo-core-BGU/neatseq-flow.git
+    - git+https://github.com/bioinfo-core-BGU/neatseq-flow-modules.git
+    - git+https://github.com/bioinfo-core-BGU/parse_blast.git

@@ -1,0 +1,480 @@
+Global_params:
+    Qsub_opts: -cwd
+    Qsub_path: /PATH_TO_YOUR_QSUB/ 
+    Qsub_q: your.q 
+    Default_wait: 10
+    module_path: /PATH_TO_NEATSEQ-FLOW_MODULES/
+
+Vars:
+    # Set your Parallel Environment :
+    Parallel_Environment:
+        # Run 'qconf –spl' to view all the Parallel Environments [pe_name] available to you
+        pe_name: shared 
+        # Set for each program the number/range of slots[cpus] to request per sample/project
+        FastQC: '1'
+        Snippy: '1'
+        Spades: '1'
+        Kraken: '1'
+        Quast: '1'
+        CARD_RGI: '1'
+        Prokka: '1'
+        Roary: '1'
+        Gassst: '1'
+    # If conda environment is not used, give the full path to the following programs:
+    Programs_path:
+        Trim_Galore:
+            Main: /PATH_TO/trim_galore
+            cutadapt: /PATH_TO/cutadapt
+        FastQC: /PATH_TO/fastqc
+        Kraken: /PATH_TO/kraken
+        Snippy:
+            Main: /PATH_TO/snippy
+            snippy_core: /PATH_TO/snippy-core
+        Gubbins: 
+            # If you choose NOT to run gubbins write in the next line: script_path: ''
+            script_path: python /PATH_TO/run_gubbins.py 
+        Spades: python /PATH_TO/spades.py
+        Quast: /PATH_TO/quast
+        CARD_RGI:
+            Main: PATH_TO/rgi
+            JSON2tsv_script: /PATH_TO/rgi_jsontab
+        Prokka: /PATH_TO/prokka
+        Roary: 
+            Main: /PATH_TO/roary
+            scoary: /PATH_TO/scoary
+            Gecko3: /PATH_TO_GECKO3/ 
+        Gassst: /PATH_TO_GASSST/ 
+        parse_blast: /PATH_TO/parse_blast.R
+        Multiqc: /PATH_TO/multiqc
+    Genome:
+        reference: /PATH_TO_REFERENCE_GENOME_IN_FASTA_or_GENBANK_FORMAT/ 
+        genus: '"YOUR_GENUS"' 
+        kingdom: '"Bacteria"'
+    MetaData:
+        File: /PATH_TO_YOUR_METADATA_FILE/
+        # THE COLUMN NAME IN THE METADATA FILE OF THE SAMPLES IDs
+        Sample_ID_column_name: Samples
+    Typing:
+        MLST:
+            FASTA: /PATH_TO_YOUR_MLST_FASTA_FILE/
+            scheme: /PATH_TO_YOUR_MLST_SCHEME_FILE/
+            Allele: /PATH_TO_YOUR_MLST_ALLELE_MAP_FILE/
+            # EDIT/ADD COLUMN IN THE SCHEME FILE THAT ARE NOT LOCUS NAMES (COMMA DELIMITED)
+            Type_col_name: "ST,clonal_complex"
+        cgMLST:
+            FASTA: /PATH_TO_YOUR_cgMLST_FASTA_FILE/
+            scheme: /PATH_TO_YOUR_cgMLST_SCHEME_FILE/
+            Allele: /PATH_TO_YOUR_cgMLST_ALLELE_MAP_FILE/
+            # EDIT/ADD COLUMN IN THE SCHEME FILE THAT ARE NOT LOCUS NAMES (COMMA DELIMITED)
+            Type_col_name: cgST
+    Database:
+        kraken: /PATH_TO_KRAKEN_DATA_BASE/
+    Additional:
+        Roary:
+            Bi_cluster:
+                # EDIT/ADD COLUMN IN THE META DATA FILE TO BE ADDED TO THE BI-CLUSTERING RESULTS
+                cols_to_use: '"SourceType","GeographicLocation"' 
+            scoary:
+                # a list of conditions to create the scoary traits file from MetaData file.
+                # Pairs of field and operator + value to convert to boolean traits: field_name1/op_value1 
+                # Example: "field_1/>=val_1<val_2"    "feild_2/=='str_val'"
+                # A Filter can be used by FILTER_field_name1/FILTER_op_value1&field_name1/op_value1
+                traits_to_pars: '"SourceType/==''Nose''" "SourceType/==''Blood''"'
+
+
+Step_params:
+
+    Merge:
+        module: merge
+        script_path: gzip -cd 
+
+    FastQC_Merge:
+        module: fastqc_html
+        base: Merge
+        script_path: {Vars.Programs_path.FastQC}
+        qsub_params:
+            -pe: '{Vars.Parallel_Environment.pe_name} {Vars.Parallel_Environment.FastQC}'
+        redirects:
+            --threads: {Vars.Parallel_Environment.FastQC}
+
+    Trim_Galore:
+        module: Trim_Galore
+        base: Merge
+        script_path: {Vars.Programs_path.Trim_Galore.Main}
+        cutadapt_path: {Vars.Programs_path.Trim_Galore.cutadapt}
+        redirects:
+            --length: 36
+            -q: 25
+
+    FastQC_Trim_Galore:
+        module: fastqc_html
+        base: Trim_Galore
+        script_path: {Vars.Programs_path.FastQC}
+        qsub_params:
+            -pe: '{Vars.Parallel_Environment.pe_name} {Vars.Parallel_Environment.FastQC}'
+        redirects:
+            --threads: {Vars.Parallel_Environment.FastQC}
+
+    Kraken:
+        module: kraken
+        base: Trim_Galore
+        script_path: {Vars.Programs_path.Kraken}
+        qsub_params:
+            -pe: '{Vars.Parallel_Environment.pe_name} {Vars.Parallel_Environment.Kraken}'
+        redirects:
+            --db: {Vars.Database.kraken}
+            --preload: null
+            --quick: null
+            --threads: {Vars.Parallel_Environment.Kraken}
+
+    Collect_kraken:
+        module: Collect_results
+        base: Kraken
+        script_path: null
+        redirects:
+            --add_samples_names: null
+            --header: null
+            --pivot: "'Samples' '5' '0'"
+            -R: .report$
+            -T: null
+
+    Snippy:
+        module: Snippy
+        base: Trim_Galore
+        script_path: {Vars.Programs_path.Snippy.Main}
+        qsub_params:
+            -pe: '{Vars.Parallel_Environment.pe_name} {Vars.Parallel_Environment.Snippy}'
+        pars:
+            --Cut: null
+            --S_MetaData: {Vars.MetaData.Sample_ID_column_name}
+            -C: 0.95
+            -M: {Vars.MetaData.File}
+        snippy_core:
+            script_path: {Vars.Programs_path.Snippy.snippy_core}
+            --noref: null
+        redirects:
+            --cpus: {Vars.Parallel_Environment.Snippy}
+            --force: null
+            --mapqual: 60
+            --mincov: 10
+            --minfrac: 0.9
+            --reference: {Vars.Genome.reference}
+
+    Gubbins:
+        module: Gubbins
+        base: Snippy
+        script_path: {Vars.Programs_path.Gubbins.script_path}
+        pars:
+            --Cut: null
+            --S_MetaData: {Vars.MetaData.Sample_ID_column_name}
+            -C: 0.95
+            -M: {Vars.MetaData.File}
+
+    Spades:
+        module: spades_assembl
+        base: Trim_Galore
+        script_path: {Vars.Programs_path.Spades}
+        scope: sample
+        qsub_params:
+            -pe: '{Vars.Parallel_Environment.pe_name} {Vars.Parallel_Environment.Spades}'
+        truncate_names: null
+        redirects:
+            --careful: null
+            --threads: {Vars.Parallel_Environment.Spades}
+            --cov-cutoff: auto
+
+    Quast:
+        module: quast
+        base: Spades
+        script_path: {Vars.Programs_path.Quast}
+        qsub_params:
+            -pe: '{Vars.Parallel_Environment.pe_name} {Vars.Parallel_Environment.Quast}'
+        scope: sample
+        redirects:
+            --fast: null
+            -t: {Vars.Parallel_Environment.Quast}
+            -L: null
+
+    Prokka:
+        module: Prokka
+        base: Spades
+        script_path: {Vars.Programs_path.Prokka}
+        qsub_params:
+            -pe: '{Vars.Parallel_Environment.pe_name}  {Vars.Parallel_Environment.Prokka}'
+        generate_GFF_dir: null
+        redirects:
+            --cpus: {Vars.Parallel_Environment.Prokka}
+            --force: null
+            --genus: {Vars.Genome.genus}
+            --kingdom: {Vars.Genome.kingdom}
+            --proteins: VFDB
+
+    CARD_RGI:
+        JSON2tsv_script: {Vars.Programs_path.CARD_RGI.JSON2tsv_script}
+        module: CARD_RGI
+        base: Spades
+        script_path: {Vars.Programs_path.CARD_RGI.Main}
+        qsub_params:
+            -pe: '{Vars.Parallel_Environment.pe_name} {Vars.Parallel_Environment.CARD_RGI}'
+        orf_to_use: -x
+        redirects:
+            -n: {Vars.Parallel_Environment.CARD_RGI}
+
+
+    Collect_CARD_RGI:
+        module: Collect_results
+        base: CARD_RGI
+        script_path: null
+        redirects:
+            --add_samples_names: null
+            --pivot: '''Samples'' ''AR0_category'' ''ARO'''
+            --split_by: ','
+            -R: .CARD_RGI.txt$
+
+    Roary:
+        module: Roary
+        base:
+        - Prokka
+        script_path: {Vars.Programs_path.Roary.Main}
+        qsub_params:
+            -pe: '{Vars.Parallel_Environment.pe_name}  {Vars.Parallel_Environment.Roary}'
+        Bi_cluster:
+            --Annotation: VFDB
+            --ID_field: {Vars.MetaData.Sample_ID_column_name}
+            --cols_to_use: {Vars.Additional.Roary.Bi_cluster.cols_to_use}
+            --metadata: {Vars.MetaData.File}
+        plot:
+            format: pdf
+            Tree: 'virulence_resistance_tag'
+        scoary:
+            BH_cutoff: 1
+            metadata_file: {Vars.MetaData.File}
+            metadata_samples_ID_field: {Vars.MetaData.Sample_ID_column_name}
+            script_path: {Vars.Programs_path.Roary.scoary}
+            traits_to_pars: {Vars.Additional.Roary.scoary.traits_to_pars}
+        virulence_resistance_tag: VFDB
+        Gecko:
+            script_path: {Vars.Programs_path.Roary.Gecko3}
+            -d: 7
+            -s: 2
+            -q: 2
+        redirects:
+            -k: {Vars.Database.kraken}
+            -p: {Vars.Parallel_Environment.Roary}
+            -qc: null
+            -s: null
+            -v: null
+            -y: null
+
+    Collect_Virulence:
+        module: Collect_results
+        base: Roary
+        script_path: 
+        redirects:
+            -R: vfclass.tab$
+            --pivot: '''Samples'' ''vfclass'' ''VFG''' 
+            --split_by: ','
+            
+    Collect_Roary:
+        module: Collect_results
+        base: Roary
+        script_path: 
+        redirects:
+            -R: gene_presence_absence.tab$
+        
+    MLST_Gassst:
+        module: Gassst
+        base: Spades
+        script_path: {Vars.Programs_path.Gassst}
+        qsub_params:
+            -pe: '{Vars.Parallel_Environment.pe_name} {Vars.Parallel_Environment.Gassst}'
+        redirects:
+            -h: 1
+            -i: {Vars.Typing.MLST.FASTA}
+            -l: 0
+            -m: 0
+            -n: {Vars.Parallel_Environment.Gassst}
+            -p: 95
+
+    MLST_parse_blast:
+        module: parse_blast
+        base: MLST_Gassst
+        script_path: {Vars.Programs_path.parse_blast}
+        scope: sample
+        redirects:
+            --dbtable: {Vars.Typing.MLST.Allele}
+            --group_dif_name: Gene
+            --max_evalue: 1e-7
+            --merge_blast: qseqid
+            --merge_metadata: Allele
+            --min_coverage: 100
+            --names: '"qseqid sallseqid qlen slen qstart qend sstart send length evalue
+                pident sseq"'
+            --num_hits: 1
+            --sort_str: '''evalue,i,pident,d,length,d'''
+
+    MLST_verdict:
+        module: cgMLST_and_MLST_typing
+        base: MLST_parse_blast
+        script_path: 
+        cut_samples_not_in_metadata: null
+        metadata: {Vars.MetaData.File}
+        metadata_samples_ID_field: {Vars.MetaData.Sample_ID_column_name}
+        sample_cutoff: 0.95
+        Tree: null
+        redirects:
+            --Type_col_name: {Vars.Typing.MLST.Type_col_name}
+            --scheme: {Vars.Typing.MLST.scheme} 
+
+    cgMLST_Gassst:
+        module: Gassst
+        base: Spades
+        script_path: {Vars.Programs_path.Gassst}
+        qsub_params:
+            -pe: '{Vars.Parallel_Environment.pe_name} {Vars.Parallel_Environment.Gassst}'
+        redirects:
+            -h: 1
+            -i: {Vars.Typing.cgMLST.FASTA}
+            -l: 0
+            -m: 0
+            -n: {Vars.Parallel_Environment.Gassst}
+            -p: 95
+
+    cgMLST_parse_blast:
+        module: parse_blast
+        base: cgMLST_Gassst
+        script_path: {Vars.Programs_path.parse_blast}
+        scope: sample
+        redirects:
+            --dbtable: {Vars.Typing.cgMLST.Allele}
+            --group_dif_name: Gene
+            --max_evalue: 1e-7
+            --merge_blast: qseqid
+            --merge_metadata: Allele
+            --min_coverage: 100
+            --names: '"qseqid sallseqid qlen slen qstart qend sstart send length evalue
+                pident sseq"'
+            --num_hits: 1
+            --sort_str: '''evalue,i,pident,d,length,d'''
+
+    cgMLST_verdict:
+        module: cgMLST_and_MLST_typing
+        base: cgMLST_parse_blast
+        script_path: 
+        cut_samples_not_in_metadata: null
+        metadata: {Vars.MetaData.File}
+        metadata_samples_ID_field: {Vars.MetaData.Sample_ID_column_name}
+        sample_cutoff: 0.95
+        Tree: null
+        redirects:
+            --Type_col_name: {Vars.Typing.cgMLST.Type_col_name}
+            --scheme: {Vars.Typing.cgMLST.scheme} 
+            
+
+    Collect_typing_verdict:
+        module: Collect_results
+        base: 
+        - MLST_verdict
+        - cgMLST_verdict
+        script_path: 
+        redirects:
+            --Merge_by: '{Vars.MetaData.Sample_ID_column_name} Samples'
+            --ignore_shared_col: null
+            --MetaData: {Vars.MetaData.File}
+            -R: phyloviz_MetaData.tab$
+            
+        
+    MultiQC_raw_reads:
+        module: Multiqc
+        base:
+        - FastQC_Merge
+        script_path: {Vars.Programs_path.Multiqc}
+        modules: fastqc,cutadapt,trimmomatic,bowtie2,bowtie1,star,htseq,prokka,samtools,quast
+        redirects:
+            --template: default
+        
+    MultiQC_post_trim:
+        module: Multiqc
+        base:
+        - FastQC_Trim_Galore
+        - Prokka
+        - Quast
+        - Gubbins
+        script_path: {Vars.Programs_path.Multiqc}
+        modules: fastqc,cutadapt,trimmomatic,bowtie2,bowtie1,star,htseq,prokka,samtools,quast
+        redirects:
+            --template: default
+
+    Collect_MultiQC_post_trim:
+        module: Collect_results
+        base: MultiQC_post_trim
+        script_path: 
+        redirects:
+            --Merge_by: Sample
+            -R: .txt$
+            
+    Collect_MultiQC_raw_reads:
+        module: Collect_results
+        base: MultiQC_raw_reads
+        script_path: 
+        redirects:
+            --Merge_by: Sample
+            -R: .txt$
+            
+    Collect_ALL:
+        module: Collect_results
+        base:
+        - Collect_typing_verdict
+        - Collect_MultiQC_post_trim
+        - Collect_MultiQC_raw_reads
+        - Collect_Roary
+        - Collect_kraken
+        - Collect_CARD_RGI
+        - Collect_Virulence
+        script_path: 
+        redirects:
+            --Excel: null
+            -R: .merg$
+
+    Plot_Trees_Resistance:
+        module: Tree_plot
+        base:
+        - Collect_ALL
+        - cgMLST_verdict
+        - MLST_verdict
+        - Roary
+        - Gubbins
+        script_path: 
+        iterate_on_bases: 
+        redirects:
+            --M_Excel: Collect_typing_verdict
+            --H_Excel: Collect_CARD_RGI
+            --heatmap: null
+            --OTU: ST
+            # --layout: fan
+            --heatmap_highest_value: blue
+            --heatmap_variable: null
+            --heatmap_count_by_sep: ','
+            --ID_field: {Vars.MetaData.Sample_ID_column_name}
+            --ID_heatmap_field: 'Samples'
+    
+    Plot_Trees_virulence:
+        module: Tree_plot
+        base:
+        - Collect_ALL
+        - cgMLST_verdict
+        - MLST_verdict
+        - Roary
+        - Gubbins
+        script_path: 
+        iterate_on_bases: 
+        redirects:
+            --M_Excel: Collect_typing_verdict
+            --H_Excel: Collect_Virulence
+            --heatmap: null
+            --OTU: ST
+            # --layout: fan
+            --heatmap_variable: null
+            --heatmap_count_by_sep: ','
+            --ID_field: {Vars.MetaData.Sample_ID_column_name}
+            --ID_heatmap_field: 'Samples'

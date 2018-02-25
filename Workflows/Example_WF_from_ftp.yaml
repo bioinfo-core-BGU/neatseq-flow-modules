@@ -49,8 +49,8 @@ Step_params:
 
     Merge:
         module:         merge 
-        script_path:    curl 
-        pipe:           gzip  -cd | head -n 500000
+        script_path:    echo -n   
+        pipe:           xargs -0 -d " " curl | gzip -cd 
         redirects:
             --retry:    10
 

@@ -1,14 +1,10 @@
-Title	PE_tabular_projData # yoogooo		
-# Title	title2 
-			
-#Type	Path	lane	
+Title	PE_projData # yoogooo		
+
+#Type	Path
 TYP1	/path/to/reference.fasta
-TYP2	/path/to/reference.fa   
-# Forward	/path/to/reference.fastq
-# Reverse	/path/to/reference.fastq
+TYP2	/path/to/reference.fa
 
-
-#SAMPLEID	TYPE	PATH    LANE	
+#SAMPLEID	TYPE	PATH	LANE
 Sample1	Forward	Sample1_F1.fastq.gz	1
 Sample1	Forward	Sample1_F2.fastq.gz	2
 Sample1	Reverse	Sample1_R1.fastq.gz	1
@@ -19,4 +15,3 @@ Sample2	Reverse	Sample2_F2.fastq.gz	2
 Sample2	Reverse	Sample2_R2.fastq.gz	2
 			
 Sample_Control	Sample1:Sample2
-# Sample_Control	Sample3:Sample4

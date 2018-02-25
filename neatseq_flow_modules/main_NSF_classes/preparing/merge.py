@@ -11,21 +11,26 @@ A module for merging and staging files from the sample file into **NeatSeq-Flow*
 
 Can be used in two modes: 
 
-**The basic mode**
-    is used when the sample file includes only sample-scope entries or only project-scope entries, and the file types are a subset of the list of recognized types. In this case, all you need to supply is the ``script_path`` (note below on legitimate ``script_path`` values). If the files are project-scope, you also need to set ``scope`` to ``project``. 
+**The Basic mode**
+    is used when the file types in the `sample definition file`_ are a subset of the list of recognized types (see below). In this case, all you need to supply is the ``script_path`` (note below on legitimate ``script_path`` values). If all files have recognized extensions, **NeatSeq-Flow** will assign ``script_path`` automatically, so you do not have to pass ``script_path``, either. See below a list of recognized extensions.
     
-    You have to make sure that all your files are zipped or unzipped, so that they can all be concatenated with the same shell command. *i.e.* with the basic mode **you cannot** have both zipped and unzipped files, or files zipped with ``zip`` and ``gzip``. 
+    You have to make sure that all files of each file type have the same extension for **NeatSeq-Flow** to guess the ``script_path``. 
     
-**The advanced mode**
-    is used when the basic mode can't be used. It enables merging files from sample and project scope, including files not in the recognized list. It also enables mixing zipped and unzipped files. 
+    All of the above is true for ``pipe`` parameter, as well.
     
-    In this mode, you have to define 4 lists: ``script_path``, ``src``, ``trg``, ``scope`` and ``ext``. For each file type in the sample file, you should have an entry in the ``src`` list. The other lists should apply to the equivalent entry in ``src``. ``trg`` is the target file type for the merged files, ``script_path`` is the shell command to use to merge the source type, ``scope`` is the scope for which the source type is defined and ``ext`` is the suffix to append to the merged filenames. Strings are expanded to the length of ``src`` list, so if ``script_path`` is the same for all source types, it is enough to specify it once. 
+**The Advanced mode**
+    is used when the basic mode can't be used. It enables full control over which file types are merged, how they are copied and in which slots they are placed in the file type index. It also enables merging file types not recognized by **NeatSeq-Flow** (see list below).
     
-    If ``src`` is not passed, it is extracted from the list of types in the sample file. If an unrecognised source type is used, **NeatSeq-Flow** will demand you define the ``trg`` list as well. 
+    In this mode, you have to define the following lists: ``src``, ``trg``, ``script_path``, ``scope`` and ``ext``. For each file type in the sample file, you should have an entry in the ``src`` list. The other lists should apply to the equivalent entry in ``src``. ``trg`` is the target file type (in the file type index) for the merged files, ``script_path`` is the shell command to use to merge the source type, ``scope`` is the scope for which the source type is defined and ``ext`` is the suffix to append to the merged filenames. Strings are expanded to the length of ``src`` list, so if ``script_path`` is the same for all source types, it is enough to specify it once. 
+    
+    When using the Advanced mode, by passing the ``src`` list, you must also define the other lists, *i.e.* ``trg``, ``ext``, ``scope`` and ``script_path``. However, **NeatSeq-Flow** will try guessing the lists based on the lists of recognized file types and extensions. 
+    
+    If some of the file types in ``src`` are recognized and some are not, you can pass the lists mentioned above with values for the unrecognized types, leaving *null* in the positions of the recognized types. These *null* values will be guessed by **NeatSeq-Flow**.
     
     The advanced mode is experimental, and documentation will hopefully improve as we gain experience with it.
 
 .. Note:: **Definition of ``script_path`` in the ``merge`` module**: ``script_path`` should be a shell program that receives a list of files and produces one single output file **to the standard error**. Examples of such programs are ``cat`` for text files and ``gzip -cd`` for gzipped files. Other types of compressed files should have such a command as well. 
+
 
 .. Tip:: **NeatSeq-Flow** attempts to guess the ``script_path`` and ``pipe`` values based on the input file extensions. For this to work, leave the ``script_path`` and ``pipe`` lists empty and make sure all files from the same source have the same extensions (*e.g.* all gzipped files should have *.gz* as file extension). 
 
@@ -52,14 +57,14 @@ Can be used in two modes:
         ".dsrc","echo", 'xargs -d " " -I % sh -c "dsrc d -s %"'
         
 
+    
+.. _sample definition file: http://neatseq-flow.readthedocs.io/en/latest/02.build_WF.html#sample-file-definition
 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For the basic mode:
-
-* A list of files of the following types, either in ``[<sample>]`` or in ``[project_data]``:
-
+* For the basic mode:
+    * A list of files of the following types, either in ``[<sample>]`` or in ``[project_data]``:
 
 .. csv-table:: File types recognized by **NeatSeq-Flow**
     :header: "Source", "Target"
@@ -75,7 +80,9 @@ For the basic mode:
     "VCF",          "vcf"
     "G.VCF",        "g.vcf"
 
-
+* For the Advanced mode:
+    * Lists of files in any file type, either in ``[<sample>]`` or in ``[project_data]``.
+    
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -121,19 +128,32 @@ Advanced mode, mixture of types and scopes::
 
     merge1:
         module:         merge
-        src:            [UR1, UR2]
-        script_path:    [gzip -cd, cat]
-        scope:          [sample,project]
-        trg:            [unrecognised1, unrecognised2]
-        ext:            [ur1,ur2]
+        src:            [UR1,       UR2]
+        script_path:    [gzip -cd,  cat]
+        scope:          [sample,    project]
+        trg:            [unrecog1,  unrecog2]
+        ext:            [ur1,       ur2]
 
         
-Advanced mode, single source type that exists both in sample and project::
+Advanced mode, both recognized and unrecognized file types::
 
     merge1:
         module:         merge
-        script_path:    cat 
-        scope:          [sample,project]
+        src:            [UR1,       Forward,    Reverse]
+        script_path:    [gzip -cd,  null,       null]
+        scope:          # Guess!
+        trg:            [unrecog1,  null,       null]
+        ext:            [ur1,       null,       null]
+        
+Advanced mode, same types in samples and project::
+
+    merge1:
+        module:         merge
+        src:            [Nucleotide,    Nucleotide]
+        script_path:    [cat,           cat]
+        scope:          [sample,        project]
+        trg:            
+        ext:            
         
 
 """
@@ -160,6 +180,7 @@ class Step_merge(Step):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = "merge"
         
+
         # Load YAML of file type stored in merge_file_types.yml
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),"merge_file_types.yml"),"r") as fileh:
             try:
@@ -188,44 +209,33 @@ class Step_merge(Step):
             
     
     def step_sample_initiation(self):
-        """ A place to do initiation stages following setting of sample_data
+        """ Two operations are performed in this function:
+            1. Creating good lists for both Basic and Advanced modes.
+            2. Testing the values passed by the user and guessing values where necessary.
         """
         
-######################################
-
 
 
         # Getting list of possible src values. 
+        # This is done for sample and project scope separately.
         # Used for creating src or testing src list passed by user
         src = set()
         # Get list of existing file types in samples file:
         for sample in self.sample_data["samples"]:
-            src = src | set(self.sample_data[sample].keys())
+            sample_src = list(set(self.sample_data[sample].keys()))
+            if "type" in sample_src: 
+                sample_src.remove("type")   # 'type' is the type of sample (PE, etc.)
+            sample_scope = ["sample"] * len(sample_src)
         if "project_data" in self.sample_data:
-            src = src | set(self.sample_data["project_data"].keys())
+            project_src = list(set(self.sample_data["project_data"].keys()))
+            project_scope = ["project"] * len(project_src)
 
-        # If 'src' is NOT user-defined:
+        src = sample_src + project_src
+        scope = sample_scope + project_scope
+        # If 'src' is NOT user-defined: (Basic mode)
         if "src" not in self.params or not self.params["src"]:
-            """ 1. Check that 'trg' is no other lists were passed (except script_path and pipe)
-                2. Create 'src'
-                3. Create other lists:
-                    a. trg, ext ans scope : [None] * len(src)
-                    b. script_path, pipe: 
-                        i. require string or none
-                        ii. [value] * len(src)
-            """
-            # # 1. Require all other lists (script_path and pipe can be guessed):
-            # for param_list in ["trg","ext","scope"]:
-                # if param_list in self.params and self.params[param_list]:
-                    # raise AssertionExcept("You did not pass 'src'. Please do not set 'trg', 'ext' and 'scope'. They will be set automatically")
-            
-            # 2. Create 'src' 
-            src = list(src)
-            if "type" in src: 
-                src.remove("type")   # 'type' is the type of sample (PE, etc.)
             self.params["src"] = src
-            
-            # 3. Create other lists:
+            # For each of the other required lists
             for param in ["trg","script_path","ext","pipe","scope"]:
                 if param in self.params and self.params[param]:  # list is defined!
                     if param in ['trg','ext','scope']:
@@ -244,9 +254,11 @@ class Step_merge(Step):
                            
                 else: # 4. If not passed by user, creating list with None. This is so that pipe can be populated by automatic file extension recognition
                     self.params[param] = [None] * len(self.params["src"])
+            # Defining 'scope' (basic mode. user should not pass this. Setting it here)
+            self.params["scope"] = scope
+
             
-            
-        else: # 'src' is user-defined
+        else: # 'src' is user-defined (Advanced mode)
             for param in ["trg","script_path","ext","pipe","scope"]:
                 if param in self.params and self.params[param]:  # list is defined!
 
