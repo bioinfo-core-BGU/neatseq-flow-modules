@@ -253,7 +253,7 @@ MLST/cgMLST Typing Scheme File [Tab delimited]
 
           .. code-block:: csh
           
-             curl http://neatseq-flow.readthedocs.io/en/latest/_downloads/get_scheme.sh > get_scheme.sh
+             curl http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/get_scheme.sh > get_scheme.sh
         
         **For example:** in order to download the **MLST** Required Files of **Campylobacter jejuni**  
         
