@@ -1,0 +1,15 @@
+Title	BlastExperiment
+
+#Type	Path
+Nucleotide	/path/to/proj.fna
+Protein	/path/to/proj.faa
+
+#SampleID	Type	Path
+Sample1	Nucleotide	/path/to/Sample1.fna
+Sample1	Protein	/path/to/Sample1.faa
+Sample2	Nucleotide	/path/to/Sample1.fna
+Sample2	Protein	/path/to/Sample1.faa
+
+
+
+

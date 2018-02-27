@@ -168,10 +168,10 @@ Step_params:
         module:             blast_new
         base:               Split_Fasta
         script_path:        '{Vars.paths.blast}/blastx'
+        query:         sample
+        db:            {Vars.databases.trinotate.sprot}
         querytype:          nucl
         redirects:
-            -query:         sample
-            -db:            {Vars.databases.trinotate.sprot}
             -max_target_seqs: 1
             -num_threads:   1
             -outfmt:        6
@@ -184,10 +184,10 @@ Step_params:
         module:             blast_new
         base:               trino_Transdecode_highExpr
         script_path:        {Vars.paths.blastp}
+        query:         sample
+        db:            {Vars.databases.trinotate.sprot}
         querytype:          prot
         redirects:
-            -query:         sample
-            -db:            {Vars.databases.trinotate.sprot}
             -max_target_seqs: 1
             -num_threads:   1
             -outfmt:        6

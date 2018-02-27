@@ -127,9 +127,9 @@ Step_params:
         base:               prokka_asmbl
         script_path:        '{Vars.paths.blast}/blastx'
         redirects:
-            -db:            {Vars.databases.uniprot_sprot.blastdb}
-            -query:         sample
             -evalue:        0.0001
+        db:                 {Vars.databases.uniprot_sprot.blastdb}
+        query:              sample
         querytype:          nucl   # Use the 'nucl' output from prokka
 ############################ BONUS. BLAST predicted genes against assembly 
     blst_genes_asmbl:
@@ -137,9 +137,9 @@ Step_params:
         base:               [prokka_asmbl,mkblst_nucl]
         script_path:        '{Vars.paths.blast}/blastn'
         redirects:
-            -db:            sample
-            -query:         sample
             -evalue:        0.0001
+        db:                 sample
+        query:              sample
         querytype:          nucl   # Use the 'nucl' output from prokka
         dbtype:             nucl   # Use the 'nucl' output from prokka
 

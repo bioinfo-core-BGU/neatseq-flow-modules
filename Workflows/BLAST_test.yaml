@@ -1,0 +1,180 @@
+Global_params:
+    Default_wait: 10
+    Qsub_opts: -V -cwd
+    Qsub_q: myqueue.q
+    Qsub_path: /path/to/qsub/bin
+    module_path:      ../modules_release_1.1.0
+Description: |
+    A pipeline showing various ways for using BLAST 
+    ------------------------------------------------
+    
+    Input: paired end or single end reads in gzipped fastq format (fq.gz).
+    
+    The workflow includes the following stages:
+    
+    1. Merging and QC
+    2. Assembly using MEGAHIT (sample scope. i.e. one assembly per sample)
+    3. Constructing a BLAST db from the assembly using the 'makeblastdb' module
+    4. Searching the assembly using a fasta query file.
+    5. Annotation of the assemblies using prokka
+    6. Using the resulting predicted gene sequences to search a BLAST database.
+    7. Using the alternative BLAST module ('blast_new') to search the assembly for the predicted genes.
+    
+    Note. Module 'parse_blast' uses a program for parsing tabular BLAST tables. The code is freelly accessible at https://github.com/bioinfo-core-BGU/parse_blast
+
+Vars:
+    paths:
+        merge:                              cat
+        fastqc:                             /path/to/fastqc
+        trimmo:                             /path/to/java -jar /path/to/trimmomatic-0.32.jar
+        megahit:                            /path/to/megahit
+        quast:                              /path/to/quast
+        prokka:                             /path/to/prokka
+        makeblastdb:                        /path/to/makeblastdb
+        blast:                              /path/to/blast/bin
+        parse_blast:                        Rscript /path/to/parse_blast.R
+        compare_blast_parsed_reports:       Rscript /path/to/compare_blast_parsed_reports.R
+    databases:
+        VFDB:
+            fasta:                          /path/to/VFDB.faa
+            table:                          /path/to/VFDB.tsv
+        uniprot_sprot:
+            fasta:                          /path/to/uniprot_sprot.fasta
+            blastdb:                        /path/to/uniprot_sprot          # Prefix of blastdb of uniprot_sprot
+            table:                          /path/to/uniprot_sprot.tab      # Table of uniprot_sprot entries.
+Step_params:
+############################ 1. merge and QC
+    Merge_smp:
+        module:             merge
+        script_path:        {Vars.paths.merge}
+        src:                [Nucleotide, Protein]
+        trg:                
+        scope:              sample
+        
+    Merge_prj:
+        module:             merge
+        script_path:        {Vars.paths.merge}
+        src:                [Nucleotide, Protein]
+        trg:                
+        scope:              project
+
+    Mkblst_smp:
+        module:             makeblastdb
+        base:               [Merge_prj, Merge_smp]
+        script_path:        {Vars.paths.makeblastdb}
+        scope:              sample
+        qsub_params:
+            -pe:            shared 20
+        redirects:
+            -dbtype:        nucl
+    Mkblst_prj:
+        module:             makeblastdb
+        base:               [Merge_prj, Merge_smp]
+        script_path:        {Vars.paths.makeblastdb}
+        scope:              project
+        qsub_params:
+            -pe:            shared 20
+        redirects:
+            -dbtype:        nucl
+# Plan:
+# Internal DB, internal Query
+    # 1a. sample DB, sample Query
+    # 1b. sample DB, project Query
+    # 1c. project DB, sample Query
+    # 1d. project DB, project Query
+# Internal DB, External Query
+    # 2a. sample DB
+    # 2b. project DB
+# External DB, Internal Query
+    # 3a. sample Query
+    # 3b. project Query
+    
+
+    Blast_1a:
+        module:             blast_new
+        base:               [Mkblst_prj, Mkblst_smp]
+        script_path:        '{Vars.paths.blast}/blastx'
+        db:                 sample
+        dbtype:             nucl
+        query:              sample
+        querytype:          nucl   # Use the 'nucl' output from prokka
+        redirects:
+            -evalue:        0.0001
+
+    Blast_1b:
+        module:             blast_new
+        base:               [Mkblst_prj, Mkblst_smp]
+        script_path:        '{Vars.paths.blast}/blastx'
+        db:                 sample
+        dbtype:             nucl
+        query:              project
+        querytype:          nucl   # Use the 'nucl' output from prokka
+        redirects:
+            -evalue:        0.0001
+
+    Blast_1c:
+        module:             blast_new
+        base:               [Mkblst_prj, Mkblst_smp]
+        script_path:        '{Vars.paths.blast}/blastx'
+        db:                 project
+        dbtype:             nucl
+        query:              sample
+        querytype:          nucl   # Use the 'nucl' output from prokka
+        redirects:
+            -evalue:        0.0001
+
+    Blast_1d:
+        module:             blast_new
+        base:               [Mkblst_prj, Mkblst_smp]
+        script_path:        '{Vars.paths.blast}/blastx'
+        db:                 project
+        dbtype:             nucl
+        query:              project
+        querytype:          nucl   # Use the 'nucl' output from prokka
+        redirects:
+            -evalue:        0.0001
+
+
+    Blast_2a:
+        module:             blast_new
+        base:               [Mkblst_prj, Mkblst_smp]
+        script_path:        '{Vars.paths.blast}/blastx'
+        db:                 sample
+        dbtype:             nucl
+        query:              /path/to/query
+        querytype:          nucl   # Use the 'nucl' output from prokka
+        redirects:
+            -evalue:        0.0001
+
+    Blast_2b:
+        module:             blast_new
+        base:               [Mkblst_prj, Mkblst_smp]
+        script_path:        '{Vars.paths.blast}/blastx'
+        db:                 project
+        dbtype:             nucl
+        query:              /path/to/query
+        querytype:          nucl   # Use the 'nucl' output from prokka
+        redirects:
+            -evalue:        0.0001
+
+    Blast_3a:
+        module:             blast_new
+        base:               [Mkblst_prj, Mkblst_smp]
+        script_path:        '{Vars.paths.blast}/blastx'
+        db:                 /path/to/blastdb
+        dbtype:             nucl
+        query:              sample
+        querytype:          nucl   # Use the 'nucl' output from prokka
+        redirects:
+            -evalue:        0.0001
+
+    Blast_3b:
+        module:             blast_new
+        base:               [Mkblst_prj, Mkblst_smp]
+        script_path:        '{Vars.paths.blast}/blastx'
+        db:                 /path/to/blastdb
+        dbtype:             nucl
+        query:              project
+        querytype:          nucl   # Use the 'nucl' output from prokka
+        redirects:
+            -evalue:        0.0001

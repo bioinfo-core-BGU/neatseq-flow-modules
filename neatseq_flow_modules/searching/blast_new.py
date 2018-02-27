@@ -129,7 +129,8 @@ __version__ = "1.1.0"
 
 class Step_blast_new(Step):
     
-    
+    auto_redirs = "-db -query".split(" ")
+
     def step_specific_init(self):
         """ Called on intiation
             Good place for parameter testing.
@@ -138,12 +139,37 @@ class Step_blast_new(Step):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = ".blast.out"
 
-        # Check that either -db or -query (not both) are set in redir_params:
-        if "-db" not in self.params["redir_params"]:
-            raise AssertionExcept("You must supply a '-db' redirects parameter\n")
-        if "-query" not in self.params["redir_params"]:
-            raise AssertionExcept("You must supply a '-query' redirects parameter\n")
+        # # Check that either -db or -query (not both) are set in redir_params:
+        # if "-db" not in self.params["redir_params"]:
+            # raise AssertionExcept("You must supply a '-db' redirects parameter\n")
+        # if "-query" not in self.params["redir_params"]:
+            # raise AssertionExcept("You must supply a '-query' redirects parameter\n")
+        # Check that either db or query (not both) are set:
+        if "db" not in self.params:
+            raise AssertionExcept("You must supply a 'db' parameter\n")
+        if "query" not in self.params:
+            raise AssertionExcept("You must supply a 'query' parameter\n")
         
+        
+        
+        if self.params["db"] in ["sample","project"]:
+            if "dbtype" not in self.params:
+                raise AssertionExcept("No 'dbtype' passed. Please specify the db type to use.")
+            elif self.params["dbtype"] not in ["prot","nucl"]:
+                raise AssertionExcept("'dbtype' must be either 'prot' or 'nucl'.")
+            else:
+                pass
+
+        if "querytype" not in self.params:
+            raise AssertionExcept("No 'querytype' passed. Please specify the query type to use. (If external query, define it's type with 'querytype')")
+        elif self.params["querytype"] not in ["prot","nucl"]:
+            raise AssertionExcept("'querytype' must be either 'prot' or 'nucl'.")
+        else:
+            pass
+
+        if self.params["query"] not in ["sample","project"] and self.params["db"] not in ["sample","project"]:
+            raise AssertionExcept("At least one of 'query' and 'db' must be 'sample' or 'project'. You can't pass two paths.")
+
             
 
     def step_sample_initiation(self):
@@ -176,26 +202,7 @@ class Step_blast_new(Step):
         self.outfmt_txt = outfmt_txt[self.outfmt]
 
         
-        
-        if self.params["redir_params"]["-db"] in ["sample","project"]:
-            if "dbtype" not in self.params:
-                raise AssertionExcept("No 'dbtype' passed. Please specify the db type to use.")
-            elif self.params["dbtype"] not in ["prot","nucl"]:
-                raise AssertionExcept("'dbtype' must be either 'prot' or 'nucl'.")
-            else:
-                pass
-        # if self.params["redir_params"]["-query"] in ["sample","project"]:
-        if "querytype" not in self.params:
-            raise AssertionExcept("No 'querytype' passed. Please specify the query type to use. (If external query, define it's type with 'querytype')")
-        elif self.params["querytype"] not in ["prot","nucl"]:
-            raise AssertionExcept("'querytype' must be either 'prot' or 'nucl'.")
-        else:
-            pass
-
-        if self.params["redir_params"]["-query"] not in ["sample","project"] and self.params["redir_params"]["-db"] not in ["sample","project"]:
-            raise AssertionExcept("At least one of -query and -db must be 'sample' or 'project'. You can't pass two paths.")
-
-        if self.params["redir_params"]["-query"] == "sample" or self.params["redir_params"]["-db"] == "sample":
+        if self.params["query"] == "sample" or self.params["db"] == "sample":
             self.params["scope"] = "sample"
             self.step_sample_initiation_bysample()
         else:
@@ -203,11 +210,11 @@ class Step_blast_new(Step):
             self.step_sample_initiation_byproject()
 
         # Moving the redirected values of -query and -db to self.
-        self.db = self.params["redir_params"]["-db"]
-        self.query = self.params["redir_params"]["-query"]
-        # Removing from redirects. Get treated individually.
-        del self.params["redir_params"]["-db"]
-        del self.params["redir_params"]["-query"]
+        self.db = self.params["db"]
+        self.query = self.params["query"]
+        # # Removing from redirects. Get treated individually.
+        # del self.params["redir_params"]["-db"]
+        # del self.params["redir_params"]["-query"]
         
         
         
@@ -219,16 +226,16 @@ class Step_blast_new(Step):
             
         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
 
-            if self.params["redir_params"]["-query"] == "sample":
+            if self.params["query"] == "sample":
                 if "fasta." + self.params["querytype"] not in self.sample_data[sample]:
                     raise AssertionExcept("No fasta of type %s in sample" % self.params["querytype"], sample)
-            if self.params["redir_params"]["-query"] == "project":
+            if self.params["query"] == "project":
                 if "fasta." + self.params["querytype"] not in self.sample_data:
                     raise AssertionExcept("No fasta of type %s in project" % self.params["querytype"])
-            if self.params["redir_params"]["-db"] == "sample":
+            if self.params["db"] == "sample":
                 if "blastdb." + self.params["dbtype"] not in self.sample_data[sample]:
                     raise AssertionExcept("No blastdb of type %s in sample. Did you run makeblastdb module with sample scope?" % self.params["dbtype"], sample)            
-            if self.params["redir_params"]["-db"] == "project":
+            if self.params["db"] == "project":
                 if "blastdb." + self.params["dbtype"] not in self.sample_data:
                     raise AssertionExcept("No blastdb of type %s in project. Did you run makeblastdb module with project scope?" % self.params["dbtype"])
             
@@ -246,10 +253,10 @@ class Step_blast_new(Step):
         """
         
 
-        if self.params["redir_params"]["-query"] == "project":
+        if self.params["query"] == "project":
             if "fasta." + self.params["querytype"] not in self.sample_data:
                 raise AssertionExcept("No fasta of type %s in project" % self.params["querytype"])
-        if self.params["redir_params"]["-db"] == "project":
+        if self.params["db"] == "project":
             if "blastdb." + self.params["dbtype"] not in self.sample_data:
                 raise AssertionExcept("No blastdb of type %s in project. Did you run makeblastdb module with project scope?" % self.params["dbtype"])
                    
