@@ -13,5 +13,6 @@ Sample2	Forward	Sample2_F1.fastq.gz	1
 Sample2	Forward	Sample2_R1.fastq.gz	1
 Sample2	Reverse	Sample2_F2.fastq.gz	2
 Sample2	Reverse	Sample2_R2.fastq.gz	2
+
 			
 Sample_Control	Sample1:Sample2

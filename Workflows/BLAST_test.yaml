@@ -25,37 +25,27 @@ Description: |
 Vars:
     paths:
         merge:                              cat
-        fastqc:                             /path/to/fastqc
-        trimmo:                             /path/to/java -jar /path/to/trimmomatic-0.32.jar
-        megahit:                            /path/to/megahit
-        quast:                              /path/to/quast
-        prokka:                             /path/to/prokka
         makeblastdb:                        /path/to/makeblastdb
         blast:                              /path/to/blast/bin
-        parse_blast:                        Rscript /path/to/parse_blast.R
-        compare_blast_parsed_reports:       Rscript /path/to/compare_blast_parsed_reports.R
-    databases:
-        VFDB:
-            fasta:                          /path/to/VFDB.faa
-            table:                          /path/to/VFDB.tsv
-        uniprot_sprot:
-            fasta:                          /path/to/uniprot_sprot.fasta
-            blastdb:                        /path/to/uniprot_sprot          # Prefix of blastdb of uniprot_sprot
-            table:                          /path/to/uniprot_sprot.tab      # Table of uniprot_sprot entries.
+
 Step_params:
 ############################ 1. merge and QC
     Merge_smp:
         module:             merge
         script_path:        {Vars.paths.merge}
-        src:                [Nucleotide, Protein]
-        trg:                
+        src:                [Nucleotide, Protein, BED]
+        trg:                [null,null   ,bed]
+        ext:                [null,null   ,bed]
         scope:              sample
+        # stop_and_show:
+        
         
     Merge_prj:
         module:             merge
         script_path:        {Vars.paths.merge}
-        src:                [Nucleotide, Protein]
-        trg:                
+        src:                [Nucleotide, Protein, BED]
+        trg:                [null,null   ,bed]
+        ext:                [null,null   ,bed]
         scope:              project
 
     Mkblst_smp:

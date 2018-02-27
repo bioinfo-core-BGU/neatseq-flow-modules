@@ -21,6 +21,7 @@ Step_params:
         trg:                [null,    null   ]
         ext:                [null,    null   ]
         scope:              [sample,  sample ]
+        
     
     trim1:
         module: trimmo
@@ -33,3 +34,4 @@ Step_params:
         todo: LEADING:20 TRAILING:20
         redirects:
             -threads: 20
+    

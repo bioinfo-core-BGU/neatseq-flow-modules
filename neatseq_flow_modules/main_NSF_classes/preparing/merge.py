@@ -12,14 +12,13 @@ A module for merging and staging files from the sample file into **NeatSeq-Flow*
 Can be used in two modes: 
 
 **The Basic mode**
-    is used when the file types in the `sample definition file`_ are a subset of the list of recognized types (see below). In this case, all you need to supply is the ``script_path`` (note below on legitimate ``script_path`` values). If all files have recognized extensions, **NeatSeq-Flow** will assign ``script_path`` automatically, so you do not have to pass ``script_path``, either. See below a list of recognized extensions.
+    **NeatSeq-Flow** will attempt to guess all the parameters it requires. Files will be concatenated and stored in the file type index according to the table below. File types not included in the table will be stored in the file type index by the type specified in the sample file, in lower case.
     
-    You have to make sure that all files of each file type have the same extension for **NeatSeq-Flow** to guess the ``script_path``. 
+    You have to make sure that all files of each file type have the same extension for **NeatSeq-Flow** to guess the ``script_path`` and ``pipe`` parameters. 
     
-    All of the above is true for ``pipe`` parameter, as well.
     
 **The Advanced mode**
-    is used when the basic mode can't be used. It enables full control over which file types are merged, how they are copied and in which slots they are placed in the file type index. It also enables merging file types not recognized by **NeatSeq-Flow** (see list below).
+    is used when more control on data merging is required. It enables full control over which file types are merged, how they are copied and in which slots they are placed in the file type index. It also enables merging file types not recognized by **NeatSeq-Flow** (see list below).
     
     In this mode, you have to define the following lists: ``src``, ``trg``, ``script_path``, ``scope`` and ``ext``. For each file type in the sample file, you should have an entry in the ``src`` list. The other lists should apply to the equivalent entry in ``src``. ``trg`` is the target file type (in the file type index) for the merged files, ``script_path`` is the shell command to use to merge the source type, ``scope`` is the scope for which the source type is defined and ``ext`` is the suffix to append to the merged filenames. Strings are expanded to the length of ``src`` list, so if ``script_path`` is the same for all source types, it is enough to specify it once. 
     
@@ -300,17 +299,24 @@ class Step_merge(Step):
             script_path = self.params["script_path"][src_ind]
             trg = self.params["trg"][src_ind]
             ext = self.params["ext"][src_ind]
-
+            # A list of srcs to remove. These are sources that do not exist in samples or projects
+            bad_srcs = []
             # Guessing 'trg'
             if not trg:
                 if src not in self.default_src_trg_map.keys():
-                    raise AssertionExcept("The following 'src' is  not recognized: %s. Please use explicit 'trg' list in merge" % src)
-                self.params["trg"][src_ind] = self.default_src_trg_map[src][0] 
+                    # raise AssertionExcept("The following 'src' is  not recognized: %s. Please use explicit 'trg' list in merge" % src)
+                    self.write_warning("The following 'src' is  not recognized: {src}. Setting 'trg' to {trg}".format(src=src,trg=src.lower()))
+                    self.params["trg"][src_ind] = src.lower()
+                else:
+                    self.params["trg"][src_ind] = self.default_src_trg_map[src][0] 
                 # Guessing 'ext'
             if ext == None:
                 if src not in self.default_src_trg_map.keys():
-                    raise AssertionExcept("The following 'src' is  not recognized: %s. Please use explicit 'ext' list in merge" % src)
-                self.params["ext"][src_ind] = self.default_src_trg_map[src][1] 
+                    # raise AssertionExcept("The following 'src' is  not recognized: %s. Please use explicit 'ext' list in merge" % src)
+                    self.write_warning("The following 'src' is  not recognized: {src}. Setting 'ext' to {ext}".format(src=src,ext=src.lower()))
+                    self.params["ext"][src_ind] = src.lower()
+                else:
+                    self.params["ext"][src_ind] = self.default_src_trg_map[src][1] 
             
             # Guessing scope if None
             if not scope:
@@ -325,7 +331,9 @@ class Step_merge(Step):
             if scope=="sample":
                 for sample in self.sample_data["samples"]:
                     if src not in self.sample_data[sample]:
-                        raise AssertionExcept("Type '{src}' does not exist for sample '{smp}'!".format(src=src,smp=sample))
+                        self.write_warning("Type '{src}' does not exist for sample '{smp}'!".format(src=src,smp=sample))
+                        bad_srcs += [src_ind]  # Adding bad source to bad_srcs
+                        
                 # Guessing script_path:
                 # Get file extensions:
                 if not script_path:  # Is none - try geussing
@@ -349,7 +357,9 @@ class Step_merge(Step):
                         
             elif scope=="project":
                 if src not in self.sample_data["project_data"]:
-                    raise AssertionExcept("Type '{src}' does not exist in project data!".format(src=src, ext=src_exts))
+                    self.write_warning("Type '{src}' does not exist in project data!".format(src=src))
+                    bad_srcs += [src_ind]  # Adding bad source to bad_srcs
+
                 # Guessing script_path:
                 # Get file extensions:
                 if not script_path:  # Is none - try geussing
@@ -375,7 +385,9 @@ class Step_merge(Step):
         # #---------------------------------------
         # for param in ["script_path","src","trg","ext","pipe","scope"]:
             # print param
+            # self.params[param] = [i for j, i in enumerate(self.params[param]) if j not in bad_srcs]
             # pp(self.params[param])
+        # print bad_srcs
         # #---------------------------------------
         # sys.exit()
 
