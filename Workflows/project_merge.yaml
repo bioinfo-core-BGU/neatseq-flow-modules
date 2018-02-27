@@ -6,17 +6,25 @@ Global_params:
     module_path:      ../modules_release_1.1.0
 
 Step_params:
-    merge1:
+    merge_proj:
+        module:             merge
+        script_path:        [cat,     cat ]
+        src:                [TYP1,    TYP2]
+        trg:                [typ1,    typ2]
+        ext:                typ
+        scope:              project
+    
+    merge_smp:
         module:             merge
         script_path:        # Guess
-        src:                [TYP1,    TYP2,    Forward, Reverse]
-        trg:                [typ1,    typ2,    null,    null   ]
-        ext:                [typ,     typ,     null,    null   ]
-        scope:              [project, project, sample,  sample ]
+        src:                [Forward, Reverse]
+        trg:                [null,    null   ]
+        ext:                [null,    null   ]
+        scope:              [sample,  sample ]
     
     trim1:
         module: trimmo
-        base: merge1
+        base: [merge_smp,merge_proj]
         script_path: /path/trimmoma
         qsub_params:
             -pe: shared 20

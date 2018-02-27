@@ -96,6 +96,8 @@ __version__ = "1.1.0"
 
 
 class Step_bowtie1_mapper(Step):
+
+    auto_redirs = "--12 --interleaved  -q -f -r -c -C --color -Q --quals --Q1 --Q2 --suppress --version -h --help".split(" ")
     
     def step_specific_init(self):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
@@ -195,9 +197,8 @@ class Step_bowtie1_mapper(Step):
             # Get constant part of script:
             self.script += self.get_script_const()
             
-            
 
-            # self.script += "--rg-id %s \\\n\t" % sample
+            self.script += "--sam \\\n\t"
             self.script += "--sam-RG   SM:%s \\\n\t" % sample
             
             
@@ -211,7 +212,9 @@ class Step_bowtie1_mapper(Step):
             except KeyError:  # Otherwise do nothing - '-x' is included through redirect params
                 self.script += "%s \\\n\t" % self.params["ebwt"]
 
-                    
+            # TODO: Define redir_params --al, --un and --max.
+            #   If passed, they should create relevant fastq files in sample directory.
+            
             # assert set("fastq.F","fastq.R","fastq.S") & self.sample_data["sample"].keys(), "There are no reads for sample %s" % sample
             if "fastq.F" in self.sample_data[sample].keys():
                 self.script += "-1 %s \\\n\t-2 %s\\\n\t" % (self.sample_data[sample]["fastq.F"],self.sample_data[sample]["fastq.R"])

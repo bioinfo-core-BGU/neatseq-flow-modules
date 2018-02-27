@@ -219,19 +219,27 @@ class Step_merge(Step):
         # Getting list of possible src values. 
         # This is done for sample and project scope separately.
         # Used for creating src or testing src list passed by user
-        src = set()
+        src = []
+        scope = []
         # Get list of existing file types in samples file:
         for sample in self.sample_data["samples"]:
             sample_src = list(set(self.sample_data[sample].keys()))
             if "type" in sample_src: 
                 sample_src.remove("type")   # 'type' is the type of sample (PE, etc.)
             sample_scope = ["sample"] * len(sample_src)
+            # If sample data exists, store in 'src' and 'scope'
+            src = sample_src# + project_src
+            scope = sample_scope# + project_scope
         if "project_data" in self.sample_data:
             project_src = list(set(self.sample_data["project_data"].keys()))
             project_scope = ["project"] * len(project_src)
+            # If project data exists, add to 'src' and 'scope'
+            src = src + project_src
+            scope = scope + project_scope
 
-        src = sample_src + project_src
-        scope = sample_scope + project_scope
+        
+        # src = sample_src + project_src
+        # scope = sample_scope + project_scope
         # If 'src' is NOT user-defined: (Basic mode)
         if "src" not in self.params or not self.params["src"]:
             self.params["src"] = src

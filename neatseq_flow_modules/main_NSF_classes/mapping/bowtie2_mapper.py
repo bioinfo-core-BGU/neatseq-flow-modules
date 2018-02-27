@@ -112,7 +112,7 @@ __version__ = "1.1.0"
 
 class Step_bowtie2_mapper(Step):
     
-   
+    auto_redirs = "--rg-id -1 -2 -U --met-file -S --version -h --help".split(" ")
     
     def step_specific_init(self):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
