@@ -227,14 +227,28 @@ class Step_merge(Step):
                 sample_src.remove("type")   # 'type' is the type of sample (PE, etc.)
             sample_scope = ["sample"] * len(sample_src)
             # If sample data exists, store in 'src' and 'scope'
-            src = sample_src# + project_src
-            scope = sample_scope# + project_scope
+            # Do this only if one of the following:
+                # 1. 'scope' is not defined, or 
+                # 2. 'scope' is a string equal to 'sample' or
+                # 3. 'scope' is a list containing 'sample'.
+            if "scope" not in self.params \
+                or (isinstance(self.params["scope"],str) and self.params["scope"] == "sample") \
+                or (isinstance(self.params["scope"],list) and "sample" in self.params["scope"]):
+                src = sample_src
+                scope = sample_scope
         if "project_data" in self.sample_data:
             project_src = list(set(self.sample_data["project_data"].keys()))
             project_scope = ["project"] * len(project_src)
             # If project data exists, add to 'src' and 'scope'
-            src = src + project_src
-            scope = scope + project_scope
+            # Do this only if one of the following:
+                # 1. 'scope' is not defined, or 
+                # 2. 'scope' is a string equal to 'project' or
+                # 3. 'scope' is a list containing 'project'.
+            if "scope" not in self.params \
+                or (isinstance(self.params["scope"],str) and self.params["scope"] == "project") \
+                or (isinstance(self.params["scope"],list) and "project" in self.params["scope"]):
+                src = src + project_src
+                scope = scope + project_scope
 
         
         # src = sample_src + project_src
@@ -245,9 +259,9 @@ class Step_merge(Step):
             # For each of the other required lists
             for param in ["trg","script_path","ext","pipe","scope"]:
                 if param in self.params and self.params[param]:  # list is defined!
-                    if param in ['trg','ext','scope']:
+                    if param in ['trg','ext']:
                         raise AssertionExcept("'src' not specified. Please do not specify '%s'." %param)
-                    else:  # Param is script_path or pipe
+                    else:  # Param is script_path or pipe or scope
                         if isinstance(self.params[param], str):
                             self.params[param] = re.split(pattern="\s*,\s*", string=self.params[param])
                             
