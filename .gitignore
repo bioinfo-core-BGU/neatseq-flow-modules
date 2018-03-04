@@ -1,3 +1,4 @@
+*.bck
 *.pyc
 git-gui*
 not_for_publication

@@ -36,7 +36,7 @@ Parameters that can be set
 .. csv-table:: 
     :header: "Parameter", "Values", "Comments"
 
-    "scope", "``sample`` | ``project``, "Use sample of project scope fasta file."
+    "scope", "``sample`` | ``project``", "Use sample of project scope fasta file."
     
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

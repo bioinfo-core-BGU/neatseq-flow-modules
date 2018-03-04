@@ -25,15 +25,15 @@ Following is a list of modules included in this repository.
 .. attention:: 
    In order to include these modules in your workflow, please:
    
-   1. download the repository::
+   #. download the repository::
    
        wget https://github.com/bioinfo-core-BGU/neatseq-flow-modules/archive/master.zip
 
-   2. **Alternatively**, clone the repository::
+   #. **Alternatively**, clone the repository::
    
        git clone https://github.com/bioinfo-core-BGU/neatseq-flow-modules.git
       
-   3. add the following line in the `Global_params` section of your workflow parameter file::
+   #. add the following line in the `Global_params` section of your workflow parameter file::
    
        module_path: /path/to/location/of/modules/repository
    
@@ -93,7 +93,7 @@ Following is a list of modules included in this repository.
    Workflow_docs/variant_calling
    Workflow_docs/Clustering
    Workflow_docs/QIIME_workflow
-   Workflow_docs/Microbe-Flow
+..   Workflow_docs/Microbe-Flow
 
 
 Indices and tables

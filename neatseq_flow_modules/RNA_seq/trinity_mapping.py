@@ -10,8 +10,9 @@ A class that defines a module for running ``align_and_estimate_abundance.pl`` on
 
 Tested on versions 2.4.0 and 2.5.0 of Trinity.
 
-See the script documentation `here <https://github.com/trinityrnaseq/trinityrnaseq/wiki/Trinity-Transcript-Quantification#estimating-transcript-abundance>`_.
+See the `align_and_estimate_abundance.pl`_ script documentation.
 
+.. _align_and_estimate_abundance.pl: https://github.com/trinityrnaseq/trinityrnaseq/wiki/Trinity-Transcript-Quantification#estimating-transcript-abundance
 
 
 Requires
