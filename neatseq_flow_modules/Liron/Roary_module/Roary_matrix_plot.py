@@ -64,9 +64,24 @@ if __name__ == "__main__":
             if i in data.columns:
                 data.loc[data[i]==old_v,[i]]=new_v
         return data
+        
+    def getNewick(node, newick, parentdist, leaf_names):
+        if node.is_leaf():
+            return "%s:%.2f%s" % (leaf_names[node.id], parentdist - node.dist, newick)
+        else:
+            if len(newick) > 0:
+                newick = "):%.2f%s" % (parentdist - node.dist, newick)
+            else:
+                newick = ");"
+            newick = getNewick(node.get_left(), newick, node.dist, leaf_names)
+            newick = getNewick(node.get_right(), ",%s" % (newick), node.dist, leaf_names)
+            newick = "(%s" % (newick)
+            return newick
 
-    if roary.T.shape[0]<150:
-        fontsize=5
+######## Generate the pangenome matrix plot and the Accessory genes tree
+    temp_roary_sorted=roary_sorted.copy()        
+    if roary_sorted.T.shape[0]<150:
+        fontsize=2
     else:
         fontsize=(40./float(roary_sorted.T.shape[0]))*15
 
@@ -113,7 +128,6 @@ if __name__ == "__main__":
         
         #roary_sorted_new=roary_sorted.loc[roary_sorted.index[mm],roary_sorted.columns[m]].copy()
         roary_sorted_new=roary_sorted.loc[:,roary_sorted.columns[m]].copy()
-        roary_sorted_new.loc[VF,].to_csv(os.path.join(options.O,'pangenome_matrix.%s' % 'tab'), sep='\t',float_format="%g",index=True)
         roary_sorted_new=change_data_val(roary_sorted_new.T,VF,1,-1)
         a=ax1.imshow(roary_sorted_new, cmap=plt.cm.bwr_r,
                vmin=-1, vmax=1,
@@ -132,21 +146,94 @@ if __name__ == "__main__":
         plt.savefig(os.path.join(options.O,'pangenome_matrix.%s' % options.format), dpi=600)
         plt.clf()
         
-    print ' write new tree file'
-    def getNewick(node, newick, parentdist, leaf_names):
-        if node.is_leaf():
-            return "%s:%.2f%s" % (leaf_names[node.id], parentdist - node.dist, newick)
-        else:
-            if len(newick) > 0:
-                newick = "):%.2f%s" % (parentdist - node.dist, newick)
-            else:
-                newick = ");"
-            newick = getNewick(node.get_left(), newick, node.dist, leaf_names)
-            newick = getNewick(node.get_right(), ",%s" % (newick), node.dist, leaf_names)
-            newick = "(%s" % (newick)
-            return newick
+        print ' Write Accessory genes tree file'
 
-    tree = to_tree(Z,False)
-    h=open(os.path.join(options.O,'pangenome_matrix.%s' % "newick"),'w')
-    h.write( getNewick(tree, "", tree.dist, map(lambda x:x[0:15],roary_sorted.columns) ))
-    h.close()
+
+        tree = to_tree(Z,False)
+        h=open(os.path.join(options.O,'Accessory.%s' % "newick"),'w')
+        h.write( getNewick(tree, "", tree.dist, map(lambda x:x,roary_sorted.columns) ))
+        h.close()
+    
+
+
+
+######## Generate the virulence/resistance matrix plot and the virulence/resistance tree
+    if len(VF)>0:
+        
+        roary_sorted=temp_roary_sorted.loc[VF,].copy()
+        
+        if roary_sorted.T.shape[0]<150:
+            fontsize=3
+        else:
+            fontsize=(40./float(roary_sorted.T.shape[0]))*15
+
+        with sns.axes_style('whitegrid'):
+            fig = plt.figure(figsize=(17, 20))
+
+            ax1=plt.subplot2grid((50,50), (13, 15), colspan=30,rowspan=35)
+            ax2=plt.subplot2grid((50,50),(13, 0), colspan=10,rowspan=35, axisbg='white')
+            #ax3=plt.subplot2grid((50,50),(0, 15), colspan=30,rowspan=10, axisbg='white')
+            
+            fig.subplots_adjust(wspace=0, hspace=0)
+
+            ax1.set_title('Roary matrix\n(%d gene clusters)'%roary_sorted.shape[0])
+            plt.rcParams["lines.linewidth"]=1
+            
+            Z = linkage(roary_sorted.loc[:,roary_sorted.columns].T.values,options.C)
+
+            g=dendrogram(
+                Z,
+                leaf_rotation=0.,  # rotates the x axis labels
+                leaf_font_size=fontsize,  # font size for the x axis labels
+                labels=map(lambda x:x[0:15],roary_sorted.columns) ,
+                orientation="left",
+                ax=ax2,
+             )
+            m=g["leaves"]
+            m.reverse()
+            
+            
+            # ZZ = linkage(roary_sorted.loc[:,roary_sorted.columns].values,options.C)
+
+            # gg=dendrogram(
+                # ZZ,
+                # leaf_rotation=90,  # rotates the x axis labels
+                # leaf_font_size=fontsize, # font size for the x axis labels
+                # labels=map(lambda x:x[0:15],roary_sorted.index) ,
+                # orientation="top",
+                # ax=ax3,
+             # )
+            # mm=gg["leaves"]
+            # mm.reverse()
+            # ax3.invert_xaxis()
+            
+            
+            #roary_sorted_new=roary_sorted.loc[roary_sorted.index[mm],roary_sorted.columns[m]].copy()
+            roary_sorted_new=roary_sorted.loc[:,roary_sorted.columns[m]].copy()
+            roary_sorted_new=change_data_val(roary_sorted_new.T,VF,1,-1)
+            a=ax1.imshow(roary_sorted_new, cmap=plt.cm.bwr_r,
+                   vmin=-1, vmax=1,
+                   aspect='auto',
+                   interpolation='none',
+                    )
+            
+            ax1.set_yticks(range(len(roary_sorted_new.index)),minor=False)
+            ax2.set_xticks([])
+            #ax3.set_yticks([])
+            
+            ax1.set_yticklabels(map(lambda x:x[0:15],roary_sorted_new.index),fontsize=fontsize)
+            ax1.grid('off')
+            ax2.grid('off')
+            #ax3.grid('off')
+            plt.savefig(os.path.join(options.O,'virulence_resistance.%s' % options.format), dpi=600)
+            plt.clf()
+            
+            tree = to_tree(Z,False)
+            h=open(os.path.join(options.O,'virulence_resistance.%s' % "newick"),'w')
+            h.write( getNewick(tree, "", tree.dist, map(lambda x:x,roary_sorted.columns) ))
+            h.close()
+
+            roary_sorted=roary_sorted.T.copy()
+            roary_sorted.index.names=['Samples']
+            roary_sorted.to_csv(os.path.join(options.O,'virulence_resistance.%s' % 'tab'), sep='\t',float_format="%g",index=True)
+            print ' Write virulence/resistance tree file'

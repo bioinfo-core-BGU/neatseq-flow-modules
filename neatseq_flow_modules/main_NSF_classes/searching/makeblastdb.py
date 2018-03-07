@@ -15,10 +15,10 @@ Requires
         
 * fastq files in the following slots:
 
-    * ``sample_data[<sample>]["fasta"]["nucl"|"prot"]``
+    * ``sample_data[<sample>]["fasta.nucl"|"fasta.prot"]``
 
 * Or (if 'projectBLAST' is set)
-    * ``sample_data["fasta"]["nucl"|"prot"]``
+    * ``sample_data["fasta.nucl"|"fasta.prot"]``
 
 Output
 ~~~~~~
@@ -161,10 +161,6 @@ class Step_makeblastdb(Step):
             # script
         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
         
-            # Check that -dbtype has equivalen file in "fasta" stricture
-            # Tested in step_sample_initiation_bysample
-            # if not dbtype in self.sample_data[sample]["fasta"]:
-                # raise AssertionExcept("No file matching the -dbtype you supplied.\n",sample)
         
             # Name of specific script:
             self.spec_script_name = "_".join([self.step,self.name,sample])

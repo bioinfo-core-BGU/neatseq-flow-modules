@@ -28,6 +28,8 @@ Output
     * Files for phyloviz in:
         ``self.sample_data["phyloviz_MetaData"]``
         ``self.sample_data["phyloviz_Alleles"]``
+    * Tree file (if --Tree flag is set) in newick format in: 
+        ``self.sample_data["newick"]``
 
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -66,6 +68,8 @@ Lines for parameter file
         metadata_samples_ID_field:               # Column name in the Meta-Data file of the samples ID
         cut_samples_not_in_metadata:             # In the final merge file consider only samples found in the Meta-Data file
         sample_cutoff:                           # In the final merge file consider only samples that have at least this fraction of identified alleles
+        Tree:                                    # Generate newick Tree using hierarchical-clustering [Hamming distance]
+        Tree_method:                             # The hierarchical-clustering linkage method [default=complete]
         redirects:
             --scheme:                            # Path to the Typing scheme file [Tab delimited]
             --Type_col_name:                     # Column/s name/s in the scheme file that are not locus names
@@ -157,14 +161,18 @@ class Step_cgMLST_and_MLST_typing(Step):
                 self.script += " -F %s \\\n\t" % merge_file
                 if "--Type_col_name" in self.params["redir_params"]:
                     #Non allelic fields in the Merged file
-                    self.script += " --Non_allelic '%s,%%s' \\\n\t" % 'Sample,Status,Percentage_of_missing_genes' % self.params["redir_params"]["--Type_col_name"]
+                    self.script += " --Non_allelic '%s,%%s' \\\n\t" % 'Samples,Status,Percentage_of_missing_genes' % self.params["redir_params"]["--Type_col_name"]
                     #Fields in the merge file to move to the metadata file
                     self.script += " --Fields '%s,%%s' \\\n\t" % 'Status,Percentage_of_missing_genes' % self.params["redir_params"]["--Type_col_name"]
+                if "Tree" in self.params.keys():
+                    self.script += " --Tree  \\\n\t" 
+                    if "Tree_method" in self.params.keys():
+                        self.script += " --Tree_method %s \\\n\t" % self.params["Tree_method"]
+                    self.sample_data["newick"]=os.path.join(pars_dir,"Tree.newick")
+ 
                 self.script += " -O %s \n\n" % pars_dir
                 self.sample_data["phyloviz_MetaData"]=os.path.join(pars_dir,"New_MetaData.tab")
                 self.sample_data["phyloviz_Alleles"]=os.path.join(pars_dir,"New_Merged_cut.tab")
-        
-        
                 
     def build_scripts(self):
         """ This is the actual script building function
@@ -197,13 +205,10 @@ class Step_cgMLST_and_MLST_typing(Step):
                 output_filename = "".join([use_dir , sample , self.file_tag])
                 
                 self.script += self.get_script_const()
-                # Define query and db files:
-                # If db is defined by user, set the query to the correct 'fasta2use'
-                # If both nucl and prot appear in blast results
                 self.script += "--blast %s \\\n\t" % self.sample_data[sample]["blast.parsed"]                
                 self.script += "--output %s\n\n" % output_filename
                 
-                # Store BLAST result file:
+                # Store Typing result file:
                 self.sample_data[sample]["Typing"] = "".join([sample_dir , sample , self.file_tag])
 
 

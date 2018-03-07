@@ -43,6 +43,8 @@ Output
     * ``sample_data["Bicluster_clusters"]``
 * puts output Gecko directory location in the following slot:
     * ``sample_data["Gecko_results_dir"]``
+* puts Accessory genes or virulence/resistance hierarchical-clustering tree file in the following slot:
+    * ``self.sample_data["newick"]``
 
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -107,7 +109,9 @@ Lines for parameter file
             --metadata:                          # location of MetaData file to use to annotate the clusters
         plot:                                    # plot gene presence/absence matrix
             format:                              # The gene presence/absence matrix plot output format. example: pdf
-            Clustering_method                    # The gene presence/absence matrix plot clustering method. example: ward
+            Clustering_method                    # The gene presence/absence matrix plot hierarchical-clustering method. example: ward
+            Tree:                                # Save s tree in newick format of the 'Accessory' genes or the 'virulence_resistance_tag' genes hierarchical-clustering
+                                                 # example: Tree: Accessory 
         scoary:
             script_path:                         # Command for running the scoary script, if empty or this line dose not exist will not run scoary 
             BH_cutoff:                           # Scoary BH correction for multiple testing cut-off
@@ -254,6 +258,13 @@ class Step_Roary(Step):
                             self.script += " --tag %s \\\n\t" % "Virulence_Resistance.fasta:Virulence"
                         else:
                             self.script += " --tag %s \\\n\t" % self.params["virulence_resistance_tag"]
+                        if 'Tree' in self.params["plot"].keys():
+                            if self.params["plot"]['Tree']=='virulence_resistance_tag':
+                                self.sample_data["newick"]=os.path.join(self.sample_data["pan_genome_results_dir"],'virulence_resistance.newick')
+                    if 'Tree' in self.params["plot"].keys():
+                        if self.params["plot"]['Tree']=='Accessory':  
+                            self.sample_data["newick"]=os.path.join(self.sample_data["pan_genome_results_dir"],'Accessory.newick')
+                            
                     if "Clustering_method" in self.params["plot"].keys():
                         self.script += " -C %s \\\n\t" % self.params["plot"]["Clustering_method"]
                 self.script += " -O %s \\\n\t" % self.sample_data["pan_genome_results_dir"]

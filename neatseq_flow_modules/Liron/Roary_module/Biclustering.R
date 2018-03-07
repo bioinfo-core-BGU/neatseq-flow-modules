@@ -81,16 +81,7 @@ if (is.null(Roary_Results_file)){
 
 
 
-    # Check if required packages are installed:
-    if(!(all(c("hgu95av2.db") %in% installed.packages()))) {
-        if (Sys.getenv("CONDA_PREFIX")!=""){
-            source("https://bioconductor.org/biocLite.R")
-            biocLite("hgu95av2.db")
-        } else {
-            cat("The 'hgu95av2.db' package is not installed. You must install it for this script to work!")
-        }
-    }
-    library("hgu95av2.db")
+
     if(!(all(c("clusterProfiler") %in% installed.packages()))) {
         if (Sys.getenv("CONDA_PREFIX")!=""){
             source("https://bioconductor.org/biocLite.R")
@@ -126,7 +117,16 @@ if (is.null(Roary_Results_file)){
     
 
 
-
+    # Check if required packages are installed:
+    if(!(all(c("hgu95av2.db") %in% installed.packages()))) {
+        if (Sys.getenv("CONDA_PREFIX")!=""){
+            source("https://bioconductor.org/biocLite.R")
+            biocLite("hgu95av2.db")
+        } else {
+            cat("The 'hgu95av2.db' package is not installed. You must install it for this script to work!")
+        }
+    }
+    library("hgu95av2.db")
 
     if(!(all(c("openxlsx") %in% installed.packages()))) {
         if (Sys.getenv("CONDA_PREFIX")!=""){
@@ -396,23 +396,51 @@ if (is.null(Roary_Results_file)){
     MetaFeature = new("AnnotatedDataFrame", data=sub_Roary_data_filter)
     MetaSample  = new("AnnotatedDataFrame", data=metadata)
 
+
     # Create the proper structure for data and meta-data all together
     dbESet = ExpressionSet(assayData   = Roary_matrix_filter,
                            featureData = MetaFeature,
                            phenoData   = MetaSample,
                            annotation  = "hgu95av2")    ## Without this "chip" argument, it doesn't work.
 
-
+    
     # Run ISA with random seeds
     set.seed(1)
     dbModules.random = ISA(data = dbESet,
                            flist = NA, uniqueEntrez = FALSE,
                            thr.gene = thr.gene, thr.cond = thr.cond, no.seeds = no.seeds)
-    # The next few lines help with adjusting the ISA thresholds
-    getNoFeatures(dbModules.random)
-    getNoSamples(dbModules.random)
+
+    
+    anno=sub_Roary_data_filter
+    Roary_matrix_filter=as.data.frame(Roary_matrix_filter)
+    
+    anno$VFG=sapply(X = anno$VFG,FUN = function(x) stringr::str_c(x,collapse = ","))
+    anno$vfclass= vapply(anno$vfclass, paste, collapse = ", ", character(1L))
+    anno=subset.data.frame(x =anno,,c('VFG','vfclass'))
+    
+    vfclass=data.frame()
+    for (name in colnames(Roary_matrix_filter)) {
+      temp=subset.data.frame(x =Roary_matrix_filter, Roary_matrix_filter[name]>0,select=name)
+      if (length(temp)>0){
+          colnames(temp)='Samples'
+          temp['Samples']=name
+          temp['gene']=rownames(temp)
+          temp=merge(temp,anno,by="row.names", all.x=FALSE, all.y=FALSE, sort=FALSE)
+          if (length(temp)>0){
+            temp$Row.names=NULL
+            vfclass=rbind(vfclass,temp)
+          }
+      }
+    }
+
+    
+    write.table(x =vfclass ,file =file.path(output,"vfclass.tab") ,quote = FALSE,row.names = FALSE,sep = "\t")
 
     if (length(dbModules.random)>0){
+        # The next few lines help with adjusting the ISA thresholds
+        getNoFeatures(dbModules.random)
+        getNoSamples(dbModules.random)
+
         # Print randomly-seeded clusters to Excel, one sheet per bi-cluster
         dbModules.random=writeSheetPerBicluster(dbModules.random, dbESet, file.path(output,"Bicluster.xlsx"))
 
@@ -445,4 +473,5 @@ if (is.null(Roary_Results_file)){
     print("No clusters were found!!!")
     
     }
+
 }

@@ -80,7 +80,7 @@ mlst["Percentage_of_missing_genes"]=0
 
 sample<- strsplit(x = opt$blast,
               split = "/")%>% unlist %>% tail(.,n=1) %>% strsplit(.,split=".blast.parsed") %>% unlist
-mlst["Sample"]=sample
+mlst["Samples"]=sample
 
 
 # Read BLAST data:
@@ -197,7 +197,7 @@ if (TRUE) {
       }
       
       
-      mlst["Sample"]=sample
+      mlst["Samples"]=sample
       write.table(x         = mlst[dim(mlst)[1],,drop=F] , 
                   file      = opt$output,
                   sep       = "\t",
@@ -215,7 +215,7 @@ if (TRUE) {
                               sep=" / ")                                                                      
       }
       
-      mlst["Sample"]=sample
+      mlst["Samples"]=sample
       write.table(x         = mlst[dim(mlst)[1],,drop=F] , 
                   file      = opt$output,
                   sep       = "\t",

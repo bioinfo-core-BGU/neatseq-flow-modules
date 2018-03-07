@@ -18,9 +18,9 @@ Short Description
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * fastq files in at least one of the following slots:
-        ``sample_data[<sample>]["fastq.F"]``
-        ``sample_data[<sample>]["fastq.R"]``
-        ``sample_data[<sample>]["fastq.S"]``
+        ``self.sample_data[<sample>]["fastq.F"]``
+        ``self.sample_data[<sample>]["fastq.R"]``
+        ``self.sample_data[<sample>]["fastq.S"]``
 
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -130,8 +130,6 @@ class Step_Snippy(Step):
         assert "--outdir" not in self.params["redir_params"] or len({"--pe1", "--pe2", "--R1", "--R2","--left", "--right", "--se", "--single"}  & set(self.params["redir_params"]))==0, \
             "you should not give output directory in step %s\n" % self.get_step_name()
 
-        assert "--reference" in self.params["redir_params"] , \
-            "you should give reference file [Supports FASTA, GenBank, EMBL (not GFF)] in step %s\n" % self.get_step_name()
 
 
     def step_sample_initiation(self):
@@ -270,6 +268,11 @@ class Step_Snippy(Step):
                 self.script +="--se  %s  \\\n\t" % self.sample_data[sample]["fastq.S"]
             self.script +="--prefix  %s  \\\n\t" % sample
             self.script +="--outdir  %s  \n\n" % use_dir
+            if "--reference" not in self.params["redir_params"]:
+                if "fasta.nucl" in self.sample_data.keys():
+                    self.script +="--reference %s  \\\n\t" % self.sample_data["fasta.nucl"]
+                else:
+                    raise AssertionExcept("No reference file found in project level [fasta.nucl] and not in the redirects [--reference] \n Supports FASTA, GenBank, EMBL (not GFF)")
             self.sample_data[sample]["Snippy"]=sample_dir
             self.sample_data[sample]["vcf"]=os.path.join(sample_dir,sample+".vcf") 
             # Move all files from temporary local dir to permanent base_dir

@@ -11,11 +11,11 @@ parser.add_argument('-O' , type=str, default=os.getcwd(),
                     help='Output file directory')
 parser.add_argument('-C', type=float, default=0.95,
                     help='Percentage of identified allele cutoff to consider sample [0.0 - 1.0]')
-parser.add_argument('--S_MetaData', type=str, default="Sample",
+parser.add_argument('--S_MetaData', type=str, default="Samples",
                     help='samples ID field in the metadata file')
-parser.add_argument('--S_Merged', type=str, default="Sample",
+parser.add_argument('--S_Merged', type=str, default="Samples",
                     help='samples ID field in the Merged file')
-parser.add_argument('--Non_allelic', nargs='+', type=str, default=["Sample",'Status','Percentage_of_missing_genes'],
+parser.add_argument('--Non_allelic', nargs='+', type=str, default=["Samples",'Status','Percentage_of_missing_genes'],
                     help='Non allelic fields in the Merged file')
 parser.add_argument('--Fields', nargs='+', type=str, default=['Status','Percentage_of_missing_genes'],
                     help='Fields to move to the metadata file')
@@ -25,6 +25,10 @@ parser.add_argument('--FASTA', action='store_true', default=False,
                     help='The input is a FASTA file')
 parser.add_argument('--Polymorphic_sites_only', action='store_true', default=False,
                     help='Filter Non Polymorphic Sites from fasta input file')
+parser.add_argument('--Tree', action='store_true', default=False,
+                    help='Generate newick Tree using hierarchical-clustering [Hamming distance]')
+parser.add_argument('--Tree_method', type=str, default='complete',
+                    help='The hierarchical-clustering linkage method [default=complete]')
 args = parser.parse_args()
 Fields=[]
 if args.Fields != None:
@@ -64,7 +68,6 @@ for j in temp_data.index:
     for i in temp_data.columns:
         if str(temp_data.loc[j,i]).startswith("New_Allele="):
             temp_data.loc[temp_data.loc[:,i]==temp_data.loc[j,i],i]=i+"_"+str(j)
-temp_data.to_csv('test.csv',sep='\t')
 
 
 temp_data.index=map(lambda x:str(x),temp_data.index)
@@ -113,6 +116,33 @@ def drop(data,fields,op=1):
     return data
 
 new_temp_data=cut_col(cut_rows(temp_data, args.C ,args.Non_allelic),args.Non_allelic)
+
+if args.Tree:
+    from scipy.cluster.hierarchy import dendrogram, linkage, to_tree 
+    from scipy.spatial.distance import pdist ,squareform
+    
+    def getNewick(node, newick, parentdist, leaf_names):
+        if node.is_leaf():
+            return "%s:%.2f%s" % (leaf_names[node.id], parentdist - node.dist, newick)
+        else:
+            if len(newick) > 0:
+                newick = "):%.2f%s" % (parentdist - node.dist, newick)
+            else:
+                newick = ");"
+            newick = getNewick(node.get_left(), newick, node.dist, leaf_names)
+            newick = getNewick(node.get_right(), ",%s" % (newick), node.dist, leaf_names)
+            newick = "(%s" % (newick)
+            return newick
+            
+    Tree_data=drop(new_temp_data,args.Non_allelic,0).copy()
+    Tree_data=Tree_data.applymap(lambda x: str(x).upper()).copy()
+    x=pdist(Tree_data, lambda u, v:  sum([1 for i in xrange(len(u)) if u[i] != v[i]]) )
+    Z = linkage(x,method=args.Tree_method,optimal_ordering=True)
+    tree = to_tree(Z,False)
+    h=open(os.path.join(args.O,'Tree.%s' % "newick"),'w')
+    h.write( getNewick(tree, "", tree.dist, Tree_data.index ))
+    h.close()
+
 if args.FASTA:
     new_temp_data['seq']=new_temp_data.apply(lambda x: x.sum().upper()  ,axis=1)
     g=new_temp_data.groupby('seq')

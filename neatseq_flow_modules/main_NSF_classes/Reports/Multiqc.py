@@ -6,7 +6,9 @@
 :Affiliation: Bioinformatics core facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
-A module for preparing a MultiQC report for all samples
+A module for preparing a MultiQC report for all samples.
+
+.. Tip:: By default, the module will search for parsable reports in the directories of all the modules in the branch leading to this instance. To search only in the directories of the explicit base steps, specify the ``bases_only`` parameter.
 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -20,6 +22,14 @@ Output
 
     * ``self.sample_data[<sample>]["Multiqc_report"]``
         
+                
+Parameters that can be set        
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. csv-table:: 
+    :header: "Parameter", "Values", "Comments"
+
+    "bases_only", "-", "Search directories of explicit base steps only."
     
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -29,8 +39,9 @@ Lines for parameter file
     firstMultQC:
         module: Multiqc
         base:
-        - sam_bwt2_1
-        - fqc_trim1
+            - sam_bwt2_1
+            - fqc_trim1
+        bases_only:
         script_path: /path/to/multiqc
 
 References
@@ -91,9 +102,13 @@ class Step_Multiqc(Step):
         #Multiqc main command
         self.script += self.get_script_const()
         # dir_base_list = get_all_bases_dir(self,dir_base_list)
-        dir_base_list = " ".join(get_base_dirs_str(self))
+        if "bases_only" in self.params:
+            dir_base_list = [step.base_dir for step in self.base_step_list]  
+
+        else:
+            dir_base_list = get_base_dirs_str(self)
         
-        self.script += "%s \\\n\t" % dir_base_list
+        self.script += "%s \\\n\t" % " ".join(dir_base_list)
         if "modules" in self.params.keys():
             if self.params["modules"]!="All":
                 modules=self.params["modules"].split(",")
@@ -103,7 +118,8 @@ class Step_Multiqc(Step):
             modules=self.params["modules_exclude"].split(",")
             for module in modules:
                 self.script += "-e %s \\\n\t" % module
-        self.script += " -s -f  -o %s \n\n" % use_dir
+        self.script += "-s -f \\\n\t" % use_dir
+        self.script += "-o %s \n\n" % use_dir
         
         self.sample_data["Multiqc_report"] = self.base_dir
        

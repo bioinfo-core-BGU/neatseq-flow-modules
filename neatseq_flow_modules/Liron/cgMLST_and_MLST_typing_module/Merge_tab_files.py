@@ -76,7 +76,7 @@ if args.Excel:
                     print file_name +" is empty!!!!"
                 else:
                     temp_data=temp_data.applymap(lambda x:unicode(re.sub('[\000-\010]|[\013-\014]|[\016-\037]', "",x), errors='ignore') if isinstance(x, STRING_TYPES) else x)
-                    temp_data.to_excel(writer, sheet_name=re.sub(Query,"",os.path.split(file_name)[-1]), engine='openpyxl')
+                    temp_data.to_excel(writer, sheet_name=re.sub(Query,"",os.path.split(file_name)[-1]), engine='openpyxl',index=False)
             else:
                 print file_name +" is empty!!!!"
         writer.save()
