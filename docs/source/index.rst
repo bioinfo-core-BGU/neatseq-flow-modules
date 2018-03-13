@@ -93,7 +93,7 @@ Following is a list of modules included in this repository.
    Workflow_docs/variant_calling
    Workflow_docs/Clustering
    Workflow_docs/QIIME_workflow
-..   Workflow_docs/Microbe-Flow
+   Workflow_docs/Microbe-Flow
 
 
 Indices and tables

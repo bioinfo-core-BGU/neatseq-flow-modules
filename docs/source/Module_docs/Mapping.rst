@@ -28,4 +28,5 @@ Mapping
 
 .. automodule:: main_NSF_classes.Reports.Multiqc
 
+.. automodule:: Liron.RSEM_module.RSEM
 

@@ -17,3 +17,4 @@ Variant-related Tasks
 
 .. automodule:: main_NSF_classes.variants.vcftools
 
+.. automodule:: Liron.Snippy_module.Snippy

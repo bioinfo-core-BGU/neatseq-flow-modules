@@ -18,4 +18,7 @@ Microbiology
 
 .. automodule:: Liron.Snippy_module.Snippy
 
+.. automodule:: Liron.Gubbins_module.Gubbins
+
+.. automodule:: Liron.Tree_plot_module.Tree_plot
 
