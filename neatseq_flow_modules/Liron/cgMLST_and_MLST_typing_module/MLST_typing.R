@@ -46,7 +46,9 @@ option_list = list(
   make_option(c("-c", "--Type_col_name"), type="character", default = NULL, 
               help="Columns in the scheme that are not locus names", metavar="character"),
   make_option(c("-F", "--Find_close_match"), type="character", default = "N", 
-              help="whether to show the closest allele match? (Y/N)", metavar="character")
+              help="whether to show the closest allele combination match? (Y/N)", metavar="character"),
+  make_option(c("-I", "--ignore_missing_genes"), type="character", default = "N", 
+              help="If allele combination was not found: Try ignoring missing genes when searching allele combination match? (Y/N)", metavar="character")
 ); 
 
 
@@ -60,16 +62,17 @@ opt$Type_col_name <- strsplit(x = opt$Type_col_name,
                                split = ",") %>% unlist
 
 # REad mlst scheme
-mlst <- read.delim(opt$scheme,
-                   he = T,
+mlst <- read.table(opt$scheme,
+                   sep="\t",
+                   header  = T,
                    stringsAsFactors = F)
-
+                   
+ignore_missing_genes=FALSE
 gene_names = names(mlst)
-print(gene_names)
+
 for (i in opt$Type_col_name){
     gene_names=gene_names[gene_names != i]
-    }
-print(gene_names) 
+    } 
 opt$num_of_genes=length(gene_names)
 
 #seting the default in status new column
@@ -173,16 +176,52 @@ if (TRUE) {
     }
 
 
-
-               
+    
     if ((dim(mlst)[1]-1)>0){
         MLST_num <- sapply(X      = 1:(dim(mlst)[1]-1), 
                           FUN    = function(x) all(mlst[x,gene_names]  ==blast[gene_names,"Number"])  ) 
+        
+        if (is.na(sum(MLST_num))){
+            MLST_num=0
+        }
+        if (sum(MLST_num) == 0) {
+            temp=blast[gene_names,"Number"]
+            temp[temp=='N']='0'
+            MLST_num <- sapply(X      = 1:(dim(mlst)[1]-1), 
+                          FUN    = function(x) all(mlst[x,gene_names]  ==temp)  ) 
+            if (is.na(sum(MLST_num))){
+                MLST_num=0
+            }
+        }
+        if (sum(MLST_num) == 0) {
+            temp=mlst
+            temp[is.na(temp)]='N'
+            MLST_num <- sapply(X      = 1:(dim(temp)[1]-1), 
+                          FUN    = function(x) all(temp[x,gene_names]  == blast[gene_names,"Number"])  ) 
+            if (is.na(sum(MLST_num))){
+                MLST_num=0
+            }
+        }
+        
+        if (sum(MLST_num) == 0) {
+            if (opt$ignore_missing_genes=='Y'){
+                temp=blast[gene_names,"Number"]
+                MLST_num <- sapply(X      = 1:(dim(mlst)[1]-1), 
+                              FUN    = function(x) all(mlst[x,gene_names[temp!='N']]  ==blast[gene_names[temp!='N'],"Number"])  ) 
+                if (is.na(sum(MLST_num))){
+                    MLST_num=0
+                }else{
+                    ignore_missing_genes=TRUE
+                }
+            }
+        }
     }else{
         MLST_num=0
     }
+    
+    
 
-
+    
     if(sum(MLST_num) == 0) {
       
       write("Allele combination not found in scheme", file = stderr())
@@ -224,9 +263,11 @@ if (TRUE) {
                   col.names = T)
     } else {
       if (mlst[dim(mlst)[1],"Status"]!="OK") {
-        write("Found the closest allele combination", file = stderr())
-        mlst["Status"]=paste( mlst[dim(mlst)[1],"Status"] , sprintf("Found the closest allele combination"),
-                              sep=" / ")  
+        if (ignore_missing_genes){
+            write("Found the closest allele combination ignoring missing genes", file = stderr())
+            mlst["Status"]=paste( mlst[dim(mlst)[1],"Status"] , sprintf("Found the closest allele combination ignoring missing genes"),
+                                  sep=" / ")  
+        }
       }
       write.table(x         = mlst[which(MLST_num),,drop=F] , 
                   file      = opt$output,

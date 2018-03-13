@@ -42,7 +42,7 @@ Vars:
             script_path: run_gubbins.py 
             conda:
                 base: # Can be empty if running from conda environment 
-                # If you choose NOT to run gubbins write in the next line: env: Microbe-Flow
+                # If you choose NOT to run gubbins write in the next line: env: Bacterial_Typing_WF_test
                 env:  gubbins 
         Spades: spades.py
         Quast: quast
@@ -53,51 +53,44 @@ Vars:
         Roary: 
             Main: roary
             scoary: scoary
-            Gecko3: /PATH_TO_GECKO3/ 
-        Gassst: /PATH_TO_GASSST/ 
+            Gecko3: $MICROBE_FLOW_CWD/Gecko3.1/bin/Gecko3
+        Gassst: $MICROBE_FLOW_CWD/Gassst_v1.28/Gassst
         parse_blast: parse_blast.R
         Multiqc: multiqc
     Genome:
-        reference: /PATH_TO_REFERENCE_GENOME_IN_FASTA_or_GENBANK_FORMAT/ 
-        genus: '"YOUR_GENUS"' 
+        genus: '"Campylobacter jejuni"'
         kingdom: '"Bacteria"'
     MetaData:
-        File: /PATH_TO_YOUR_METADATA_FILE/
-        # THE COLUMN NAME IN THE METADATA FILE OF THE SAMPLES IDs
+        File: $MICROBE_FLOW_CWD/SRP090551_DATA.txt
         Sample_ID_column_name: Samples
     Typing:
         MLST:
-            FASTA: /PATH_TO_YOUR_MLST_FASTA_FILE/
-            scheme: /PATH_TO_YOUR_MLST_SCHEME_FILE/
-            Allele: /PATH_TO_YOUR_MLST_ALLELE_MAP_FILE/
-            # EDIT/ADD COLUMN IN THE SCHEME FILE THAT ARE NOT LOCUS NAMES (COMMA DELIMITED)
+            FASTA: $MICROBE_FLOW_CWD/MLST/Campylobacterjejuni_MLST_FASTA.fasta
+            scheme: $MICROBE_FLOW_CWD/MLST/Campylobacterjejuni_MLST_scheme.tsv
+            Allele: $MICROBE_FLOW_CWD/MLST/Campylobacterjejuni_MLST_Alleles_Map.tab
             Type_col_name: "ST,clonal_complex"
         cgMLST:
-            FASTA: /PATH_TO_YOUR_cgMLST_FASTA_FILE/
-            scheme: /PATH_TO_YOUR_cgMLST_SCHEME_FILE/
-            Allele: /PATH_TO_YOUR_cgMLST_ALLELE_MAP_FILE/
-            # EDIT/ADD COLUMN IN THE SCHEME FILE THAT ARE NOT LOCUS NAMES (COMMA DELIMITED)
+            FASTA: $MICROBE_FLOW_CWD/cgMLST/Campylobacterjejuni_cgMLST_FASTA.fasta
+            scheme: $MICROBE_FLOW_CWD/cgMLST/Campylobacterjejuni_cgMLST_scheme.tsv
+            Allele: $MICROBE_FLOW_CWD/cgMLST/Campylobacterjejuni_cgMLST_Alleles_Map.tab
             Type_col_name: cgST
     Database:
-        kraken: /PATH_TO_KRAKEN_DATA_BASE/
+        kraken: 
     Additional:
         Roary:
             Bi_cluster:
-                # EDIT/ADD COLUMN IN THE META DATA FILE TO BE ADDED TO THE BI-CLUSTERING RESULTS
-                cols_to_use: '"SourceType","GeographicLocation"' 
+                cols_to_use: '"Isolation_Source","Collection_date"'
             scoary:
-                # a list of conditions to create the scoary traits file from MetaData file.
-                # Pairs of field and operator + value to convert to boolean traits: field_name1/op_value1 
-                # Example: "field_1/>=val_1<val_2"    "feild_2/=='str_val'"
-                # A Filter can be used by FILTER_field_name1/FILTER_op_value1&field_name1/op_value1
-                traits_to_pars: '"SourceType/==''Nose''" "SourceType/==''Blood''"'
-
+                traits_to_pars: '"Isolation_Source/==''Blood''"'
 
 Step_params:
 
     Merge:
-        module: merge
-        script_path: 
+        module:         merge 
+        script_path:    curl 
+        pipe:           gzip  -cd 
+        redirects:
+            --retry:    10 
 
     FastQC_Merge:
         module: fastqc_html
@@ -127,6 +120,7 @@ Step_params:
             --threads: {Vars.Parallel_Environment.FastQC}
 
     Kraken:
+        SKIP:
         module: kraken
         base: Trim_Galore
         script_path: {Vars.Programs_path.Kraken}
@@ -169,7 +163,6 @@ Step_params:
             --mapqual: 60
             --mincov: 10
             --minfrac: 0.9
-            --reference: {Vars.Genome.reference}
 
     Gubbins:
         conda:

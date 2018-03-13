@@ -73,6 +73,7 @@ Lines for parameter file
         redirects:
             --scheme:                            # Path to the Typing scheme file [Tab delimited]
             --Type_col_name:                     # Column/s name/s in the scheme file that are not locus names
+            --ignore_unidentified_alleles        # Remove columns with unidentified alleles [default=False]
 
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -145,7 +146,7 @@ class Step_cgMLST_and_MLST_typing(Step):
             
             if "MLST_parser.py" in os.listdir(self.module_location):                
                 # Make a dir for the parsed files:
-                pars_dir = self.make_folder_for_sample("pars")
+                pars_dir = self.make_folder_for_sample("Data_for_Phyloviz")
                 self.script += "python %s \\\n\t" % os.path.join(self.module_location,"MLST_parser.py")
                 #Percentage of identified allele cutoff to consider sample [0.0 - 1.0]
                 if "sample_cutoff" in self.params.keys():

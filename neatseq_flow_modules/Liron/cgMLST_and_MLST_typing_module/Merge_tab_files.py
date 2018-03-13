@@ -31,6 +31,16 @@ parser.add_argument('--ignore_shared_col', dest='ignore', action='store_true',de
                     help='Ignore shared columns when merging using the --Merge_by option')
 args = parser.parse_args()
 
+def isint(string):
+    try:
+        if float(string).is_integer():
+            return str(int(string))
+        else:
+            return string
+    except ValueError:
+        return string
+
+
 if args.header:
     args.pivot=map(lambda x:int(x)  if str.isdigit(x) else x ,args.pivot)
     header=None
@@ -124,6 +134,7 @@ else:
                         # index=True
             else:
                 print file_name +" is empty!!!!"
+        Data=Data.applymap(lambda x: isint(x) ).copy()
         if len(args.pivot)==3:
             if args.split_by!=None:
                 Data=(Data.drop(args.pivot[1], axis=1)
@@ -144,12 +155,13 @@ else:
                 Data=Data.pivot(index=args.pivot[0], columns=args.pivot[1], values=args.pivot[2]).copy()
                 Data.columns=map(lambda x:x.strip(" "),Data.columns)
                 if args.Trans:
-                    Data.T.to_csv(Output ,sep='\t',index=index,float_format="%g")
+                    Data.T.to_csv(Output ,sep='\t',index=index, float_format="%s")
                 else:
-                    Data.to_csv(Output ,sep='\t',index=index,float_format="%g")
+                    Data.to_csv(Output ,sep='\t',index=index, float_format="%s")
         else:
-            Data.columns=map(lambda x:x.strip(" "),Data.columns)
+            Data.columns=map(lambda x:x.strip(" "),Data.columns) 
+                      
             if args.Trans:
-                Data.T.to_csv(Output ,sep='\t',index=index,float_format="%g")
+                Data.T.to_csv(Output ,sep='\t',index=index, float_format="%s")
             else:
-                Data.to_csv(Output ,sep='\t',index=index,float_format="%g")
+                Data.to_csv(Output ,sep='\t',index=index, float_format="%s")

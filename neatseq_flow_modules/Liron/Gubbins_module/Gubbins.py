@@ -66,7 +66,7 @@ Lines for parameter file
         env:                                    # env parameters that needs to be in the PATH for running this module
         qsub_params:
             -pe:                                # Number of CPUs to reserve for this analysis
-        pars:                                   # Generate phyloviz ready to use files
+        phyloviz:                                   # Generate phyloviz ready to use files
             -M:                                 # Location of a MetaData file 
             --Cut:                              # Use only Samples found in the metadata file
             --S_MetaData:                       # The name of the samples ID column
@@ -139,22 +139,22 @@ class Step_Gubbins(Step):
             
 
 
-            if "pars" in self.params.keys(): 
+            if "phyloviz" in self.params.keys(): 
                 if "MLST_parser.py" in os.listdir(self.module_location):
                     # Make a dir for the parsed files:
-                    pars_dir = self.make_folder_for_sample("pars")
+                    pars_dir = self.make_folder_for_sample("Data_for_Phyloviz")
                     if "env" in self.params.keys():
                         if self.shell=="bash":
                             self.script +="export env %s  \\\n\t" % self.params["env"]
                         else:
                             self.script +="env %s  \\\n\t" % self.params["env"]
                     self.script +="python %s  \\\n\t" % os.path.join(self.module_location,"MLST_parser.py")
-                    if is_it_dict(self.params["pars"]):
-                        for par in self.params["pars"].keys():
+                    if is_it_dict(self.params["phyloviz"]):
+                        for par in self.params["phyloviz"].keys():
                             if len(par)>0:
-                                if self.params["pars"][par]!=None:
+                                if self.params["phyloviz"][par]!=None:
                                     self.script +="%s  %%s \\\n\t" % par \
-                                                                   % self.params["pars"][par]
+                                                                   % self.params["phyloviz"][par]
                                 else:
                                     self.script +="%s  \\\n\t" % par
                     self.script += " -F %s \\\n\t" %  self.sample_data["fasta.nucl"]

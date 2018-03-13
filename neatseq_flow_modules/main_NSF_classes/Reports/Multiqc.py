@@ -118,7 +118,7 @@ class Step_Multiqc(Step):
             modules=self.params["modules_exclude"].split(",")
             for module in modules:
                 self.script += "-e %s \\\n\t" % module
-        self.script += "-s -f \\\n\t" % use_dir
+        self.script += "-s -f \\\n\t"
         self.script += "-o %s \n\n" % use_dir
         
         self.sample_data["Multiqc_report"] = self.base_dir

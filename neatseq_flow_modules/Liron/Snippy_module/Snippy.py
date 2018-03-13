@@ -83,7 +83,7 @@ Lines for parameter file
         gubbins:
             script_path:                        # Command for running the gubbins script, if empty or this line dose not exist will not run gubbins
             --STR:                              # More redirects arguments for running gubbins
-        pars:                                   # Generate phyloviz ready to use files
+        phyloviz:                                   # Generate phyloviz ready to use files
             -M:                                 # Location of a MetaData file 
             --Cut:                              # Use only Samples found in the metadata file
             --S_MetaData:                       # The name of the samples ID column
@@ -207,22 +207,22 @@ class Step_Snippy(Step):
                                 
 
 
-                    if "pars" in self.params.keys(): 
+                    if "phyloviz" in self.params.keys(): 
                         if "MLST_parser.py" in os.listdir(self.module_location):
                             # Make a dir for the parsed files:
-                            pars_dir = self.make_folder_for_sample("pars")
+                            pars_dir = self.make_folder_for_sample("Data_for_Phyloviz")
                             if "env" in self.params.keys():
                                 if self.shell=="bash":
                                     self.script +="export env %s  \\\n\t" % self.params["env"]
                                 else:
                                     self.script +="env %s  \\\n\t" % self.params["env"]
                             self.script +="python %s  \\\n\t" % os.path.join(self.module_location,"MLST_parser.py")
-                            if is_it_dict(self.params["pars"]):
-                                for par in self.params["pars"].keys():
+                            if is_it_dict(self.params["phyloviz"]):
+                                for par in self.params["phyloviz"].keys():
                                     if len(par)>0:
-                                        if self.params["pars"][par]!=None:
+                                        if self.params["phyloviz"][par]!=None:
                                             self.script +="%s  %%s \\\n\t" % par \
-                                                                           % self.params["pars"][par]
+                                                                           % self.params["phyloviz"][par]
                                         else:
                                             self.script +="%s  \\\n\t" % par
                             self.script += " -F %s \\\n\t" %  self.sample_data["fasta.nucl"]
@@ -267,12 +267,13 @@ class Step_Snippy(Step):
             else:
                 self.script +="--se  %s  \\\n\t" % self.sample_data[sample]["fastq.S"]
             self.script +="--prefix  %s  \\\n\t" % sample
-            self.script +="--outdir  %s  \n\n" % use_dir
             if "--reference" not in self.params["redir_params"]:
                 if "fasta.nucl" in self.sample_data.keys():
                     self.script +="--reference %s  \\\n\t" % self.sample_data["fasta.nucl"]
                 else:
                     raise AssertionExcept("No reference file found in project level [fasta.nucl] and not in the redirects [--reference] \n Supports FASTA, GenBank, EMBL (not GFF)")
+            self.script +="--outdir  %s  \n\n" % use_dir
+            
             self.sample_data[sample]["Snippy"]=sample_dir
             self.sample_data[sample]["vcf"]=os.path.join(sample_dir,sample+".vcf") 
             # Move all files from temporary local dir to permanent base_dir

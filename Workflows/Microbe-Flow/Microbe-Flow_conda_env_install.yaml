@@ -36,6 +36,8 @@ dependencies:
 
   
 # Software
+  - curl
+  - unzip
   - fastqc 
   - Trim-Galore
   - cutadapt

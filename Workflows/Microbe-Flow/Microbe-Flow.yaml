@@ -9,7 +9,7 @@ Vars:
     # Set your Parallel Environment :
     Parallel_Environment:
         # Run 'qconf –spl' to view all the Parallel Environments [pe_name] available to you
-        pe_name: shared 
+        pe_name: 
         # Set for each program the number/range of slots[cpus] to request per sample/project
         FastQC: '1'
         Snippy: '1'
@@ -81,12 +81,11 @@ Vars:
                 # A Filter can be used by FILTER_field_name1/FILTER_op_value1&field_name1/op_value1
                 traits_to_pars: '"SourceType/==''Nose''" "SourceType/==''Blood''"'
 
-
 Step_params:
 
     Merge:
         module: merge
-        script_path: gzip -cd 
+        script_path: 
 
     FastQC_Merge:
         module: fastqc_html
@@ -144,10 +143,10 @@ Step_params:
         script_path: {Vars.Programs_path.Snippy.Main}
         qsub_params:
             -pe: '{Vars.Parallel_Environment.pe_name} {Vars.Parallel_Environment.Snippy}'
-        pars:
+        phyloviz:
             --Cut: null
             --S_MetaData: {Vars.MetaData.Sample_ID_column_name}
-            -C: 0.95
+            -C: 0.7
             -M: {Vars.MetaData.File}
         snippy_core:
             script_path: {Vars.Programs_path.Snippy.snippy_core}
@@ -161,13 +160,16 @@ Step_params:
             --reference: {Vars.Genome.reference}
 
     Gubbins:
+        conda:
+            path: {Vars.Programs_path.Gubbins.conda.base}
+            env:  {Vars.Programs_path.Gubbins.conda.env}
         module: Gubbins
         base: Snippy
         script_path: {Vars.Programs_path.Gubbins.script_path}
-        pars:
+        phyloviz:
             --Cut: null
             --S_MetaData: {Vars.MetaData.Sample_ID_column_name}
-            -C: 0.95
+            -C: 0.7
             -M: {Vars.MetaData.File}
 
     Spades:
@@ -214,6 +216,7 @@ Step_params:
         module: CARD_RGI
         base: Spades
         script_path: {Vars.Programs_path.CARD_RGI.Main}
+        scope: sample
         qsub_params:
             -pe: '{Vars.Parallel_Environment.pe_name} {Vars.Parallel_Environment.CARD_RGI}'
         orf_to_use: -x
@@ -259,9 +262,7 @@ Step_params:
             -s: 2
             -q: 2
         redirects:
-            -k: {Vars.Database.kraken}
             -p: {Vars.Parallel_Environment.Roary}
-            -qc: null
             -s: null
             -v: null
             -y: null
@@ -320,7 +321,7 @@ Step_params:
         cut_samples_not_in_metadata: null
         metadata: {Vars.MetaData.File}
         metadata_samples_ID_field: {Vars.MetaData.Sample_ID_column_name}
-        sample_cutoff: 0.95
+        sample_cutoff: 0.7
         Tree: null
         redirects:
             --Type_col_name: {Vars.Typing.MLST.Type_col_name}
@@ -364,7 +365,7 @@ Step_params:
         cut_samples_not_in_metadata: null
         metadata: {Vars.MetaData.File}
         metadata_samples_ID_field: {Vars.MetaData.Sample_ID_column_name}
-        sample_cutoff: 0.95
+        sample_cutoff: 0.7
         Tree: null
         redirects:
             --Type_col_name: {Vars.Typing.cgMLST.Type_col_name}
@@ -446,6 +447,7 @@ Step_params:
         - Gubbins
         script_path: 
         iterate_on_bases: 
+        tree_by_heatmap:
         redirects:
             --M_Excel: Collect_typing_verdict
             --H_Excel: Collect_CARD_RGI
@@ -468,6 +470,7 @@ Step_params:
         - Gubbins
         script_path: 
         iterate_on_bases: 
+        tree_by_heatmap: 
         redirects:
             --M_Excel: Collect_typing_verdict
             --H_Excel: Collect_Virulence

@@ -1,0 +1,40 @@
+Title	Microbe-Flow
+
+#Type	Path
+Nucleotide	ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/009/085/GCF_000009085.1_ASM908v1/GCF_000009085.1_ASM908v1_genomic.fna.gz
+
+#SampleID	Type	Path
+SRR4300047	Forward	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/007/SRR4300047/SRR4300047_1.fastq.gz
+SRR4300047	Reverse	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/007/SRR4300047/SRR4300047_2.fastq.gz
+SRR4300048	Forward	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/008/SRR4300048/SRR4300048_1.fastq.gz
+SRR4300048	Reverse	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/008/SRR4300048/SRR4300048_2.fastq.gz
+SRR4300049	Forward	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/009/SRR4300049/SRR4300049_1.fastq.gz
+SRR4300049	Reverse	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/009/SRR4300049/SRR4300049_2.fastq.gz
+SRR4300050	Forward	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/000/SRR4300050/SRR4300050_1.fastq.gz
+SRR4300050	Reverse	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/000/SRR4300050/SRR4300050_2.fastq.gz
+SRR4300051	Forward	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/001/SRR4300051/SRR4300051_1.fastq.gz
+SRR4300051	Reverse	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/001/SRR4300051/SRR4300051_2.fastq.gz
+SRR4300052	Forward	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/002/SRR4300052/SRR4300052_1.fastq.gz
+SRR4300052	Reverse	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/002/SRR4300052/SRR4300052_2.fastq.gz
+SRR4300053	Forward	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/003/SRR4300053/SRR4300053_1.fastq.gz
+SRR4300053	Reverse	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/003/SRR4300053/SRR4300053_2.fastq.gz
+SRR4300054	Forward	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/004/SRR4300054/SRR4300054_1.fastq.gz
+SRR4300054	Reverse	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/004/SRR4300054/SRR4300054_2.fastq.gz
+SRR4300055	Forward	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/005/SRR4300055/SRR4300055_1.fastq.gz
+SRR4300055	Reverse	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/005/SRR4300055/SRR4300055_2.fastq.gz
+SRR4300056	Forward	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/006/SRR4300056/SRR4300056_1.fastq.gz
+SRR4300056	Reverse	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/006/SRR4300056/SRR4300056_2.fastq.gz
+SRR4300057	Forward	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/007/SRR4300057/SRR4300057_1.fastq.gz
+SRR4300057	Reverse	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/007/SRR4300057/SRR4300057_2.fastq.gz
+SRR4300058	Forward	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/008/SRR4300058/SRR4300058_1.fastq.gz
+SRR4300058	Reverse	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/008/SRR4300058/SRR4300058_2.fastq.gz
+SRR4300059	Forward	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/009/SRR4300059/SRR4300059_1.fastq.gz
+SRR4300059	Reverse	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/009/SRR4300059/SRR4300059_2.fastq.gz
+SRR4300060	Forward	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/000/SRR4300060/SRR4300060_1.fastq.gz
+SRR4300060	Reverse	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/000/SRR4300060/SRR4300060_2.fastq.gz
+SRR4300061	Forward	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/001/SRR4300061/SRR4300061_1.fastq.gz
+SRR4300061	Reverse	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/001/SRR4300061/SRR4300061_2.fastq.gz
+SRR4300062	Forward	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/002/SRR4300062/SRR4300062_1.fastq.gz
+SRR4300062	Reverse	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/002/SRR4300062/SRR4300062_2.fastq.gz
+SRR4300063	Forward	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/003/SRR4300063/SRR4300063_1.fastq.gz
+SRR4300063	Reverse	ftp.sra.ebi.ac.uk/vol1/fastq/SRR430/003/SRR4300063/SRR4300063_2.fastq.gz

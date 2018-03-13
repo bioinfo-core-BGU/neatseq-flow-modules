@@ -29,7 +29,21 @@ parser.add_argument('--Tree', action='store_true', default=False,
                     help='Generate newick Tree using hierarchical-clustering [Hamming distance]')
 parser.add_argument('--Tree_method', type=str, default='complete',
                     help='The hierarchical-clustering linkage method [default=complete]')
+parser.add_argument('--ignore_unidentified_alleles', action='store_true', default=False,
+                    help='Remove columns with unidentified alleles [default=False]')
 args = parser.parse_args()
+
+def isnumber(str):
+    if str==str:
+        try:
+            float(str)
+            return True
+        except ValueError:
+            return False
+    else:
+        return False
+
+
 Fields=[]
 if args.Fields != None:
     for field in args.Fields:
@@ -55,7 +69,7 @@ if args.FASTA:
     from Bio import AlignIO
     msa=AlignIO.read(args.F,"fasta")
     data=pd.DataFrame.from_records(msa)
-    data.index=map(lambda x:msa[int(x)].id,list(data.index))
+    data.index=list(map(lambda x:msa[int(x)].id,list(data.index)))
     data=data.drop(data.columns[data.apply(lambda x: len(re.findall("[- N]",x.sum().upper()))>0 ,axis=0)],axis=1)
     if args.Polymorphic_sites_only:
         data=data.drop(data.columns[data.apply(lambda x: len(list(set(x.sum().upper())))==1   ,axis=0)],axis=1)
@@ -64,21 +78,28 @@ else:
     temp_data = pd.read_csv(args.F, sep='\t',index_col=False, encoding="ISO-8859-1")
     temp_data=temp_data.set_index(args.S_Merged,drop=False).copy()
 
+
+temp_data=temp_data.applymap(lambda x: int(float(x)) if isnumber(x)  else x).copy()
+
+
 for j in temp_data.index:
     for i in temp_data.columns:
         if str(temp_data.loc[j,i]).startswith("New_Allele="):
             temp_data.loc[temp_data.loc[:,i]==temp_data.loc[j,i],i]=i+"_"+str(j)
 
 
-temp_data.index=map(lambda x:str(x),temp_data.index)
+temp_data.index=list(map(lambda x:str(x),temp_data.index))
+
 if (args.M != None)&(args.Cut):
     MetaData = pd.read_csv(args.M , sep='\t',index_col=False, encoding="ISO-8859-1")
     MetaData=MetaData.set_index(args.S_MetaData,drop=False).copy()
-    MetaData.index=map(lambda x:str(x),MetaData.index)
+    MetaData.index=list(map(lambda x:str(x),MetaData.index))
     flag=1
-    temp_data=temp_data.loc[map(lambda x:x in MetaData.index,temp_data.index),].copy()
+    temp_data=temp_data.loc[list(map(lambda x:x in MetaData.index,temp_data.index)),].copy()
+
 args.Non_allelic.extend([args.S_Merged])
 args.Non_allelic.extend(args.Fields)
+
 if None in args.Non_allelic:
     args.Non_allelic.remove(None)
 args.Non_allelic=set(args.Non_allelic)
@@ -88,17 +109,18 @@ def cut_rows(temp_data,cutoff,Non_allelic_rows):
     temp_data=temp_data[drop]
     stay=list()
     for row in temp_data.index:
-        if (float(temp_data.ix[row].count())/ float(temp_data.shape[1]))>=cutoff:
+        if (float(sum(temp_data.ix[row]!='N'))/ float(temp_data.shape[1]))>=cutoff:
             stay.append(row)
         else:
-            print "The Sample %s has lower percentage of identified allele (%%s) than the cutoff" % row % (float(temp_data.ix[row].count())/ float(temp_data.shape[1]))
+            print("The Sample %s has lower percentage of identified allele than the cutoff" % row )
+            print("%s"   % (float(sum(temp_data.ix[row]!='N'))/ float(temp_data.shape[1])))
     return  temp_data.ix[stay].copy()
 
 def cut_col(temp_data,Non_allelic):
     stay=list()
     for col in temp_data.columns:
         if col not in Non_allelic:
-            if temp_data[col].count()==temp_data.shape[0]:
+            if sum(temp_data.ix[row]!='N')==temp_data.shape[0]:
                 stay.append(col)
         else:
             stay.append(col)
@@ -114,9 +136,12 @@ def drop(data,fields,op=1):
             if i in data:
                 data=data.drop(i).copy()
     return data
-
-new_temp_data=cut_col(cut_rows(temp_data, args.C ,args.Non_allelic),args.Non_allelic)
-
+    
+if args.ignore_unidentified_alleles:
+    new_temp_data=cut_col(cut_rows(temp_data, args.C ,args.Non_allelic),args.Non_allelic)
+else:
+    new_temp_data=cut_rows(temp_data, args.C ,args.Non_allelic)
+    
 if args.Tree:
     from scipy.cluster.hierarchy import dendrogram, linkage, to_tree 
     from scipy.spatial.distance import pdist ,squareform
@@ -162,7 +187,7 @@ if args.M != None:
     if flag!=1:
         MetaData = pd.read_csv(args.M , sep='\t',index_col=False, encoding="ISO-8859-1")
         MetaData=MetaData.set_index(args.S_MetaData,drop=False).copy()
-        MetaData.index=map(lambda x:str(x),MetaData.index)
+        MetaData.index=list(map(lambda x:str(x),MetaData.index))
     MetaData=MetaData.join(new_temp_data["Index"])
     MetaData=MetaData.loc[~MetaData["Index"].isnull(),:]
     if args.Fields != None:
@@ -178,20 +203,11 @@ else:
                 MetaData=MetaData.join(temp_data[field],lsuffix='_Old')
 
 
-def isnumber(str):
-    if str==str:
-        try:
-            float(str)
-            return True
-        except ValueError:
-            return False
-    else:
-        return False
 
 
-MetaData.to_csv(os.path.join(args.O,'phyloviz_MetaData.tab'), sep='\t',index=True,float_format='%g')
+MetaData.to_csv(os.path.join(args.O,'phyloviz_MetaData.tab'), sep='\t',index=True,float_format='%s')
 new_temp_data=new_temp_data.set_index("Index").copy()
 
 #new_temp_data=drop(new_temp_data,args.Non_allelic).copy()
-new_temp_data.applymap(lambda x: int(float(x)) if isnumber(x)  else x).to_csv(os.path.join(args.O, 'phyloviz_Alleles.tab'), sep='\t',index=True,float_format='%.0f')
+new_temp_data.to_csv(os.path.join(args.O, 'phyloviz_Alleles.tab'), sep='\t',index=True,float_format='%s')
 

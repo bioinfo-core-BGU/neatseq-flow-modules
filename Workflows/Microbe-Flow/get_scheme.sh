@@ -52,8 +52,9 @@ then
                 curl $loci_URL > $ALLELE_FILE
                 if [ -s $ALLELE_FILE ]
                 then 
-                    ALLELE_MAP_FILE=$(echo $ORGANISM"_"$SCHEM_TYPE"_Alleles_Map.tab" | sed 's/ //')
-                    grep '>' $ALLELE_FILE | sed 's/^>//' | awk 'BEGIN { FS="_"; print "Allele\tGene\tNumber"; } {print $1"_"$2"\t"$1"\t"$2;}' > $ALLELE_MAP_FILE 
+                    ALLELE_MAP_FILE=$(echo $ORGANISM"_"$SCHEM_TYPE"_Alleles.tab" | sed 's/ //')
+                    #grep '>' $ALLELE_FILE | sed 's/^>//' | awk 'BEGIN { FS="_"; print "Allele\tGene\tNumber"; } {print $1"_"$2"\t"$1"\t"$2;}' > $ALLELE_MAP_FILE
+                    grep '>' $ALLELE_FILE | sed 's/^>//' | awk 'BEGIN { FS="_" ; print "Allele\tGene\tNumber"; } { temp=sprintf("%s",$0); temp_NF=sprintf("%s",$NF); sub("_"$NF,"",$0);} { print temp"\t"$0"\t"temp_NF;}' > $ALLELE_MAP_FILE                     
                 else
                     echo "Could not download the alleles sequences of scheme " $SCHEM_TYPE " for " $ORGANISM
                 fi

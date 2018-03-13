@@ -328,11 +328,12 @@ if (is.null(Roary_Results_file)){
                               rows = numerical.data.rows, cols = numerical.data.cols,
                               rule = c(0, 1), style = c("white", "red"), type = "colourscale")
       }
-      
-      # Save workbook
-      print("Saving...")
-      saveWorkbook(wb=wb, file=outputFile, overwrite = TRUE)
-      print("Done.")
+      if (i>0){
+          # Save workbook
+          print("Saving...")
+          saveWorkbook(wb=wb, file=outputFile, overwrite = TRUE)
+          print("Done.")
+      }
       return(new.modules)
     }
 
@@ -410,7 +411,8 @@ if (is.null(Roary_Results_file)){
                            flist = NA, uniqueEntrez = FALSE,
                            thr.gene = thr.gene, thr.cond = thr.cond, no.seeds = no.seeds)
 
-    
+    print(length(dbModules.random))
+
     anno=sub_Roary_data_filter
     Roary_matrix_filter=as.data.frame(Roary_matrix_filter)
     
@@ -435,7 +437,7 @@ if (is.null(Roary_Results_file)){
 
     
     write.table(x =vfclass ,file =file.path(output,"vfclass.tab") ,quote = FALSE,row.names = FALSE,sep = "\t")
-
+    print(eisa::getFeatureNames(dbModules.random[[1]]))
     if (length(dbModules.random)>0){
         # The next few lines help with adjusting the ISA thresholds
         getNoFeatures(dbModules.random)
@@ -443,31 +445,35 @@ if (is.null(Roary_Results_file)){
 
         # Print randomly-seeded clusters to Excel, one sheet per bi-cluster
         dbModules.random=writeSheetPerBicluster(dbModules.random, dbESet, file.path(output,"Bicluster.xlsx"))
+        if (length(dbModules.random)>0){
 
+            sub_Roary_data_filter$Gene=row.names(sub_Roary_data_filter)
+            sub_Roary_data_filter$VFG2=sapply(X = sub_Roary_data_filter$VFG,FUN = function(x) stringr::str_c(x,collapse = ","))# stringr::str_replace_all(string = as.character(x),pattern = '[c( \" )]',replacement = "") )
+            sub_Roary_data_filter$vfclass2=sapply(X = sub_Roary_data_filter$vfclass,FUN = function(x) stringr::str_c(x,collapse = ","))# stringr::str_replace_all(string = as.character(x),pattern = '[c( \" )]',replacement = "") )
+              
+            mm=convert_agregate(sub_Roary_data_filter,"Gene","vfclass2",",")
+            mm=mm[mm$v1!='',]
+            Pathway2gene=mm[,c("v1","index")]
+            Pathway2name=mm[,c("v1","v1")]
+            
+            lines=list()
+            for (cluster in c(1:length(dbModules.random))){
+               lines[cluster]=paste( c( as.character(cluster) ,unlist(eisa::getFeatureNames(dbModules.random[[cluster]])) ) ,collapse = "\t")
+            }
+            print(unlist(lines))
+            writeLines(unlist(lines),file.path(output,"Bicluster_clusters"))
 
-        sub_Roary_data_filter$Gene=row.names(sub_Roary_data_filter)
-        sub_Roary_data_filter$VFG2=sapply(X = sub_Roary_data_filter$VFG,FUN = function(x) stringr::str_c(x,collapse = ","))# stringr::str_replace_all(string = as.character(x),pattern = '[c( \" )]',replacement = "") )
-        sub_Roary_data_filter$vfclass2=sapply(X = sub_Roary_data_filter$vfclass,FUN = function(x) stringr::str_c(x,collapse = ","))# stringr::str_replace_all(string = as.character(x),pattern = '[c( \" )]',replacement = "") )
-          
-        mm=convert_agregate(sub_Roary_data_filter,"Gene","vfclass2",",")
-        mm=mm[mm$v1!='',]
-        Pathway2gene=mm[,c("v1","index")]
-        Pathway2name=mm[,c("v1","v1")]
-        
-        lines=list()
-        for (cluster in c(1:length(dbModules.random))){
-           lines[cluster]=paste( c( as.character(cluster) ,unlist(eisa::getFeatureNames(dbModules.random[[cluster]])) ) ,collapse = "\t")
-        }
-        print(unlist(lines))
-        writeLines(unlist(lines),file.path(output,"Bicluster_clusters"))
-
-        print("Enrichment analysis... ")
-        suppressWarnings(
-            invisible(
-                      clusters_enricher(dbModules.random,Pathway2name,Pathway2gene,file.path(output,"Bicluster_Enrichment"),"",pAdjustMethod,pvalueCutoff)
+            print("Enrichment analysis... ")
+            suppressWarnings(
+                invisible(
+                          clusters_enricher(dbModules.random,Pathway2name,Pathway2gene,file.path(output,"Bicluster_Enrichment"),"",pAdjustMethod,pvalueCutoff)
+                )
             )
-        )
-        print("Done")
+            print("Done")
+        }else{
+               write.table(x =data.frame() ,file =file.path(output,"No_clusters_were_found") ,quote = FALSE,row.names = TRUE,sep = "\t")
+               print("No clusters were found!!!")
+        }
     } else {
     write.table(x =data.frame() ,file =file.path(output,"No_clusters_were_found") ,quote = FALSE,row.names = TRUE,sep = "\t")
     print("No clusters were found!!!")
