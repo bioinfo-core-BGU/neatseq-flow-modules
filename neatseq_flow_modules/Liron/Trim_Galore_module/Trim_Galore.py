@@ -171,10 +171,16 @@ class Step_Trim_Galore(Step):
                     
                     fq_fn_S = use_dir + "".join([re.sub("\.\w+$","",basename_S ), "_trimmed.fq"])          #The filename containing the end result. Used both in script and to set reads in $sample_params
                     fq_fn_S_bn = os.path.basename(fq_fn_S);
-                    # TODO: use existing                     
-                    for key in self.params["redir_params"].keys():
-                        if key not in ["--paired","--retain_unpaired"]:
-                            self.script += "%s %s \\\n\t" % (key,self.params["redir_params"][key]) 
+                    # TODO: use existing      
+                    # Remove --paired and --retain_unpaired from redirects. Should not be passed if SE (Menachem)
+                    for key in ["--paired","--retain_unpaired"]:
+                        if key in self.params:
+                            del self.params[key]
+                    self.script += self.get_redir_parameters_script()
+
+                    # for key in self.params["redir_params"].keys():
+                        # if key not in ["--paired","--retain_unpaired"]:
+                            # self.script += "%s %s \\\n\t" % (key,self.params["redir_params"][key]) 
                     if "cutadapt_path" in self.params.keys():
                         self.script += "--path_to_cutadapt %s \\\n\t" % self.params["cutadapt_path"] 
                     self.script += "%s \\\n\t" % self.sample_data[sample]["fastq.S"]
