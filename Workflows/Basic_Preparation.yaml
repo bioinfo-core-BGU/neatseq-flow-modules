@@ -1,0 +1,89 @@
+Global_params:
+    Default_wait:           10
+    Qsub_opts:              -V -cwd
+    Qsub_path:              /path/to/qsub/bin
+    Qsub_q:                 myqueue.q
+    module_path:            ../modules_release_1.1.0
+
+Documentation: |
+    A pipeline for basic preparation of fastq reads
+    ----------------------------------------------------------------
+    
+    The pipeline includes the following stages:
+    1. Preparation and QA:
+        a. Merging the reads into a single file per sample.
+        b. QC with fastqc
+        c. Trimming with trimmomatic or TrimGalore  (Notice the 'SKIP' directive in trimmo instance!)
+        d. QC on trimmed reads with fastqc
+        e. Report with multiQC
+
+Vars:
+    paths:
+        trimmo:             /path/to/trimmomatic-0.32.jar
+        trimmo_dir:         /path/to/trimmo_dir
+        fastqc:             /path/to/fastqc
+        fastqc_sum_script:  /path/to/fastqc_sum_script
+        trimgal:            /path/to/TrimGalore  
+        multiqc:            /path/to/multiQC
+        cutadapt:           /path/to/cutadapt  
+
+Step_params:
+# ---------------------------------- 1. Merge, QC  and trimming
+    merge1:
+        module:         merge
+        script_path:    
+
+    fqc_merge1:
+        module:         fastqc_html
+        base:           merge1
+        script_path:    {Vars.paths.fastqc}
+        sum_script:     {Vars.paths.fastqc_sum_script}
+        qsub_params:
+            -pe:        shared 15
+        redirects:
+            --threads:  15
+            
+    trim1:
+        module:             trimmo
+        base:               merge1
+        script_path:        'java -jar {Vars.paths.trimmo}'
+        SKIP:
+        spec_dir:           {Vars.paths.trimmo_dir}
+        todo:               ILLUMINACLIP:TruSeq3-SE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
+        redirects:
+            -threads:       20
+            
+    trim_gal: 
+        module:         Trim_Galore
+        base:           merge1
+        script_path:    {Vars.paths.trimgal}
+        cutadapt_path:  {Vars.paths.cutadapt}
+        redirects:
+            --length:   50
+            --quality:  20 # Parameters for running Trim Galore
+            --max_n:    1
+            --trim-n:
+            --yoohoo:
+            # --paired:
+            # --retain_unpaired:
+    fqc_trimgal:
+        module:         fastqc_html
+        base:           trim_gal
+        script_path:    {Vars.paths.fastqc}
+        sum_script:     {Vars.paths.fastqc_sum_script}
+        qsub_params:
+            -pe:        shared 15
+        redirects:
+            --threads:  15
+    MultQC_merge:
+        module:         Multiqc
+        base:           fqc_merge1
+        script_path:    {Vars.paths.multiqc}        
+        redirects:
+            --interactive:
+    MultQC_trimgal:
+        module:         Multiqc
+        base:           fqc_trimgal
+        script_path:    {Vars.paths.multiqc}        
+        redirects:
+            --interactive:
