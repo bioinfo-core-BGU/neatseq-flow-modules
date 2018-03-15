@@ -309,9 +309,9 @@ Using CONDA environment
   
      conda config --add channels conda-forge
      conda config --add channels bioconda
-     wget http://neatseq-flow.readthedocs.io/en/latest/_downloads/Microbe-Flow_conda_env_install.yaml
+     wget http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/Microbe-Flow_conda_env_install.yaml
      conda env create -f  Microbe-Flow_conda_env_install.yaml
-     wget http://neatseq-flow.readthedocs.io/en/latest/_downloads/Microbe-Flow_GUBBINS_conda_env_install.yaml 
+     wget http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/Microbe-Flow_GUBBINS_conda_env_install.yaml 
      conda env create -f  Microbe-Flow_GUBBINS_conda_env_install.yaml
 
 3. Activate the Microbe-Flow environment
@@ -359,7 +359,7 @@ Using CONDA environment
 
   .. code-block:: csh
     
-    curl http://neatseq-flow.readthedocs.io/en/latest/_downloads/Microbe-Flow_conda.yaml > Microbe-Flow_conda.yaml
+    curl http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/Microbe-Flow_conda.yaml > Microbe-Flow_conda.yaml
     nano  Microbe-Flow_conda.yaml
 
   .. tip:: You can do the editting with any text editor of your liking. However:
@@ -659,7 +659,7 @@ Using a local copy of NeatSeq-Flow
 
   .. code-block:: csh
     
-    curl http://neatseq-flow.readthedocs.io/en/latest/_downloads/Microbe-Flow.yaml > Microbe-Flow.yaml
+    curl http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/Microbe-Flow.yaml > Microbe-Flow.yaml
     nano  Microbe-Flow.yaml
 
 
@@ -963,7 +963,7 @@ Perform a test run on a publicly available data
   .. code-block:: csh
     
     cd $MICROBE_FLOW_CWD
-    wget http://neatseq-flow.readthedocs.io/en/latest/_downloads/Microbe-Flow_conda_test_run.yaml
+    wget http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/Microbe-Flow_conda_test_run.yaml
     sed -i $( echo 's:$MICROBE_FLOW_CWD:'$MICROBE_FLOW_CWD':') Microbe-Flow_conda_test_run.yaml
     sed -i $( echo 's:/PATH_TO_YOUR_QSUB/:'$(dirname `which qsub`)':') Microbe-Flow_conda_test_run.yaml
     nano  Microbe-Flow_conda_test_run.yaml
