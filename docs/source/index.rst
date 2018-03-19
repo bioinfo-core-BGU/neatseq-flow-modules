@@ -3,7 +3,7 @@
 
 .. _module_repo_docs:
 
-NeatSeq_Flow's Module and Workflow Repository 
+**NeatSeq-Flow**'s Module and Workflow Repository 
 =============================================
 
 .. figure:: figs/NeatSeq_Flow_logo.png
