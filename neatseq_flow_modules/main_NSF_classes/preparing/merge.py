@@ -364,18 +364,20 @@ class Step_merge(Step):
                     src_exts = list(set([item for sublist in src_exts for item in sublist]))
 
                     if len(src_exts)>1:
-                        raise AssertionExcept("More than one file extension in source '{src}' ({ext}). Can't guess 'script_path'".format(src=src, ext=", ".join(src_exts)))
-                    # Convert set to string:
-                    src_exts = src_exts[0]
-                    if src_exts not in self.script_path_map.keys():
-                        raise AssertionExcept("Unidentified extension in source '{src}' ({ext}). Can't guess 'script_path'".format(src=src, ext=src_exts))
+                        # raise AssertionExcept("More than one file extension in source '{src}' ({ext}). Can't guess 'script_path'".format(src=src, ext=", ".join(src_exts)))
+                        pass
                     else:
-                        if isinstance(self.script_path_map[src_exts],list):
-                            self.params["script_path"][src_ind] = self.script_path_map[src_exts][0]
-                            self.params["pipe"][src_ind] = self.script_path_map[src_exts][1]
+                        # Convert set to string:
+                        src_exts = src_exts[0]
+                        if src_exts not in self.script_path_map.keys():
+                            raise AssertionExcept("Unidentified extension in source '{src}' ({ext}). Can't guess 'script_path'".format(src=src, ext=src_exts))
                         else:
-                            self.params["script_path"][src_ind] = self.script_path_map[src_exts]
-                    # print "===> ",src_exts
+                            if isinstance(self.script_path_map[src_exts],list):
+                                self.params["script_path"][src_ind] = self.script_path_map[src_exts][0]
+                                self.params["pipe"][src_ind] = self.script_path_map[src_exts][1]
+                            else:
+                                self.params["script_path"][src_ind] = self.script_path_map[src_exts]
+                        # print "===> ",src_exts
 
             elif scope=="project":
                 if src not in self.sample_data["project_data"]:
@@ -404,14 +406,14 @@ class Step_merge(Step):
 
                     
 
-        #---------------------------------------
+        # #---------------------------------------
         # for param in ["script_path","src","trg","ext","pipe","scope"]:
             # print param
             # # self.params[param] = [i for j, i in enumerate(self.params[param]) if j not in bad_srcs]
             # self.params[param] = [i for j, i in enumerate(self.params[param]) ]
             # pp(self.params[param])
         # print bad_srcs
-        #---------------------------------------
+        # # ---------------------------------------
         # sys.exit()
 
     def create_spec_wrapping_up_script(self):
@@ -430,7 +432,6 @@ class Step_merge(Step):
             scope = self.params["scope"][scope_ind]
             trg = self.params["trg"][scope_ind]
             ext = self.params["ext"][scope_ind]
-            script_path = self.params["script_path"][scope_ind]
 
             if scope == "sample":
                 # Each iteration must define the following class variables:
@@ -440,13 +441,12 @@ class Step_merge(Step):
                     # General comment: If there is a parallel routine for each direction (forward, reverse), add this loop	
                     # if  in self.sample_data[sample].keys():
 
-                    # for type_i in range(len(self.params["src"])):
+                    # The following two may be modified per sample. Therefore, reading them each time
+                    script_path = self.params["script_path"][scope_ind]
+                    pipe = self.params["pipe"][scope_ind]
+
                 
                     self.script = ""
-                    
-                    # Get index of src. Will be used to extract equivalent trg, script_path and ext.
-                    # type_i = self.params["src"].index(src_type)
-                    # src_type = self.params["src"][type_i]
                     
                     # src_type not defined for this sample. Move on.
                     if src not in self.sample_data[sample]:
@@ -460,13 +460,28 @@ class Step_merge(Step):
                     
                     fq_fn = ".".join([sample, src, self.file_tag,ext])          #The filename containing the end result. Used both in script and to set reads in $sample_params
 
+                    if not script_path:         # Not all samples have the same file types. Sample-specific guessing...
 
+                        src_exts = list(set([os.path.splitext(filename)[1] for filename in self.sample_data[sample][src]]))
+                        if len(src_exts)>1:
+                            raise AssertionExcept("More than one file extension in source '{src}' for sample '{sample}' ({ext}). Can't guess 'script_path'".format(src=src, sample = sample, ext=", ".join(src_exts)))
+                        # Convert set to string:
+                        src_exts = src_exts[0]
+                        if src_exts not in self.script_path_map.keys():
+                            raise AssertionExcept("Unidentified extension in source '{src}' for sample {sample} ({ext}). Can't guess 'script_path'".format(src=src, sample = sample, ext=src_exts))
+                        else:
+                            if isinstance(self.script_path_map[src_exts],list):
+                                script_path = self.script_path_map[src_exts][0]
+                                pipe = self.script_path_map[src_exts][1]
+                            else:
+                                script_path = self.script_path_map[src_exts]
+                                    
                     self.script += script_path + " \\\n\t"
                     # The following line concatenates all the files in the direction separated by a " "
                     self.script += " ".join(self.sample_data[sample][src]) 
                     self.script += " \\\n\t"
-                    if self.params["pipe"][scope_ind]:  #"pipe" in self.params:
-                        self.script += "| {pipe} \\\n\t".format(pipe = self.params["pipe"][scope_ind])
+                    if pipe:  # pipe is not 'None'
+                        self.script += "| {pipe} \\\n\t".format(pipe = pipe)
                     self.script += "> %s%s \n\n"  % (use_dir, fq_fn)
 
                     # Move all files from temporary local dir to permanent base_dir

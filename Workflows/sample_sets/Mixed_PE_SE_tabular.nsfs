@@ -3,8 +3,8 @@ Title	Mixed_PE_SE_project
 #SampleID	Type	Path	lane
 Sample1	Single	/path/to/Sample1.fastq	1
 Sample1	Single	/path/to/Sample1.fastq	2
-Sample2	Single	/path/to/Sample2.fastq	1
-Sample2	Single	/path/to/Sample2.fastq	2
+Sample2	Single	/path/to/Sample2.fastq.gz	1
+Sample2	Single	/path/to/Sample2.fastq.gz	2
 Sample3	Single	/path/to/Sample3.fastq	1
 Sample3	Single	/path/to/Sample3.fastq	2
 # Paired:
