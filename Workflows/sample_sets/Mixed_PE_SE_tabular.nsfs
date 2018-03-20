@@ -1,0 +1,26 @@
+Title	Mixed_PE_SE_project
+
+#SampleID	Type	Path	lane
+Sample1	Single	/path/to/Sample1.fastq	1
+Sample1	Single	/path/to/Sample1.fastq	2
+Sample2	Single	/path/to/Sample2.fastq	1
+Sample2	Single	/path/to/Sample2.fastq	2
+Sample3	Single	/path/to/Sample3.fastq	1
+Sample3	Single	/path/to/Sample3.fastq	2
+# Paired:
+Sample4	Forward	/path/to/Sample4_F1.fastq.gz	1
+Sample4	Forward	/path/to/Sample4_F2.fastq.gz	2
+Sample4	Reverse	/path/to/Sample4_R1.fastq.gz	1
+Sample4	Reverse	/path/to/Sample4_R2.fastq.gz	2
+Sample5	Forward	/path/to/Sample5_F1.fastq.gz	1
+Sample5	Reverse	/path/to/Sample5_R1.fastq.gz	1
+Sample5	Forward	/path/to/Sample5_F2.fastq.gz	2
+Sample5	Reverse	/path/to/Sample5_R2.fastq.gz	2
+Sample6	Forward	/path/to/Sample6_F1.fastq.gz	1
+Sample6	Reverse	/path/to/Sample6_R1.fastq.gz	1
+Sample6	Forward	/path/to/Sample6_F2.fastq.gz	2
+Sample6	Reverse	/path/to/Sample6_R2.fastq.gz	2
+
+
+
+
