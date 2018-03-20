@@ -405,12 +405,12 @@ class Step_merge(Step):
                     
 
         #---------------------------------------
-        for param in ["script_path","src","trg","ext","pipe","scope"]:
-            print param
-            # self.params[param] = [i for j, i in enumerate(self.params[param]) if j not in bad_srcs]
-            self.params[param] = [i for j, i in enumerate(self.params[param]) ]
-            pp(self.params[param])
-        print bad_srcs
+        # for param in ["script_path","src","trg","ext","pipe","scope"]:
+            # print param
+            # # self.params[param] = [i for j, i in enumerate(self.params[param]) if j not in bad_srcs]
+            # self.params[param] = [i for j, i in enumerate(self.params[param]) ]
+            # pp(self.params[param])
+        # print bad_srcs
         #---------------------------------------
         # sys.exit()
 
