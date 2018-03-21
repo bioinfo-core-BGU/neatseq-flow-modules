@@ -432,6 +432,8 @@ class Step_merge(Step):
             scope = self.params["scope"][scope_ind]
             trg = self.params["trg"][scope_ind]
             ext = self.params["ext"][scope_ind]
+            script_path = self.params["script_path"][scope_ind]
+            pipe = self.params["pipe"][scope_ind]
 
             if scope == "sample":
                 # Each iteration must define the following class variables:
@@ -441,7 +443,7 @@ class Step_merge(Step):
                     # General comment: If there is a parallel routine for each direction (forward, reverse), add this loop	
                     # if  in self.sample_data[sample].keys():
 
-                    # The following two may be modified per sample. Therefore, reading them each time
+                    # The following two may be modified per sample. Therefore, reading them again for each sample
                     script_path = self.params["script_path"][scope_ind]
                     pipe = self.params["pipe"][scope_ind]
 
@@ -500,16 +502,13 @@ class Step_merge(Step):
 
                 self.script = ""
                 
-                # Get index of src. Will be used to extract equivalent trg, script_path and ext.
-                # type_i = self.params["src"].index(src_type)
-                # src_type = self.params["src"][type_i]
                 
                 # src_type not defined for this sample. Move on.
                 if src not in self.sample_data["project_data"]:
                     continue
-                    
-                self.spec_script_name = "_".join([self.step,self.name,self.sample_data["Title"],src])
 
+                self.spec_script_name = "_".join([self.step,self.name,self.sample_data["Title"],src])
+                
                 # This line should be left before every new script. It sees to local issues.
                 # Use the dir it returns as the base_dir for this step.
                 use_dir = self.local_start(self.base_dir)
