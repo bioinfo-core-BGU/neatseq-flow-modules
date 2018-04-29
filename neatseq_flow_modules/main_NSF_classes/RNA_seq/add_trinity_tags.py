@@ -12,6 +12,7 @@ See the `Strand specific assembly`_ section of the Trinity manual.
 The module uses awk, so you don't need to pass a ``script_path``. 
 Since you must pass a ``script_path``, just leave it blank. 
 
+.. Attention:: The ``awk`` command is set to remove all text in title following any whitespace. Make sure the said information is not important. If it is, you can do the mapping step using the base of ``add_trinity_tags``.
 
 .. _Strand specific assembly: https://github.com/trinityrnaseq/trinityrnaseq/wiki/Running-Trinity#strand_specific_assembly
  
@@ -124,7 +125,7 @@ class Step_add_trinity_tags(Step):
                     if self.params["script_path"]:
                         self.script += self.params["script_path"]
                     else:
-                        self.script += "awk '{ if (NR%%4==1) { gsub(\" .*\",\"\"); print $0\"%(tag)s\" } else { print } }' \\\n\t" % {"tag" : {"R":"/2","F":"/1","S":"/1"}[direction[0]]}
+                        self.script += "awk '{ if (NR%%4==1) { gsub(/\s.*/,\"\"); print $0\"%(tag)s\" } else { print } }' \\\n\t" % {"tag" : {"R":"/2","F":"/1","S":"/1"}[direction[0]]}
                     self.script += "%s \\\n\t" % self.sample_data[sample][file_slot]
                     self.script += "> %s\n\n" % (use_dir + fq_fn)
 

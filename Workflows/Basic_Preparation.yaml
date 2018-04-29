@@ -71,6 +71,7 @@ Step_params:
         base:           trim_gal
         script_path:    {Vars.paths.fastqc}
         sum_script:     {Vars.paths.fastqc_sum_script}
+        # exclude_sample_list:    [Sample1, Sample2]
         qsub_params:
             -pe:        shared 15
         redirects:

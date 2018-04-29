@@ -298,8 +298,8 @@ class Step_samtools(Step):
                     self.script += "-1  {readsF} \\\n\t".format(readsF = (use_dir + bam_name + ".F." + type))
                     self.script += "-2  {readsR} \\\n\t".format(readsR = (use_dir + bam_name + ".R." + type))
                 else:
-                    self.script += "-s  {readsS} \\\n\t".format(readsS = (use_dir + bam_name + ".S." + type))
-                # -0 and mixed paired-single not supported yet
+                    self.script += "-0  {readsS} \\\n\t".format(readsS = (use_dir + bam_name + ".S." + type))
+                # -s and mixed paired-single not supported yet
                 self.script += "{bam} \n\n".format(bam = (use_dir + bam_name))
                 
                 # Storing and Stamping files

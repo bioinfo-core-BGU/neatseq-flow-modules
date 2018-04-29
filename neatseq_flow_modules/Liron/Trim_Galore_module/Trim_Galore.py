@@ -83,6 +83,8 @@ __version__= "1.2.0"
 
 class Step_Trim_Galore(Step):
 
+    auto_redirs = "--paired --retain_unpaired".split(" ")
+
     def step_specific_init(self):
         self.shell = "bash"
         self.file_tag = "trim_galore.fq"
@@ -153,10 +155,10 @@ class Step_Trim_Galore(Step):
                         self.script += "--path_to_cutadapt %s \\\n\t" % self.params["cutadapt_path"] 
                     self.script += "%s \\\n\t" % (" \\\n\t".join([self.sample_data[sample]["fastq.F"],\
                                                                   self.sample_data[sample]["fastq.R"]]))
-                    if "--paired" not in self.params["redir_params"].keys():
-                        self.script += "%s \\\n\t" %  "--paired"                                                                                                                                                                                                                                                                                                                           
-                    if "--retain_unpaired" not in self.params["redir_params"].keys():
-                        self.script += "%s \\\n\t" %  "--retain_unpaired"                       
+                    # if "--paired" not in self.params["redir_params"].keys():
+                    self.script += "%s \\\n\t" %  "--paired"                                                                                                                                                                                                                                                                                                                           
+                    # if "--retain_unpaired" not in self.params["redir_params"].keys():
+                    self.script += "%s \\\n\t" %  "--retain_unpaired"                       
                     
                     self.script += "-o %s \n\n" % use_dir 
                     
@@ -171,11 +173,11 @@ class Step_Trim_Galore(Step):
                     
                     fq_fn_S = use_dir + "".join([re.sub("\.\w+$","",basename_S ), "_trimmed.fq"])          #The filename containing the end result. Used both in script and to set reads in $sample_params
                     fq_fn_S_bn = os.path.basename(fq_fn_S);
-                    # TODO: use existing      
-                    # Remove --paired and --retain_unpaired from redirects. Should not be passed if SE (Menachem)
-                    for key in ["--paired","--retain_unpaired"]:
-                        if key in self.params:
-                            del self.params[key]
+                    # # TODO: use existing      
+                    # # Remove --paired and --retain_unpaired from redirects. Should not be passed if SE (Menachem)
+                    # for key in ["--paired","--retain_unpaired"]:
+                        # if key in self.params:
+                            # del self.params[key]
                     self.script += self.get_redir_parameters_script()
 
                     # for key in self.params["redir_params"].keys():
