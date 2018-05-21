@@ -107,8 +107,24 @@ Step_params:
         del_sam: 
         del_unsorted: 
     MultQC_rRNA_filt:
-        module:         Multiqc_single_base
+        module:         Multiqc
         base:           [sam2bam,bwt2_map]
         script_path:    {Vars.paths.multiqc}        
         redirects:
             --interactive:
+
+    sam_noview_nosort:
+        module:         samtools
+        base:           sam2bam
+        script_path:    {Vars.paths.samtools}
+        type2use:       bam
+        qsub_params:
+            -pe:        shared 20
+        # view:           -buh  -q 30 -@ 20 -F 4
+        # sort:           -@ 20
+        flagstat: 
+        # index: 
+        stats:          --remove-dups
+        # fasta:          -t -F 4
+        # del_sam: 
+        # del_unsorted: 
