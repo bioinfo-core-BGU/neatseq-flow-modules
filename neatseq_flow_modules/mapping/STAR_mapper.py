@@ -279,10 +279,10 @@ class Step_STAR_mapper(Step):
             
             # Adding sample ID to ID: attribute:
             if "outSAMattrRGline" in self.params:
-                self.params["redir_params"]["--outSAMattrRGline"] = "ID:{ID} {rest}".format(ID=sample, \
+                self.params["redir_params"]["--outSAMattrRGline"] = "ID:{ID} SM:{ID} {rest}".format(ID=sample, \
                                                                                 rest=self.params["outSAMattrRGline"])
             else:
-                self.params["redir_params"]["--outSAMattrRGline"] = "ID:{ID}".format(ID=sample)
+                self.params["redir_params"]["--outSAMattrRGline"] = "ID:{ID} SM:{ID}".format(ID=sample)
             
             # If using internal index, define it here:
             if "scope" in self.params:
