@@ -1,0 +1,124 @@
+Global_params:
+    Default_wait: 10
+    Qsub_opts: -cwd
+    Qsub_q: myqueue.q
+    Qsub_path: /path/to/qsub/bin
+    module_path:      ../modules_release_1.1.0
+Description: |
+   
+Vars:
+    paths:
+        merge:          gzip -cd    
+        fastqc:         /path/to/fastqc
+        trimmo:         /path/to/trimmomatic-0.32.jar
+        bowtie2:        /path/to/bowtie2
+        samtools:       /path/to/samtools
+        java:           /path/to/java
+        multiqc:        /path/to/multiQC
+    reference:
+        fasta:          /path/to/fasta
+        chrom_sizes:    /path/to/chrom.sizes
+        ceas_db:        /path/to/CEAS-Package-1.0.2/databases/hg19.refGene
+        bowtie2_ind:    /path/to/bowtie2/index  # Without the suffix
+        NGSplot_code:   mm10
+Step_params:
+# ---------------------------------- 1. Merge, QC  and trimming
+    merge1:
+        module:         merge
+        script_path:    #{Vars.paths.merge}
+        # stop_and_show:
+    
+
+    RSEM_prep_ind:
+        module:             RSEM_prep
+        base:               merge1
+        script_path:        /path/to/RSEM
+        # reference:              /path/to/fasta
+        scope:              project
+        redirects:
+            --star:
+            --star-path:    path/to/star
+        # stop_and_show:
+
+            # --gtf:          /path/to/gtf
+            # --transcript-to-gene-map: /path/to/map_file
+    
+
+    STAR_map:
+        module:         STAR_mapper
+        base:           RSEM_prep_ind
+        script_path:    STAR
+        scope:          project
+        # ref_genome:     {Vars.reference.hg38.fasta}
+            # Used by Liron.
+            # Michal used the following (from STAR?): /fastspace/bioinfo_databases/STAR_GRCh38_Gencode21/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna
+        # arg_separator:  '='
+        qsub_params:
+            queue:      star.q
+            -pe:        shared 4
+        redirects:  # All parameters taken from RSEMs log file. Not sure if we need the '\' in outSAMheaderHD
+            --runThreadN:               4
+            --outSAMunmapped:           Within
+            --outFilterType:            BySJout
+            --outSAMattributes:         NH HI AS NM MD
+            --outFilterMultimapNmax:    20
+            --outFilterMismatchNmax:    999
+            --outFilterMismatchNoverLmax: 0.04
+            --alignIntronMin:           20
+            --alignIntronMax:           1000000
+            --alignMatesGapMax:         1000000
+            --alignSJoverhangMin:       8
+            --alignSJDBoverhangMin:     1
+            --sjdbScore:                1
+            --genomeLoad:               NoSharedMemory
+            --outSAMtype:               BAM Unsorted
+            --quantMode:                TranscriptomeSAM
+            --outSAMheaderHD:           \@HD VN:1.4 SO:unsorted
+            --outSAMattrRGline:         PL:Illumina PU:something LB:empty
+        # stop_and_show:
+        
+    move_transcriptome_bam:
+        module:             manage_types
+        base:               STAR_map
+        script_path:
+        scope:              sample
+        operation:          mv
+        type:               bam_transcriptome
+        type_trg:           bam
+        scope_trg:          sample
+
+
+    makePICARDfiles:
+        module:             MakePICARDfiles
+        base:               STAR_map
+        script_path:        /path/to/PICARD
+        scope:              sample
+        gtfToGenePred_path: /path/to/gtfToGenePred
+        gtf2bed_path:       /path/to/gtf2bed
+        setenv:             PATH="/path/to/bedops/bin:$PATH"
+        stop_and_show:
+
+    CollectRnaSeqMetrics:
+        module:             CollectRnaSeqMetrics
+        base:               makePICARDfiles
+        script_path:        /gpfs0/bioinfo/apps/java/jre1.8.0_152/bin/java -jar /gpfs0/bioinfo/apps/PICARD/PICARD_v2.10.2/picard.jar CollectRnaSeqMetrics 
+        scope:              sample
+        redirects:
+            REF_FLAT:           reference/refFlat_mine.flatf 
+            STRAND:             NONE 
+            RIBOSOMAL_INTERVALS: reference/Homo_sapiens.GRCh38.91.rRNA.interval_list
+      
+      
+   
+    
+    
+    RSEM_map:
+        module:             RSEM_mapper
+        base:               move_transcriptome_bam
+        script_path:        /path/to/RSEM
+        # reference:              /path/to/fasta
+        scope:              project
+        # redirects:
+            # --gtf:          /path/to/gtf
+            # --transcript-to-gene-map: /path/to/map_file
+    

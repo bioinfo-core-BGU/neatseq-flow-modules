@@ -9,3 +9,6 @@ NeatSeq_Flow_modules.egg-info
 .pydevproject
 cp_to_main.bat
 my_backup_log.txt
+.idea/
+condaenv/
+venv/

@@ -77,7 +77,7 @@ Parameters that can be set
     :header: "Parameter", "Values", "Comments"
     :widths: 15, 10, 10
 
-    "ref_genome", "path to genome fasta", "If ebwt is NOT given, will use the equivalent internal fasta. If ebwt IS given, and ref_genome is NOT passed, will leave the reference slot empty."
+    "ref_genome", "path to genome fasta", ""
     "scope", "project | sample", "Not used"
 
 Lines for parameter file

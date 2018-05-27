@@ -10,6 +10,9 @@
 .bz2:    bzip -cd
 .dsrc2:  [echo , 'xargs -d " " -I % sh -c "dsrc2 d -s %"']
 .dsrc:   [echo , 'xargs -d " " -I % sh -c "dsrc d -s %"']
+.gtf:     cat
+.gff:     cat
+.gff3:     cat
 # The following require knowing non-standard paths, such as samtools. Must be passed through script_path
 # .sam:    cat       
 # .bam:    cat
