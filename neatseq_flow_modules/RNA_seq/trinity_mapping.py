@@ -197,12 +197,23 @@ class Step_trinity_mapping(Step):
         """ Add script to run BEFORE all other steps
         """
   
-        if all([self.params["scope"] == "project",  \
+        if all([self.params["scope"] == "project",
                 self.params["aln_method"] not in ["bam", None]]):
             
             self.script = ""
 
-       
+
+            self.script += """\
+# Creating a local sost link to the reference
+# The purpose is that the reference will not be built in the original location 
+mkdir {dir}
+cp -rs \\
+    {ref} \\
+    {dir}
+
+""".format(ref=self.sample_data["fasta.nucl"],
+                             dir=self.base_dir+"Reference")
+            self.sample_data["fasta.nucl"] = self.base_dir+"Reference/"+os.path.basename(self.sample_data["fasta.nucl"])
             # Create script and write to SCRPT
             # First: transcript preparation (with --pre_reference arg)
             self.script += self.get_script_const()

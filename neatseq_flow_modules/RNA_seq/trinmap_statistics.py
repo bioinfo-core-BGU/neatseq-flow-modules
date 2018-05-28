@@ -40,7 +40,7 @@ Parameters that can be set
 .. csv-table:: 
     :header: "Parameter", "Values", "Comments"
 
-    "use_isoforms", "", "Use 'isoforms.results' matrix. If not passed, use 'genes.results'"
+    "use_genes", "", "Use 'genes.results' matrix. If not passed, use 'isoforms.results'"
     "redirects: --gene_trans_map", "path or 'none'", "If path, use path as gene_trans_map for all samples. If 'none', does not produce gene level estimates. **In order to use an internal gene_trans_map, do not pass this parameter!**"
     
     
@@ -85,9 +85,7 @@ class Step_trinmap_statistics(Step):
         
         if "use_genes" not in self.params:
             self.write_warning("'use_genes' not passed. Using 'isoforms.results' matrix")
-        # if self.params["use_isoforms"] not in ['genes.results' , 'isoforms.results']:
-            # raise AssertionExcept("'use_isoforms' can be either 'genes.results' or 'isoforms.results'")
-        
+
         
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data

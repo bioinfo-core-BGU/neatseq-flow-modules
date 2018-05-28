@@ -45,17 +45,6 @@ Lines for parameter file
 
 ::
 
-
-    RSEM_prep_ind:
-        module:             RSEM_prep
-        base:               merge1
-        script_path:        /path/to/RSEM
-        reference:              /path/to/fasta
-        redir_params:
-            --gtf:          /path/to/gtf
-            --transcript-to-gene-map: /path/to/map_file
-    
-    
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -79,6 +68,11 @@ class Step_RSEM_mapper(Step):
         if "scope" not in self.params:
             raise AssertionExcept("Please supply a scope parameter: either 'sample' or 'project'!")
 
+        if "result2use" not in self.params:
+            self.params["result2use"] = "isoforms"
+        if self.params["result2use"] not in ["genes","isoforms"]:
+            raise AssertionExcept("'result2use' must be either 'genes' or 'isoforms'")
+
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
@@ -95,9 +89,30 @@ class Step_RSEM_mapper(Step):
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
-        pass
-        
-    
+        # This line should be left before every new script. It sees to local issues.
+        # Use the dir it returns as the base_dir for this step.
+        use_dir = self.local_start(self.base_dir)
+
+        results_list = " \\\n\t".join([self.sample_data[sample][self.params["result2use"]+".counts"]
+                                       for sample
+                                       in self.sample_data["samples"]])
+        output_basename = "{name}.{type}.matrix".format(name=self.sample_data["Title"],
+                                                        type=self.params["result2use"])
+
+        self.script = """
+{path}{sep}rsem-generate-data-matrix \\
+    {result_list} \\
+    > {output}
+        """.format(path=os.path.dirname(self.params["script_path"]),
+                   sep=os.sep,
+                   result_list=results_list,
+                   output=use_dir+output_basename)
+        self.sample_data[self.params["result2use"]+".matrix"] = self.base_dir + output_basename
+        self.stamp_file(self.sample_data[self.params["result2use"]+".matrix"])
+
+        # Move all files from temporary local dir to permanent base_dir
+        self.local_finish(use_dir, self.base_dir)  # Sees to copying local files to final destination (and other stuff)
+
     def build_scripts(self):
         """ This is the actual script building function
             Most, if not all, editing should be done here 
@@ -137,7 +152,7 @@ class Step_RSEM_mapper(Step):
             self.script += self.get_script_const()
 
             if alignment:
-                self.script += "--alignment %s \\\n\t" % alignment
+                self.script += "--alignments %s \\\n\t" % alignment
             elif "fastq.F" in self.sample_data[sample]:
                 self.script += "--paired-end \\\n\t\t%s \\\n\t\t%s \\\n\t" % (self.sample_data[sample]["fastq.F"],self.sample_data[sample]["fastq.R"])
             elif "fastq.S" in self.sample_data[sample]:
@@ -145,13 +160,13 @@ class Step_RSEM_mapper(Step):
             else:
                 raise AssertionExcept("No fastq file. Thats really really strange...\n")
 
-
             if self.params["scope"] == "sample":
                 self.script += "%s \\\n\t" % self.sample_data[sample]["RSEM_index"]
-            else:    #if self.params["scope"] == "project":
+            else:    # if self.params["scope"] == "project":
                 self.script += "%s \\\n\t" % self.sample_data["RSEM_index"]
 
-            # Savinf bam files:
+            self.script += "{dir}{sample}".format(dir=sample_dir,sample=sample)
+            # Saving bam files:
             if "--output-genome-bam" in self.params["redir_params"].keys():
                 if "--sort-bam-by-read-name" in self.params["redir_params"] or "--sort-bam-by-coordinate" in self.params["redir_params"]:
                     self.sample_data[sample]["genome.unsorted.bam"] = sample_dir + sample + ".genome.bam"
@@ -163,18 +178,16 @@ class Step_RSEM_mapper(Step):
                 self.sample_data[sample]["transcript.bam"] = sample_dir + sample + ".transcript.sorted.bam"
             else:
                 self.sample_data[sample]["transcript.bam"] = sample_dir + sample + ".transcript.bam"
-
             
-            self.sample_data[sample]["genes.counts"] = sample_dir + sample + ".isoforms.results"
-
-            self.sample_data[sample]["isoforms.counts"] = sample_dir + sample + ".genes.results"
-    
+            self.sample_data[sample]["genes.counts"] = sample_dir + sample + ".genes.results"
+            self.sample_data[sample]["isoforms.counts"] = sample_dir + sample + ".isoforms.results"
+            
+            self.stamp_file(self.sample_data[sample]["genes.counts"])
+            self.stamp_file(self.sample_data[sample]["isoforms.counts"])
         
             # Move all files from temporary local dir to permanent base_dir
             self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)
-       
-            
-            
+           
             self.create_low_level_script()
                     
         

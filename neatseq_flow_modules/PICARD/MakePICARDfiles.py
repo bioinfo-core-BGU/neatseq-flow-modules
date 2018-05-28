@@ -89,16 +89,13 @@ from neatseq_flow.PLC_step import Step,AssertionExcept
 __author__ = "Menachem Sklarz"
 __version__ = "1.1.0"
 
-
 class Step_MakePICARDfiles(Step):
     
     def step_specific_init(self):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         
         self.arg_separator='='
-        
-        
-        
+
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
             Here you should do testing for dependency output. These will NOT exist at initiation of this instance. They are set only following sample_data updating
@@ -117,9 +114,7 @@ class Step_MakePICARDfiles(Step):
                     raise AssertionExcept("Sample does not have fasta.nucl and gtf files.", sample)
         else:
             raise AssertionExcept("'scope' must be either 'sample' or 'project'")
-        
-         
-        
+
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
@@ -133,9 +128,7 @@ class Step_MakePICARDfiles(Step):
         else:
             self.build_scripts_sample()
             
-            
     def build_scripts_project(self):
-        
         
         # Name of specific script:
         self.spec_script_name = "_".join([self.step,self.name,self.sample_data["Title"]])
@@ -146,16 +139,14 @@ class Step_MakePICARDfiles(Step):
         # Use the dir it returns as the base_dir for this step.
         use_dir = self.local_start(self.base_dir)
 
-
         bed_file = "{title}.bed".format(title = self.sample_data["Title"])
         dict_file = "{title}.dict".format(title = self.sample_data["Title"])
         interval_list_file = "{title}.interval_list".format(title = self.sample_data["Title"])
         rRNA_interval_list_file = "{title}.rRNA_interval_list".format(title = self.sample_data["Title"])
         refFlat_file = "{title}.refFlat".format(title = self.sample_data["Title"])
- 
-        
+
         # Get constant part of script:
-        self.script += self.get_script_const()
+        self.script += self.get_setenv_part()
         self.script += """
 
 {gtf2bed} \\
@@ -190,28 +181,28 @@ grep -i rrna {bed} |
     awk 'BEGIN {{ OFS="\\t"}} {{print $12, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10}}' \\
     > {refFlat}
 """.format(PICARD=self.params["script_path"],
-                gtf2bed=self.params["gtf2bed_path"],
-                gtfToGenePred=self.params["gtfToGenePred_path"],
-                gtf=self.sample_data["gtf"],
-                fasta=self.sample_data["fasta.nucl"],
-                bed=use_dir + bed_file,
-                dict=use_dir + dict_file,
-                interval_list=use_dir + interval_list_file,
-                rRNA_interval_list=use_dir + rRNA_interval_list_file,
-                refFlat=use_dir + refFlat_file)
+           gtf2bed=self.params["gtf2bed_path"],
+           gtfToGenePred=self.params["gtfToGenePred_path"],
+           gtf=self.sample_data["gtf"],
+           fasta=self.sample_data["fasta.nucl"],
+           bed=use_dir + bed_file,
+           dict=use_dir + dict_file,
+           interval_list=use_dir + interval_list_file,
+           rRNA_interval_list=use_dir + rRNA_interval_list_file,
+           refFlat=use_dir + refFlat_file)
     
         # Store results to fasta and assembly slots:
         self.sample_data["bed"]                = self.base_dir +  bed_file
-        self.sample_data["dict"]               = self.base_dir +  dict_file
-        self.sample_data["interval_list"]      = self.base_dir +  interval_list_file
-        self.sample_data["rRNA_interval_list"] = self.base_dir +  rRNA_interval_list_file
-        self.sample_data["refFlat"]            = self.base_dir +  refFlat_file
+        self.sample_data["sequence.dict"]               = self.base_dir +  dict_file
+        self.sample_data["INTERVAL_LIST"]      = self.base_dir +  interval_list_file
+        self.sample_data["RIBOSOMAL_INTERVALS"] = self.base_dir +  rRNA_interval_list_file
+        self.sample_data["REF_FLAT"]            = self.base_dir +  refFlat_file
  
         self.stamp_file(self.sample_data["bed"])
-        self.stamp_file(self.sample_data["dict"])
-        self.stamp_file(self.sample_data["interval_list"])
-        self.stamp_file(self.sample_data["rRNA_interval_list"])
-        self.stamp_file(self.sample_data["refFlat"])
+        self.stamp_file(self.sample_data["sequence.dict"])
+        self.stamp_file(self.sample_data["INTERVAL_LIST"])
+        self.stamp_file(self.sample_data["RIBOSOMAL_INTERVALS"])
+        self.stamp_file(self.sample_data["REF_FLAT"])
     
         # Move all files from temporary local dir to permanent base_dir
         self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
@@ -242,7 +233,7 @@ grep -i rrna {bed} |
      
             
             # Get constant part of script:
-            self.script += self.get_script_const()
+            self.script += self.get_setenv_part()
             self.script += """
 
 {gtf2bed} \\
@@ -274,33 +265,32 @@ grep -i rrna {bed} |
     -ignoreGroupsWithoutExons \\
     {gtf} \\
     /dev/stdout | \\
-    awk 'BEGIN { OFS="\\t"} {print $12, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10}' \\
+    awk 'BEGIN {{ OFS="\\t"}} {{print $12, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10}}' \\
     > {refFlat}
 """.format(PICARD=self.params["script_path"],
-                gtf2bed=self.params["gtf2bed_path"],
-                gtfToGenePred=self.params["gtfToGenePred_path"],
-                gtf=self.sample_data["gtf"],
-                fasta=self.sample_data["fasta.nucl"],
-                bed=use_dir + bed_file,
-                dict=use_dir + dict_file,
-                interval_list=use_dir + interval_list_file,
-                rRNA_interval_list=use_dir + rRNA_interval_list_file,
-                refFlat=use_dir + refFlat_file)
+           gtf2bed=self.params["gtf2bed_path"],
+           gtfToGenePred=self.params["gtfToGenePred_path"],
+           gtf=self.sample_data["gtf"],
+           fasta=self.sample_data["fasta.nucl"],
+           bed=use_dir + bed_file,
+           dict=use_dir + dict_file,
+           interval_list=use_dir + interval_list_file,
+           rRNA_interval_list=use_dir + rRNA_interval_list_file,
+           refFlat=use_dir + refFlat_file)
     
             # Store results to fasta and assembly slots:
             self.sample_data[sample]["bed"]                = self.base_dir + bed_file
-            self.sample_data[sample]["dict"]               = self.base_dir + dict_file
-            self.sample_data[sample]["interval_list"]      = self.base_dir + interval_list_file
-            self.sample_data[sample]["rRNA_interval_list"] = self.base_dir + rRNA_interval_list_file
-            self.sample_data[sample]["refFlat"]            = self.base_dir + refFlat_file
+            self.sample_data[sample]["sequence.dict"]               = self.base_dir + dict_file
+            self.sample_data[sample]["INTERVAL_LIST"]      = self.base_dir + interval_list_file
+            self.sample_data[sample]["RIBOSOMAL_INTERVALS"] = self.base_dir + rRNA_interval_list_file
+            self.sample_data[sample]["REF_FLAT"]            = self.base_dir + refFlat_file
      
             self.stamp_file(self.sample_data[sample]["bed"])
-            self.stamp_file(self.sample_data[sample]["dict"])
-            self.stamp_file(self.sample_data[sample]["interval_list"])
-            self.stamp_file(self.sample_data[sample]["rRNA_interval_list"])
-            self.stamp_file(self.sample_data[sample]["refFlat"])
+            self.stamp_file(self.sample_data[sample]["sequence.dict"])
+            self.stamp_file(self.sample_data[sample]["INTERVAL_LIST"])
+            self.stamp_file(self.sample_data[sample]["RIBOSOMAL_INTERVALS"])
+            self.stamp_file(self.sample_data[sample]["REF_FLAT"])
      
             # Move all files from temporary local dir to permanent base_dir
             self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)
             self.create_low_level_script()
-            

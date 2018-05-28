@@ -92,21 +92,21 @@ Step_params:
         module:             MakePICARDfiles
         base:               STAR_map
         script_path:        /path/to/PICARD
-        scope:              sample
+        scope:              project
         gtfToGenePred_path: /path/to/gtfToGenePred
         gtf2bed_path:       /path/to/gtf2bed
         setenv:             PATH="/path/to/bedops/bin:$PATH"
-        stop_and_show:
+        # stop_and_show:
 
     CollectRnaSeqMetrics:
         module:             CollectRnaSeqMetrics
         base:               makePICARDfiles
         script_path:        /gpfs0/bioinfo/apps/java/jre1.8.0_152/bin/java -jar /gpfs0/bioinfo/apps/PICARD/PICARD_v2.10.2/picard.jar CollectRnaSeqMetrics 
-        scope:              sample
+        scope:              project
         redirects:
-            REF_FLAT:           reference/refFlat_mine.flatf 
+            # REF_FLAT:           reference/refFlat_mine.flatf 
             STRAND:             NONE 
-            RIBOSOMAL_INTERVALS: reference/Homo_sapiens.GRCh38.91.rRNA.interval_list
+            # RIBOSOMAL_INTERVALS: reference/Homo_sapiens.GRCh38.91.rRNA.interval_list
       
       
    
@@ -118,7 +118,8 @@ Step_params:
         script_path:        /path/to/RSEM
         # reference:              /path/to/fasta
         scope:              project
+        result2use:         genes
         # redirects:
             # --gtf:          /path/to/gtf
             # --transcript-to-gene-map: /path/to/map_file
-    
+        stop_and_show:
