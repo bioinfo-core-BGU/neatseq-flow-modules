@@ -143,7 +143,6 @@ class Step_trinmap_statistics(Step):
 
         self.script += self.get_script_const()
 
-            
         self.script += "--out_prefix %s \\\n\t" % os.sep.join([use_dir, prefix])
         # type2use is 'genes.results' or 'isoforms.results'. This is used to then select the correct slot from "mapping"
         type2use = "genes.results" if "use_genes" in self.params.keys() else "isoforms.results"
@@ -166,26 +165,20 @@ class Step_trinmap_statistics(Step):
             
             self.stamp_file(self.sample_data["isoform.raw_counts"] )
             self.stamp_file(self.sample_data["isoform.norm_counts"])
-            
-            
+
             if(self.use_gene_trans_map):  # True when --gene_trans_map is not "none"
                 self.sample_data["gene.raw_counts"] = os.sep.join([self.base_dir,  "%s.gene.counts.matrix" % prefix])
                 self.sample_data["gene.norm_counts"] = os.sep.join([self.base_dir, "%s.gene.TPM.not_cross_norm" % prefix])
                 self.stamp_file(self.sample_data["gene.raw_counts"] )
                 self.stamp_file(self.sample_data["gene.norm_counts"])
-            
-        
+
         else:
-            self.write_warning("Not storing output files for old version of trinity. If required, load the appropriate files with a 'manage_types' module")
+            self.write_warning("Not storing output files for old version of trinity. "
+                               "If required, load the appropriate files with a 'manage_types' module")
 
        
         # Move all files from temporary local dir to permanent base_dir
-        self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
-     
-            
-        
-        
+        # Sees to copying local files to final destination (and other stuff)
+        self.local_finish(use_dir,self.base_dir)
+
         self.create_low_level_script()
-                    
-    
-     

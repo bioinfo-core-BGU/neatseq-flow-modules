@@ -204,11 +204,21 @@ Step_params:
             # -pe:            shared 10
         redirects:
             --cpu:          1
+
+    trino_rnammer_highExpr:
+        module:             RnammerTranscriptome
+        base:               Split_Fasta
+        script_path:        /gpfs0/bioinfo/apps/Trinity/Trinotate-v3.1.1/util/rnammer_support/RnammerTranscriptome.pl #{Vars.paths.hmmscan}
+        scope:              sample
+        redirects:
+            --path_to_rnammer:  /gpfs0/bioinfo/apps/RNAMMER/RNAMMER_v1.2/rnammer
+
+
     trino_merge_blast_highExpr:
         module:             merge_table
-        base:               [trino_blastp_sprot_highExpr,trino_blastx_sprot_highExpr]
+        base:               [trino_blastp_sprot_highExpr,trino_blastx_sprot_highExpr,trino_rnammer_highExpr]
         script_path:        
-        type:               [blast.prot,blast.nucl,transcripts.fasta.nucl,fasta.prot]
+        type:               [blast.prot,blast.nucl,transcripts.fasta.nucl,fasta.prot,rnammer]
         # header:             5
     trino_merge_hmm_highExpr:
         module:             merge_table
