@@ -147,7 +147,7 @@ cd {dir}
     
 cd -
 """.format(dir=use_dir,
-           const=self.get_script_const().rstrip("\\\n\t"),
+           const=self.get_script_const().rstrip("\\"),
            fasta_nucl=self.sample_data["fasta.nucl"])
 
         # Store results to fasta and assembly slots:
@@ -189,7 +189,7 @@ cd {dir}
 
 cd -
 """.format(dir=use_dir,
-           const=self.get_script_const().rstrip("\\\n\t"),
+           const=self.get_script_const().rstrip("\\"),
            fasta_nucl=self.sample_data[sample]["fasta.nucl"])
 
             # Store results to fasta and assembly slots:
