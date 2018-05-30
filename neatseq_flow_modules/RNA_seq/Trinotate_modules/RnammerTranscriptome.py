@@ -151,7 +151,7 @@ cd -
            fasta_nucl=self.sample_data["fasta.nucl"])
 
         # Store results to fasta and assembly slots:
-        self.sample_data["rnammer"] = "%s%s" % (self.base_dir, output_basename)
+        self.sample_data["rnammer"] = "{dir}{name}".format(dir=self.base_dir, name=output_basename)
         self.sample_data["gff"] = self.sample_data["rnammer"]
 
         self.stamp_file(self.sample_data["rnammer"])
@@ -194,7 +194,7 @@ cd -
            fasta_nucl=self.sample_data[sample]["fasta.nucl"])
 
             # Store results to fasta and assembly slots:
-            self.sample_data[sample]["rnammer"] = "%s%s" % (self.base_dir, output_basename)
+            self.sample_data[sample]["rnammer"] = "{dir}{name}".format(dir=sample_dir,name=output_basename)
             self.sample_data[sample]["gff"] = self.sample_data[sample]["rnammer"]
 
             self.stamp_file(self.sample_data[sample]["rnammer"])
