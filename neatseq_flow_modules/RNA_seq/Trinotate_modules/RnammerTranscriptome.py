@@ -137,7 +137,7 @@ class Step_RnammerTranscriptome(Step):
         # Use the dir it returns as the base_dir for this step.
         use_dir = self.local_start(self.base_dir)
 
-        output_basename = "{title}.gff".format(title=self.sample_data["Title"])
+        output_basename = "{fasta}.rnammer.gff".format(fasta=os.path.basename(self.sample_data["fasta.nucl"]))
 
         self.script = """\
 cd {dir}
@@ -179,7 +179,8 @@ cd -
             # Use the dir it returns as the base_dir for this step.
             use_dir = self.local_start(sample_dir)
             
-            output_basename = "{title}.gff".format(title = sample)
+            output_basename = "{fasta}.rnammer.gff".\
+                format(fasta=os.path.basename(self.sample_data[sample]["fasta.nucl"]))
 
             self.script = """\
 cd {dir}
