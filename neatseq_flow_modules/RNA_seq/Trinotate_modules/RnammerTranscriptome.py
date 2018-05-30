@@ -139,8 +139,16 @@ class Step_RnammerTranscriptome(Step):
 
         output_basename = "{title}.gff".format(title=self.sample_data["Title"])
 
-        self.script = self.get_script_const()
-        self.script += "--transcriptome {fasta_nucl} \n\n".format(fasta_nucl=self.sample_data["fasta.nucl"])
+        self.script = """\
+cd {dir}
+
+{const}
+    --transcriptome {fasta_nucl}
+    
+cd -
+""".format(dir=use_dir,
+           const=self.get_script_const().rstrip("\\\n\t"),
+           fasta_nucl=self.sample_data["fasta.nucl"])
 
         # Store results to fasta and assembly slots:
         self.sample_data["rnammer"] = "%s%s" % (self.base_dir, output_basename)
@@ -172,9 +180,17 @@ class Step_RnammerTranscriptome(Step):
             use_dir = self.local_start(sample_dir)
             
             output_basename = "{title}.gff".format(title = sample)
-            
-            self.script = self.get_script_const()
-            self.script += "--transcriptome {fasta_nucl} \n\n".format(fasta_nucl=self.sample_data[sample]["fasta.nucl"])\
+
+            self.script = """\
+cd {dir}
+
+{const}
+    --transcriptome {fasta_nucl}
+
+cd -
+""".format(dir=use_dir,
+           const=self.get_script_const().rstrip("\\\n\t"),
+           fasta_nucl=self.sample_data[sample]["fasta.nucl"])
 
             # Store results to fasta and assembly slots:
             self.sample_data[sample]["rnammer"] = "%s%s" % (self.base_dir, output_basename)
