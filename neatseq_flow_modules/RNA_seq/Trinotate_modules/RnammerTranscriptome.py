@@ -123,10 +123,8 @@ class Step_RnammerTranscriptome(Step):
             self.build_scripts_project()
         else:
             self.build_scripts_sample()
-            
-            
+
     def build_scripts_project(self):
-        
         
         # Name of specific script:
         self.spec_script_name = "_".join([self.step,self.name,self.sample_data["Title"]])
