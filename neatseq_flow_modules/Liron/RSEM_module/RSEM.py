@@ -313,7 +313,6 @@ class Step_RSEM(Step):
 
             # Wrapping up function. Leave these lines at the end of every iteration:
             self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)         
-            self.add_jid_to_jid_list()
             self.create_low_level_script()
 
 def set_Sample_data_dir(self,category,info,data):
