@@ -132,19 +132,32 @@ class Step_merge_table(Step):
             output_fn = "{filename}".format(filename = ".".join([self.sample_data["Title"],type]))
             
             
-            if self.params["header"]==0:
+            if "add_filename" in self.params:
+                pass
+            elif self.params["header"]==0:
                 self.script += "cat \\\n\t".format(header = self.params["header"])
             else:
                 self.script += "sed -s '1,{header}d' \\\n\t".format(header = self.params["header"])
 
-            
-            # # Get constant part of script:
-            # self.script += self.get_script_const()
-            # # Files to merge:
-            for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-                self.script += "%s \\\n\t" % self.sample_data[sample][type]
-            
-            self.script += "> {dir}{file}\n\n".format(dir=use_dir,file=output_fn) 
+            print self.script
+            if "add_filename" in self.params:
+                print "in here"
+                for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
+                    self.script += """
+awk 'function basename(file) {{sub(".*/", "", file); return file}} BEGIN {{OFS="\\t"}} {{if(NR>{header}) print basename(FILENAME),$0}}' {filename} >> {output}
+""".format(filename=self.sample_data[sample][type],
+                    header=self.params["header"],
+                    output="{dir}{file}".format(dir=use_dir,file=output_fn))
+
+
+            else:
+                # # Get constant part of script:
+                # self.script += self.get_script_const()
+                # # Files to merge:
+                for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
+                    self.script += "%s \\\n\t" % self.sample_data[sample][type]
+                
+                self.script += "> {dir}{file}\n\n".format(dir=use_dir,file=output_fn) 
             
           
             self.sample_data[type] = "%s%s" % (self.base_dir, output_fn)

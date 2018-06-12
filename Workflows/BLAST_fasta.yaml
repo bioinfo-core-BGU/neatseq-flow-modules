@@ -122,13 +122,14 @@ Step_params:
         base:               blst_asmbl
         script_path:        cat
         type:               [blast,blast.nucl]
+        add_filename:       yes
         # header:             5
     parse_tbl_blst:
         module:             parse_blast
         base:               blst_asmbl
         script_path:        {Vars.paths.parse_blast}
         blast_merge_path:   {Vars.paths.compare_blast_parsed_reports}
-        scope:  sample
+        scope:              sample
         redirects:
             --dbtable:      {Vars.databases.VFDB.table}
             --max_evalue:   1e-7
