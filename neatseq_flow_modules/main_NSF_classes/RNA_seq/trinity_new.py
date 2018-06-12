@@ -201,12 +201,11 @@ class Step_trinity_new(Step):
         elif (single):
             self.script += "--single %s \n\n" % single
         
-        
+        # The assembly itself is stored in the prefix + .Trinity.fasta:
+        output_basename += ".Trinity.fasta"
 
         # Store results to fasta and assembly slots:
-        self.sample_data["fasta.nucl"] = os.path.join(self.base_dir,
-                                                        output_basename,
-                                                        "Trinity.fasta") 
+        self.sample_data["fasta.nucl"] = os.path.join(self.base_dir, output_basename) 
         self.sample_data[self.get_step_step() + ".contigs"] = self.sample_data["fasta.nucl"]
 
         self.stamp_file(self.sample_data["fasta.nucl"])
@@ -222,24 +221,24 @@ class Step_trinity_new(Step):
     {script_path} \\
         {transcriptome} \\
         > {map} 
-""".format(transcriptome = os.path.join(use_dir, output_basename,"Trinity.fasta"),\
+""".format(transcriptome = os.path.join(use_dir, output_basename) ,\
            script_path   = os.path.join(os.path.dirname(os.path.normpath(self.params["script_path"])) , \
                                           "util/support_scripts/get_Trinity_gene_to_trans_map.pl"),\
-           map           = "%s.gene_trans_map" % os.path.join(use_dir, output_basename,"Trinity.fasta"))
+           map           = "{contigs}.gene_trans_map".format(contigs=os.path.join(use_dir, output_basename)))
            
             
             self.script += """
-# Create summary of biom table for use in rarefaction later
+# Creating transcript to gene mapping file:
 
 if [ -e {transcriptome} ]
 then
 	{cmd_text}
 fi
-""".format(transcriptome = os.path.join(use_dir, output_basename,"Trinity.fasta"),\
+""".format(transcriptome = os.path.join(use_dir, output_basename),
            cmd_text = cmd_text)
            
             
-            self.sample_data["gene_trans_map"] = "%s.gene_trans_map" % os.path.join(self.base_dir, output_basename,"Trinity.fasta")
+            self.sample_data["gene_trans_map"] = "{contigs}.gene_trans_map".format(contigs=os.path.join(self.base_dir, output_basename))
             self.stamp_file(self.sample_data["gene_trans_map"])
               
         # Move all files from temporary local dir to permanent base_dir
@@ -283,10 +282,11 @@ fi
             # If there is an extra "\\\n\t" at the end of the script, remove it.
             self.script = self.script.rstrip("\\\n\t") + "\n\n"
 
+            # The assembly itself is stored in the prefix + .Trinity.fasta:
+            output_basename += ".Trinity.fasta"
+
             # Store results to fasta and assembly slots:
-            self.sample_data[sample]["fasta.nucl"] = os.path.join(sample_dir,
-                                                                    output_basename,
-                                                                    "Trinity.fasta") 
+            self.sample_data[sample]["fasta.nucl"] = os.path.join(sample_dir, output_basename) 
 
             self.sample_data[sample][self.get_step_step() + ".contigs"] = self.sample_data[sample]["fasta.nucl"]
 
@@ -303,10 +303,10 @@ fi
         {script_path} \\
             {transcriptome} \\
             > {map} 
-""".format(transcriptome = os.path.join(use_dir,output_basename,"Trinity.fasta"),\
+""".format(transcriptome = os.path.join(use_dir,output_basename),\
            script_path   = os.sep.join([os.path.split(os.path.normpath(self.params["script_path"]))[0] , \
                                           "util/support_scripts/get_Trinity_gene_to_trans_map.pl"]),\
-           map           = os.path.join(use_dir,output_basename,"Trinity.fasta.gene_trans_map"))
+           map           = "{contigs}.gene_trans_map".format(contigs=os.path.join(use_dir, output_basename)))
            
             
                 self.script += """
@@ -316,11 +316,11 @@ if [ -e {transcriptome} ]
 then
     {cmd_text}
 fi
-""".format(transcriptome = use_dir + "Trinity.fasta",\
+""".format(transcriptome = os.path.join(use_dir, output_basename),
            cmd_text = cmd_text)
            
                 
-                self.sample_data[sample]["gene_trans_map"] = os.path.join(sample_dir,output_basename,"Trinity.fasta.gene_trans_map") 
+                self.sample_data[sample]["gene_trans_map"] = "{contigs}.gene_trans_map".format(contigs=os.path.join(sample_dir, output_basename))
                 self.stamp_file(self.sample_data[sample]["gene_trans_map"])
            
                                 

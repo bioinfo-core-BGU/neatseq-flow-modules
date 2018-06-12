@@ -162,41 +162,41 @@ class Step_Trinotate(Step):
             self.script += "cp {source} {dest}\n\n".format(source=self.params["sqlitedb"],
                                                            dest=os.path.join(use_dir,os.path.basename(self.params["sqlitedb"])))
             # Setting sqlitedb to new copy of db:
-            self.sqlitedb = os.path.join(use_dir,os.path.basename(self.params["sqlitedb"]))
+            self.sqlitedb = os.path.join(use_dir, os.path.basename(self.params["sqlitedb"]))
             
-        trino_cmd_sqlite = "{script} \\\n\t{sqlitedb} \\\n\t".format(script = self.params["script_path"],
-                                                                        sqlitedb = self.sqlitedb)
+        trino_cmd_sqlite = "{script} \\\n\t{sqlitedb} \\\n\t".format(script=self.params["script_path"],
+                                                                     sqlitedb=self.sqlitedb)
 
-                
         ################################ Step 1. init
         self.script += "### Step 1: init db\n\n"
         self.script += """
 {trino_cmd}init \\
 \t--gene_trans_map {trans_map} \\
 \t--transcript_fasta {trans_fa} \\
-\t--transdecoder_pep  {pep_fa}\n\n""".format(trino_cmd = trino_cmd_sqlite, 
-                                               trans_map = self.sample_data["gene_trans_map"], 
-                                                trans_fa = self.sample_data["transcripts.fasta.nucl"], 
-                                                pep_fa   = self.sample_data["fasta.prot"])
+\t--transdecoder_pep  {pep_fa}\n\n""".format(trino_cmd = trino_cmd_sqlite,
+                                             trans_map = self.sample_data["gene_trans_map"],
+                                             trans_fa  = self.sample_data["transcripts.fasta.nucl"],
+                                             pep_fa    = self.sample_data["fasta.prot"])
         
         
         ################################ Step 2. Load
-        self.script += "### Step 2: Load blast reports\n\n"
+        self.script += "### Step 2: Load reports\n\n"
         self.script += """
 {trino_cmd}LOAD_swissprot_blastp {blastp} \n
 {trino_cmd}LOAD_swissprot_blastx {blastx} \n
 
-if [ -e {pfam} ]
-    then
-        {trino_cmd}LOAD_pfam {pfam}\n\n
-    fi
+""".format(trino_cmd = trino_cmd_sqlite,
+           blastp  = self.sample_data["blast.prot"],
+           blastx = self.sample_data["blast.nucl"])
 
-""".format(trino_cmd = trino_cmd_sqlite, 
-                                           blastp  = self.sample_data["blast.prot"], 
-                                            blastx = self.sample_data["blast.nucl"], 
-                                            pfam   = self.sample_data["hmmscan.prot"])
+        if "hmmscan.prot" in self.sample_data:
+            self.script += "{trino_cmd}LOAD_pfam {pfam}\n\n".format(trino_cmd = trino_cmd_sqlite,
+                                                                    pfam   = self.sample_data["hmmscan.prot"])
 
-        
+        if "rnammer" in self.sample_data:
+            self.script += "{trino_cmd}LOAD_rnammer {rnammer}\n\n".format(trino_cmd=trino_cmd_sqlite,
+                                                                    rnammer=self.sample_data["rnammer"])
+
         ################################ Step 4. Report
         self.script += "### Step 4: Create report\n\n"
         self.script += """
@@ -219,14 +219,11 @@ if [ -e {pfam} ]
 
             
         # Move all files from temporary local dir to permanent base_dir
-        self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
-     
-            
-        
-        
+        # Sees to copying local files to final destination (and other stuff)
+        self.local_finish(use_dir,self.base_dir)
+
         self.create_low_level_script()
-                    
-#################################################
+
     def build_scripts_sample(self):
         
         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
@@ -278,30 +275,18 @@ if [ -e {pfam} ]
 {trino_cmd}LOAD_swissprot_blastp {blastp} \n
 {trino_cmd}LOAD_swissprot_blastx {blastx} \n
 
-if [ -e {pfam} ]
-    then
-        {trino_cmd}LOAD_pfam {pfam}\n\n
-    fi
+""".format(trino_cmd = trino_cmd_sqlite,
+           blastp  = self.sample_data[sample]["blast.prot"],
+           blastx  = self.sample_data[sample]["blast.nucl"])
 
-""".format(trino_cmd = trino_cmd_sqlite, 
-                                            blastp  = self.sample_data[sample]["blast.prot"], 
-                                            blastx  = self.sample_data[sample]["blast.nucl"], 
-                                            pfam    = self.sample_data[sample]["hmmscan.prot"])
+            if "hmmscan.prot" in self.sample_data[sample]:
+                self.script += "{trino_cmd}LOAD_pfam {pfam}\n\n".format(trino_cmd=trino_cmd_sqlite,
+                                                                        pfam=self.sample_data[sample]["hmmscan.prot"])
 
-#===============================================================================
-#         ################################ Step 3. Load other files
-#         self.script += "### Step 2: Load blast reports\n\n"
-#         trino_cmd_sqlite = "{script} \\\n\n {sqlitedb} \\\n\t".format(script=self.get_script_const(),
-#                                                                         sqlitedb = self.params["sqlitedb"])
-#         self.script += """
-# {trino_cmd}LOAD_swissprot_blastp {blastp} \n
-# {trino_cmd}LOAD_swissprot_blastx {blastx} \n
-# {trino_cmd}LOAD_pfam {pfam}\n\n""".format(blastp  = self.sample_data["gene_trans_map"], 
-#                                             blastx = self.sample_data["blast.nucl"], 
-#                                             pfam   = self.sample_data["blast.prot"])
-#===============================================================================
-            
-            
+            if "rnammer" in self.sample_data[sample]:
+                self.script += "{trino_cmd}LOAD_rnammer {rnammer}\n\n".format(trino_cmd=trino_cmd_sqlite,
+                                                                              rnammer=self.sample_data[sample]["rnammer"])
+
             ################################ Step 4. Report
             self.script += "### Step 4: Create report\n\n"
             self.script += """
@@ -311,7 +296,6 @@ if [ -e {pfam} ]
                                  dir=use_dir, 
                                  file=output_basename)
             
-    
             # Store results to fasta and assembly slots:
             self.sample_data[sample]["trino.rep"] = "%s%s" % (sample_dir, output_basename)
             
@@ -322,14 +306,8 @@ if [ -e {pfam} ]
             if "cp_sqlitedb" in self.params and "rm_sqlitedb" in self.params:
                 self.script += "rm -rf {dest}\n\n".format(dest=os.path.join(use_dir,os.path.basename(self.params["sqlitedb"])))
                         
-                
             # Wrapping up function. Leave these lines at the end of every iteration:
-            self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)
+            # Sees to copying local files to final destination (and other stuff)
+            self.local_finish(use_dir,sample_dir)
 
             self.create_low_level_script()
-                        
-            
-            
-                 
-            
-     

@@ -129,7 +129,7 @@ class Step_merge_table(Step):
             use_dir = self.local_start(self.base_dir)
 
             # Define location and prefix for output files:
-            output_fn = "{filename}".format(filename = "_".join([self.sample_data["Title"],type]))
+            output_fn = "{filename}".format(filename = ".".join([self.sample_data["Title"],type]))
             
             
             if self.params["header"]==0:

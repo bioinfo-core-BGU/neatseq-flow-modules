@@ -77,7 +77,7 @@ Parameters that can be set
     :header: "Parameter", "Values", "Comments"
     :widths: 15, 10, 10
 
-    "ref_genome", "path to genome fasta", "If ebwt is NOT given, will use the equivalent internal fasta. If ebwt IS given, and ref_genome is NOT passed, will leave the reference slot empty."
+    "ref_genome", "path to genome fasta", ""
     "scope", "project | sample", "Not used"
 
 Lines for parameter file
@@ -279,10 +279,10 @@ class Step_STAR_mapper(Step):
             
             # Adding sample ID to ID: attribute:
             if "outSAMattrRGline" in self.params:
-                self.params["redir_params"]["--outSAMattrRGline"] = "ID:{ID} {rest}".format(ID=sample, \
+                self.params["redir_params"]["--outSAMattrRGline"] = "ID:{ID} SM:{ID} {rest}".format(ID=sample, \
                                                                                 rest=self.params["outSAMattrRGline"])
             else:
-                self.params["redir_params"]["--outSAMattrRGline"] = "ID:{ID}".format(ID=sample)
+                self.params["redir_params"]["--outSAMattrRGline"] = "ID:{ID} SM:{ID}".format(ID=sample)
             
             # If using internal index, define it here:
             if "scope" in self.params:

@@ -53,7 +53,7 @@ Lines for parameter file
         gtf:            /fastspace/bioinfo_databases/STAR_GRCh38_Gencode21/gencode.v21.annotation.gtf
         redirects:
             --format:   bam
-            -s:         no
+            -s:         'no'
             -m:         intersection-nonempty
 
 

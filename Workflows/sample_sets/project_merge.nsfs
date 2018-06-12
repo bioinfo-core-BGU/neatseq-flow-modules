@@ -3,6 +3,8 @@ Title	PE_projData # yoogooo
 #Type	Path
 TYP1	/path/to/reference.fasta
 TYP2	/path/to/reference.fa
+Nucleotide	/path/to/myreference.fasta
+GTF	/path/to/gtf.gtf
 
 #SAMPLEID	TYPE	PATH	LANE
 Sample1	Forward	Sample1_F1.fastq.gz	1
