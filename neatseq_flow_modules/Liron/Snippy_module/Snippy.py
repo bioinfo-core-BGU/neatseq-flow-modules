@@ -283,8 +283,6 @@ class Step_Snippy(Step):
             if "spec_dir" in self.params.keys():
                 self.script += "cd " + self.pipe_data["home_dir"] + "\n\n";
             
-                        
-            self.add_jid_to_jid_list()
             self.create_low_level_script()
                     
 
