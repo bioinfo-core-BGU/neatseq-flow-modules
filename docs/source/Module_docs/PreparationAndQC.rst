@@ -19,4 +19,4 @@ Preparation and QC
 
 .. automodule:: neatseq_flow_modules.Liron.Trim_Galore_module.Trim_Galore
 
-.. automodule:: neatseq_flow_modules.miscellaneous.merge_project
+.. automodule:: neatseq_flow_modules.miscellaneous.merge_table
