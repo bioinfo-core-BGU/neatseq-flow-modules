@@ -1,6 +1,6 @@
 name: NeatSeq_Flow
 channels:
-  conda-forge
+  - conda-forge
 dependencies:
 # Deps of Neatseq_Flow
   - python=2.7   # or 2.7
