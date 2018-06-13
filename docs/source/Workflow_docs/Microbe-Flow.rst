@@ -26,7 +26,7 @@ The Microbe-Flow Workflow performs the following tasks:
   * Pan-genome analysis using **Roary** [12]_,including generation of a genes X genomes presence/absence matrix and association analysis based on the pan-genome using **scoary** [13]_.
   * Bi-clustering analysis of virulence genes, to identify groups of genes that are shared by subsets of the genomes using the **eisa** R package [14]_ and in-house scripts.. 
   * Enrichment analysis of gene groups and genome subsets, identified by the bi-clustering analysis using the  **clusterProfiler** R package [15]_ and in house scripts.
-  * Co-localization analysis of gene clusters identified in the bi-clustering analysis using **Gecko3**[16]_.
+  * Co-localization analysis of gene clusters identified in the bi-clustering analysis using **Gecko3** [16]_.
   * Generation of output files ready to use in **phyloviz** [17]_.
   * Generation of multiple layers’ phylogenetic trees plots using **ggtree** R package [18]_ and in-house scripts. 
   * Generation of a final report that includes: Sample’s MetaData, reads QC, Kraken results, de novo assembly QC, pan-genome analysis matrix, resistance genes results and MLST typing
@@ -88,7 +88,7 @@ Programs required
   * ``Roary`` *
   * ``multiqc`` *
   * ``scoary`` *
-  * ``Gubbins`` ***
+  * ``Gubbins`` *
   * ``Gassst`` `Download page <https://www.irisa.fr/symbiose/projects/gassst/>`_
   * ``Gecko3`` `Download page <https://bio.informatik.uni-jena.de/software/gecko3/>`_
 
@@ -128,6 +128,7 @@ Packages required
     * The Programs/Packages marked by * will be installed automatically **[with all their dependencies]** when using CONDA environment. 
     * The R packages marked by ** are not available through CONDA, however, when using CONDA environment they will be installed to the CONDA environment on the first run of the relevant R scripts.
     * The **Gubbins** program needs a different version of python **(v3.6)** therefore needs to run in different CONDA environment.
+    
     **See The** :ref:`Using CONDA environment` **section**
     
 Requirements Table
@@ -262,6 +263,7 @@ MLST/cgMLST Typing Scheme File [Tab delimited]
           .. code-block:: csh     
           
              sh get_scheme.sh "Campylobacter jejuni" "MLST" 
+             
      **Go to** `PubMLST  <https://pubmlst.org/>`_ **to make sure the correct scheme was downloaded!!!!**
      
 Install and Run Microbe-Flow
@@ -269,6 +271,7 @@ Install and Run Microbe-Flow
     **There are two ways to install and run the Microbe-Flow workflow:**
         * For users that needs to install all/most of the required :ref:`programs<Programs required>`/:ref:`packages<Packages required>` it is recommended to :ref:`Install using CONDA<Using CONDA environment>`
         * Users that already have the required :ref:`programs<Programs required>`/:ref:`packages<Packages required>` installed on their system can :ref:`use a local copy of NeatSeq-Flow<Using a local copy of NeatSeq-Flow>`
+        
     **To perform a test run on a publicly available data jump to the** :ref:`Perform a test run <Perform a test run start>` **section**
     
 .. _Using CONDA environment:
@@ -482,6 +485,7 @@ Using CONDA environment
       .. code-block:: csh
 
         qconf -spl
+        
       To view all PEs [pe_name] available to you.
 
   .. tip:: If you don't have a Kraken database you can create one using this command:
@@ -609,7 +613,7 @@ Using a local copy of NeatSeq-Flow
   * Python 2.7 installed
   * The python dependencies: yaml and bunch (you can install them by using ``pip install yaml bunch`` in the command line).
   * All the required programs for this workflow installed on your system.
-  * :download:`Microbe-Flow parameter file <../../../Workflows/Microbe-Flow.yaml>` 
+  * :download:`Microbe-Flow parameter file <../../../Workflows/Microbe-Flow/Microbe-Flow.yaml>` 
   
 .. attention:: The Programs/Packages used in Microbe-Flow might have their own dependencies **Make sure they are all satisfied** 
 
@@ -778,6 +782,7 @@ Using a local copy of NeatSeq-Flow
       .. code-block:: csh
 
         qconf –spl
+        
       To view all PEs [pe_name] available to you.
 
   .. tip:: The ``parse_blast`` parameter can be determined by executing the following command:

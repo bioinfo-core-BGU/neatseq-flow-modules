@@ -4,7 +4,7 @@
 .. _module_repo_docs:
 
 **NeatSeq-Flow**'s Module and Workflow Repository 
-=============================================
+===================================================
 
 .. figure:: figs/NeatSeq_Flow_logo.png
    :scale: 60 %

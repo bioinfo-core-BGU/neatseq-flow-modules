@@ -8,7 +8,7 @@ Transcriptome Annotation
 
 
 
-.. automodule:: RNA_seq.Trinotate
+.. automodule:: RNA_seq.Trinotate_modules.Trinotate
 
-.. automodule:: RNA_seq.TransDecoder
+.. automodule:: RNA_seq.Trinotate_modules.TransDecoder
 
