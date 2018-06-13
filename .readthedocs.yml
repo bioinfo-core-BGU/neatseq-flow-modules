@@ -1,0 +1,13 @@
+# .readthedocs.yml
+
+build:
+  image: latest
+
+python:
+  version: 2.7
+  setup_py_install: true
+  
+formats: []
+
+conda:
+  file: .conda_environment.yml
