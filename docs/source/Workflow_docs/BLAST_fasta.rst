@@ -20,7 +20,7 @@ Steps:
 DAG
 ~~~
 
-.. image:: BLAST_fasta.PNG
+.. image:: BLAST_fasta.png
    :alt: Assembly and searching DAG
 
 Requires

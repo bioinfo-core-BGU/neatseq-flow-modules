@@ -34,7 +34,7 @@ Steps:
 DAG
 ~~~
 
-.. image:: QIIME_workflow.PNG   
+.. image:: QIIME_workflow.png   
    :alt: QIIME workflow DAG
 
 Requires

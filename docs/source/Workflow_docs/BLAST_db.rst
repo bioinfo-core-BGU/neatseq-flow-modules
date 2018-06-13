@@ -20,7 +20,7 @@ Steps:
 DAG
 ~~~
 
-.. image:: BLAST_db.PNG
+.. image:: BLAST_db.png
    :alt: BLAST database DAG
 
 Requires

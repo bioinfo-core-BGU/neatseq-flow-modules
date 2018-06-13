@@ -30,7 +30,7 @@ b. Assembly and analysis of the assembled reads:
 DAG
 ~~~
 
-.. image:: Metagenomics.PNG   
+.. image:: Metagenomics.png   
    :alt: Metagenomics DAG
 
 Requires

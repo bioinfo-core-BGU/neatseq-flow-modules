@@ -17,7 +17,7 @@ Steps:
 DAG
 ~~~
 
-.. image:: Assembly_Indexing_mapping.PNG
+.. image:: Assembly_Indexing_mapping.png
    :alt: Assembly and mapping DAG
 
 Requires

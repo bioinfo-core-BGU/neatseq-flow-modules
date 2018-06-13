@@ -7,8 +7,8 @@ ChIP-seq
    :local:
    :depth: 1
 
-.. automodule:: main_NSF_classes.ChIP_seq.macs2_callpeak
+.. automodule:: neatseq_flow_modules.main_NSF_classes.ChIP_seq.macs2_callpeak
 
-.. automodule:: ChIP_seq.macs2_bdgcmp
+.. automodule:: neatseq_flow_modules.ChIP_seq.macs2_bdgcmp
 
-.. automodule:: ChIP_seq.CEAS
+.. automodule:: neatseq_flow_modules.ChIP_seq.CEAS
