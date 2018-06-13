@@ -8,25 +8,25 @@ Mapping
    :depth: 1
 
 
-.. automodule:: main_NSF_classes.mapping.bowtie2_builder
+.. automodule:: neatseq_flow_modules.main_NSF_classes.mapping.bowtie2_builder
 
-.. automodule:: main_NSF_classes.mapping.bowtie2_mapper
+.. automodule:: neatseq_flow_modules.main_NSF_classes.mapping.bowtie2_mapper
 
-.. automodule:: main_NSF_classes.mapping.bowtie1_builder
+.. automodule:: neatseq_flow_modules.main_NSF_classes.mapping.bowtie1_builder
 
-.. automodule:: main_NSF_classes.mapping.bowtie1_mapper
+.. automodule:: neatseq_flow_modules.main_NSF_classes.mapping.bowtie1_mapper
 
-.. automodule:: main_NSF_classes.mapping.bwa_builder
+.. automodule:: neatseq_flow_modules.main_NSF_classes.mapping.bwa_builder
 
-.. automodule:: main_NSF_classes.mapping.bwa_mapper
+.. automodule:: neatseq_flow_modules.main_NSF_classes.mapping.bwa_mapper
 
-.. automodule:: mapping.STAR_mapper
+.. automodule:: neatseq_flow_modules.mapping.STAR_mapper
 
-.. automodule:: mapping.STAR_builder
+.. automodule:: neatseq_flow_modules.mapping.STAR_builder
 
-.. automodule:: main_NSF_classes.mapping.samtools
+.. automodule:: neatseq_flow_modules.main_NSF_classes.mapping.samtools
 
-.. automodule:: main_NSF_classes.Reports.Multiqc
+.. automodule:: neatseq_flow_modules.main_NSF_classes.Reports.Multiqc
 
-.. automodule:: Liron.RSEM_module.RSEM
+.. automodule:: neatseq_flow_modules.Liron.RSEM_module.RSEM
 

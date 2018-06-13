@@ -9,11 +9,11 @@ Miscellaneous Modules
 
 
 
-.. automodule:: miscellaneous.manage_types
+.. automodule:: neatseq_flow_modules.miscellaneous.manage_types
 
-.. automodule:: miscellaneous.merge_table
+.. automodule:: neatseq_flow_modules.miscellaneous.merge_table
 
-.. automodule:: miscellaneous.split_fasta
+.. automodule:: neatseq_flow_modules.miscellaneous.split_fasta
 
 
 

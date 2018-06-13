@@ -7,7 +7,7 @@ Sequence Annotation
    :local:
    :depth: 1
 
-.. automodule:: Liron.Prokka_module.Prokka
+.. automodule:: neatseq_flow_modules.Liron.Prokka_module.Prokka
 
-.. automodule:: Annotation.prokka_old
+.. automodule:: neatseq_flow_modules.Annotation.prokka_old
 

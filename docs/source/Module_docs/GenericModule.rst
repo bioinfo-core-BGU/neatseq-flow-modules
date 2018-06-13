@@ -8,7 +8,7 @@ Generic Module
 ..    :depth: 1
 
 
-.. automodule:: main_NSF_classes.Generic_module.Generic
+.. automodule:: neatseq_flow_modules.main_NSF_classes.Generic_module.Generic
 
 
 

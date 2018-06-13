@@ -6,13 +6,13 @@ BAM Conversion to Other Formats
    :local:
    :depth: 1
 
-.. automodule:: main_NSF_classes.mapping.genomeCoverageBed
+.. automodule:: neatseq_flow_modules.main_NSF_classes.mapping.genomeCoverageBed
 
-.. automodule:: main_NSF_classes.UCSCtools.UCSC_BW_wig
+.. automodule:: neatseq_flow_modules.main_NSF_classes.UCSCtools.UCSC_BW_wig
 
-.. automodule:: main_NSF_classes.IGVtools.IGV_count
+.. automodule:: neatseq_flow_modules.main_NSF_classes.IGVtools.IGV_count
 
-.. automodule:: main_NSF_classes.IGVtools.IGV_toTDF
+.. automodule:: neatseq_flow_modules.main_NSF_classes.IGVtools.IGV_toTDF
 
 
 

@@ -11,10 +11,10 @@ Variant-related Tasks
 
 
 
-.. automodule:: variants.freebayes
+.. automodule:: neatseq_flow_modules.variants.freebayes
 
-.. automodule:: variants.mpileup_varscan
+.. automodule:: neatseq_flow_modules.variants.mpileup_varscan
 
-.. automodule:: main_NSF_classes.variants.vcftools
+.. automodule:: neatseq_flow_modules.main_NSF_classes.variants.vcftools
 
-.. automodule:: Liron.Snippy_module.Snippy
+.. automodule:: neatseq_flow_modules.Liron.Snippy_module.Snippy

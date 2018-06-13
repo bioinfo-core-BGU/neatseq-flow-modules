@@ -7,10 +7,10 @@ Genome Assembly
    :local:
    :depth: 1
 
-.. automodule:: Assembly.clc_assembl
+.. automodule:: neatseq_flow_modules.Assembly.clc_assembl
 
-.. automodule:: Assembly.megahit_assembl
+.. automodule:: neatseq_flow_modules.Assembly.megahit_assembl
 
-.. automodule:: main_NSF_classes.Assembly.spades_assembl
+.. automodule:: neatseq_flow_modules.main_NSF_classes.Assembly.spades_assembl
 
-.. automodule:: main_NSF_classes.Assembly.quast
+.. automodule:: neatseq_flow_modules.main_NSF_classes.Assembly.quast

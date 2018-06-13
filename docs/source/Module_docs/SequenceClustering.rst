@@ -10,9 +10,9 @@ Sequence Clustering
 
 
 
-.. automodule:: clustering.cd_hit
+.. automodule:: neatseq_flow_modules.clustering.cd_hit
 
-.. automodule:: clustering.vsearch_cluster
+.. automodule:: neatseq_flow_modules.clustering.vsearch_cluster
 
-.. automodule:: clustering.vsearch_derepel
+.. automodule:: neatseq_flow_modules.clustering.vsearch_derepel
 

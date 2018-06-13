@@ -9,15 +9,15 @@ Metagenomics
 
 
 
-.. automodule:: metagenomics.HUMAnN2
+.. automodule:: neatseq_flow_modules.metagenomics.HUMAnN2
 
-.. automodule:: metagenomics.kaiju
+.. automodule:: neatseq_flow_modules.metagenomics.kaiju
 
-.. automodule:: metagenomics.kraken
+.. automodule:: neatseq_flow_modules.metagenomics.kraken
 
-.. automodule:: metagenomics.kraken_biom
+.. automodule:: neatseq_flow_modules.metagenomics.kraken_biom
 
-.. automodule:: metagenomics.metaphlan2
+.. automodule:: neatseq_flow_modules.metagenomics.metaphlan2
 
-.. automodule:: metagenomics.centrifuge
+.. automodule:: neatseq_flow_modules.metagenomics.centrifuge
 
