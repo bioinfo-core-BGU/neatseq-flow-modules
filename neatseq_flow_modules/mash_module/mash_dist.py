@@ -43,8 +43,6 @@ Output:
     * ``sample_data["mash.dist.table"]``
     
 
-
-
 Parameters that can be set        
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -59,24 +57,85 @@ Parameters that can be set
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+1. External reference. Sample-wise fastq files.
+    Returns table of mash dist of sample against external reference. One table per sample
 
 ::
+
+    dist:
+        module:         mash_dist
+        base:           [sketch_proj,sketch_smp]
+        script_path:    "{Vars.paths.mash} dist"
+        reference:
+            path:   /path/to/ref1
+        query:
+            scope:          sample
+            type:           fastq
+            msh:
+
+2. Project mashed fasta reference. Sample mashed fastq query
+    Returns table of mash dist of sample against project reference. One table per sample
+
+::
+
+    dist:
+        module:         mash_dist
+        base:           [sketch_proj,sketch_smp]
+        script_path:    "{Vars.paths.mash} dist"
+        reference:
+            scope:      project
+            type:       fasta
+            msh:
+        query:
+            scope:      sample
+            type:       fastq
+            msh:
+
+3. Project mashed reference. Project mashed fastq query
+    Returns table of mash dist of project sketch against project sketch.
+    One table for the whole project.
+
+    If the project sketch is built from sample sketches, as is created by ``mash_sketch`` using ``scope=project`` and
+    ``src_scope=sample``, the result will be an all-agianst-all mash dist table.
+
+::
+
+    dist:
+        module:         mash_dist
+        base:           [sketch_proj,sketch_smp]
+        script_path:    "{Vars.paths.mash} dist"
+        reference:
+            scope:      project
+            type:       fastq
+            msh:
+        query:
+            scope:      project
+            type:       fastq
+            msh:
+
+4. Project mashed fastq reference. Sample mashed fastq query
+    Returns table of mash dist of project sketch against teach sample sketch. One table per sample.
+
+::
+
     dist: 
         module:         mash_dist
         base:           [sketch_proj,sketch_smp]
         script_path:    "{Vars.paths.mash} dist"
         reference:
-            # path:   /path/to/ref1
-            type:           fastq
+            scope:      project
+            type:       fastq
             msh:
         query:
-            scope:          all_samples
-            type:           fastq
+            scope:      sample
+            type:       fastq
             msh:
 
 
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Ondov, Brian D., et al. **Mash: fast genome and metagenome distance estimation using MinHash** *Genome biology*, 17.1 (2016): 132.
 
 """
 
@@ -102,45 +161,36 @@ class Step_mash_dist(Step):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = ".mash.tbl"
 
+        if not (set(self.params) & {"reference" ,"query"}):
+            raise AssertionExcept("You must pass 'reference' and 'query' blocks of params. See help")
 
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
         
-        ## TODO: Check that files exist for the analysis
+        # TODO: Check that files exist for the analysis
         pass
-        
-        
+
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
         pass
 
-    
     def build_scripts(self):
         """ This is the actual script building function
             
         """
 
-
-          
-        if self.params["query"]["scope"] in ["all_samples","project"]:
+        if self.params["query"]["scope"] in ["all_samples", "project"]:
             self.build_scripts_byproject()
         else:
             self.build_scripts_bysample()
-        
 
     def build_scripts_bysample(self):
         """ Script building function for sample-level BLAST
             
         """
-   
-        
-        # Each iteration must define the following class variables:
-            # spec_script_name
-            # script
-            
-        
+
         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
 
             # Make a dir for the current sample:
@@ -150,61 +200,67 @@ class Step_mash_dist(Step):
             # Use the dir it returns as the base_dir for this step.
             use_dir = self.local_start(sample_dir)
 
+            # Setting reference sources:
             if "path" in self.params["reference"]:
                 ref_path = self.params["reference"]["path"]
             else:
-                if "msh" in self.params["reference"]:
-                    if "type" in self.params["reference"] and self.params["reference"]["type"]=="fasta":
-                        try:
-                            ref_path = self.sample_data["msh.fasta"]
-                        except KeyError:
-                            raise AssertionExcept("No project fasta mash sketch")
-                    else:
-                        try:
-                            ref_path = self.sample_data["msh.fastq"]
-                        except KeyError:
-                            raise AssertionExcept("No project fastq mash sketch")
+                if "type" in self.params["reference"] and self.params["reference"]["type"] == "fasta":
+                    type2use = "fasta"
+                else:
+                    type2use = "fastq"
 
-                else:
-                    if "type" in self.params["reference"] and self.params["reference"]["type"]=="fasta":
+                if "scope" in self.params["reference"] and self.params["reference"]["scope"]=="project":
+                    if "msh" in self.params["reference"]:
+                        # if msh2use not in self.sample_data[sample]:
                         try:
-                            ref_path = self.sample_data["fasta.nucl"]
+                            ref_path = self.sample_data["msh." + type2use]
                         except KeyError:
-                            raise AssertionExcept("No project fasta.nucl file")
+                            raise AssertionExcept(
+                                "No {type} mash sketch (in reference) for project".format(type=type2use))
+
                     else:
+                        if type2use == "fasta":
+                            type2use = "fasta.nucl"
                         try:
-                            ref_path = self.sample_data["fastq"]
+                            ref_path = self.sample_data[type2use]
                         except KeyError:
-                            raise AssertionExcept("No project 'fastq' file")
-            ################ Setting query path
-            if "msh" in self.params["query"]:
-                if "type" in self.params["query"] and self.params["query"]["type"]=="fasta":
-                    try:
-                        query_path = self.sample_data[sample]["msh.fasta"]
-                    except KeyError:
-                        raise AssertionExcept("No sample fasta mash sketch",sample)
+                            raise AssertionExcept("No {type} file (in reference) for project".format(type=type2use))
                 else:
-                    try:
-                        query_path = self.sample_data[sample]["msh.fastq"]
-                    except KeyError:
-                        raise AssertionExcept("No sample fastq mash sketch",sample)
+                    if "msh" in self.params["reference"]:
+                        # if msh2use not in self.sample_data[sample]:
+                        try:
+                            ref_path = self.sample_data[sample]["msh." + type2use]
+                        except KeyError:
+                            raise AssertionExcept("No {type} mash sketch (in reference) for sample".format(type=type2use), sample)
+
+                    else:
+                        if type2use == "fasta":
+                            type2use = "fasta.nucl"
+                        try:
+                            ref_path = self.sample_data[sample][type2use]
+                        except KeyError:
+                            raise AssertionExcept("No {type} file (in reference) for sample".format(type=type2use), sample)
+
+            # Setting query sources:
+            if "type" in self.params["query"] and self.params["query"]["type"] == "fasta":
+                type2use = "fasta"
+            else:
+                type2use = "fastq"
+            if "msh" in self.params["query"]:
+
+                try:
+                    query_path = self.sample_data[sample]["msh." + type2use]
+                except KeyError:
+                    raise AssertionExcept("No {type} mash sketch (in query) for sample".format(type=type2use), sample)
 
             else:
-                if "type" in self.params["query"] and self.params["query"]["type"]=="fasta":
-                    try:
-                        query_path = self.sample_data[sample]["fasta.nucl"]
-                    except KeyError:
-                        raise AssertionExcept("No sample fasta.nucl file",sample)
-                else:
-                    try:
-                        query_path = self.sample_data[sample]["fastq"]
-                    except KeyError:
-                        raise AssertionExcept("No sample 'fastq' file",sample)
+                if type2use == "fasta":
+                    type2use = "fasta.nucl"
+                try:
+                    query_path = self.sample_data[sample][type2use]
+                except KeyError:
+                    raise AssertionExcept("No {type} file (in query) for sample".format(type=type2use), sample)
 
-            print query_path
-            print ref_path
-
-            
             output_filename = sample + self.file_tag
             
             # Name of specific script:
@@ -215,15 +271,12 @@ class Step_mash_dist(Step):
             self.script += "%s \\\n\t" % ref_path
             self.script += "%s \\\n\t" % query_path
             self.script += "> %s \n\n" % (use_dir + output_filename)
-            
-                        
+
             # Store results table
             self.sample_data[sample]["mash.dist.table"] = (sample_dir + output_filename)
             self.stamp_file(self.sample_data[sample]["mash.dist.table"])
 
-            # Wrapping up function. Leave these lines at the end of every iteration:
-            self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)
-
+            self.local_finish(use_dir,sample_dir)
             self.create_low_level_script()
             
     def build_scripts_byproject(self):
@@ -231,94 +284,74 @@ class Step_mash_dist(Step):
 
         """
 
-        
         # This line should be left before every new script. It sees to local issues.
         # Use the dir it returns as the base_dir for this step.
         use_dir = self.local_start(self.base_dir)
 
-        
         # Name of specific script:
         self.spec_script_name = "_".join([self.step,self.name,self.sample_data["Title"]])
         self.script = ""
 
+        # Setting reference sources:
         if "path" in self.params["reference"]:
             ref_path = self.params["reference"]["path"]
         else:
+            if "type" in self.params["reference"] and self.params["reference"]["type"] == "fasta":
+                type2use = "fasta"
+            else:
+                type2use = "fastq"
+
             if "msh" in self.params["reference"]:
-                if "type" in self.params["reference"] and self.params["reference"]["type"]=="fasta":
-                    try:
-                        ref_path = self.sample_data["msh.fasta"]
-                    except KeyError:
-                        raise AssertionExcept("No project fasta mash sketch")
-                else:
-                    try:
-                        ref_path = self.sample_data["msh.fastq"]
-                    except KeyError:
-                        raise AssertionExcept("No project fastq mash sketch")
+                # if msh2use not in self.sample_data[sample]:
+                try:
+                    ref_path = self.sample_data["msh." + type2use]
+                except KeyError:
+                    raise AssertionExcept("No {type} mash sketch (in reference) for project".format(type=type2use))
 
             else:
-                if "type" in self.params["reference"] and self.params["reference"]["type"]=="fasta":
-                    try:
-                        ref_path = self.sample_data["fasta.nucl"]
-                    except KeyError:
-                        raise AssertionExcept("No project fasta.nucl file")
-                else:
-                    try:
-                        ref_path = self.sample_data["fastq"]
-                    except KeyError:
-                        raise AssertionExcept("No project 'fastq' file")
-        ################ Setting query path
-        if self.params["query"]["scope"] == "project":
-            if "msh" in self.params["query"]:
-                if "type" in self.params["query"] and self.params["query"]["type"]=="fasta":
-                    try:
-                        query_path = self.sample_data["msh.fasta"]
-                    except KeyError:
-                        raise AssertionExcept("No project fasta mash sketch")
-                else:
-                    try:
-                        query_path = self.sample_data["msh.fastq"]
-                    except KeyError:
-                        raise AssertionExcept("No project fastq mash sketch")
+                if type2use == "fasta":
+                    type2use = "fasta.nucl"
+                try:
+                    ref_path = self.sample_data[type2use]
+                except KeyError:
+                    raise AssertionExcept("No {type} file (in reference) for project".format(type=type2use))
 
-            else:
-                if "type" in self.params["query"] and self.params["query"]["type"]=="fasta":
-                    try:
-                        query_path = self.sample_data["fasta.nucl"]
-                    except KeyError:
-                        raise AssertionExcept("No project fasta.nucl file")
-                else:
-                    try:
-                        query_path = self.sample_data["fastq"]
-                    except KeyError:
-                        raise AssertionExcept("No project 'fastq' file")
-                        
-        else:  # scope = "all_samples"
-            if "msh" in self.params["query"]:
-                if "type" in self.params["query"] and self.params["query"]["type"]=="fasta":
-                    try:
-                        query_path = " ".join([self.sample_data[sample]["msh.fasta"] for sample in self.sample_data["samples"]])
-                    except KeyError:
-                        raise AssertionExcept("A sample is missing a fasta mash sketch")
-                else:
-                    try:
-                        query_path = " ".join([self.sample_data[sample]["msh.fastq"] for sample in self.sample_data["samples"]])
+        # Setting query sources:
+        if "type" in self.params["query"] and self.params["query"]["type"] == "fasta":
+            type2use = "fasta"
+        else:
+            type2use = "fastq"
+        if "msh" in self.params["query"]:
 
-                    except KeyError:
-                        raise AssertionExcept("A sample is missing a fastq mash sketch")
-
-            else:
-                if "type" in self.params["query"] and self.params["query"]["type"]=="fasta":
-                    try:
-                        query_path = " ".join([self.sample_data[sample]["fasta.nucl"] for sample in self.sample_data["samples"]])
-                    except KeyError:
-                        raise AssertionExcept("A sample is missing a fasta.nucl file")
-                else:
-                    try:
-                        query_path = " ".join([self.sample_data[sample]["fastq"] for sample in self.sample_data["samples"]])
-
-                    except KeyError:
-                        raise AssertionExcept("A sample is missing a 'fastq' file")
+            if self.params["query"]["scope"] == "project":
+                try:
+                    query_path = self.sample_data["msh." + type2use]
+                except KeyError:
+                    raise AssertionExcept("No {type} mash sketch (in query) for project".format(type=type2use))
+            else: # scope = "all_samples"
+                try:
+                    query_path = " ".join(
+                        [self.sample_data[sample]["msh." + type2use]
+                         for sample
+                         in self.sample_data["samples"]])
+                except KeyError:
+                    raise AssertionExcept("A sample is missing a {type} mash sketch".format(type=type2use))
+        else:
+            if type2use == "fasta":
+                type2use = "fasta.nucl"
+            if self.params["query"]["scope"] == "project":
+                try:
+                    query_path = self.sample_data[type2use]
+                except KeyError:
+                    raise AssertionExcept("No {type} file (in query) for project".format(type=type2use))
+            else: # scope = "all_samples"
+                try:
+                    query_path = " ".join(
+                        [self.sample_data[sample][type2use]
+                         for sample
+                         in self.sample_data["samples"]])
+                except KeyError:
+                    raise AssertionExcept("A sample is missing a {type} mash sketch".format(type=type2use))
 
         output_filename = self.sample_data["Title"] + self.file_tag
 
@@ -326,14 +359,12 @@ class Step_mash_dist(Step):
         self.script += "%s \\\n\t" % ref_path
         self.script += "%s \\\n\t" % query_path
         self.script += "> %s \n\n" % (use_dir + output_filename)
-        
-                    
+
         # Store results table
         self.sample_data["mash.dist.table"] = (self.base_dir + output_filename)
         self.stamp_file(self.sample_data["mash.dist.table"])
 
-
         # Wrapping up function. Leave these lines at the end of every iteration:
-        self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
+        self.local_finish(use_dir,self.base_dir)
         self.create_low_level_script()
-    
+

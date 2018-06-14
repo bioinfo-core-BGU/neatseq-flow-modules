@@ -83,7 +83,7 @@ __version__= "1.2.0"
 
 class Step_Trim_Galore(Step):
 
-    auto_redirs = "--paired --retain_unpaired".split(" ")
+    auto_redirs = "--paired".split(" ")
 
     def step_specific_init(self):
         self.shell = "bash"
@@ -156,10 +156,8 @@ class Step_Trim_Galore(Step):
                     self.script += "%s \\\n\t" % (" \\\n\t".join([self.sample_data[sample]["fastq.F"],\
                                                                   self.sample_data[sample]["fastq.R"]]))
                     # if "--paired" not in self.params["redir_params"].keys():
-                    self.script += "%s \\\n\t" %  "--paired"                                                                                                                                                                                                                                                                                                                           
-                    # if "--retain_unpaired" not in self.params["redir_params"].keys():
-                    self.script += "%s \\\n\t" %  "--retain_unpaired"                       
-                    
+                    self.script += "--paired \\\n\t"
+
                     self.script += "-o %s \n\n" % use_dir 
                     
                 elif direction=="SE":
