@@ -85,15 +85,13 @@ __author__ = "Menachem Sklarz"
 __version__ = "1.1.0"
 
 
-
 class Step_manage_types(Step):
     
     def step_specific_init(self):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         # self.file_tag = "merge"
         self.skip_scripts = True
-        
-        
+
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
@@ -107,7 +105,6 @@ class Step_manage_types(Step):
 
         if any(map(lambda x: x not in ["sample", "project"], self.params["scope"])):
             raise AssertionExcept("'scope' param must be 'sample' or 'project'")
-
 
         if "operation" not in self.params:
             raise AssertionExcept("You must pass an 'operation' parameter!")
@@ -125,39 +122,31 @@ class Step_manage_types(Step):
         for extra_params in (set(["scope_trg", "type_trg", "path"]) & set(self.params.keys())):
             if not isinstance(self.params[extra_params], list):
                 self.params[extra_params] = re.split(pattern="\s*,\s*", string=self.params[extra_params])
-        
 
         # Check all lists have len 1 or same length
         active_params = set(["scope","operation","type","scope_trg", "type_trg", "path"]) & set(self.params.keys())
-        
         # Get those params with len>1 (i.e., lists)
         list_params = filter(lambda x: len(self.params[x])>1, active_params)
         str_params =  filter(lambda x: len(self.params[x])==1, active_params)
-        
-        
         if len(set(map(lambda x: len(self.params[x]), list_params))) > 1:
             raise AssertionExcept("More than one list with len>1 specified! (%s)" % ", ".join(list_params))
-
+        # Extend all len-1 lists to required_len:
         if list_params:
             required_len = len(self.params[list_params[0]])
             for i in str_params:
                 self.params[i] = self.params[i] * required_len
 
-                
-                
         # Now all lists are same length. Can perform operation per index of list "operation"
         for oper_ind in range(len(self.params["operation"])):
             
             operation = self.params["operation"][oper_ind]
-            
 
-##  ---------------- del ----------------------
+#  ---------------- del ----------------------
             if operation == "del":
             
                 type = self.params["type"][oper_ind]
                 scope_src = self.params["scope"][oper_ind]
-                
-                
+
                 if scope_src == "sample":
                     for sample in self.sample_data["samples"]:
                         if type not in self.sample_data[sample]:
@@ -172,7 +161,7 @@ class Step_manage_types(Step):
                 else:
                     pass
 
-##  ---------------- mv and cp ----------------------
+#  ---------------- mv and cp ----------------------
 
             elif operation in ["mv","cp"]:
             
@@ -223,13 +212,9 @@ class Step_manage_types(Step):
                 else:
                     pass
 
-
-
-    ##  ---------------- add ----------------------
+#  ---------------- add ----------------------
             elif operation == "add":
-            
-            
-            
+
                 try:
                     type = self.params["type"][oper_ind]
                     scope = self.params["scope"][oper_ind]
@@ -237,16 +222,6 @@ class Step_manage_types(Step):
                 except KeyError:
                     raise AssertionExcept("'operation' is 'add'. Make sure you have 'type', 'scope' and 'path' defined.")
                     
-                    
-                    
-                # if "type" not in self.params:
-                    # raise AssertionExcept("You must pass a 'type' param!")
-                # if "path" not in self.params:
-                    # raise AssertionExcept("You must pass a 'path' param!")
-                
-                
-                # type2add = self.params["type"]
-                
                 if scope == "sample":
                     for sample in self.sample_data["samples"]:
                         if type in self.sample_data[sample]:
@@ -258,8 +233,7 @@ class Step_manage_types(Step):
                     self.sample_data[type] = path
                 else:
                     pass
-                
-            
+
             else:
                 pass
             
@@ -274,7 +248,7 @@ class Step_manage_types(Step):
     def build_scripts(self):
         
         return 
-        # if 
+
         
 
                     

@@ -85,6 +85,7 @@ Lines for parameter file
 1. Create project sketch for all samples' fastq files
 
 ::
+
     sketch_proj:
         module:         mash_sketch
         base:           merge1

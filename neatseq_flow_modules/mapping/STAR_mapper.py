@@ -45,6 +45,19 @@ Output
     * ``self.sample_data[<sample>]["bam"]``
     * ``self.sample_data[<sample>]["bam_unsorted"]``
 
+* High confidence collapsed splice junctions (SJ.out.tab  file) will be stored in:
+
+    * ``self.sample_data[<sample>]["SJ.out.tab"]``
+
+* If ``--quantMode`` contains ``TranscriptomeSAM``, alignments BAM translated into transcript coordinates
+will be stored in:
+
+    * ``self.sample_data[<sample>]["TranscriptomeSAM"]``
+
+* If ``--quantMode`` contains ``GeneCounts``, the ``ReadsPerGene.out.tab`` file will be stored:
+
+    * ``self.sample_data[<sample>]["GeneCounts"]``
+
 * If ``--outWigType`` is set, will store outputs in:
 
     * if ``--outWigType`` is ``wiggle``
@@ -130,19 +143,15 @@ class Step_STAR_mapper(Step):
     
     def step_specific_init(self):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
-        # self.file_tag = "Bowtie_mapper"
 
-        
-        # if "--genomeDir" not in self.params["redir_params"]:
-            # raise AssertionExcept("No --genomeDir specified. You must specify a STAR index of the genome.")
-        
+        self.auto_redirs = ["--readFilesCommand", "--readFilesIn", "--outFileNamePrefix", "--outTmpDir", "--outStd"]
+
         if "ref_genome" not in self.params.keys():
             self.write_warning("No reference given with 'ref_genome' (path to fasta file). It is highly recommended to give one!\n")
         
         if "--runDirPerm" not in self.params["redir_params"]:
             self.params["redir_params"]["--runDirPerm"] = "All_RWX"
             self.write_warning("No --runDirPerm specified. Using 'All_RWX'")
-
 
         if "--outSAMtype" in self.params["redir_params"]:
             outSAMtype = re.split("\s+", self.params["redir_params"]["--outSAMtype"])
@@ -152,7 +161,8 @@ class Step_STAR_mapper(Step):
             if self.output_type == "BAM":
                 self.bam_types = outSAMtype[1:]
                 if "Unsorted" not in self.bam_types and "SortedByCoordinate" not in self.bam_types:
-                    raise AssertionExcept("When --outSAMtype is BAM, you must supply a type: 'Unsorted', 'SortedByCoordinate' or both.")
+                    raise AssertionExcept("When --outSAMtype is BAM, you must supply a type: "
+                                          "'Unsorted', 'SortedByCoordinate' or both.")
         else:
             self.output_type = "SAM"
             
@@ -175,21 +185,13 @@ class Step_STAR_mapper(Step):
         else:
             self.wig_type = "None"
 
-        if "--quantMode" in self.params["redir_params"] and self.params["redir_params"]["--quantMode"] == "GeneCounts":
-            self.write_warning("--quantMode GeneCounts is not supported yet. The script will run but the output will not be stored in the file type index")
+        # if "--quantMode" in self.params["redir_params"] and self.params["redir_params"]["--quantMode"] == "GeneCounts":
+        #     self.write_warning("--quantMode GeneCounts is not supported yet. The script will run but the output will not be stored in the file type index")
 
-
-            
-        # print self.output_type, self.bam_types
-        # sys.exit()
-        
-            
-        
-        for redir2remove in ["--readFilesCommand", "--readFilesIn", "--outFileNamePrefix", "--outTmpDir", "--outStd"]:
-            if redir2remove in self.params["redir_params"]:
-                del self.params["redir_params"][redir2remove]
-                self.write_warning("You are not supposed to specify %s in redirects. We set it automatically" % redir2remove)
-
+        # for redir2remove in ["--readFilesCommand", "--readFilesIn", "--outFileNamePrefix", "--outTmpDir", "--outStd"]:
+        #     if redir2remove in self.params["redir_params"]:
+        #         del self.params["redir_params"][redir2remove]
+        #         self.write_warning("You are not supposed to specify %s in redirects. We set it automatically" % redir2remove)
 
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
@@ -320,7 +322,11 @@ class Step_STAR_mapper(Step):
                 self.stamp_file(self.sample_data[sample]["bam"])
             else:  # None
                 pass
-            
+
+            # Storing the SJ file:
+            self.sample_data[sample]["SJ.out.tab"] = "%s%s.SJ.out.tab" % (sample_dir,output_prefix)
+            self.stamp_file(self.sample_data[sample]["SJ.out.tab"])
+
             if self.wig_type == "bedGraph":
                 if "--outWigStrand" not in self.params["redir_params"] or self.params["redir_params"]["--outWigStrand"] == "Stranded":
                     self.sample_data[sample]["bdg2_UniqueMultiple"] = "%s%s.Signal.UniqueMultiple.str2.out.bg" % (sample_dir,output_prefix)
@@ -347,12 +353,13 @@ class Step_STAR_mapper(Step):
                 pass
 
             if "--quantMode" in self.params["redir_params"]:
-                if self.params["redir_params"]["--quantMode"] == "TranscriptomeSAM":
+                if re.search(string=self.params["redir_params"]["--quantMode"], pattern="GeneCounts"):
+                    self.sample_data[sample]["GeneCounts"] = "%s%s.ReadsPerGene.out.tab" % (sample_dir,output_prefix)
+                    self.stamp_file(self.sample_data[sample]["GeneCounts"])
+                if re.search(string=self.params["redir_params"]["--quantMode"], pattern="TranscriptomeSAM"):
                     self.sample_data[sample]["bam_transcriptome"] = "%s%s.Aligned.toTranscriptome.out.bam" % (sample_dir,output_prefix)
-                    
-                if self.params["redir_params"]["--quantMode"] == "GeneCounts":
-                    pass  # Not supported yet...
-                
+                    self.stamp_file(self.sample_data[sample]["bam_transcriptome"])
+
             # Storing name of mapper. might be useful:
             self.sample_data[sample]["mapper"] = self.get_step_step()  
             
@@ -360,12 +367,6 @@ class Step_STAR_mapper(Step):
             if "ref_genome" in self.params.keys():
                 self.sample_data[sample]["reference"] = self.params["ref_genome"]
 
-        
-        
             # Move all files from temporary local dir to permanent base_dir
-            self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
-       
-            
-            
+            self.local_finish(use_dir,self.base_dir)
             self.create_low_level_script()
-                    

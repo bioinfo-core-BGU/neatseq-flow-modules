@@ -79,18 +79,16 @@ class Step_STAR_builder(Step):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         # self.file_tag = "Bowtie_mapper"
 
-
-        
-        for redir2remove in ["--runMode", "--genomeDir", "--genomeFastaFiles"]:
-            if redir2remove in self.params["redir_params"]:
-                del self.params["redir_params"][redir2remove]
-                self.write_warning("You are not supposed to specify %s in redirects. We set it automatically" % redir2remove)
-
+        self.auto_redirs = ["--runMode", "--genomeDir", "--genomeFastaFiles"]
 
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
-        
+
+        # By default, do not use internal GTF and SJ files, except when requested in param file
+        # See below
+        self.use_internal_GTF_file = False
+        self.use_internal_SJ_file = False
         if "scope" not in self.params.keys():
             # Try guessing scope:
             try:  # Does a nucl fasta exist for project?
@@ -110,26 +108,61 @@ class Step_STAR_builder(Step):
                     self.sample_data[sample]["fasta.nucl"]
                 except KeyError:
                     raise AssertionExcept("Sample does not have a nucl fasta defined. Can't build index\n", sample)
+                # Checking the the splice junctions file exists, if requested:
+                # 1. --sjdbFileChrStartEnd exists in params
+                # 2. --sjdbFileChrStartEnd is empty
+                if "--sjdbFileChrStartEnd" in self.params["redir_params"] and \
+                    not self.params["redir_params"]["--sjdbFileChrStartEnd"]:
+                    if "SJ.out.tab" in self.sample_data[sample]:
+                        self.use_internal_SJ_file = True
+                    else:
+                        raise AssertionExcept("You passed an empty '--sjdbFileChrStartEnd' but sample does not have "
+                                              "a 'SJ.out.tab' file defined. "
+                                              "Can't build index\n", sample)
+                if "--sjdbGTFfile" in self.params["redir_params"] and \
+                    not self.params["redir_params"]["--sjdbGTFfile"]:
+                    if "gtf" in self.sample_data[sample]:
+                        self.use_internal_GTF_file = True
+                    else:
+                        raise AssertionExcept("You passed an empty '--sjdbGTFfile' but sample does not have "
+                                              "a 'gtf' file defined. "
+                                              "Can't build index\n", sample)
         else:
             try:
                 self.sample_data["fasta.nucl"]
             except KeyError:
                 raise AssertionExcept("Project does not have a nucl fasta defined. Can't build index\n")
-        
+            # Checking the the splice junctions file exists, if requested:
+            # 1. --sjdbFileChrStartEnd exists in params
+            # 2. --sjdbFileChrStartEnd is empty
+            if "--sjdbFileChrStartEnd" in self.params["redir_params"] and \
+                not self.params["redir_params"]["--sjdbFileChrStartEnd"]:
+                if "SJ.out.tab" in self.sample_data:
+                    self.use_internal_SJ_file = True
+                else:
+                    raise AssertionExcept("You passed an empty '--sjdbFileChrStartEnd' but project does not have "
+                                          "a 'SJ.out.tab' file defined. "
+                                          "Can't build index\n")
+            if "--sjdbGTFfile" in self.params["redir_params"] and \
+                    not self.params["redir_params"]["--sjdbGTFfile"]:
+                if "gtf" in self.sample_data:
+                    self.use_internal_GTF_file = True
+                else:
+                    raise AssertionExcept("You passed an empty '--sjdbGTFfile' but project does not have "
+                                          "a 'gtf' file defined. "
+                                          "Can't build index\n")
 
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
         pass
-        
-    
+
     def build_scripts(self):
         """ This is the actual script building function
             Most, if not all, editing should be done here 
             HOWEVER, DON'T FORGET TO CHANGE THE CLASS NAME AND THE FILENAME!
         """
-        
-        
+
         # Each iteration must define the following class variables:
             # self.spec_script_name
             # self.script
@@ -143,59 +176,59 @@ class Step_STAR_builder(Step):
                 # Name of specific script:
                 self.spec_script_name = "_".join([self.step,self.name,sample])
                 self.script = ""
-                
-                
+
                 # This line should be left before every new script. It sees to local issues.
                 # Use the dir it returns as the base_dir for this step.
                 use_dir = self.local_start(sample_dir)
-     
+
+                # Requested internal SJ.out.tab file.
+                # Setting in redir_params in each instance to sample SJ.out.tab file
+                if self.use_internal_SJ_file:
+                    self.params["redir_params"]["--sjdbFileChrStartEnd"] = self.sample_data[sample]["SJ.out.tab"]
+                # Requested internal gtf file.
+                # Setting in redir_params in each instance to sample gtf
+                if self.use_internal_GTF_file:
+                    self.params["redir_params"]["--sjdbGTFfile"] = self.sample_data[sample]["gtf"]
+
                 # Get constant part of script:
                 self.script += self.get_script_const()
-        
                 self.script += "--runMode genomeGenerate \\\n\t"
                 self.script += "--genomeDir %s \\\n\t"  % use_dir
                 self.script += "--genomeFastaFiles %s \n\n"  % self.sample_data[sample]["fasta.nucl"]
 
-
                 self.sample_data[sample]["STAR_index"] = sample_dir
                 self.sample_data[sample]["STAR_fasta"] = self.sample_data[sample]["fasta.nucl"]
-        
-            
-            
+
                 # Move all files from temporary local dir to permanent base_dir
-                self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
-           
-                
-                
+                self.local_finish(use_dir,self.base_dir)
                 self.create_low_level_script()
         else:
             self.spec_script_name = "_".join([self.step,self.name,self.sample_data["Title"]])
 
             self.script = ""
-            
-            
+
             # This line should be left before every new script. It sees to local issues.
             # Use the dir it returns as the base_dir for this step.
             use_dir = self.local_start(self.base_dir)
- 
+
+            # Requested internal SJ.out.tab file.
+            # Setting in redir_params in each instance to sample SJ.out.tab file
+            if self.use_internal_SJ_file:
+                self.params["redir_params"]["--sjdbFileChrStartEnd"] = self.sample_data["SJ.out.tab"]
+            # Requested internal GTF file.
+            # Setting in redir_params in each instance to project gtf file
+            if self.use_internal_GTF_file:
+                self.params["redir_params"]["--sjdbGTFfile"] = self.sample_data["gtf"]
+
             # Get constant part of script:
             self.script += self.get_script_const()
             self.script += "--runMode genomeGenerate \\\n\t"
             self.script += "--genomeDir %s \\\n\t"  % use_dir
             self.script += "--genomeFastaFiles %s \n\n"  % self.sample_data["fasta.nucl"]
 
-
-
             self.sample_data["STAR_index"] = self.base_dir
             self.sample_data["STAR_fasta"] = self.sample_data["fasta.nucl"]
         
             # Move all files from temporary local dir to permanent base_dir
-            self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
-       
-            
-            
+            self.local_finish(use_dir,self.base_dir)
             self.create_low_level_script()
-                    
-
-        
-        

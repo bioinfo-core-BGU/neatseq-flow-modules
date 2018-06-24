@@ -39,7 +39,7 @@ Parameters that can be set
 
     "type", "", "A file type that exists in all samples."
     "script_path", "", "Leave blank"
-    "header","","The number of header lines each table has. The header will be used for the complete table and all other headers will be removed. If there is no header line, set to 0 or leave out completely. **If not specified but not set, will default to 1!**"
+    "header","0","The number of header lines each table has. The header will be used for the complete table and all other headers will be removed. If there is no header line, set to 0 or leave out completely. **If not specified but not set, will default to 1!**"
 
 
 
