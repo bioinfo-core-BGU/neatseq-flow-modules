@@ -82,7 +82,7 @@ Lines for parameter file
             -m:         2
             -p:         10
 
-1. Create project sketch for all samples' fastq files
+2. Create project sketch for all samples' fastq files
 
 ::
 

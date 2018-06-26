@@ -49,8 +49,7 @@ Output
 
     * ``self.sample_data[<sample>]["SJ.out.tab"]``
 
-* If ``--quantMode`` contains ``TranscriptomeSAM``, alignments BAM translated into transcript coordinates
-will be stored in:
+* If ``--quantMode`` contains ``TranscriptomeSAM``, alignments BAM translated into transcript coordinates will be stored in:
 
     * ``self.sample_data[<sample>]["TranscriptomeSAM"]``
 
@@ -91,7 +90,7 @@ Parameters that can be set
     :widths: 15, 10, 10
 
     "ref_genome", "path to genome fasta", ""
-    "scope", "project | sample", "Not used"
+    "scope", "project | sample", "The scope from which to take the genome directory"
 
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -133,14 +132,11 @@ import os, re
 import sys
 from neatseq_flow.PLC_step import Step,AssertionExcept
 
-
 __author__ = "Menachem Sklarz"
 __version__ = "1.2.0"
 
-
 class Step_STAR_mapper(Step):
 
-    
     def step_specific_init(self):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
 
@@ -185,20 +181,10 @@ class Step_STAR_mapper(Step):
         else:
             self.wig_type = "None"
 
-        # if "--quantMode" in self.params["redir_params"] and self.params["redir_params"]["--quantMode"] == "GeneCounts":
-        #     self.write_warning("--quantMode GeneCounts is not supported yet. The script will run but the output will not be stored in the file type index")
-
-        # for redir2remove in ["--readFilesCommand", "--readFilesIn", "--outFileNamePrefix", "--outTmpDir", "--outStd"]:
-        #     if redir2remove in self.params["redir_params"]:
-        #         del self.params["redir_params"][redir2remove]
-        #         self.write_warning("You are not supposed to specify %s in redirects. We set it automatically" % redir2remove)
-
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
 
-        ##########################################
-        
         # Require either 'scope' or '--genomeDir':
         if "scope" in self.params:
             # If scope defined, comment if also -x exists.
@@ -221,8 +207,7 @@ class Step_STAR_mapper(Step):
                         raise AssertionExcept("No reference exists at 'sample' scope. Do you have a STAR_builder step defined?",sample)
                 else:
                     raise AssertionExcept("Scope must be either 'sample' or 'project'")
-                
-                
+
             if "ref_genome" in self.params.keys():
                 raise AssertionExcept("ref_genome was passed, and 'scope' was defined. Resolve!\n")
         else:
@@ -241,25 +226,16 @@ class Step_STAR_mapper(Step):
             else:
                 self.write_warning("No reference given. It is highly recommended to give one!\n")
 
-        ##########################################
-        
-                
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
         pass
-        
-    
+
     def build_scripts(self):
         """ This is the actual script building function
             Most, if not all, editing should be done here 
             HOWEVER, DON'T FORGET TO CHANGE THE CLASS NAME AND THE FILENAME!
         """
-        
-        
-        # Each iteration must define the following class variables:
-            # self.spec_script_name
-            # self.script
         
         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
 
@@ -292,9 +268,7 @@ class Step_STAR_mapper(Step):
                     self.params["redir_params"]["--genomeDir"] = self.sample_data[sample]["STAR_index"]
                 else:   
                     self.params["redir_params"]["--genomeDir"] = self.sample_data["STAR_index"]
-            
-            
-            
+
             # Get constant part of script:
             self.script += self.get_script_const()
             
@@ -307,8 +281,6 @@ class Step_STAR_mapper(Step):
         
             self.script += "--outFileNamePrefix %s%s. \n\n" % (use_dir,output_prefix)
 
-
-            
             if self.output_type == "SAM":
                 self.sample_data[sample]["sam"] = "%s%s.Aligned.out.sam" % (sample_dir,output_prefix)
                 self.stamp_file(self.sample_data[sample]["sam"])
