@@ -162,12 +162,9 @@ import sys
 import re
 from neatseq_flow.PLC_step import Step,AssertionExcept
 
-from  neatseq_flow.modules.global_defs import ZIPPED_EXTENSIONS, ARCHIVE_EXTENSIONS, KNOWN_FILE_EXTENSIONS
-
 import yaml
 
 from pprint import pprint as pp
-
 
 __author__ = "Menachem Sklarz"
 __version__ = "1.1.0"
@@ -212,10 +209,8 @@ class Step_merge(Step):
             1. Creating good lists for both Basic and Advanced modes.
             2. Testing the values passed by the user and guessing values where necessary.
         """
-        
 
-
-        # Getting list of possible src values. 
+        # Getting list of possible src values.
         # This is done for sample and project scope separately.
         # Used for creating src or testing src list passed by user
         src = []
@@ -253,8 +248,8 @@ class Step_merge(Step):
         # Getting unique pairs of src and scope:
         uniq_src_scope = list(set(zip(src,scope)))
         src, scope = zip(*uniq_src_scope)
-
-        
+        src = list(src)
+        scope = list(scope)
         # src = sample_src + project_src
         # scope = sample_scope + project_scope
         # If 'src' is NOT user-defined: (Basic mode)
@@ -267,11 +262,13 @@ class Step_merge(Step):
                         raise AssertionExcept("'src' not specified. Please do not specify '%s'." %param)
                     else:  # Param is script_path or pipe or scope
                         if isinstance(self.params[param], str):
+                            # If param is a str, convert it into a list:
                             self.params[param] = re.split(pattern="\s*,\s*", string=self.params[param])
                             
                         if isinstance(self.params[param], list):
                             if len(self.params[param])>1:
-                                raise AssertionExcept("'src' not specified. Please do not specify '%s' as list (only string values are accepted)." %param)
+                                raise AssertionExcept("'src' not specified. Please do not specify '%s' as list "
+                                                      "(only string values are accepted)." %param)
                             else:
                                 self.params[param] = self.params[param] * len(self.params["src"])
                         else:
@@ -284,31 +281,39 @@ class Step_merge(Step):
 
             
         else: # 'src' is user-defined (Advanced mode)
+            # Converting 'src' into list
+            if isinstance(self.params['src'], str):
+                self.params['src'] = re.split(pattern="\s*,\s*", string=self.params['src'])
+            if isinstance(self.params['src'], list):
+                pass
+            else:  # src is not a string or a list. What is it???
+                raise AssertionExcept("Unrecognized format in 'src'")
             for param in ["trg","script_path","ext","pipe","scope"]:
                 if param in self.params and self.params[param]:  # list is defined!
 
                     if isinstance(self.params[param], str):
                         self.params[param] = re.split(pattern="\s*,\s*", string=self.params[param])
                     if isinstance(self.params[param], list):
-                        if len(self.params[param])==1:
+                        if len(self.params[param]) == 1:
                             self.params[param] = self.params[param] * len(self.params["src"])
                         elif len(self.params[param]) == len(self.params["src"]):
                             pass
                         else:
-                            raise AssertionExcept("Parameter '%s' must be a single value or a list the length of 'src'. Set null in places to be determined automatically.")
+                            raise AssertionExcept("Parameter '%s' must be a single value or a list the length of "
+                                                  "'src'. Set null in places to be determined automatically.")
                     else: # param is not a string or a list. What is it???
                         raise AssertionExcept("Unrecognized format in '%s'" % param)
                 else:
                     self.params[param] = [None] * len(self.params["src"])
 
-                    
+        #
         # #---------------------------------------
         # for param in ["script_path","src","trg","ext","pipe","scope"]:
-            # print param
-            # pp(self.params[param])
+        #     print param
+        #     pp(self.params[param])
         # #---------------------------------------
         # sys.exit()
-        
+        #
                     
         # For each src in the list of sources:
         for src_ind in range(len(self.params["src"])):  
@@ -323,16 +328,16 @@ class Step_merge(Step):
             # Guessing 'trg'
             if not trg:
                 if src not in self.default_src_trg_map.keys():
-                    # raise AssertionExcept("The following 'src' is  not recognized: %s. Please use explicit 'trg' list in merge" % src)
-                    self.write_warning("The following 'src' is  not recognized: {src}. Setting 'trg' to {trg}".format(src=src,trg=src.lower()))
+                    self.write_warning("The following 'src' is  not recognized: {src}. "
+                                       "Setting 'trg' to {trg}".format(src=src,trg=src.lower()))
                     self.params["trg"][src_ind] = src.lower()
                 else:
                     self.params["trg"][src_ind] = self.default_src_trg_map[src][0] 
                 # Guessing 'ext'
             if ext == None:
                 if src not in self.default_src_trg_map.keys():
-                    # raise AssertionExcept("The following 'src' is  not recognized: %s. Please use explicit 'ext' list in merge" % src)
-                    self.write_warning("The following 'src' is  not recognized: {src}. Setting 'ext' to {ext}".format(src=src,ext=src.lower()))
+                    self.write_warning("The following 'src' is  not recognized: {src}. "
+                                       "Setting 'ext' to {ext}".format(src=src,ext=src.lower()))
                     self.params["ext"][src_ind] = src.lower()
                 else:
                     self.params["ext"][src_ind] = self.default_src_trg_map[src][1] 
@@ -344,7 +349,8 @@ class Step_merge(Step):
                 elif src in self.sample_data["project_data"]:
                     self.params["scope"][src_ind] = "project"
                 else:
-                    raise AssertionExcept("{src} does not exist in all samples or in project. Make sure sample file is correct, or pass 'scope' explicitly.".format(src=src))
+                    raise AssertionExcept("{src} does not exist in all samples or in project. Make sure sample "
+                                          "file is correct, or pass 'scope' explicitly.".format(src=src))
             scope = self.params["scope"][src_ind]
             # Testing scope and guessing 'script_path':
             if scope=="sample":
@@ -358,19 +364,24 @@ class Step_merge(Step):
                 if not script_path:  # Is none - try guessing
                     # src_exts is defined as follows: For each sample in samples list, get the list of file extensions. Creates a list of lists.
 
-                    src_exts = [[os.path.splitext(filename)[1] for filename in self.sample_data[sample][src]] for sample in self.sample_data["samples"] if src in self.sample_data[sample]]
+                    src_exts = [[os.path.splitext(filename)[1]
+                                 for filename
+                                 in self.sample_data[sample][src]]
+                                for sample
+                                in self.sample_data["samples"]
+                                if src in self.sample_data[sample]]
 
                     # Flatten the list of lists, and uniqify:
                     src_exts = list(set([item for sublist in src_exts for item in sublist]))
 
                     if len(src_exts)>1:
-                        # raise AssertionExcept("More than one file extension in source '{src}' ({ext}). Can't guess 'script_path'".format(src=src, ext=", ".join(src_exts)))
                         pass
                     else:
                         # Convert set to string:
                         src_exts = src_exts[0]
                         if src_exts not in self.script_path_map.keys():
-                            raise AssertionExcept("Unidentified extension in source '{src}' ({ext}). Can't guess 'script_path'".format(src=src, ext=src_exts))
+                            raise AssertionExcept("Unidentified extension in source '{src}' ({ext}). Can't guess "
+                                                  "'script_path'".format(src=src, ext=src_exts))
                         else:
                             if isinstance(self.script_path_map[src_exts],list):
                                 self.params["script_path"][src_ind] = self.script_path_map[src_exts][0]
@@ -389,11 +400,13 @@ class Step_merge(Step):
                 if not script_path:  # Is none - try geussing
                     src_exts = list(set([os.path.splitext(filename)[1] for filename in self.sample_data["project_data"][src]]))
                     if len(src_exts)>1:
-                        raise AssertionExcept("More than one file extension in source '{src}' for project ({ext}). Can't guess 'script_path'".format(src=src, ext=", ".join(src_exts)))
+                        raise AssertionExcept("More than one file extension in source '{src}' for project ({ext}). "
+                                              "Can't guess 'script_path'".format(src=src, ext=", ".join(src_exts)))
                     # Convert set to string:
                     src_exts = src_exts[0]
                     if src_exts not in self.script_path_map.keys():
-                        raise AssertionExcept("Unidentified extension in source '{src}' for project ({ext}). Can't guess 'script_path'".format(src=src, ext=src_exts))
+                        raise AssertionExcept("Unidentified extension in source '{src}' for project ({ext}). "
+                                              "Can't guess 'script_path'".format(src=src, ext=src_exts))
                     else:
                         if isinstance(self.script_path_map[src_exts],list):
                             self.params["script_path"][src_ind] = self.script_path_map[src_exts][0]
@@ -403,8 +416,6 @@ class Step_merge(Step):
                                     
             else:
                 raise AssertionExcept("'scope' must be either 'sample' or 'project'")
-
-                    
 
         # #---------------------------------------
         # for param in ["script_path","src","trg","ext","pipe","scope"]:
@@ -423,9 +434,6 @@ class Step_merge(Step):
         pass
     
     def build_scripts(self):
-        
-        
-        
 
         for scope_ind in range(len(self.params["scope"])):
             src = self.params["src"][scope_ind]
@@ -464,13 +472,19 @@ class Step_merge(Step):
 
                     if not script_path:         # Not all samples have the same file types. Sample-specific guessing...
 
-                        src_exts = list(set([os.path.splitext(filename)[1] for filename in self.sample_data[sample][src]]))
+                        src_exts = list(set([os.path.splitext(filename)[1]
+                                             for filename
+                                             in self.sample_data[sample][src]]))
                         if len(src_exts)>1:
-                            raise AssertionExcept("More than one file extension in source '{src}' for sample '{sample}' ({ext}). Can't guess 'script_path'".format(src=src, sample = sample, ext=", ".join(src_exts)))
+                            raise AssertionExcept("More than one file extension in source '{src}' for sample "
+                                                  "'{sample}' ({ext}). Can't guess 'script_path'".
+                                                  format(src=src, sample = sample, ext=", ".join(src_exts)))
                         # Convert set to string:
                         src_exts = src_exts[0]
                         if src_exts not in self.script_path_map.keys():
-                            raise AssertionExcept("Unidentified extension in source '{src}' for sample {sample} ({ext}). Can't guess 'script_path'".format(src=src, sample = sample, ext=src_exts))
+                            raise AssertionExcept("Unidentified extension in source '{src}' for sample {sample} "
+                                                  "({ext}). Can't guess 'script_path'".
+                                                  format(src=src, sample = sample, ext=src_exts))
                         else:
                             if isinstance(self.script_path_map[src_exts],list):
                                 script_path = self.script_path_map[src_exts][0]
@@ -489,20 +503,17 @@ class Step_merge(Step):
                     # Move all files from temporary local dir to permanent base_dir
                     self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
 
-                    
                     # Store file in active file for sample:
                     self.sample_data[sample][trg] = self.base_dir + fq_fn
                     
                     self.stamp_file(self.sample_data[sample][trg])
-                    
-                    
+
                     self.create_low_level_script()
                     
             elif scope == "project":
 
                 self.script = ""
-                
-                
+
                 # src_type not defined for this sample. Move on.
                 if src not in self.sample_data["project_data"]:
                     continue
@@ -515,7 +526,6 @@ class Step_merge(Step):
                 
                 fq_fn = ".".join([self.sample_data["Title"], src, self.file_tag,ext])          #The filename containing the end result. Used both in script and to set reads in $sample_params
 
-
                 self.script += script_path + " \\\n\t"
                 # The following line concatenates all the files in the direction separated by a " "
                 self.script += " ".join(self.sample_data["project_data"][src]) 
@@ -527,12 +537,9 @@ class Step_merge(Step):
                 # Move all files from temporary local dir to permanent base_dir
                 self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
 
-                
                 # Store file in active file for sample:
                 self.sample_data[trg] = self.base_dir + fq_fn
                 
                 self.stamp_file(self.sample_data[trg])
-                
-                
+
                 self.create_low_level_script()
-                
