@@ -15,6 +15,8 @@ Miscellaneous Modules
 
 .. automodule:: neatseq_flow_modules.miscellaneous.split_fasta
 
+.. automodule:: neatseq_flow_modules.miscellaneous.ProjectToSample
+
 
 
 
