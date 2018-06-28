@@ -23,13 +23,13 @@ Requires
     
     * STAR index directories in:
 
-        * ``sample_data[<sample>]["STAR_index"]``  if ``scope`` = "sample"
-        * ``sample_data["STAR_index"]``  if ``scope`` = "project"
+        * ``sample_data[<sample>]["STAR.index"]``  if ``scope`` = "sample"
+        * ``sample_data["STAR.index"]``  if ``scope`` = "project"
 
     * Reference fasta files in:
 
-        * ``sample_data[<sample>]["STAR_fasta"]``  if ``scope`` = "sample"
-        * ``sample_data["STAR_fasta"]``  if ``scope`` = "project"
+        * ``sample_data[<sample>]["STAR.fasta"]``  if ``scope`` = "sample"
+        * ``sample_data["STAR.fasta"]``  if ``scope`` = "project"
 
     
 Output
@@ -91,6 +91,13 @@ Parameters that can be set
 
     "ref_genome", "path to genome fasta", ""
     "scope", "project | sample", "The scope from which to take the genome directory"
+
+.. Note::
+    You can set the RG atrribute of the resulting SAM/BAM files with the redirected parameter ``--outSAMattrRGline``
+    This will set the equivalent STAR parameter.
+
+    By default, the parameter will be set to include ID and SM tags, both set to the sample name.
+    You can set the SM tag, but any ID tags will be removed and replaced with the sample name.
 
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -196,13 +203,13 @@ class Step_STAR_mapper(Step):
                 if self.params["scope"] == "project":
                     # Set project wide reference:
                     try:
-                        self.sample_data[sample]["reference"] = self.sample_data["STAR_fasta"]
+                        self.sample_data[sample]["reference"] = self.sample_data["STAR.fasta"]
                     except:
                         raise AssertionExcept("No reference exists at 'project' scope. Do you have a STAR_builder step defined?")
                 elif self.params["scope"] == "sample":
                     # Set per-sample reference:
                     try:
-                        self.sample_data[sample]["reference"] = self.sample_data[sample]["STAR_fasta"]
+                        self.sample_data[sample]["reference"] = self.sample_data[sample]["STAR.fasta"]
                     except:
                         raise AssertionExcept("No reference exists at 'sample' scope. Do you have a STAR_builder step defined?",sample)
                 else:
@@ -245,8 +252,7 @@ class Step_STAR_mapper(Step):
             # Name of specific script:
             self.spec_script_name = "_".join([self.step,self.name,sample])
             self.script = ""
-            
-            
+
             # This line should be left before every new script. It sees to local issues.
             # Use the dir it returns as the base_dir for this step.
             use_dir = self.local_start(sample_dir)
@@ -265,17 +271,19 @@ class Step_STAR_mapper(Step):
             # If using internal index, define it here:
             if "scope" in self.params:
                 if self.params["scope"] == "sample":
-                    self.params["redir_params"]["--genomeDir"] = self.sample_data[sample]["STAR_index"]
+                    self.params["redir_params"]["--genomeDir"] = self.sample_data[sample]["STAR.index"]
                 else:   
-                    self.params["redir_params"]["--genomeDir"] = self.sample_data["STAR_index"]
+                    self.params["redir_params"]["--genomeDir"] = self.sample_data["STAR.index"]
 
             # Get constant part of script:
             self.script += self.get_script_const()
             
             if "fastq.F" in self.sample_data[sample]:
-                self.script += "--readFilesIn %s %s \\\n\t" % (self.sample_data[sample]["fastq.F"],self.sample_data[sample]["fastq.R"])
+                self.script += "--readFilesIn {fastqF} {fastqR}\\\n\t".\
+                    format(fastqF=self.sample_data[sample]["fastq.F"],
+                           fastqR=self.sample_data[sample]["fastq.R"])
             elif "fastq.S" in self.sample_data[sample]:
-                self.script += "--readFilesIn %s \\\n\t" % self.sample_data[sample]["fastq.S"]
+                self.script += "--readFilesIn {fastqS} \\\n\t".format(fastqS=self.sample_data[sample]["fastq.S"])
             else:
                 raise AssertionExcept("No fastq files exist for sample!!\n" , sample)
         

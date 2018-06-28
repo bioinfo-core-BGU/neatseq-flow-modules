@@ -16,16 +16,31 @@ Requires
 
     * ``sample_data["fasta.nucl"]``
     * ``sample_data[<sample>]["fasta.nucl"]``
-       
+
+* If ``--sjdbGTFfile`` is set in redirects, but left empty, will expect to find a ``GTF`` file here:
+
+    * ``sample_data["gtf"]``  if ``scope`` = "project"
+    * ``sample_data[<sample>]["gtf"]``   if ``scope`` = `"sample"
+
+* If ``--sjdbFileChrStartEnd`` is set in redirects, but left empty, will expect to find an SJ file here:
+
+    * ``sample_data["SJ.out.tab"]``  if ``scope`` = "project"
+    * ``sample_data[<sample>]["SJ.out.tab"]``   if ``scope`` = "sample"
+
 
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Puts output index files in one of the following slot:
 
-    * ``self.sample_data[<sample>]["STAR_index"]``
-    * ``self.sample_data["STAR_index"]``
+    * ``self.sample_data[<sample>]["STAR.index"]``
+    * ``self.sample_data["STAR.index"]``
 
+
+Puts the reference fasta file in one of the following slot:
+
+        * ``self.sample_data[<sample>]["STAR.fasta"]``
+    * ``self.sample_data["STAR.fasta"]``
 
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -196,8 +211,8 @@ class Step_STAR_builder(Step):
                 self.script += "--genomeDir %s \\\n\t"  % use_dir
                 self.script += "--genomeFastaFiles %s \n\n"  % self.sample_data[sample]["fasta.nucl"]
 
-                self.sample_data[sample]["STAR_index"] = sample_dir
-                self.sample_data[sample]["STAR_fasta"] = self.sample_data[sample]["fasta.nucl"]
+                self.sample_data[sample]["STAR.index"] = sample_dir
+                self.sample_data[sample]["STAR.fasta"] = self.sample_data[sample]["fasta.nucl"]
 
                 # Move all files from temporary local dir to permanent base_dir
                 self.local_finish(use_dir,self.base_dir)
@@ -226,8 +241,8 @@ class Step_STAR_builder(Step):
             self.script += "--genomeDir %s \\\n\t"  % use_dir
             self.script += "--genomeFastaFiles %s \n\n"  % self.sample_data["fasta.nucl"]
 
-            self.sample_data["STAR_index"] = self.base_dir
-            self.sample_data["STAR_fasta"] = self.sample_data["fasta.nucl"]
+            self.sample_data["STAR.index"] = self.base_dir
+            self.sample_data["STAR.fasta"] = self.sample_data["fasta.nucl"]
         
             # Move all files from temporary local dir to permanent base_dir
             self.local_finish(use_dir,self.base_dir)
