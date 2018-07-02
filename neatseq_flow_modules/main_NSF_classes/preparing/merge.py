@@ -33,11 +33,9 @@ Can be used in two modes:
 
 .. Tip:: **NeatSeq-Flow** attempts to guess the ``script_path`` and ``pipe`` values based on the input file extensions. For this to work, leave the ``script_path`` and ``pipe`` lists empty and make sure all files from the same source have the same extensions (*e.g.* all gzipped files should have *.gz* as file extension). 
 
-    If you want **NeatSeq-Flow** to guess only some of the ``script_path`` values, set them to `null` or to `..guess..`, *e.g.* if ``src`` is ``[Single,TYP1]`` and ``script_path`` is ``[null,cat]``, then the ``script_path`` for *Single* will be guessed and the ``script_path`` for *TYP1* will be set to *cat*.
+    If you want **NeatSeq-Flow** to guess only some of the ``script_path`` values, set them to `null` or to ``..guess..``, *e.g.* if ``src`` is ``[Single,TYP1]`` and ``script_path`` is ``[null,cat]``, then the ``script_path`` for *Single* will be guessed and the ``script_path`` for *TYP1* will be set to *cat*.
 
-    Two more options are available for ``script path``: `..skip..`` will skip the type entirely, while `..import..` will import the values from the sample file into the relevant slots without actually producing any scripts.
-
-    This is useful for including entities which are not files in the sample file. `e.g.` in the qiime2 pipeline you might want to include a semantic type in the sample file.
+    Two more options are available for ``script path``: ``..skip..`` will skip the type entirely, while ``..import..`` will import the values from the sample file into the relevant slots without actually producing any scripts (This is useful for including entities which are not files in the sample file. `e.g.` in the qiime2 pipeline you might want to include a semantic type in the sample file).
 
 
     The following extensions are recognized:
