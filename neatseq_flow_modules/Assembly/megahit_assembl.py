@@ -149,7 +149,7 @@ class Step_megahit_assembl(Step):
             
                             
             # Name of specific script:
-            self.spec_script_name = "_".join([self.step,self.name,self.sample_data["Title"]])
+            self.spec_script_name = self.set_spec_script_name()
             self.script = ""
 
             # This line should be left before every new script. It sees to local issues.

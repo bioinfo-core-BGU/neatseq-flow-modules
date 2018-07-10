@@ -120,7 +120,7 @@ class Step_merge_table(Step):
 
         for type in self.params["type"]:
             # Name of specific script:
-            self.spec_script_name = "_".join([self.step,self.name,self.sample_data["Title"],type])
+            self.spec_script_name = self.jid_name_sep.join([self.step,self.name,self.sample_data["Title"],type])
             self.script = ""
             
             

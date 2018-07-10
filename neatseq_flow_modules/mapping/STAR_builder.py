@@ -218,7 +218,7 @@ class Step_STAR_builder(Step):
                 self.local_finish(use_dir,self.base_dir)
                 self.create_low_level_script()
         else:
-            self.spec_script_name = "_".join([self.step,self.name,self.sample_data["Title"]])
+            self.spec_script_name = self.set_spec_script_name()
 
             self.script = ""
 

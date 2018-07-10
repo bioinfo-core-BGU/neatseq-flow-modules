@@ -181,7 +181,7 @@ class Step_vsearch_cluster(Step):
         if self.params["scope"] == "project":
 
             # Name of specific script:
-            self.spec_script_name = "_".join([self.step,self.name,self.sample_data["Title"]])
+            self.spec_script_name = self.set_spec_script_name()
             self.script = ""
             
             

@@ -107,7 +107,7 @@ class Step_trimmo(Step):
 
             if "fastq.F" in self.sample_data[sample] and "fastq.R" in self.sample_data[sample]:
                 #################### Start PE
-                self.spec_script_name = "_".join([self.step,self.name,sample,"PE"])
+                self.spec_script_name = self.jid_name_sep.join([self.step,self.name,sample,"PE"])
                 self.script = ""
                 
                 
@@ -180,7 +180,7 @@ class Step_trimmo(Step):
 
             if "fastq.S" in self.sample_data[sample]:
                 #################### Start SE
-                self.spec_script_name = "_".join([self.step,self.name,sample,"SE"])
+                self.spec_script_name = self.jid_name_sep.join([self.step,self.name,sample,"SE"])
                 self.script = ""
                 
                 

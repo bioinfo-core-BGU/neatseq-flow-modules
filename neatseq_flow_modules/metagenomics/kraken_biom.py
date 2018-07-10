@@ -117,7 +117,7 @@ class Step_kraken_biom(Step):
             HOWEVER, DON'T FORGET TO CHANGE THE CLASS NAME AND THE FILENAME!
         """
         
-        self.spec_script_name = "_".join([self.step,self.name,self.sample_data["Title"]])
+        self.spec_script_name = self.set_spec_script_name()
         self.script = ""
 
         # This line should be left before every new script. It sees to local issues.

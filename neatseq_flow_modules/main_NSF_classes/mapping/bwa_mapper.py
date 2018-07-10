@@ -260,7 +260,7 @@ class Step_bwa_mapper(Step):
                     self.script = ""
                     direction_tag = direction[-1] # Get last letter in direction
                     # Name of specific script:
-                    self.spec_script_name = "_".join([self.step,self.name,sample,direction_tag]) 
+                    self.spec_script_name = self.jid_name_sep.join([self.step,self.name,sample,direction_tag])
                     self.script = ""
 
                     

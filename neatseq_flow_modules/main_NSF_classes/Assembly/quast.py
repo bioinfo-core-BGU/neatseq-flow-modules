@@ -199,7 +199,7 @@ class Step_quast(Step):
                 # print "in here: multiple_bases"
                 # print multiple_bases
                 # Name of specific script:
-                self.spec_script_name = "_".join([self.step,self.name,self.sample_data["Title"]])
+                self.spec_script_name = self.set_spec_script_name()
                 self.script = ""
 
                 
@@ -288,7 +288,7 @@ class Step_quast(Step):
         else:    # 'scope' = project
             
             # Name of specific script:
-            self.spec_script_name = "_".join([self.step,self.name,self.sample_data["Title"]])
+            self.spec_script_name = self.set_spec_script_name()
             self.script = ""
 
             

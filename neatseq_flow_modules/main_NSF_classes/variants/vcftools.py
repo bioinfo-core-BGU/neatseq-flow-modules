@@ -223,9 +223,9 @@ class Step_vcftools(Step):
 
                 for output_type in self.output_types:
                     # Name of specific script:
-                    self.spec_script_name = "_".join([self.step,\
-                                                      self.name, \
-                                                      output_type.lstrip("-"), \
+                    self.spec_script_name = self.jid_name_sep.join([self.step,
+                                                      self.name,
+                                                      output_type.lstrip("-"),
                                                       sample])
                     self.script = ""
 
@@ -481,9 +481,9 @@ class Step_vcftools(Step):
             
             for output_type in self.output_types:
                 
-                self.spec_script_name = "_".join([  self.step, \
-                                                    self.name, \
-                                                    output_type.lstrip("-"), \
+                self.spec_script_name = self.jid_name_sep.join([  self.step,
+                                                    self.name,
+                                                    output_type.lstrip("-"),
                                                     self.sample_data["Title"]])
                 self.script = ""
                 

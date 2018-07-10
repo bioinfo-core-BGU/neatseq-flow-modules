@@ -218,7 +218,7 @@ class Step_mash_sketch(Step):
                     continue
 
                 # Name of specific script:
-                self.spec_script_name = "_".join([self.step,self.name,sample,filetype])
+                self.spec_script_name = self.jid_name_sep.join([self.step,self.name,sample,filetype])
                 self.script = ""
 
                 # If there is only one sequence file (i.e. fastq.S), use directly
@@ -285,7 +285,7 @@ class Step_mash_sketch(Step):
 
         for filetype in list(set(self.params["type"]) & {"fastq","fasta"}):
             # Name of specific script:
-            self.spec_script_name = "_".join([self.step, self.name, self.sample_data["Title"], filetype])
+            self.spec_script_name = self.jid_name_sep.join([self.step, self.name, self.sample_data["Title"], filetype])
             self.script = ""
 
             filetype_lists = {"fastq": list(set(self.sample_data.keys()) & {"fastq.F", "fastq.R", "fastq.S"}),

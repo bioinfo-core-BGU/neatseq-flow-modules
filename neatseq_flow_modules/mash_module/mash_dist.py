@@ -289,7 +289,7 @@ class Step_mash_dist(Step):
         use_dir = self.local_start(self.base_dir)
 
         # Name of specific script:
-        self.spec_script_name = "_".join([self.step,self.name,self.sample_data["Title"]])
+        self.spec_script_name = self.set_spec_script_name()
         self.script = ""
 
         # Setting reference sources:

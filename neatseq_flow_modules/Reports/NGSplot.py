@@ -159,7 +159,7 @@ class Step_NGSplot(Step):
             # Add option to pass a configuration file. Check the NGSplot help pages
             if "Controls" in self.sample_data.keys() and sample in self.sample_data["Controls"].keys():   # This is a 'sample' (i.e. not a control)
                 # Name of specific script:
-                self.spec_script_name = "_".join([self.step,self.name,sample,"vs_control"])
+                self.spec_script_name = self.jid_name_sep.join([self.step,self.name,sample,"vs_control"])
                 self.script = ""
                 use_dir = "_".join([use_dir,"vs_control"])
                 output_prefix = "_".join([output_prefix,"vs_control"])

@@ -122,7 +122,7 @@ class Step_Trinity_gene_to_trans_map(Step):
         
         
         # Name of specific script:
-        self.spec_script_name = "_".join([self.step,self.name,self.sample_data["Title"]])
+        self.spec_script_name = self.set_spec_script_name()
 
         self.script = ""
 

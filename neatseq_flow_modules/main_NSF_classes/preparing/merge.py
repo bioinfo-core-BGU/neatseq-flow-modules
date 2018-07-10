@@ -471,7 +471,7 @@ class Step_merge(Step):
                     if script_path == "..skip..":
                         return
 
-                    self.spec_script_name = "_".join([self.step,self.name,sample,src]) 
+                    self.spec_script_name = self.jid_name_sep.join([self.step,self.name,sample,src])
                     
                     # This line should be left before every new script. It sees to local issues.
                     # Use the dir it returns as the base_dir for this step.
@@ -533,7 +533,7 @@ class Step_merge(Step):
                 if script_path == "..skip..":
                     return
 
-                self.spec_script_name = "_".join([self.step,self.name,self.sample_data["Title"],src])
+                self.spec_script_name = self.jid_name_sep.join([self.step,self.name,self.sample_data["Title"],src])
                 
                 # This line should be left before every new script. It sees to local issues.
                 # Use the dir it returns as the base_dir for this step.
