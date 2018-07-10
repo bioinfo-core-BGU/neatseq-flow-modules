@@ -155,8 +155,8 @@ class Step_RSEM_prep(Step):
                 self.sample_data[sample]["RSEM_index"] = "{dir}{ref_name}_rsem_ref".format(dir=sample_dir,ref_name=sample)
                 self.sample_data[sample]["RSEM_fasta"] = reference_fasta_file
                 if "--star" in self.params["redir_params"]:
-                    self.sample_data[sample]["STAR_index"] = "{dir}".format(dir=sample_dir)
-                    self.sample_data[sample]["STAR_fasta"] = reference_fasta_file
+                    self.sample_data[sample]["STAR.index"] = "{dir}".format(dir=sample_dir)
+                    self.sample_data[sample]["STAR.fasta"] = reference_fasta_file
                 
                 # TODO: Check the exact part of the name to include in the reference!!
                 # if "--bowtie" in self.params["redir_params"]:
@@ -210,8 +210,8 @@ class Step_RSEM_prep(Step):
             self.sample_data["RSEM_fasta"] = reference_fasta_file
     
             if "--star" in self.params["redir_params"]:
-                self.sample_data["STAR_index"] = "{dir}".format(dir=self.base_dir)
-                self.sample_data["STAR_fasta"] = reference_fasta_file
+                self.sample_data["STAR.index"] = "{dir}".format(dir=self.base_dir)
+                self.sample_data["STAR.fasta"] = reference_fasta_file
                 
         
         

@@ -256,7 +256,7 @@ class Step_STAR_mapper(Step):
             # This line should be left before every new script. It sees to local issues.
             # Use the dir it returns as the base_dir for this step.
             use_dir = self.local_start(sample_dir)
- 
+
             # Define location and prefix for output files:
             output_prefix = sample + "_STAR_map"
             # output_prefix = use_dir + output_prefix
@@ -277,7 +277,9 @@ class Step_STAR_mapper(Step):
 
             # Get constant part of script:
             self.script += self.get_script_const()
-            
+            # Setting location of temporary dir:
+            self.script += "--outTmpDir {tmp_dir} \\\n\t".format(tmp_dir=use_dir+"STAR_tmp")
+
             if "fastq.F" in self.sample_data[sample]:
                 self.script += "--readFilesIn {fastqF} {fastqR}\\\n\t".\
                     format(fastqF=self.sample_data[sample]["fastq.F"],
