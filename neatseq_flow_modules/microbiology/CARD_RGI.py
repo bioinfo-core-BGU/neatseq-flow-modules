@@ -197,7 +197,7 @@ class Step_CARD_RGI(Step):
                 
                 
                 # Name of specific script:
-                self.spec_script_name = "_".join([self.step,self.name,sample])
+                self.spec_script_name = self.set_spec_script_name(sample)
                 self.script = ""
                 
                 # Make a dir for the current sample:

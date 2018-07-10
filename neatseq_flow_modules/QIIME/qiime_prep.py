@@ -177,7 +177,7 @@ class Step_qiime_prep(Step):
             # General comment: If there is a parallel routine for each direction (forward, reverse), add this loop	
             
             # Name of specific script:
-            self.spec_script_name = "_".join([self.step,self.name,sample])
+            self.spec_script_name = self.set_spec_script_name(sample)
             
             # Init script itself
             self.script = ""

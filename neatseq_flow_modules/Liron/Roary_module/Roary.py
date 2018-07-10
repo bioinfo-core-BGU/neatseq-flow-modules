@@ -218,7 +218,7 @@ class Step_Roary(Step):
         GFF_dir=self.sample_data["GFF_dir"]
         sample='Pan_Genome'
         # Name of specific script:
-        self.spec_script_name = "_".join([self.step,self.name,sample])
+        self.spec_script_name = self.set_spec_script_name(sample)
         self.script = ""
 
         # Make a dir for the RESULTS:
