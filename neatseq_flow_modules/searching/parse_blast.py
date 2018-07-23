@@ -265,11 +265,17 @@ class Step_parse_blast(Step):
         """ Make file containing samples and target file names for use by kraken analysis R script
         """
         
-        with open(self.base_dir + "parsed_BLAST_files_index.txt", "w") as index_fh:
-            index_fh.write("#Sample\tBLAST_report\n")
-            for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-                index_fh.write("%s\t%s\n" % (sample,self.sample_data[sample]["blast.parsed"]))
-                
+        if self.params["scope"]=="sample":
+            with open(self.base_dir + "parsed_BLAST_files_index.txt", "w") as index_fh:
+                index_fh.write("#Sample\tBLAST_report\n")
+                for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
+                    index_fh.write("%s\t%s\n" % (sample,self.sample_data[sample]["blast.parsed"]))
+        else:
+            with open(self.base_dir + "parsed_BLAST_files_index.txt", "w") as index_fh:
+                index_fh.write("""\
+#Sample\tBLAST_report
+{project}\t{file}""".format(project=self.sample_data["Title"], file=self.sample_data["blast.parsed"]))
+        
         self.sample_data["BLAST_files_index"] = self.base_dir + "parsed_BLAST_files_index.txt"
         
   
