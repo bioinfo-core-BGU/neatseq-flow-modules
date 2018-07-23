@@ -110,12 +110,12 @@ class Step_parse_blast(Step):
         if "scope" in self.params:
           
             if self.params["scope"]=="project":
-                if not "blast" in self.sample_data:
+                if not "blast.nucl" in self.sample_data and not "blast.prot" in self.sample_data:
                     raise AssertionExcept("There are no project BLAST results.\n")
             elif self.params["scope"]=="sample":
                 # Checking all samples have a 'blast' file-type in sample_data
                 for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-                    if not "blast" in self.sample_data[sample]:
+                    if not "blast.nucl" in self.sample_data[sample] and not "blast.prot" in self.sample_data[sample]:
                         raise AssertionExcept("There are no BLAST results.\n" , sample)
             else:
                 raise AssertionExcept("'scope' must be either 'sample' or 'project'")

@@ -24,6 +24,8 @@ Mapping
 
 .. automodule:: neatseq_flow_modules.mapping.STAR_builder
 
+.. automodule:: neatseq_flow_modules.mapping.STAR_LoadRemoveGenome
+
 .. automodule:: neatseq_flow_modules.main_NSF_classes.mapping.samtools
 
 .. automodule:: neatseq_flow_modules.main_NSF_classes.Reports.Multiqc
