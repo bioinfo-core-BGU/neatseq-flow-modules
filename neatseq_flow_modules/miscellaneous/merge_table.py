@@ -113,7 +113,6 @@ class Step_merge_table(Step):
             HOWEVER, DON'T FORGET TO CHANGE THE CLASS NAME AND THE FILENAME!
         """
         
-        
         # Each iteration must define the following class variables:
             # self.spec_script_name
             # self.script
@@ -123,15 +122,13 @@ class Step_merge_table(Step):
             self.spec_script_name = self.jid_name_sep.join([self.step,self.name,self.sample_data["Title"],type])
             self.script = ""
             
-            
             # This line should be left before every new script. It sees to local issues.
             # Use the dir it returns as the base_dir for this step.
             use_dir = self.local_start(self.base_dir)
 
             # Define location and prefix for output files:
             output_fn = "{filename}".format(filename = ".".join([self.sample_data["Title"],type]))
-            
-            
+
             if "add_filename" in self.params:
                 pass
             elif self.params["header"]==0:
@@ -139,16 +136,13 @@ class Step_merge_table(Step):
             else:
                 self.script += "sed -s '1,{header}d' \\\n\t".format(header = self.params["header"])
 
-            print self.script
             if "add_filename" in self.params:
-                print "in here"
                 for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
                     self.script += """
 awk 'function basename(file) {{sub(".*/", "", file); return file}} BEGIN {{OFS="\\t"}} {{if(NR>{header}) print basename(FILENAME),$0}}' {filename} >> {output}
 """.format(filename=self.sample_data[sample][type],
                     header=self.params["header"],
                     output="{dir}{file}".format(dir=use_dir,file=output_fn))
-
 
             else:
                 # # Get constant part of script:
@@ -158,14 +152,11 @@ awk 'function basename(file) {{sub(".*/", "", file); return file}} BEGIN {{OFS="
                     self.script += "%s \\\n\t" % self.sample_data[sample][type]
                 
                 self.script += "> {dir}{file}\n\n".format(dir=use_dir,file=output_fn) 
-            
-          
+
             self.sample_data[type] = "%s%s" % (self.base_dir, output_fn)
             self.stamp_file(self.sample_data[type])
-                    
-        
+
             # Move all files from temporary local dir to permanent base_dir
-            self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
-            
+            self.local_finish(use_dir,self.base_dir)
             self.create_low_level_script()
-                            
+

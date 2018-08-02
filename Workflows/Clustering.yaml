@@ -29,7 +29,6 @@ Step_params:
         module:         vsearch_derepel
         base:           merge1
         script_path:    '{Vars.paths.vsearch}/vsearch'
-        script_path:    '{Vars.paths.vsearch}/vsearch'
         scope:          sample
         type:           derep_fulllength
         redirects:

@@ -142,9 +142,11 @@ awk -v seqs="$SEQPERFRAG" 'BEGIN {{n_seq=0; file_cnt=1;}} /^>/ {{ if(n_seq%seqs=
             sample_list = ["subsample{num}".format(num=num) for num in range(1,self.params["subsample_num"]+1)]
             self.stash_sample_list(sample_list)
 
-            for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
+            # Creating data container for subsamples:
+            for sample in self.sample_data["samples"]:
                 self.sample_data[sample] = dict()
-                self.sample_data[sample][self.params["type"]] = "{use_dir}{sample}.fa".format(use_dir=self.base_dir,sample=sample)
+                self.sample_data[sample][self.params["type"]] = "{use_dir}{sample}.fa".format(use_dir=self.base_dir,
+                                                                                              sample=sample)
                 # Stamping the files takes a long time. Cancelling for the time being
                 # self.stamp_file(self.sample_data[sample][self.params["type"]])
 

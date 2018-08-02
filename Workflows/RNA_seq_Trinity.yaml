@@ -34,8 +34,8 @@ Vars:
         RSEM:               /path/to/rsem/bin               # Path to dir containing rsem scripts 
         samtools:           /path/to/samtools-1.3/bin       # Path to dir containing samtools executable
         STAR:               /path/to/STAR                   # Path to STAR executable
-        bowtie2:            /path/to/bowtie2/
-        samtools:           /path/to/samtools
+        # bowtie2:            /path/to/bowtie2/
+        # samtools:           /path/to/samtools
         hpc_cmds_GridRunner:    /path/to/hpc_cmds_GridRunner.pl
         BUSCO:              /path/to/BUSCO.py
         filter_trinity_by_counts:   /path/to/filter_trinity_by_counts.R

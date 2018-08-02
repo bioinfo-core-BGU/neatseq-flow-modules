@@ -291,14 +291,6 @@ class Step_mash_sketch(Step):
             filetype_lists = {"fastq": list(set(self.sample_data.keys()) & {"fastq.F", "fastq.R", "fastq.S"}),
                               "fasta": list(set(self.sample_data.keys()) & {"fasta.nucl"})}
 
-            print filetype
-            print filetype_lists
-            # if filetype=="fastq":
-            #     type_list = list(set(self.sample_data.keys()) & set(["fastq.F","fastq.R","fastq.S"]))
-            # else:
-            #     type_list = list(set(self.sample_data.keys()) & set(["fasta.nucl"]))
-            # import pdb; pdb.set_trace()
-
             # Move on if no files exist for type
             if not filetype_lists[filetype]:
                 continue
@@ -319,7 +311,6 @@ class Step_mash_sketch(Step):
                 for spec_type in filetype_lists[filetype]:
                     self.script += "%s \\\n\t" % self.sample_data[spec_type]
                 self.script += "> %s\n\n" % input_filename
-
 
             # Define output filename 
             output_filename = "%s.%s" % (self.sample_data["Title"] , filetype)
