@@ -65,6 +65,7 @@ The samtools programs included in the module are the following:
     "filter_by_tag", "*e.g.*: NM:i:[01]", "Filter BAM by one of the tags. Use an awk-compliant regular expression. In this example, keep only lines where the edit distance is 0 or 1. This is an experimental feature and should be used with caution..."
     "del_sam", "", "Remove SAM file"
     "del_unsorted", "", "Remove unsorted bam file."
+    "type2use","sam|bam","Type of file to use. Must exist in scope"
 
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -261,7 +262,9 @@ class Step_samtools(Step):
                     self.sample_data[sample]["sam"] = sample_dir + output_sam_name
                     self.stamp_file(self.sample_data[sample]["sam"])
 
-                    self.write_warning("Output from samtools view is SAM. Not proceeding further.\nTo produce a BAM, make sure to include the -b flag in the samtools view parameters.\n")
+                    self.write_warning("""
+Output from samtools view is SAM. Not proceeding further.
+To produce a BAM, make sure to include the -b flag in the samtools view parameters.""")
                     # If sam output, can't proceed with rest of commands which require bam input_file:
                     # Move all files from temporary local dir to permanent base_dir
                     self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)
@@ -505,7 +508,7 @@ class Step_samtools(Step):
             self.script += "%s sort \\\n\t" % self.get_script_env_path()
             if self.params["sort"]:
                 self.script += "%s \\\n\t" % self.params["sort"]
-            self.script += "-o %s \\\n\t" % (active_file + sort_suffix)  # (use_dir + sort_name)
+            self.script += "-o %s \\\n\t" % (use_dir + os.path.basename(active_file) + sort_suffix)  # (use_dir + sort_name)
             self.script += "%s\n\n" % active_file  # (bam_name)
 
             # If user requires than unsorted bam be removed:
@@ -515,26 +518,38 @@ class Step_samtools(Step):
 
             # Storing sorted bam in 'bam' slot and unsorted bam in unsorted_bam slot
             self.sample_data["unsorted_bam"] = self.base_dir + os.path.basename(active_file)
-            active_file = active_file + sort_suffix
+            active_file = use_dir + os.path.basename(active_file) + sort_suffix
             self.sample_data["bam"] = self.base_dir + os.path.basename(active_file)
             self.stamp_file(self.sample_data["bam"])
 
         if "index" in self.params.keys():
-            self.script += "###########\n# Indexing BAM\n#----------------\n"
-            self.script += "%s index \\\n\t" % self.get_script_env_path()
-            if self.params["index"]:
-                self.script += "%s \\\n\t" % self.params["index"]
-            self.script += "%s\n\n" % active_file  # (use_dir + bam_name)
+            self.script += """
+###########
+# Indexing BAM
+#----------------
+{env_script_path} index {params} \\
+    {input} \\
+    {output}
+""".format(env_script_path=self.get_script_env_path(),
+                                 params=self.params["index"] if self.params["index"] else "",
+                                 input=active_file,
+                                 output=use_dir + os.path.basename(active_file) + index_suffix)
             self.sample_data["index"] = self.base_dir + os.path.basename(active_file) + index_suffix
             self.stamp_file(self.sample_data["index"])
 
         if "flagstat" in self.params.keys():
-            self.script += "###########\n# Calculating BAM statistics:\n#----------------\n"
-            self.script += "%s flagstat \\\n\t" % self.get_script_env_path()
-            self.script += "%s \\\n\t" % active_file  # (use_dir + bam_name)
-            self.script += "> %s.flagstat \n\n" % active_file  # (use_dir + bam_name)
-            self.sample_data["flagstat"] = "%s%s.flagstat" % (
-                self.base_dir, os.path.basename(active_file))  # bam_name)
+            self.script += """
+###########
+#  Calculating BAM statistics
+#----------------
+{env_script_path} flagstat \\
+    {input} \\
+    > {output}
+""".format(env_script_path=self.get_script_env_path(),
+           input=active_file,
+           output=use_dir + os.path.basename(active_file) + ".flagstat")
+
+            self.sample_data["flagstat"] = "%s%s.flagstat" % (self.base_dir, os.path.basename(active_file))
             self.stamp_file(self.sample_data["flagstat"])
 
         if "stats" in self.params.keys():
