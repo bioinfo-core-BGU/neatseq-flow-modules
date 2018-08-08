@@ -90,8 +90,8 @@ class Step_fastqc_html(Step):
         """
         if "sum_script" in self.params.keys():
             self.script = "%(script)s \\\n\t-d %(indir)s \\\n\t-o %(outdir)s\n\n" % \
-                    {"script" : self.params["sum_script"],                          \
-                     "indir"  : self.base_dir,                                      \
+                    {"script" : self.params["sum_script"],
+                     "indir"  : self.base_dir,
                      "outdir" : self.base_dir}
 
         
