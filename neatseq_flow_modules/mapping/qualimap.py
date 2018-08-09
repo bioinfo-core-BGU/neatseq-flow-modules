@@ -157,14 +157,20 @@ class Step_qualimap(Step):
             use_dir = self.local_start(sample_dir)
 
             self.script = """
+
+{setenv}
 {const} bamqc \\
-    -bam {bam} \\
-    -outdir {outd} \\
-    -outfile {outf}
-            """.format(const=self.get_script_const(),
+	{redir}  
+	-bam {bam} \\
+	-outdir {outd} \\
+	-outfile {outf}
+            """.format(const=self.params["script_path"],
+                       setenv=self.get_setenv_part(),
+                       redir=self.get_redir_parameters_script().rstrip(),
                        bam=self.sample_data[sample]["bam"],
                        outd=use_dir,
                        outf="{smp}_qualimap.report".format(smp=sample))
+
 
             self.sample_data[sample]["qualimap"] = "{dir}{smp}_qualimap.report".format(dir=sample_dir,
                                                                                        smp=sample)
@@ -186,11 +192,16 @@ class Step_qualimap(Step):
         use_dir = self.local_start(self.base_dir)
 
         self.script = """
+        
+{setenv}
 {const} bamqc \\
-    -bam {bam} \\
-    -outdir {outd} \\
-    -outfile {outf}
-            """.format(const=self.get_script_const(),
+	{redir} 
+	-bam {bam} \\
+	-outdir {outd} \\
+	-outfile {outf}
+            """.format(const=self.params["script_path"],
+                       setenv=self.get_setenv_part(),
+                       redir=self.get_redir_parameters_script().rstrip(),
                        bam=self.sample_data["bam"],
                        outd=use_dir,
                        outf="{proj}_qualimap.report".format(proj=self.sample_data["Title"]))
