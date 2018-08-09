@@ -160,7 +160,7 @@ class Step_qualimap(Step):
 
 {setenv}
 {const} bamqc \\
-	{redir}  
+	{redir}
 	-bam {bam} \\
 	-outdir {outd} \\
 	-outfile {outf}
@@ -195,7 +195,7 @@ class Step_qualimap(Step):
         
 {setenv}
 {const} bamqc \\
-	{redir} 
+	{redir}
 	-bam {bam} \\
 	-outdir {outd} \\
 	-outfile {outf}
