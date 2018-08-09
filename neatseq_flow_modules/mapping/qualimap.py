@@ -72,13 +72,22 @@ class Step_qualimap(Step):
 
         self.auto_redirs = "-d --data -outdir -outfile -bam".split(" ")
 
+        if "mode" not in self.params:
+            raise AssertionExcept("Please supply a qualimap mode")
+
+        if self.params["mode"] not in ["bamqc", "multi-bamqc"]:
+            raise AssertionExcept("mode must be bamq or multi-bamqc")
+
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
 
         if "scope" not in self.params:
-            self.write_warning("No scope specified. Setting to 'sample'")
-            self.params["scope"] = "sample"
+            self.write_warning("No scope specified. Setting appropriate")
+            if self.params["mode"] == "multi-bamqc":
+                self.params["scope"] = "project"
+            else:
+                self.params["scope"] = "sample"
 
         if self.params["scope"] == "project":
             self.step_sample_initiation_byproject()
@@ -90,33 +99,28 @@ class Step_qualimap(Step):
     def step_sample_initiation_bysample(self):
         
         # Assert that all samples have reads files:
-        for sample in self.sample_data["samples"]:    
-            if "bam" not in self.sample_data[sample]:
-                raise AssertionExcept("No bam file defined for sample\n", sample)
+        if self.params["mode"] == "bamqc":
+            for sample in self.sample_data["samples"]:
+                if "bam" not in self.sample_data[sample]:
+                    raise AssertionExcept("No bam file defined for sample\n", sample)
+        if self.params["mode"] == "multi-bamqc":
+            raise AssertionExcept("mode multi-bamqc is not defined for sample scope")
 
     def step_sample_initiation_byproject(self):
-        if "bam" not in self.sample_data:
-            raise AssertionExcept("No bam file defined for project\n")
+
+        if self.params["mode"] == "bamqc":
+            if "bam" not in self.sample_data:
+                raise AssertionExcept("No bam file defined for project\n")
+
+        if self.params["mode"] == "multi-bamqc":
+            if "qualimap_files_index" not in self.sample_data:
+                raise AssertionExcept("if mode is multi-bamqc, you have to have a bamqc instance first!")
 
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
         if self.params["scope"] == "sample":
             self.make_sample_file_index()   # see definition below
-
-            self.script = """
-{setenv}
-{const} multi-bamqc \\
-	{redir}
-	--data {report} \\
-	outdir {outd} \\
-	-outfile {outf}
-            """.format(const=self.params["script_path"],
-                       setenv=self.get_setenv_part(),
-                       redir=self.get_redir_parameters_script().rstrip(),
-                       report=self.sample_data["qualimap_files_index"],
-                       outd=self.base_dir + self.sample_data["Title"],
-                       outf="{proj}_qualimap.report".format(proj=self.sample_data["Title"]))
 
     def make_sample_file_index(self):
         """ Make file containing samples and target file names.
@@ -186,28 +190,51 @@ class Step_qualimap(Step):
         # script
 
         # Name of specific script:
-        self.spec_script_name = self.set_spec_script_name(sample)
+        self.spec_script_name = self.set_spec_script_name()
         self.script = ""
 
         # This line should be left before every new script. It sees to local issues.
         # Use the dir it returns as the base_dir for this step.
         use_dir = self.local_start(self.base_dir)
 
-        self.script = """
+        if self.params["mode"] == "bamqc":
+            self.script = """
         
 {setenv}
-{const} bamqc \\
+{const} {mode} \\
 	{redir}
 	-bam {bam} \\
 	-outdir {outd} \\
 	-outfile {outf}
             """.format(const=self.params["script_path"],
+                       mode=self.params["mode"],
                        setenv=self.get_setenv_part(),
                        redir=self.get_redir_parameters_script().rstrip(),
                        bam=self.sample_data["bam"],
                        outd=use_dir,
                        outf="{proj}_qualimap.report".format(proj=self.sample_data["Title"]))
 
-        self.sample_data["qualimap"] = self.base_dir
+            self.sample_data["qualimap"] = self.base_dir
+
+
+        elif self.params["mode"] == "multi-bamqc":
+            self.script = """
+
+{setenv}
+{const} multi-bamqc \\
+	{redir}
+	--data {report} \\
+	-outdir {outd} \\
+	-outfile {outf}
+            """.format(const=self.params["script_path"],
+                       setenv=self.get_setenv_part(),
+                       redir=self.get_redir_parameters_script().rstrip(),
+                       report=self.sample_data["qualimap_files_index"],
+                       outd=use_dir,
+                       outf="{proj}_qualimap.report".format(proj=self.sample_data["Title"]))
+
+            self.sample_data["qualimap"] = self.base_dir
+
         self.local_finish(use_dir, self.base_dir)
         self.create_low_level_script()
+
