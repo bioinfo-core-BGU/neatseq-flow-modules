@@ -105,13 +105,17 @@ class Step_qualimap(Step):
             self.make_sample_file_index()   # see definition below
 
             self.script = """
+{setenv}
 {const} multi-bamqc \\
-    --data {report} \\
-    -outdir {outd} \\
-    -outfile {outf}
-            """.format(const=self.get_script_const(),
+	{redir}
+	--data {report} \\
+	outdir {outd} \\
+	-outfile {outf}
+            """.format(const=self.params["script_path"],
+                       setenv=self.get_setenv_part(),
+                       redir=self.get_redir_parameters_script().rstrip(),
                        report=self.sample_data["qualimap_files_index"],
-                       outd=self.base_dir,
+                       outd=self.base_dir + self.sample_data["Title"],
                        outf="{proj}_qualimap.report".format(proj=self.sample_data["Title"]))
 
     def make_sample_file_index(self):
@@ -157,7 +161,6 @@ class Step_qualimap(Step):
             use_dir = self.local_start(sample_dir)
 
             self.script = """
-
 {setenv}
 {const} bamqc \\
 	{redir}
@@ -172,8 +175,7 @@ class Step_qualimap(Step):
                        outf="{smp}_qualimap.report".format(smp=sample))
 
 
-            self.sample_data[sample]["qualimap"] = "{dir}{smp}_qualimap.report".format(dir=sample_dir,
-                                                                                       smp=sample)
+            self.sample_data[sample]["qualimap"] = sample_dir
             self.local_finish(use_dir,sample_dir)
             self.create_low_level_script()
 
@@ -206,7 +208,6 @@ class Step_qualimap(Step):
                        outd=use_dir,
                        outf="{proj}_qualimap.report".format(proj=self.sample_data["Title"]))
 
-        self.sample_data["qualimap"] = "{dir}{proj}_qualimap.report".format(dir=self.base_dir,
-                                                                            proj=self.sample_data["Title"])
+        self.sample_data["qualimap"] = self.base_dir
         self.local_finish(use_dir, self.base_dir)
         self.create_low_level_script()
