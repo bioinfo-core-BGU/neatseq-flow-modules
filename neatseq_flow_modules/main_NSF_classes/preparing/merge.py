@@ -221,8 +221,14 @@ class Step_merge(Step):
         # Get list of existing file types in samples file:
         for sample in self.sample_data["samples"]:
             sample_src = list(set(self.sample_data[sample].keys()))
-            if "type" in sample_src: 
-                sample_src.remove("type")   # 'type' is the type of sample (PE, etc.)
+            # if "type" in sample_src:
+            #     sample_src.remove("type")   # 'type' is the type of sample (PE, etc.)
+            # Remove keywords from sample. These are not 'src's.
+            # At the moment, "type" and "grouping". Add more when required!
+            sample_src = [src1
+                          for src1
+                          in sample_src
+                          if src1 not in ["type","grouping"]]
             sample_scope = ["sample"] * len(sample_src)
             # If sample data exists, store in 'src' and 'scope'
             # Do this only if one of the following:
@@ -277,12 +283,13 @@ class Step_merge(Step):
                         else:
                             raise AssertionExcept("Unrecognized value for '%s'" % param)
                            
-                else: # 4. If not passed by user, creating list with None. This is so that pipe can be populated by automatic file extension recognition
+                else:
+                    # 4. If not passed by user, creating list with None. This is so that pipe can be populated by
+                    # automatic file extension recognition
                     self.params[param] = [None] * len(self.params["src"])
             # Defining 'scope' (basic mode. user should not pass this. Setting it here)
             self.params["scope"] = scope
 
-            
         else: # 'src' is user-defined (Advanced mode)
             # Converting 'src' into list
             if isinstance(self.params['src'], str):
