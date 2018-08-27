@@ -334,13 +334,13 @@ To produce a BAM, make sure to include the -b flag in the samtools view paramete
 ###########
 # Sorting BAM
 #----------------
-{env_path}sort \\{params} 
+{env_path}sort \\{params}
 \t-o {outf} \\
 \t{inf}                
-                """.format(env_path=self.get_script_env_path(),
-                           params="" if not self.params["sort"] else "\n\t"+self.params["sort"]+" \\",
-                           outf=(use_dir + os.path.basename(active_file) + sort_suffix),
-                           inf=active_file)
+""".format(env_path=self.get_script_env_path(),
+           params="" if not self.params["sort"] else "\n\t"+self.params["sort"]+" \\",
+           outf=(use_dir + os.path.basename(active_file) + sort_suffix),
+           inf=active_file)
 
                 # If user requires than unsorted bam be removed:
                 if "del_unsorted" in self.params.keys():
