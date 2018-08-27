@@ -99,15 +99,38 @@ class Step_merge_table(Step):
                 if type not in self.sample_data[sample]:
                     raise AssertionExcept("Type %s does not exist in sample" % type, sample)
 
-        
+        if "scope" not in self.params:
+            self.write_warning("No 'scope' specified. Setting to 'project'")
+            self.params["scope"] = "project"
+        if self.params["scope"] == "project":
+            pass
+        elif self.params["scope"] == "group":
+            if "category" not in self.params:
+                raise AssertionExcept("For merging by group, you must supply a 'category' parameter.")
+            if not isinstance(self.params["category"], str):
+                raise AssertionExcept("'category' parameter must be a string.")
+            for sample in self.sample_data["samples"]:  # Getting list of samples out of samples_hash
+                try:
+                    self.sample_data[sample]["grouping"][self.params["category"]]
+                except KeyError:
+                    raise AssertionExcept("'category' {cat} not defined for sample".format(cat=self.params["category"]),
+                                          sample)
+        else:
+            raise AssertionExcept("'scope' must be either 'group' or 'project'")
         
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
         pass
-        
-    
+
     def build_scripts(self):
+
+        if self.params["scope"] == "project":
+            self.build_scripts_project()
+        else:
+            self.build_scripts_group()
+
+    def build_scripts_project(self):
         """ This is the actual script building function
             Most, if not all, editing should be done here 
             HOWEVER, DON'T FORGET TO CHANGE THE CLASS NAME AND THE FILENAME!
@@ -160,3 +183,67 @@ awk 'function basename(file) {{sub(".*/", "", file); return file}} BEGIN {{OFS="
             self.local_finish(use_dir,self.base_dir)
             self.create_low_level_script()
 
+    def build_scripts_group(self):
+        """ This is the actual script building function
+            Most, if not all, editing should be done here
+            HOWEVER, DON'T FORGET TO CHANGE THE CLASS NAME AND THE FILENAME!
+        """
+
+        # Create slots for levels of category, including types derived from samples.
+        self.create_group_slots(self.params["category"])
+
+        # Get levels of category
+        cat_levels = self.get_category_levels(self.params["category"])
+        for cat_lev in cat_levels:
+            # Creating slot for level data:
+            # self.sample_data[cat_lev] = dict()
+            # Building cat level type from types of samples.
+            # This is dangerous - samples may have different types and this is not being tested here.
+            # self.sample_data[cat_lev]["type"] = self.merge_sample_types_categories(self.params["category"], cat_lev)
+
+            for type in self.params["type"]:
+
+                self.spec_script_name = self.jid_name_sep.join([self.step, self.name, cat_lev, type])
+                self.script = ""
+
+                # This line should be left before every new script. It sees to local issues.
+                # Use the dir it returns as the base_dir for this step.
+                group_dir = self.make_folder_for_sample(cat_lev)
+                use_dir = self.local_start(group_dir)
+
+                # Define location and prefix for output files:
+                output_fn = ".".join([cat_lev, type])
+
+                if "add_filename" in self.params:
+                    pass
+                elif self.params["header"] == 0:
+                    self.script += "cat \\\n\t".format(header=self.params["header"])
+                else:
+                    self.script += "sed -s '1,{header}d' \\\n\t".format(header=self.params["header"])
+
+                if "add_filename" in self.params:
+                    for sample in self.get_samples_in_category_level(self.params["category"], cat_lev):
+                        self.script += """
+awk 'function basename(file) {{sub(".*/", "", file); return file}} BEGIN {{OFS="\\t"}} {{if(NR>{header}) print basename(FILENAME),$0}}' {filename} >> {output}
+""".format(filename=self.sample_data[sample][type],
+           header=self.params["header"],
+           output="{dir}{file}".format(dir=use_dir, file=output_fn))
+
+                else:
+                    # # Get constant part of script:
+                    # self.script += self.get_script_const()
+                    # # Files to merge:
+                    for sample in self.get_samples_in_category_level(self.params["category"], cat_lev):
+                        self.script += "%s \\\n\t" % self.sample_data[sample][type]
+
+                    self.script += "> {dir}{file}\n\n".format(dir=use_dir, file=output_fn)
+
+                self.sample_data[cat_lev][type] = "%s%s" % (group_dir, output_fn)
+                self.stamp_file(self.sample_data[cat_lev][type])
+
+                # Move all files from temporary local dir to permanent base_dir
+                self.local_finish(use_dir, group_dir)
+                self.create_low_level_script()
+        # Setting new sample names to category levels.
+        # From now on, these are the new samples.
+        self.sample_data["samples"] = cat_levels

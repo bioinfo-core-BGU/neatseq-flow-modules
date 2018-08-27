@@ -273,17 +273,36 @@ To produce a BAM, make sure to include the -b flag in the samtools view paramete
 
             # The following can be merged into the main 'view' section
             if "filter_by_tag" in self.params.keys():
-            
-                self.script += "###########\n# Filtering BAM\n#----------------\n"
-                self.script += "\n\n"
-                self.script += "%s view \\\n\t" % self.get_script_env_path()
-                self.script += "-h \\\n\t" 
-                self.script += "%s | \\\n\t" % active_file    # self.sample_data[sample]["bam"]
-                self.script += "awk '$0 ~\"(^@)|(%s)\"' | \\\n\t" % self.params["filter_by_tag"]
-                self.script += "%s view \\\n\t" % self.get_script_env_path()
-                self.script += "-bh \\\n\t" 
-                self.script += "-o %s \\\n\t" % (active_file + filter_suffix)   # use_dir + filtered_name)
-                self.script += "- \n\n" 
+
+                self.script += """\
+###########
+# Filtering BAM
+#----------------
+
+{env_path} view \\
+\t-h \\
+\t{active_file} | \\  
+\tawk '$0 ~\"(^@)|({query})\"' | \\
+\t{env_path} view \\
+\t-bh \\
+\t-o {active_file}{filt_suff} \\
+\t- 
+
+""".format(env_path=self.get_script_env_path(),
+           active_file=active_file,
+           query=self.params["filter_by_tag"],
+           filt_suff=filter_suffix)
+
+                # self.script += "###########\n# Filtering BAM\n#----------------\n"
+                # self.script += "\n\n"
+                # self.script += "%s view \\\n\t" % self.get_script_env_path()
+                # self.script += "-h \\\n\t"
+                # self.script += "%s | \\\n\t" % active_file    # self.sample_data[sample]["bam"]
+                # self.script += "awk '$0 ~\"(^@)|(%s)\"' | \\\n\t" % self.params["filter_by_tag"]
+                # self.script += "%s view \\\n\t" % self.get_script_env_path()
+                # self.script += "-bh \\\n\t"
+                # self.script += "-o %s \\\n\t" % (active_file + filter_suffix)   # use_dir + filtered_name)
+                # self.script += "- \n\n"
 
                 # If user requires than unsorted bam be removed:
                 if "del_unfiltered" in self.params.keys():
@@ -311,12 +330,17 @@ To produce a BAM, make sure to include the -b flag in the samtools view paramete
                         # self.write_warning("Can't find BAM but found SAM for sample. Using it instead of a BAM.\n", sample)
                     # else:
                         # raise AssertionExcept("Can't run sort without BAM file. Either include 'view' or use other BAM creating steps.\n",sample)
-                self.script += "###########\n# Sorting BAM\n#----------------\n"
-                self.script += "%s sort \\\n\t" % self.get_script_env_path()
-                if self.params["sort"]:
-                    self.script += "%s \\\n\t" % self.params["sort"]
-                self.script += "-o %s \\\n\t" % (active_file + sort_suffix)   #(use_dir + sort_name)
-                self.script += "%s\n\n" % active_file  #(bam_name)
+                self.script += """\
+###########
+# Sorting BAM
+#----------------
+{env_path}sort \\{params} 
+\t-o {outf} \\
+\t{inf}                
+                """.format(env_path=self.get_script_env_path(),
+                           params="" if not self.params["sort"] else "\n\t"+self.params["sort"]+" \\",
+                           outf=(use_dir + os.path.basename(active_file) + sort_suffix),
+                           inf=active_file)
 
                 # If user requires than unsorted bam be removed:
                 if "del_unsorted" in self.params.keys():
@@ -508,7 +532,7 @@ To produce a BAM, make sure to include the -b flag in the samtools view paramete
             self.script += "%s sort \\\n\t" % self.get_script_env_path()
             if self.params["sort"]:
                 self.script += "%s \\\n\t" % self.params["sort"]
-            self.script += "-o %s \\\n\t" % (use_dir + os.path.basename(active_file) + sort_suffix)  # (use_dir + sort_name)
+            self.script += "-o %s \\\n\t" % (use_dir + os.path.basename(active_file) + sort_suffix)
             self.script += "%s\n\n" % active_file  # (bam_name)
 
             # If user requires than unsorted bam be removed:
