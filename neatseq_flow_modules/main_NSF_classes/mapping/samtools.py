@@ -336,7 +336,8 @@ To produce a BAM, make sure to include the -b flag in the samtools view paramete
 #----------------
 {env_path}sort \\{params}
 \t-o {outf} \\
-\t{inf}                
+\t{inf}    
+            
 """.format(env_path=self.get_script_env_path(),
            params="" if not self.params["sort"] else "\n\t"+self.params["sort"]+" \\",
            outf=(use_dir + os.path.basename(active_file) + sort_suffix),
@@ -349,7 +350,7 @@ To produce a BAM, make sure to include the -b flag in the samtools view paramete
 
                 # Storing sorted bam in 'bam' slot and unsorted bam in unsorted_bam slot
                 self.sample_data[sample]["unsorted_bam"] = sample_dir + os.path.basename(active_file)
-                active_file = active_file + sort_suffix
+                active_file = use_dir + os.path.basename(active_file) + sort_suffix
                 self.sample_data[sample]["bam"] = sample_dir + os.path.basename(active_file)
                 self.stamp_file(self.sample_data[sample]["bam"])
 
@@ -554,6 +555,7 @@ To produce a BAM, make sure to include the -b flag in the samtools view paramete
 {env_script_path} index {params} \\
     {input} \\
     {output}
+
 """.format(env_script_path=self.get_script_env_path(),
                                  params=self.params["index"] if self.params["index"] else "",
                                  input=active_file,
