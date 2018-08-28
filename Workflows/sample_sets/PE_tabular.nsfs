@@ -2,6 +2,7 @@ Title	Paired_end_project
 
 #Type	Path
 Nucleotide	/path/to/dsdsdsd.fasta
+mapping_file	C:\Users\sklarz\Documents\python_pipeline_gitlab\python_pipeline\modules_repo\modules_release_1.1.0\Workflows\sample_sets\PE_tabular.grouping.nsfs
 
 #SampleID	Type	Path	lane
 Sample1	Forward	/path/to/Sample1_F1.fastq.gz	1

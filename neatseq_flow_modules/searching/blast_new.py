@@ -161,7 +161,8 @@ class Step_blast_new(Step):
                 pass
 
         if "querytype" not in self.params:
-            raise AssertionExcept("No 'querytype' passed. Please specify the query type to use. (If external query, define it's type with 'querytype')")
+            raise AssertionExcept("No 'querytype' passed. Please specify the query type to use. "
+                                  "(If external query, define it's type with 'querytype')")
         elif self.params["querytype"] not in ["prot","nucl"]:
             raise AssertionExcept("'querytype' must be either 'prot' or 'nucl'.")
         else:
@@ -234,10 +235,12 @@ class Step_blast_new(Step):
                     raise AssertionExcept("No fasta of type %s in project" % self.params["querytype"])
             if self.params["db"] == "sample":
                 if "blastdb." + self.params["dbtype"] not in self.sample_data[sample]:
-                    raise AssertionExcept("No blastdb of type %s in sample. Did you run makeblastdb module with sample scope?" % self.params["dbtype"], sample)            
+                    raise AssertionExcept("No blastdb of type %s in sample. Did you run makeblastdb module "
+                                          "with sample scope?" % self.params["dbtype"], sample)
             if self.params["db"] == "project":
                 if "blastdb." + self.params["dbtype"] not in self.sample_data:
-                    raise AssertionExcept("No blastdb of type %s in project. Did you run makeblastdb module with project scope?" % self.params["dbtype"])
+                    raise AssertionExcept("No blastdb of type %s in project. "
+                                          "Did you run makeblastdb module with project scope?" % self.params["dbtype"])
             
        
             self.sample_data[sample]["blast.outfmt"]     = self.outfmt
@@ -258,7 +261,8 @@ class Step_blast_new(Step):
                 raise AssertionExcept("No fasta of type %s in project" % self.params["querytype"])
         if self.params["db"] == "project":
             if "blastdb." + self.params["dbtype"] not in self.sample_data:
-                raise AssertionExcept("No blastdb of type %s in project. Did you run makeblastdb module with project scope?" % self.params["dbtype"])
+                raise AssertionExcept("No blastdb of type %s in project. "
+                                      "Did you run makeblastdb module with project scope?" % self.params["dbtype"])
                    
         self.sample_data["blast.outfmt"]     = self.outfmt
         self.sample_data["blast.outfmt.txt"] = self.outfmt_txt
@@ -274,35 +278,24 @@ class Step_blast_new(Step):
             pass
         elif self.params["scope"]=="sample":
             self.make_sample_file_index()   # see definition below
-        
-        
 
-    
     def build_scripts(self):
         """ This is the actual script building function
             
         """
-        
 
-          
         if self.params["scope"]=="project":
             self.build_scripts_byproject()
         elif self.params["scope"]=="sample":
             self.build_scripts_bysample()
         else:
             raise AssertionExcept("'scope' must be either 'sample' or 'project'")
-                
-        
 
     def build_scripts_bysample(self):
         """ Script building function for sample-level BLAST
             
         """
    
-        
-        # Each iteration must define the following class variables:
-            # spec_script_name
-            # script
         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
             
             # Name of specific script:

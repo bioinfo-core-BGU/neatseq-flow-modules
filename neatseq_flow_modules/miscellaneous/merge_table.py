@@ -195,11 +195,6 @@ awk 'function basename(file) {{sub(".*/", "", file); return file}} BEGIN {{OFS="
         # Get levels of category
         cat_levels = self.get_category_levels(self.params["category"])
         for cat_lev in cat_levels:
-            # Creating slot for level data:
-            # self.sample_data[cat_lev] = dict()
-            # Building cat level type from types of samples.
-            # This is dangerous - samples may have different types and this is not being tested here.
-            # self.sample_data[cat_lev]["type"] = self.merge_sample_types_categories(self.params["category"], cat_lev)
 
             for type in self.params["type"]:
 
@@ -244,6 +239,9 @@ awk 'function basename(file) {{sub(".*/", "", file); return file}} BEGIN {{OFS="
                 # Move all files from temporary local dir to permanent base_dir
                 self.local_finish(use_dir, group_dir)
                 self.create_low_level_script()
+
+            # Setting new sample types:
+            self.sample_data[cat_lev]["type"] = self.determine_sample_types(self.sample_data[cat_lev])
         # Setting new sample names to category levels.
         # From now on, these are the new samples.
         self.sample_data["samples"] = cat_levels
