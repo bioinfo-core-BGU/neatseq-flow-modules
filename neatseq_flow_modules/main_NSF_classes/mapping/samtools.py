@@ -201,11 +201,7 @@ class Step_samtools(Step):
             Most, if not all, editing should be done here 
             HOWEVER, DON'T FORGET TO CHANGE THE CLASS NAME AND THE FILENAME!
         """
-        
-        
-        # Each iteration must define the following class variables:
-            # self.spec_script_name
-            # self.script
+
         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
 
             # Make a dir for the current sample:
@@ -214,65 +210,54 @@ class Step_samtools(Step):
             # Name of specific script:
             self.spec_script_name = self.set_spec_script_name(sample)
             self.script = ""
-            
 
             # This line should be left before every new script. It sees to local issues.
             # Use the dir it returns as the base_dir for this step.
             use_dir = self.local_start(sample_dir)
-            
-            
 
-            # sam_file = self.sample_data[sample]["sam"]
-            input_file = self.sample_data[sample][self.file2use]
-            # bam_name = self.sample_data[sample]["sam"] + ".bam"
-            bam_name = os.path.basename(input_file) + ".bam"
-            output_sam_name = os.path.basename(input_file) + ".sam" #might be used...
-            
-            active_file = input_file
-            
-            if "filter_by_tag" in self.params.keys():
-                filtered_name = bam_name + ".filt.bam"
-                sort_name = filtered_name + ".srt.bam"
-            else:
-                sort_name = bam_name + ".srt.bam"
-            index_name = sort_name + ".bai"
-            
+            active_file = self.sample_data[sample][self.file2use]
+
             filter_suffix = ".filt.bam"
             sort_suffix = ".srt.bam"
             index_suffix = ".bai"
 
-            
             if "view" in self.params.keys():
-                self.script += "###########\n# Running samtools view:\n#----------------\n"
-                self.script += "%s view \\\n\t" % self.get_script_env_path()
-                if self.params["view"]:
-                    self.script += "%s \\\n\t" % self.params["view"]
 
-                tobam = re.search("\-\w*b",self.params["view"])
-                if tobam:
-                    self.script += "-o {outfile} \\\n\t{infile}\n\n".format(outfile=use_dir + bam_name,
-                                                                             infile=active_file)
-                    active_file = use_dir + bam_name
-                    self.sample_data[sample]["bam"] = sample_dir + bam_name
-                    self.stamp_file(self.sample_data[sample]["bam"])
-                    
-                else:
-                    self.script += "-o {outfile} \\\n\t{infile}\n\n".format(outfile=use_dir + output_sam_name,
-                                                                             infile=active_file)
-                    self.sample_data[sample]["sam"] = sample_dir + output_sam_name
-                    self.stamp_file(self.sample_data[sample]["sam"])
+                output_type = "bam" if re.search("\-\w*b", self.params["view"]) else "sam"
+                outfile = ".".join([os.path.basename(active_file), output_type])
 
+                self.script += """\
+###########
+# Running samtools view
+#----------------
+
+{env_path} view \\{params}
+\t-o {outfile} \\
+\t{active_file} 
+
+""".format(env_path=self.get_script_env_path(),
+                   active_file=active_file,
+                   params="" if not self.params["view"] else "\n\t" + self.params["view"] + " \\",
+                   outfile=use_dir + outfile)
+
+                active_file = use_dir + outfile
+                self.sample_data[sample][output_type] = sample_dir + outfile
+                self.stamp_file(self.sample_data[sample][output_type])
+
+            # If target of view is sam, terminating script. All others work on bam only.
+                if output_type == "sam":
                     self.write_warning("""
-Output from samtools view is SAM. Not proceeding further.
-To produce a BAM, make sure to include the -b flag in the samtools view parameters.""")
+                    Output from samtools view is SAM. Not proceeding further.
+                    To produce a BAM, make sure to include the -b flag in the samtools view parameters.""")
                     # If sam output, can't proceed with rest of commands which require bam input_file:
                     # Move all files from temporary local dir to permanent base_dir
-                    self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)
+                    self.local_finish(use_dir, sample_dir)
                     self.create_low_level_script()
                     continue
 
             # The following can be merged into the main 'view' section
             if "filter_by_tag" in self.params.keys():
+                outfile = os.path.basename(active_file) + filter_suffix
 
                 self.script += """\
 ###########
@@ -285,150 +270,138 @@ To produce a BAM, make sure to include the -b flag in the samtools view paramete
 \tawk '$0 ~\"(^@)|({query})\"' | \\
 \t{env_path} view \\
 \t-bh \\
-\t-o {active_file}{filt_suff} \\
+\t-o {outfile} \\
 \t- 
 
+{rm_unfilt}
 """.format(env_path=self.get_script_env_path(),
            active_file=active_file,
            query=self.params["filter_by_tag"],
-           filt_suff=filter_suffix)
-
-                # self.script += "###########\n# Filtering BAM\n#----------------\n"
-                # self.script += "\n\n"
-                # self.script += "%s view \\\n\t" % self.get_script_env_path()
-                # self.script += "-h \\\n\t"
-                # self.script += "%s | \\\n\t" % active_file    # self.sample_data[sample]["bam"]
-                # self.script += "awk '$0 ~\"(^@)|(%s)\"' | \\\n\t" % self.params["filter_by_tag"]
-                # self.script += "%s view \\\n\t" % self.get_script_env_path()
-                # self.script += "-bh \\\n\t"
-                # self.script += "-o %s \\\n\t" % (active_file + filter_suffix)   # use_dir + filtered_name)
-                # self.script += "- \n\n"
-
-                # If user requires than unsorted bam be removed:
-                if "del_unfiltered" in self.params.keys():
-                    self.script += "###########\n# Removing unfiltered BAM\n#----------------\n"
-                    self.script += "\n\nrm -rf %s\n\n" % (active_file)
+           filt_suff=filter_suffix,
+           outfile=use_dir+outfile,
+           rm_unfilt="# Removing unfiltered BAM\nrm -rf "+active_file if "del_unfiltered" in self.params.keys() else "")
 
                 # Storing filtered and unfiltered bams:
-                self.sample_data[sample]["unfiltered_bam"] = sample_dir + os.path.basename(active_file)   #bam_name
-                active_file = active_file + filter_suffix
-                self.sample_data[sample]["bam"] = sample_dir + os.path.basename(active_file)
+                self.sample_data[sample]["unfiltered_bam"] = active_file
+                self.sample_data[sample]["bam"] = sample_dir + outfile
                 self.stamp_file(self.sample_data[sample]["bam"])
+                active_file = use_dir + outfile
 
-                # The following is so that sort will work on the filtered file without playing around with the sort code:
-                bam_name = filtered_name
-                
             if "sort" in self.params.keys():
-                # This permits running only sort and index, in case a bam file was produced in a differnet step.
-                # if "view" in self.params.keys():
-                    # bam_name = use_dir + bam_name
-                # else:
-                    # if "bam" in self.sample_data[sample].keys():
-                        # bam_name = self.sample_data[sample]["bam"]
-                    # elif "sam" in self.sample_data[sample].keys():
-                        # bam_name = self.sample_data[sample]["sam"]
-                        # self.write_warning("Can't find BAM but found SAM for sample. Using it instead of a BAM.\n", sample)
-                    # else:
-                        # raise AssertionExcept("Can't run sort without BAM file. Either include 'view' or use other BAM creating steps.\n",sample)
+                if "bam" not in self.sample_data[sample]:
+                    raise AssertionExcept("Can't run 'sort', as no BAM is defined", sample)
+                outfile = os.path.basename(active_file) + sort_suffix
+
                 self.script += """\
 ###########
 # Sorting BAM
 #----------------
 {env_path}sort \\{params}
 \t-o {outf} \\
-\t{inf}    
+\t{active_file}    
             
+{rm_unsort}
+
 """.format(env_path=self.get_script_env_path(),
            params="" if not self.params["sort"] else "\n\t"+self.params["sort"]+" \\",
-           outf=(use_dir + os.path.basename(active_file) + sort_suffix),
-           inf=active_file)
-
-                # If user requires than unsorted bam be removed:
-                if "del_unsorted" in self.params.keys():
-                    self.script += "###########\n# Removing unsorted BAM\n#----------------\n"
-                    self.script += "\n\nrm -rf %s\n\n" % (active_file)
+           outf=(use_dir + outfile),
+           active_file=active_file,
+           rm_unsort="# Removing unsorted BAM\nrm -rf "+active_file if "del_unsorted" in self.params.keys() else "")
 
                 # Storing sorted bam in 'bam' slot and unsorted bam in unsorted_bam slot
-                self.sample_data[sample]["unsorted_bam"] = sample_dir + os.path.basename(active_file)
-                active_file = use_dir + os.path.basename(active_file) + sort_suffix
-                self.sample_data[sample]["bam"] = sample_dir + os.path.basename(active_file)
+                self.sample_data[sample]["unsorted_bam"] = active_file
+                self.sample_data[sample]["bam"] = sample_dir + outfile
                 self.stamp_file(self.sample_data[sample]["bam"])
+                active_file = use_dir + outfile
 
             if "index" in self.params.keys():
-                self.script += "###########\n# Indexing BAM\n#----------------\n"
-                self.script += "%s index \\\n\t" % self.get_script_env_path()
-                if self.params["index"]:
-                    self.script += "%s \\\n\t" % self.params["index"]
-                self.script += "%s\n\n" % active_file   #(use_dir + bam_name)
+
+                self.script += """\
+###########
+# Indexing BAM
+#----------------
+{env_path}index \\{params}
+\t{active_file}    
+
+""".format(env_path=self.get_script_env_path(),
+           params="" if not self.params["index"] else "\n\t" + self.params["index"] + " \\",
+           active_file=active_file)
+
                 self.sample_data[sample]["index"] = sample_dir + os.path.basename(active_file) + index_suffix
                 self.stamp_file(self.sample_data[sample]["index"])
 
-            if "flagstat" in self.params.keys():
-                self.script += "###########\n# Calculating BAM statistics:\n#----------------\n"
-                self.script += "%s flagstat \\\n\t" % self.get_script_env_path()
-                self.script += "%s \\\n\t" % active_file   #(use_dir + bam_name)
-                self.script += "> %s.flagstat \n\n" % active_file    #(use_dir + bam_name)
-                self.sample_data[sample]["flagstat"] = "%s%s.flagstat" % (sample_dir, os.path.basename(active_file))  #bam_name)
-                self.stamp_file(self.sample_data[sample]["flagstat"])
 
+            for comm in ["flagstat","stats","idxstats"]:
+                if comm in self.params.keys():
 
-            if "stats" in self.params.keys():
-                self.script += "###########\n# Calculating BAM statistics:\n#----------------\n"
-                self.script += "%s stats \\\n\t" % self.get_script_env_path()
-                if self.params["stats"]:  # Adding parameters the user might pass
-                    self.script += "%s \\\n\t" % self.params["stats"]
-                self.script += "%s \\\n\t" % active_file  #(use_dir + bam_name)
-                self.script += "> %s.stats \n\n" % active_file  #(use_dir + bam_name)
-                self.sample_data[sample]["stats"] = "%s%s.stats" % (sample_dir, os.path.basename(active_file))
-                self.stamp_file(self.sample_data[sample]["stats"])
+                    self.script += """\
+###########
+# Calculating {comm}
+#----------------
+{env_path}{comm} \\{params}
+\t{active_file}    
+\t> {outfile}
 
-            if "idxstats" in self.params.keys() and "idxstats" in self.sample_data[sample]:
-                self.script += "###########\n# Calculating index statistics (idxstats):\n#----------------\n"
-                self.script += "%s idxstats \\\n\t" % self.get_script_env_path()
-                # idxstats has no uder defined parameters...
-                self.script += "%s \\\n\t" % active_file  #(use_dir + bam_name)
-                self.script += "> %s.idxstat.tab \n\n" % active_file  #(use_dir + bam_name)
-                self.sample_data[sample]["idxstats"] = "%s%s.idxstat.tab" % (sample_dir, os.path.basename(active_file))  #bam_name)
-                self.stamp_file(self.sample_data[sample]["idxstats"])
+""".format(env_path=self.get_script_env_path(),
+           params="" if not self.params[comm] else "\n\t" + self.params[comm] + " \\",
+           active_file=active_file,
+           comm=comm,
+           outfile=".".join([active_file,comm]))
+
+                    self.sample_data[sample][comm] = sample_dir + ".".join([os.path.basename(active_file),comm])
+                    self.stamp_file(self.sample_data[sample][comm])
 
             # Adding code for fastq or fasta extraction from bam:
             for type in (set(self.params.keys()) & set(["fasta","fastq"])):
-                self.script += """###########\n# Extracting fastq files from BAM:\n#----------------\n"""
-                self.script += self.get_script_env_path()
-                self.script += "{command} {params} \\\n\t".format(command = type, params = self.params[type])
+
                 if "fastq.F" in self.sample_data[sample]:
-                    self.script += "-1  {readsF} \\\n\t".format(readsF = (active_file + ".F." + type))
-                    self.script += "-2  {readsR} \\\n\t".format(readsR = (active_file + ".R." + type))
+                    readspart = """\
+-1  {readsF} \\
+\t-2  {readsR} \
+""".format(readsF=(active_file + ".F." + type),
+           readsR=(active_file + ".R." + type))
                 else:
-                    self.script += "-0  {readsS} \\\n\t".format(readsS = (active_file + ".S." + type))
-                # -s and mixed paired-single not supported yet
-                self.script += "{bam} \n\n".format(bam = (active_file))
-                
+                    readspart = """\
+-s  {readsS} \
+""".format(readsS=(active_file + ".S." + type))
+
+                # -0 and mixed paired-single not supported yet
+
+                self.script += """\
+###########
+# Extracting fastq files from BAM:
+#----------------
+{env_path}{type} \\{params}
+\t{readspart} \\
+\t{active_file}
+
+""".format(env_path=self.get_script_env_path(),
+           params="" if not self.params[type] else "\n\t" + self.params[type] + " \\",
+           readspart=readspart,
+           type=type,
+           active_file=active_file)
+
                 # Storing and Stamping files
                 if "fastq.F" in self.sample_data[sample]:
-                    self.sample_data[sample]["%s.F"    % type] = "%s%s.F.%s" % (sample_dir, os.path.basename(active_file)   , type)   
-                    self.sample_data[sample]["%s.R"    % type] = "%s%s.R.%s" % (sample_dir, os.path.basename(active_file)   , type)   
-                    self.stamp_file(self.sample_data[sample]["%s.F"    % type] )
-                    self.stamp_file(self.sample_data[sample]["%s.R"    % type] )
+                    self.sample_data[sample][type+".F"] = "%s%s.F.%s" % (sample_dir, os.path.basename(active_file), type)
+                    self.sample_data[sample][type+".R"] = "%s%s.R.%s" % (sample_dir, os.path.basename(active_file), type)
+                    self.stamp_file(self.sample_data[sample][type+".F"])
+                    self.stamp_file(self.sample_data[sample][type+".R"])
                 else:
-                    self.sample_data[sample]["%s.S"    % type] = "%s%s.S.%s" % (sample_dir, os.path.basename(active_file)   , type)   
-                    self.stamp_file(self.sample_data[sample]["%s.S"    % type] )
-                
+                    self.sample_data[sample][type+".S"] = "%s%s.S.%s" % (sample_dir, os.path.basename(active_file), type)
+                    self.stamp_file(self.sample_data[sample][type+".S"])
 
-
-
-                
             if "del_sam" in self.params.keys() and "sam" in self.sample_data[sample]:
-                self.script += "###########\n# Removing SAM\n#----------------\n\n"
-                self.script += "rm -rf %s\n\n" % self.sample_data[sample]["sam"]
+                self.script += """\
+###########
+# Removing SAM
+#----------------
 
-            
+rm -rf {sam}
 
-            # self.stamp_dir_files(sample_dir)
-            # Move all files from temporary local dir to permanent base_dir
-            self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)
-            
-            
+""".format(sam=self.sample_data[sample]["sam"])
+
+            self.local_finish(use_dir,sample_dir)
             self.create_low_level_script()
 
     def build_scripts_byproject(self):
