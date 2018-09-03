@@ -157,7 +157,14 @@ class Step_merge_table(Step):
             elif self.params["header"]==0:
                 self.script += "cat \\\n\t".format(header = self.params["header"])
             else:
-                self.script += "sed -s '1,{header}d' \\\n\t".format(header = self.params["header"])
+                self.script += """\
+# Add header:
+sed -s '{header}q' {first_inp} > {output} 
+# Add bodies:
+sed -s '1,{header}d' \\
+\t""".format(header = self.params["header"],
+             first_inp = self.sample_data[self.sample_data["samples"][1]][type],
+             output = use_dir+output_fn)
 
             if "add_filename" in self.params:
                 for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
@@ -174,7 +181,7 @@ awk 'function basename(file) {{sub(".*/", "", file); return file}} BEGIN {{OFS="
                 for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
                     self.script += "%s \\\n\t" % self.sample_data[sample][type]
                 
-                self.script += "> {dir}{file}\n\n".format(dir=use_dir,file=output_fn) 
+                self.script += ">> {dir}{file}\n\n".format(dir=use_dir,file=output_fn)
 
             self.sample_data[type] = "%s%s" % (self.base_dir, output_fn)
             self.stamp_file(self.sample_data[type])
