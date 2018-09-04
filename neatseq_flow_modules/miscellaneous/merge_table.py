@@ -157,7 +157,7 @@ class Step_merge_table(Step):
 SKIP={skip}
 HEADER={header}
 awk -v header="$HEADER" -v skip="$SKIP" \\
-    '{fn_function} BEGIN{{ORS=""; headerline=0; skipline=0;}} 
+    '{fn_function}BEGIN{{ORS=""; headerline=0; skipline=0;}} 
     FNR==1 {{headerline=0; skipline=0}} {comment_str}
     skipline<skip {{print ""; skipline=skipline+1; next}};
     headerline<header {{
@@ -174,9 +174,9 @@ awk -v header="$HEADER" -v skip="$SKIP" \\
            comment_str='\n    /^{comm}/ {{print ""; next}};'.format(comm=self.params["comment"])
                                                     if "comment" in self.params
                                                     else '',
-           fn_function='function basename(file) {{sub(".*/", "", file); return file}}\n   '
+           fn_function='function basename(file) {{sub(".*/", "", file); return file}}\n    '
                                     if "add_filename" in self.params
-                                    else '$0,"\\n"',
+                                    else '',
            infiles= ' \\\n    '.join([self.sample_data[sample][type] for sample in self.sample_data["samples"]]),
            outfile=use_dir+output_fn)
 
