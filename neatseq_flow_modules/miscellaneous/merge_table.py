@@ -152,36 +152,65 @@ class Step_merge_table(Step):
             # Define location and prefix for output files:
             output_fn = "{filename}".format(filename = ".".join([self.sample_data["Title"],type]))
 
-            if "add_filename" in self.params:
-                pass
-            elif self.params["header"]==0:
-                self.script += "cat \\\n\t".format(header = self.params["header"])
-            else:
-                self.script += """\
-# Add header:
-sed -s '{header}q' {first_inp} > {output} 
-# Add bodies:
-sed -s '1,{header}d' \\
-\t""".format(header = self.params["header"],
-             first_inp = self.sample_data[self.sample_data["samples"][1]][type],
-             output = use_dir+output_fn)
 
-            if "add_filename" in self.params:
-                for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-                    self.script += """
-awk 'function basename(file) {{sub(".*/", "", file); return file}} BEGIN {{OFS="\\t"}} {{if(NR>{header}) print basename(FILENAME),$0}}' {filename} >> {output}
-""".format(filename=self.sample_data[sample][type],
-                    header=self.params["header"],
-                    output="{dir}{file}".format(dir=use_dir,file=output_fn))
+            self.script += """\
+SKIP={skip}
+HEADER={header}
+awk -v header="$HEADER" -v skip="$SKIP" \\
+    '{fn_function} BEGIN{{ORS=""; headerline=0; skipline=0;}} 
+    FNR==1 {{headerline=0; skipline=0}} {comment_str}
+    skipline<skip {{print ""; skipline=skipline+1; next}};
+    headerline<header {{
+        if (NR==FNR) {{print {line2print}}}
+        headerline=headerline+1; next
+    }}
+    headerline>=header {{print {line2print}}}' \\
+    {infiles} \\
+    > {outfile}
 
-            else:
-                # # Get constant part of script:
-                # self.script += self.get_script_const()
-                # # Files to merge:
-                for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-                    self.script += "%s \\\n\t" % self.sample_data[sample][type]
-                
-                self.script += ">> {dir}{file}\n\n".format(dir=use_dir,file=output_fn)
+""".format(skip=self.params["skip"] if "skip" in self.params else 0,
+           header=self.params["header"] if "header" in self.params else 0,
+           line2print='basename(FILENAME),$0,"\\n"' if "add_filename" in self.params else '$0,"\\n"',
+           comment_str='\n    /^{comm}/ {{print ""; next}};'.format(comm=self.params["comment"])
+                                                    if "comment" in self.params
+                                                    else '',
+           fn_function='function basename(file) {{sub(".*/", "", file); return file}}\n   '
+                                    if "add_filename" in self.params
+                                    else '$0,"\\n"',
+           infiles= ' \\\n    '.join([self.sample_data[sample][type] for sample in self.sample_data["samples"]]),
+           outfile=use_dir+output_fn)
+
+#
+#             if "add_filename" in self.params:
+#                 pass
+#             elif self.params["header"]==0:
+#                 self.script += "cat \\\n\t".format(header = self.params["header"])
+#             else:
+#                 self.script += """\
+# # Add header:
+# sed -s '{header}q' {first_inp} > {output}
+# # Add bodies:
+# sed -s '1,{header}d' \\
+# \t""".format(header = self.params["header"],
+#              first_inp = self.sample_data[self.sample_data["samples"][1]][type],
+#              output = use_dir+output_fn)
+#
+#             if "add_filename" in self.params:
+#                 for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
+#                     self.script += """
+# awk 'function basename(file) {{sub(".*/", "", file); return file}} BEGIN {{OFS="\\t"}} {{if(NR>{header}) print basename(FILENAME),$0}}' {filename} >> {output}
+# """.format(filename=self.sample_data[sample][type],
+#                     header=self.params["header"],
+#                     output="{dir}{file}".format(dir=use_dir,file=output_fn))
+#
+#             else:
+#                 # # Get constant part of script:
+#                 # self.script += self.get_script_const()
+#                 # # Files to merge:
+#                 for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
+#                     self.script += "%s \\\n\t" % self.sample_data[sample][type]
+#
+#                 self.script += ">> {dir}{file}\n\n".format(dir=use_dir,file=output_fn)
 
             self.sample_data[type] = "%s%s" % (self.base_dir, output_fn)
             self.stamp_file(self.sample_data[type])
@@ -216,33 +245,64 @@ awk 'function basename(file) {{sub(".*/", "", file); return file}} BEGIN {{OFS="
                 # Define location and prefix for output files:
                 output_fn = ".".join([cat_lev, type])
 
-                if "add_filename" in self.params:
-                    pass
-                elif self.params["header"] == 0:
-                    self.script += "cat \\\n\t".format(header=self.params["header"])
-                else:
-                    self.script += "sed -s '1,{header}d' \\\n\t".format(header=self.params["header"])
+                self.script += """\
+SKIP={skip}
+HEADER={header}
+awk -v header="$HEADER" -v skip="$SKIP" \\
+    '{fn_function} BEGIN{{ORS=""; headerline=0; skipline=0;}} 
+    FNR==1 {{headerline=0; skipline=0}} {comment_str}
+    skipline<skip {{print ""; skipline=skipline+1; next}};
+    headerline<header {{
+        if (NR==FNR) {{print {line2print}}}
+        headerline=headerline+1; next
+    }}
+    headerline>=header {{print {line2print}}}' \\
+    {infiles} \\
+    > {outfile}
 
-                if "add_filename" in self.params:
-                    for sample in self.get_samples_in_category_level(self.params["category"], cat_lev):
-                        self.script += """
-awk 'function basename(file) {{sub(".*/", "", file); return file}} BEGIN {{OFS="\\t"}} {{if(NR>{header}) print basename(FILENAME),$0}}' {filename} >> {output}
-""".format(filename=self.sample_data[sample][type],
-           header=self.params["header"],
-           output="{dir}{file}".format(dir=use_dir, file=output_fn))
+""".format(skip=self.params["skip"] if "skip" in self.params else 0,
+           header=self.params["header"] if "header" in self.params else 0,
+           line2print='basename(FILENAME),$0,"\\n"' if "add_filename" in self.params else '$0,"\\n"',
+           comment_str='\n    /^{comm}/ {{print ""; next}};'.format(comm=self.params["comment"])
+           if "comment" in self.params
+           else '',
+           fn_function='function basename(file) {{sub(".*/", "", file); return file}}\n   '
+           if "add_filename" in self.params
+           else '$0,"\\n"',
+           infiles=' \\\n    '.join(
+               [self.sample_data[sample][type]
+                for sample
+                in self.get_samples_in_category_level(self.params["category"], cat_lev)]),
+           outfile=use_dir + output_fn)
 
-                else:
-                    # # Get constant part of script:
-                    # self.script += self.get_script_const()
-                    # # Files to merge:
-                    for sample in self.get_samples_in_category_level(self.params["category"], cat_lev):
-                        self.script += "%s \\\n\t" % self.sample_data[sample][type]
-
-                    self.script += "> {dir}{file}\n\n".format(dir=use_dir, file=output_fn)
+#                 if "add_filename" in self.params:
+#                     pass
+#                 elif self.params["header"] == 0:
+#                     self.script += "cat \\\n\t".format(header=self.params["header"])
+#                 else:
+#                     self.script += "sed -s '1,{header}d' \\\n\t".format(header=self.params["header"])
+#
+#                 if "add_filename" in self.params:
+#                     for sample in self.get_samples_in_category_level(self.params["category"], cat_lev):
+#                         self.script += """
+# awk 'function basename(file) {{sub(".*/", "", file); return file}} BEGIN {{OFS="\\t"}} {{if(NR>{header}) print basename(FILENAME),$0}}' {filename} >> {output}
+# """.format(filename=self.sample_data[sample][type],
+#            header=self.params["header"],
+#            output="{dir}{file}".format(dir=use_dir, file=output_fn))
+#
+#                 else:
+#                     # # Get constant part of script:
+#                     # self.script += self.get_script_const()
+#                     # # Files to merge:
+#                     for sample in self.get_samples_in_category_level(self.params["category"], cat_lev):
+#                         self.script += "%s \\\n\t" % self.sample_data[sample][type]
+#
+#                     self.script += "> {dir}{file}\n\n".format(dir=use_dir, file=output_fn)
 
                 self.sample_data[cat_lev][type] = "%s%s" % (group_dir, output_fn)
                 self.stamp_file(self.sample_data[cat_lev][type])
 
+                print self.script
                 # Move all files from temporary local dir to permanent base_dir
                 self.local_finish(use_dir, group_dir)
                 self.create_low_level_script()
