@@ -21,10 +21,10 @@ Requires
     * self.sample_data["gene_trans_map"], 
 * A protein fasta file (produced by ``TransDecoder``)
     * self.sample_data["fasta.prot"])
-* Results of ``blastx`` of protein file against swissprot database:
-    * self.sample_data["blast.prot"], 
-* Results of ``blastn`` of transcripts file against swissprot database:
-    * self.sample_data["blast.nucl"], 
+* Results of ``blastp`` of protein file against swissprot database:
+    * self.sample_data["blast.prot"],
+* Results of ``blastx`` of transcripts file against swissprot database:
+    * self.sample_data["blast.nucl"],
 * Results of ``hmmscan`` of protein file against pfam database:
     * self.sample_data["hmmscan.prot"])
     
