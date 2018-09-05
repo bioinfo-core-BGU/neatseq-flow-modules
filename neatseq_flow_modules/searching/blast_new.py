@@ -72,9 +72,10 @@ Parameters that can be set
     
     "dbtype", "nucl|prot", "Helps the module decide which blastdb to use."
     "querytype", "nucl|prot", "Helps the module decide which fasta file to use."
-    "redirects: -query | -db", "sample|project|<Path to fasta or BLAST index>", "Redirected compulsory parameters. Set to ``sample`` for sample-scope files, to ``project`` for project-scope files, or to a path for an external file."
+    "query", "sample|project|<Path to fasta or BLAST index>", "Set to ``sample`` for sample-scope query, to ``project`` for project-scope query, or to a path for an external query file."
+    "db", "sample|project|<Path to BLAST index>", "Set to ``sample`` for sample-scope index, to ``project`` for project-scope index, or to a path for an external index."
 
-.. Note:: You can't set both ``-db`` and ``-query`` to external files. One of them at least has to be ``sample`` or ``project``.
+.. Note:: You can't set both ``db`` and ``query`` to external files. One of them at least has to be ``sample`` or ``project``.
 
 
 Lines for parameter file
@@ -85,29 +86,29 @@ External query, project-wise *nucl*-type database (must be proceeded by ``makebl
 
 
     tbl_blst_int:
-        module: blast_new
-        base: mkblst1
-        script_path: /path/to/blastn
-        dbtype: nucl
+        module:             blast_new
+        base:               mkblst1
+        script_path:        {Vars.Programs.blast.Bin}/blastn
+        dbtype:             nucl
+        query:              /path/to/query.fasta
+        db:                 project
         redirects:
-            -query: /path/to/query.fasta
-            -db:  project
-            -evalue: 0.0001
+            -evalue:        0.0001
             -max_target_seqs: 5
-            -num_of_proc: 20
-            -num_threads: 20
+            -num_of_proc:   20
+            -num_threads:   20
 
 
 Sample specific *prot*-type fasta, external database::
 
     tbl_blst_ext:
-        module: blast_new
-        base: prokka1
-        script_path: /path/to/blastp
-        querytype: prot
+        module:             blast_new
+        base:               prokka1
+        script_path:        {Vars.Programs.blast.Bin}/blastp
+        querytype:          prot
+        db:                 {Vars.Genome.blast_index}
+        query: sample
         redirects:
-            -db: /path/to/blasdb.ind
-            -query: sample
             -evalue: 0.0001
             
 
