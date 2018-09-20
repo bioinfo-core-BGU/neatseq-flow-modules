@@ -446,7 +446,7 @@ rm -rf {sam}
                 self.script += "-o {outfile} \\\n\t{infile}\n\n".format(outfile=use_dir + bam_name,
                                                                         infile=active_file)
                 active_file = use_dir + bam_name
-                pipe_gene"bam"] = self.base_dir + bam_name
+                self.sample_data["bam"] = self.base_dir + bam_name
                 self.stamp_file(self.sample_data["bam"])
 
             else:
