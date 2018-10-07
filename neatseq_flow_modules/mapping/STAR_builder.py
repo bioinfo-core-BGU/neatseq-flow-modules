@@ -20,7 +20,7 @@ Requires
 * If ``--sjdbGTFfile`` is set in redirects, but left empty, will expect to find a ``GTF`` file here:
 
     * ``sample_data["gtf"]``  if ``scope`` = "project"
-    * ``sample_data[<sample>]["gtf"]``   if ``scope`` = `"sample"
+    * ``sample_data[<sample>]["gtf"]``   if ``scope`` = "sample"
 
 * If ``--sjdbFileChrStartEnd`` is set in redirects, but left empty, will expect to find an SJ file here:
 
@@ -39,7 +39,7 @@ Puts output index files in one of the following slot:
 
 Puts the reference fasta file in one of the following slot:
 
-        * ``self.sample_data[<sample>]["STAR.fasta"]``
+    * ``self.sample_data[<sample>]["STAR.fasta"]``
     * ``self.sample_data["STAR.fasta"]``
 
 Parameters that can be set

@@ -7,28 +7,99 @@
 :Affiliation: Bioinformatics core facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
-    
+Description
+~~~~~~~~~~~~
+
+This module enables executing any type of shell script, including pipes and multiple steps.
+Files and directories are embedded in the script by describing the file or directory in a ``{{}}`` block, as follows:
+
+1. File names:
+***************
+
+Include 4 ``:``-separated fields: (a) scope, (b) slot, (c) separator and (d) base. For example: ``{{sample:fastq.F:,:merge1}}``
+Leave the field empty if you do not want to pass a value, e.g. ``{{sample:fastq.F}}``
+The following examples cover most of the options:
+
+.. csv-table::
+    :header: "File descriptor", "Result"
+    :widths: 5,10
+
+    "``{{project:fasta.nucl}}``", "The ``fasta.nucl`` slot of the project"
+    "``{{sample:fastq.F}}``", "The ``fastq.F`` slot of the sample"
+    "``{{sample:fastq.F:,}}``", "A comma-separated list of the ``fastq.F`` slots of all samples"
+    "``{{project}}``", "The project name"
+    "``{{sample}}``", "The sample name"
+    "``{{sample::,}}``", "A comma-separated list of sample names"
+    "``{{sample:fastq.F:,:base}}``", "A comma-separated list of the ``fastq.F`` files of all samples, taken from the sample data of step ``base``."
+
+.. Tip:: For a colon separate list of sample names or files, use the word 'colon' in the separator slot.
+
+.. Note:: The separator field is ignored for project-scope slots.
+
+If a sample-scope slot is used, in the inputs or the outputs, the scripts will be sample-scope scripts. Otherwise, one project-scope script will be produced.
+
+2. Directories
++++++++++++++++++++
+
+Can take one of two values:
+
+.. csv-table::
+    :header: "Dir descriptor", "Result"
+    :widths: 5,10
+
+    "``{{base_dir}}``", "Returns the base directory for the step."
+    "``{{dir}}``", "Returns the active directory of the script. For project-scope scripts, this is identical to ``base_dir``. For sample scope scripts, this will be a direcotry within ``base_dir`` for sample related files."
+
+3. Outputs
++++++++++++++++
+
+Will be replaced with the filename specified in the named output. *e.g.* ``{{o:fasta.nucl}}`` will be replced according to the specifications in the output block named ``fasta.nucl``.
+
+Each output block must contain 2 fields: ``scope`` and ``name``. The name contains a string describing the file to be stored in the equivalent slot. In the example above, there must be a block called ``fasta.nucl`` in the ``output`` block which can be defined as shown in the example in section **Lines for parameter file** below.
+
+
 Requires:
 ~~~~~~~~~~~~~
-
+Customizable
     
 Output:
 ~~~~~~~~~~~~~
-    
+Customizable
+
 
 Parameters that can be set        
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. .. csv-table:: 
-..     :header: "Parameter", "Values", "Comments"
-..     :widths: 5,10,10
-..     
-..     "reference", "", "A block including 'path' or 'scope', 'type' and optionally 'msh'"
-..     "query", "", "A block including 'scope' (sample, project or all_samples), 'type' and optionally 'msh'"
+.. csv-table::
+    :header: "Parameter", "Values", "Comments"
+    :widths: 5,10,10
+
+    "output", "", "A block including 'scope' and 'name' definining the script outputs"
 
 
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Demonstration of embedding various files and titles in a script file::
+
+    pipe_gen_3:
+        module:             pipe_generic
+        base:               pipe_gen_2
+        script_path: |
+            project:                    {{project}}
+            project:fasta.nucl:         {{project:fasta.nucl}}
+            project:fasta.nucl:merge1   {{project:fasta.nucl::merge1}}
+
+            sample:             {{sample::,}}
+            sample:fastq.F:     {{sample:fastq.F}}
+            sample:fastq.F:merge1     {{sample:fastq.F::merge1}}
+
+            output:fasta.nucl:    {{o:fasta.nucl}}
+        output:
+            fasta.nucl:
+                scope:      project
+                name:       "{{base_dir}}{{project}}_new_pipegen3.fasta"
 
 
 """
@@ -61,38 +132,29 @@ class Step_pipe_generic(Step):
         # pp(dict(self.params))
         # sys.exit()
 
-        # parms = re.findall(pattern="(\{\{[io]\:.*?\}\})", string=self.params["script_path"])
-        # print parms
-        # inputs = [re.search("\{[io]:(.*?)\}", name).group(1) for name in parms if
-        #           re.search("\{([io]):.*?\}", name).group(1) == "i"]
-        # outputs = [re.search("\{[io]:(.*?)\}", name).group(1) for name in parms if
-        #            re.search("\{([io]):.*?\}", name).group(1) == "o"]
-        # print inputs, outputs
-        # """ TODO:
-        # Tests:
-        # 1. For each input inp:
-        #     a. inp has 'type'
-        #     b. if inp has scope, scope is sample of project
-        # 2.  For each output outp:
-        #     a. if outp has 'form', it is either 'file' or 'dir'
-        #     b. if any input is of scope 'sample', set outp scope to sample, unless specified
-        #     c. if outp has 'struct':
-        #         i. parse struct
-        #         ii. make sure all fields are legitimate: {sample}, {project}, {module}, {instance}
-        #     d. 'store'
-        #         i. if does not exist,
-        # """
-        # print self.params["script_path"]
-
-        # Version2:
         # Get all user defined variables in string
-        variables = re.findall(pattern="(\{\{.*?\}\})", string=self.params["script_path"])
-        # Set scope. If any of the variables begins with 'sample:' or is only 'sample', set scope to sample
-        # Otherwise, scope is project:
-        if any([re.match(string=match,pattern="\{\{sample[\:\}]") for match in variables]):
-            self.params["scope"] = "sample"
-        else:
-            self.params["scope"] = "project"
+        variables = list(set(re.findall(pattern="\{\{(.*?)\}\}", string=self.params["script_path"])))
+
+        # Default scope is project
+        self.params["scope"] = "project"
+
+        # Check the definition of all variables
+        for variable in variables:
+            var_def = re.findall(pattern="([^\:]*)\:?",string=variable)
+            # print variable
+            # print var_def
+            # If variable scope is sample and the separator field (3rd slot) is not defined, change scope to sample
+            if var_def[0]=="sample" and (len(var_def)<3 or not var_def[2]):
+                self.params["scope"] = "sample"
+
+        # print "scope:\n" + self.params["scope"]
+
+        # # Set scope. If any of the variables begins with 'sample:' or is only 'sample', set scope to sample
+        # # Otherwise, scope is project:
+        # if any([re.match(string=match,pattern="\{\{sample[\:\}]") for match in variables]):
+        #     self.params["scope"] = "sample"
+        # else:
+        #     self.params["scope"] = "project"
 
         # sys.exit()
 
@@ -115,6 +177,23 @@ class Step_pipe_generic(Step):
         """ Add stuff to check and agglomerate the output data
         """
         pass
+
+#         variables = list(set(re.findall(pattern="(\{\{.*?\}\})", string=rawstring)))
+#
+#         self.script = ""
+#         for variable in variables:
+#             # Splitting by ':'
+#             var_def = re.findall(pattern="([^\:]*)\:?",string=variable.strip('{{').strip('}}'))
+#
+#             if len(var_def) < 5:
+#                 var_def = var_def + [''] * (4 - len(var_def))
+#
+#             if var_def[4] == "del":
+#                 if var_def[0]=="project":
+#                     file2del = self.sample
+#                 self.script += """
+# rm -rf {file}
+#                 """
 
     def build_scripts(self):
         """ This is the actual script building function
@@ -217,66 +296,108 @@ class Step_pipe_generic(Step):
         :return:
         """
 
+        # Use self.get_base_sample_data() to get historic files (4th entry in input strings)
+
         rawstring=string
         # Try using function to include export (setenv) etc...
 
         variables = list(set(re.findall(pattern="(\{\{.*?\}\})", string=rawstring)))
 
         for variable in variables:
+            # Splitting by ':'
+            var_def = re.findall(pattern="([^\:]*)\:?",string=variable.strip('{{').strip('}}'))
+            # var_def = variable.split(":")
+
+            if len(var_def) < 4:
+                var_def = var_def + [''] * (4 - len(var_def))
+            if var_def[2] == "colon":
+                var_def[2] = ":"
+            print variable
+            print var_def
+            print "---------------------"
+
             # ------------------------------
-            if variable == "{{project}}":
-                rawstring = re.sub(pattern=re.escape(variable),
-                                     repl=self.sample_data["Title"],
-                                     string=rawstring)
-                continue
-            # ------------------------------
-            if variable == "{{dir}}":
+            if var_def[0] == "dir":
                 rawstring = rawstring.replace(variable, use_dir)
                 continue
             # ------------------------------
-            if variable == "{{base_dir}}":
+            if var_def[0] == "base_dir":
                 rawstring = rawstring.replace(variable, self.base_dir)
                 continue
             # ------------------------------
-            re_match = re.match("\{\{project\:(.*?)\}\}", variable)
-            if re_match:
-                # print re_match.group(1)
-                # print re.escape(variable)
-                try:
-                    rawstring = re.sub(pattern=re.escape(variable),
-                                         repl=("{!r}".format(self.sample_data[re_match.group(1)])).strip("'"),
-                                         string=rawstring)
-                except KeyError:
-                    raise AssertionExcept(
-                        "File type '{type}' not found in project scope".format(type=re_match.group(1)))
+            if var_def[0] == "project":
+                repl_str=""
+                if not var_def[1]:  # Type not defined, use title
+                    # rawstring = re.sub(pattern=re.escape(variable),
+                    #                      repl=self.sample_data["Title"],
+                    #                      string=rawstring)
+                    repl_str = self.sample_data["Title"]
+                else:                # Type defined
+                    if not var_def[3]:  # Base not defined. Use current
+                        try:
+                            repl_str = ("{!r}".format(self.sample_data[var_def[1]])).strip("'")
+                        except KeyError:
+                            raise AssertionExcept(
+                                "File type '{type}' not found in project scope".format(type=re_match.group(1)))
+                    else:               # Base defined. Use defined base
+                        if var_def[3] not in self.get_base_sample_data():
+                            raise AssertionExcept("No base '{base}' defined!".format(base=var_def[3]))
+                        try:
+                            repl_str = ("{!r}".format(self.get_base_sample_data()[var_def[3]][var_def[1]])).strip("'")
+                        except KeyError:
+                            raise AssertionExcept("No file of type '{type}' in project scope for base '{base}'".
+                                                  format(type=var_def[1],
+                                                         base=var_def[3]))
+
+                rawstring = re.sub(pattern=re.escape(variable),
+                                     # repl=("{!r}".format(self.sample_data[re_match.group(1)])).strip("'"),
+                                     # repl=("{!r}".format(self.sample_data[var_def[1]])).strip("'"),
+                                   repl=repl_str,
+                                   string=rawstring)
+
                 continue
             # ------------------------------
-            if variable == "{{sample}}":
-                if not sample:
-                    raise AssertionExcept("Trying to parse sample in project scope script!")
-                rawstring = rawstring.replace(variable, sample)
+            if var_def[0] == "sample":
+                # Create local copy of sample_data. If base is defined, this will be the base sample_data
+                if not var_def[3]:  # Base not defined. Use current
+                    sample_data = self.sample_data
+                else:  # Base defined. Use defined base
+                    if var_def[3] not in self.get_base_sample_data():
+                        raise AssertionExcept("No base '{base}' defined!".format(base=var_def[3]))
+                    sample_data = self.get_base_sample_data()[var_def[3]]
+                if var_def[2]:  # Separator is defined
+                    if not var_def[1]:  # Type is not defined
+                        repl_str = var_def[2].join(sample_data["samples"])
+                    else:           # Type is defined
+                        try:
+                            repl_str = var_def[2].join([("{!r}".format(sample_data[sample][var_def[1]])).strip("'")
+                                                  for sample
+                                                  in sample_data["samples"]])
+
+                        except KeyError:
+                            raise AssertionExcept("File type '{type}' not found in all samples".format(type=var_def[1]))
+                else:           # Separator is not defined
+                    if not sample:
+                        raise AssertionExcept("Trying to parse sample in project scope script!")
+                    if not var_def[1]:
+                        repl_str = sample
+                    else:
+                        try:
+                            repl_str=("{!r}".format(sample_data[sample][var_def[1]])).strip("'")
+                        except KeyError:
+                            raise AssertionExcept("File type '{type}' not found in sample".format(type=var_def[1]),
+                                                  sample)
+
+                rawstring = re.sub(pattern=re.escape(variable),
+                                   repl=repl_str,
+                                   string=rawstring)
+
                 continue
             # ------------------------------
-            re_match = re.match("\{\{sample\:(.*?)\}\}", variable)
-            if re_match:
-                if not sample:
-                    raise AssertionExcept("Trying to parse sample in project scope script!")
-                # print re_match.group(1)
-                # print re.escape(variable)
+            if var_def[0] == "o":
                 try:
                     rawstring = re.sub(pattern=re.escape(variable),
-                                         repl=("{!r}".format(self.sample_data[sample][re_match.group(1)])).strip("'"),
-                                         string=rawstring)
-                except KeyError:
-                    raise AssertionExcept("File type '{type}' not found in sample".format(type=re_match.group(1)),
-                                          sample)
-                continue
-            # ------------------------------
-            re_match = re.match("\{\{o\:(.*?)\}\}", variable)
-            if re_match:
-                try:
-                    rawstring = re.sub(pattern=re.escape(variable),
-                                         repl=("{!r}".format(self.params_output[re_match.group(1)]["name"])).strip("'"),
+                                         repl=("{!r}".format(self.params_output[var_def[1]]["name"])).strip("'"),
                                          string=rawstring)
                 except KeyError:
                     raise AssertionExcept("Error embedding output '{var}'".format(var=variable), sample)
@@ -284,5 +405,6 @@ class Step_pipe_generic(Step):
             # ------------------------------
             #  variable does not match any of the expected formats:
             raise AssertionExcept('Variable {var} in script_path not identified'.format(var=variable))
-
+        # print "Return: ", rawstring
         return rawstring
+
