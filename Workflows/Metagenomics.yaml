@@ -3,7 +3,7 @@ Global_params:
     Qsub_opts: -V -cwd
     Qsub_path: /path/to/qsub/bin
     Qsub_q: myqueue.q
-    module_path:      ../modules_release_1.1.0
+    module_path:      ../neatseq_flow_modules
     conda:
         path:   /gpfs0/bioinfo/apps/Miniconda2/Miniconda_v4.3.21/bin
         env:    NeatSeq_Flow
@@ -210,6 +210,7 @@ Step_params:
     prokka1:
         module:             prokka_old
         base:               spades1
+        scope:              sample
         script_path:        {Vars.paths.prokka}
         qsub_params:
             -pe:            shared 20
@@ -236,6 +237,7 @@ Step_params:
     rgi_spades:
         module:             CARD_RGI
         base:               spades1
+        scope:              sample
         script_path:        'python {Vars.paths.RGI}/rgi.py'
         JSON2tsv_script:    'python {Vars.paths.RGI}/convertJsonToTSV.py'
         qsub_params:

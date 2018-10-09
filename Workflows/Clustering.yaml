@@ -3,7 +3,7 @@ Global_params:
     Qsub_opts:          -cwd
     Qsub_q:             myqueue.q
     Qsub_path:          /path/to/qsub/bin
-    module_path:        ../modules_release_1.1.0
+    module_path:        ../neatseq_flow_modules
 Vars:
     paths:
         merge:          gzip -cd    

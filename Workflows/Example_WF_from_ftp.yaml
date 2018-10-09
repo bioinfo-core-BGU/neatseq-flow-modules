@@ -9,7 +9,7 @@ Global_params:
     Qsub_path:          /PATH_TO_YOUR_QSUB/
     Qsub_q:             your.q
     Default_wait:       10
-    module_path:      ../modules_release_1.1.0
+    module_path:      ../neatseq_flow_modules
 
 ## Definition of variables used in parameters below:
 Vars:

@@ -4,6 +4,7 @@ Global_params:
     Qsub_q: your.q 
     Default_wait: 10
    # For running using conda environments:
+    module_path:            ../neatseq_flow_modules
     conda:
         path: {Vars.conda.base}
         env:  {Vars.conda.env}

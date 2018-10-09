@@ -4,7 +4,7 @@ Global_params:
     Qsub_q: your.q 
     Default_wait: 10
     module_path:      
-        - ../modules_release_1.1.0
+        - ../neatseq_flow_modules
         - H:\Liron\neatseq-flow-modules\neatseq_flow_modules\Liron
         - H:\Liron\neatseq-flow-modules\neatseq_flow_modules\main_NSF_classes\Generic_module
    # For running using conda environments:

@@ -3,7 +3,7 @@ Global_params:
     Qsub_opts: -V -cwd
     Qsub_path: /path/to/qsub/bin
     Qsub_q: myqueue.q
-    module_path:      ../modules_release_1.1.0
+    module_path:      ../neatseq_flow_modules
 Description: |
     A pipeline for creating an assembly and mapping to it
     --------------------------------------------------------------
