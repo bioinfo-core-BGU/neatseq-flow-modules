@@ -47,7 +47,7 @@ Step_params:
         module:             trimmo
         base:               merge1
         script_path:        'java -jar {Vars.paths.trimmo}'
-        SKIP:
+        # SKIP:
         spec_dir:           {Vars.paths.trimmo_dir}
         todo:               ILLUMINACLIP:TruSeq3-SE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
         redirects:

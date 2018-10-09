@@ -247,7 +247,7 @@ Step_params:
         base:               
             - trino_merge_blast_highExpr
             - trino_merge_hmm_highExpr
-        stop_and_show:
+        # stop_and_show:
         script_path:        {Vars.paths.Trinotate}
         scope:              project
         sqlitedb:           {Vars.databases.trinotate.sqlitedb}

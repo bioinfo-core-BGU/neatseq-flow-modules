@@ -66,6 +66,7 @@ Step_params:
             -pe:            shared 20
         redirects:
             -dbtype:        nucl
+        # stop_and_show:
 # Plan:
 # Internal DB, internal Query
     # 1a. sample DB, sample Query
@@ -101,6 +102,7 @@ Step_params:
         querytype:          nucl   # Use the 'nucl' output from prokka
         redirects:
             -evalue:        0.0001
+        # stop_and_show_input:
 
     Blast_1c:
         module:             blast_new

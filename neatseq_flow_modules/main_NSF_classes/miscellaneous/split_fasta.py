@@ -139,7 +139,10 @@ awk -v seqs="$SEQPERFRAG" 'BEGIN {{n_seq=0; file_cnt=1;}} /^>/ {{ if(n_seq%seqs=
 
             # self.sample_data["samples.old"] = self.sample_data["samples"]
             # self.sample_data["samples"] = ["subsample{num}".format(num=num) for num in range(1,self.params["subsample_num"]+1)]
-            sample_list = ["subsample{num}".format(num=num) for num in range(1,self.params["subsample_num"]+1)]
+            try:
+                sample_list = ["subsample{num}".format(num=num) for num in range(1,int(self.params["subsample_num"])+1)]
+            except ValueError:
+                raise AssertionExcept("'subsample_num' must be an integer")
             self.stash_sample_list(sample_list)
 
             # Creating data container for subsamples:
