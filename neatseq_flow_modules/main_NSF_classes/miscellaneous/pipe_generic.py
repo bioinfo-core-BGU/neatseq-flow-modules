@@ -368,7 +368,7 @@ class Step_pipe_generic(Step):
                         raise AssertionExcept("No base '{base}' defined!".format(base=var_def[3]))
                     sample_data = self.get_base_sample_data()[var_def[3]]
                     # print "base"
-                print self.get_step_name(), sample_data[sample].keys()
+
                 if var_def[2]:  # Separator is defined
                     if not var_def[1]:  # Type is not defined
                         repl_str = var_def[2].join(sample_data["samples"])
