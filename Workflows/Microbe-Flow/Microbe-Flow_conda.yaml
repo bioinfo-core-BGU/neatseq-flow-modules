@@ -383,7 +383,7 @@ Step_params:
         redirects:
             --Type_col_name: {Vars.Typing.cgMLST.Type_col_name}
             --scheme: {Vars.Typing.cgMLST.scheme} 
-            
+        # stop_and_show:
 
     Collect_typing_verdict:
         module: Collect_results
@@ -449,7 +449,22 @@ Step_params:
         redirects:
             --Excel: null
             -R: .merg$
-
+    # aaaaaaaaa:
+        # module: manage_types
+        # base:
+        # - Collect_ALL
+        # - cgMLST_verdict
+        # - MLST_verdict
+        # - Roary
+        # - Gubbins
+        # script_path: 
+        # operation:  add
+        # type:       klkk
+        # scope:          sample
+        # path:       kjlklkjlj
+        # stop_and_show:
+        
+        
     Plot_Trees_Resistance:
         module: Tree_plot
         base:

@@ -189,11 +189,10 @@ class Step_Tree_plot(Step):
                     self.script += "--output %s \n\n" % os.sep.join([use_dir.rstrip(os.sep),'Heatmap_HC_tree'+self.file_tag])
         else:
             sample_data=self.sample_data
-            if self.params["script_path"]!=None:  
+            if self.params["script_path"]!=None:
                 for base in self.get_base_step_list():
                     if len(self.get_base_step_list())>1:
-                        print base.name
-                        sample_data=self.base_sample_data[base.name]
+                        sample_data=self.get_base_sample_data()[base.name]
                     #Tree_plot main command
                     if "env" in self.params.keys():
                         self.script +="env %s  \\\n" % self.params["env"]

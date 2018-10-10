@@ -312,9 +312,9 @@ class Step_pipe_generic(Step):
                 var_def = var_def + [''] * (4 - len(var_def))
             if var_def[2] == "colon":
                 var_def[2] = ":"
-            print variable
-            print var_def
-            print "---------------------"
+            # print variable
+            # print var_def
+            # print "---------------------"
 
             # ------------------------------
             if var_def[0] == "dir":
@@ -338,8 +338,9 @@ class Step_pipe_generic(Step):
                             repl_str = ("{!r}".format(self.sample_data[var_def[1]])).strip("'")
                         except KeyError:
                             raise AssertionExcept(
-                                "File type '{type}' not found in project scope".format(type=re_match.group(1)))
+                                "File type '{type}' not found in project scope".format(type=var_def[1]))
                     else:               # Base defined. Use defined base
+                        # print self.get_base_sample_data().keys()
                         if var_def[3] not in self.get_base_sample_data():
                             raise AssertionExcept("No base '{base}' defined!".format(base=var_def[3]))
                         try:
@@ -361,10 +362,13 @@ class Step_pipe_generic(Step):
                 # Create local copy of sample_data. If base is defined, this will be the base sample_data
                 if not var_def[3]:  # Base not defined. Use current
                     sample_data = self.sample_data
+                    # print "self"
                 else:  # Base defined. Use defined base
                     if var_def[3] not in self.get_base_sample_data():
                         raise AssertionExcept("No base '{base}' defined!".format(base=var_def[3]))
                     sample_data = self.get_base_sample_data()[var_def[3]]
+                    # print "base"
+                print self.get_step_name(), sample_data[sample].keys()
                 if var_def[2]:  # Separator is defined
                     if not var_def[1]:  # Type is not defined
                         repl_str = var_def[2].join(sample_data["samples"])
