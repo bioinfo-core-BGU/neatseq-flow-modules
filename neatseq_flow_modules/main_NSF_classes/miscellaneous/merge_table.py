@@ -161,18 +161,18 @@ awk -v header="$HEADER" -v skip="$SKIP" \\
     FNR==1 {{headerline=0; skipline=0}} {comment_str}
     skipline<skip {{print ""; skipline=skipline+1; next}};
     headerline<header {{
-        if (NR==FNR) {{printf({line2print})}}
+        if (NR==FNR) {{{line2print}}}
         headerline=headerline+1; next
     }}
-    headerline>=header {{printf({line2print})}}' \\
+    headerline>=header {{{line2print}}}' \\
     {infiles} \\
     > {outfile}
 
 """.format(skip=self.params["skip"] if "skip" in self.params else 0,
            header=self.params["header"] if "header" in self.params else 0,
-           line2print='"%s\\t%s\\n",basename(FILENAME),$0'
+           line2print='printf("%s\\t%s\\n",basename(FILENAME),$0)'
                             if "add_filename" in self.params
-                            else '"%s\\n",$0',
+                            else 'printf("%s\\n",$0)',
            comment_str='\n    /^{comm}/ {{print ""; next}};'.format(comm=self.params["comment"])
                                                     if "comment" in self.params
                                                     else '',
