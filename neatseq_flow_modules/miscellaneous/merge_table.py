@@ -152,7 +152,6 @@ class Step_merge_table(Step):
             # Define location and prefix for output files:
             output_fn = "{filename}".format(filename = ".".join([self.sample_data["Title"],type]))
 
-
             self.script += """\
 SKIP={skip}
 HEADER={header}
@@ -164,13 +163,16 @@ awk -v header="$HEADER" -v skip="$SKIP" \\
         if (NR==FNR) {{print {line2print}}}
         headerline=headerline+1; next
     }}
-    headerline>=header {{print {line2print}}}' \\
+    headerline>=header {{printf({line2print})}}' \\
     {infiles} \\
     > {outfile}
 
 """.format(skip=self.params["skip"] if "skip" in self.params else 0,
            header=self.params["header"] if "header" in self.params else 0,
-           line2print='basename(FILENAME),$0,"\\n"' if "add_filename" in self.params else '$0,"\\n"',
+           # line2print='basename(FILENAME),$0,"\\n"' if "add_filename" in self.params else '$0,"\\n"',
+           line2print='"%s\\t%s\\n",basename(FILENAME),$0)'
+                            if "add_filename" in self.params
+                            else '"%s\\n",$0)',
            comment_str='\n    /^{comm}/ {{print ""; next}};'.format(comm=self.params["comment"])
                                                     if "comment" in self.params
                                                     else '',
