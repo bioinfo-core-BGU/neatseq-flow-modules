@@ -172,7 +172,7 @@ awk -v header="$HEADER" -v skip="$SKIP" \\
            header=self.params["header"] if "header" in self.params else 0,
            line2print='"%s\\t%s\\n",basename(FILENAME),$0'
                             if "add_filename" in self.params
-                            else '"%s\\n",$0)',
+                            else '"%s\\n",$0',
            comment_str='\n    /^{comm}/ {{print ""; next}};'.format(comm=self.params["comment"])
                                                     if "comment" in self.params
                                                     else '',
