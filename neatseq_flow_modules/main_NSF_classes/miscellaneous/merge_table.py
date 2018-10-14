@@ -161,7 +161,7 @@ awk -v header="$HEADER" -v skip="$SKIP" \\
     FNR==1 {{headerline=0; skipline=0}} {comment_str}
     skipline<skip {{print ""; skipline=skipline+1; next}};
     headerline<header {{
-        if (NR==FNR) {{print {line2print}}}
+        if (NR==FNR) {{printf({line2print})}}
         headerline=headerline+1; next
     }}
     headerline>=header {{printf({line2print})}}' \\
