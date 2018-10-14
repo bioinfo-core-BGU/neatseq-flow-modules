@@ -128,14 +128,32 @@ class Step_split_fasta(Step):
             # Use the dir it returns as the base_dir for this step.
             use_dir = self.local_start(self.base_dir)
 
+#             self.script = """
+# FASTA={project_fasta}
+# SEQPERFRAG=$[$(grep -c "^>" $FASTA)/$[{subsample_num}-1]]
+# awk -v seqs="$SEQPERFRAG" 'BEGIN {{n_seq=0; file_cnt=1;}} /^>/ {{ if(n_seq%seqs==0){{file=sprintf("{use_dir}subsample%d.fa",file_cnt); file_cnt++; }} print > file; n_seq++; next;}} {{ print > file; }}' < $FASTA
+#
+# """.format(project_fasta = self.sample_data[self.params["type"]],
+#             subsample_num = self.params["subsample_num"],
+#             use_dir = use_dir)
+
             self.script = """
 FASTA={project_fasta}
-SEQPERFRAG=$[$(grep -c "^>" $FASTA)/$[{subsample_num}-1]]
-awk -v seqs="$SEQPERFRAG" 'BEGIN {{n_seq=0; file_cnt=1;}} /^>/ {{ if(n_seq%seqs==0){{file=sprintf("{use_dir}subsample%d.fa",file_cnt); file_cnt++; }} print > file; n_seq++; next;}} {{ print > file; }}' < $FASTA
-
+            
+awk 'BEGIN {{file_cnt=1;}} 
+    /^>/ {{
+        file=sprintf("{use_dir}subsample%d.fa",file_cnt);
+        if(file_cnt%{subsample_num}==0)
+            {{ file_cnt = 0}}
+        file_cnt++; 
+        print > file; 
+        next;}} \
+    {{ print > file; }}' < $FASTA
+            
 """.format(project_fasta = self.sample_data[self.params["type"]],
             subsample_num = self.params["subsample_num"],
             use_dir = use_dir)
+
 
             # self.sample_data["samples.old"] = self.sample_data["samples"]
             # self.sample_data["samples"] = ["subsample{num}".format(num=num) for num in range(1,self.params["subsample_num"]+1)]
@@ -184,7 +202,11 @@ awk -v seqs="$SEQPERFRAG" 'BEGIN {{n_seq=0; file_cnt=1;}} /^>/ {{ if(n_seq%seqs=
                 self.script = """
 FASTA={sample_fasta}
 SEQPERFRAG=$[$(grep -c "^>" $FASTA)/$[{subsample_num}-1]]
-awk -v seqs="$SEQPERFRAG" 'BEGIN {{n_seq=0; file_cnt=1;}} /^>/ {{ if(n_seq%seqs==0){{file=sprintf("{use_dir}{sample}.subsample%d.fa",file_cnt); file_cnt++; }} print >> file; n_seq++; next;}} {{ print >> file; }}' < $FASTA
+awk -v seqs="$SEQPERFRAG" ' 
+    BEGIN {{n_seq=0; file_cnt=1;}} 
+    /^>/ {{ if(n_seq%seqs==0){{
+        file=sprintf("{use_dir}{sample}.subsample%d.fa",file_cnt); 
+        file_cnt++; }} print >> file; n_seq++; next;}} {{ print >> file; }}' < $FASTA
 
 """.format(sample_fasta = self.sample_data[sample][self.params["type"]],
            sample = sample,
