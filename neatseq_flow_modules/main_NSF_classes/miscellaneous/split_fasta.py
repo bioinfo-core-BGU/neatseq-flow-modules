@@ -139,32 +139,19 @@ class Step_split_fasta(Step):
 
             self.script = """
 FASTA={project_fasta}
-            
-# awk 'BEGIN {{file_cnt=1;}} 
-#     /^>/ {{
-#         file=sprintf("{use_dir}subsample%d.fa",file_cnt);
-#         if(file_cnt%{subsample_num}==0)
-#             {{ file_cnt = 0}}
-#         file_cnt++; 
-#         print > file; 
-#         next;}} \
-#     {{ print > file; }}' < $FASTA
-
-
-
 NUMSEQS=$(grep -c "^>" $FASTA)
 awk -v nseqs="$NUMSEQS" '
     BEGIN {{n_seq=1; 
             file_cnt=1;
             seqspfile=int(nseqs/{subsample_num}); 
             numbigfiles=nseqs%{subsample_num};
-            file=sprintf("{use_dir}subsample%d.fa",file_cnt); 
+            file=sprintf("{use_dir}subsample%04d.fa",file_cnt); 
             }}
     /^>/ {{
         if((n_seq==seqspfile+2 && file_cnt<=numbigfiles) || 
             (n_seq==seqspfile+1 && file_cnt>numbigfiles)){{
             file_cnt++; 
-            file=sprintf("{use_dir}subsample%d.fa",file_cnt); 
+            file=sprintf("{use_dir}subsample%04d.fa",file_cnt); 
             n_seq=1;
         }} 
         print > file; 
@@ -221,13 +208,36 @@ awk -v nseqs="$NUMSEQS" '
 
             
                 self.script = """
+# FASTA={sample_fasta}
+# SEQPERFRAG=$[$(grep -c "^>" $FASTA)/$[{subsample_num}-1]]
+# awk -v seqs="$SEQPERFRAG" ' 
+#     BEGIN {{n_seq=0; file_cnt=1;}} 
+#     /^>/ {{ if(n_seq%seqs==0){{
+#         file=sprintf("{use_dir}{sample}.subsample%d.fa",file_cnt); 
+#         file_cnt++; }} print >> file; n_seq++; next;}} {{ print >> file; }}' < $FASTA
+
 FASTA={sample_fasta}
-SEQPERFRAG=$[$(grep -c "^>" $FASTA)/$[{subsample_num}-1]]
-awk -v seqs="$SEQPERFRAG" ' 
-    BEGIN {{n_seq=0; file_cnt=1;}} 
-    /^>/ {{ if(n_seq%seqs==0){{
-        file=sprintf("{use_dir}{sample}.subsample%d.fa",file_cnt); 
-        file_cnt++; }} print >> file; n_seq++; next;}} {{ print >> file; }}' < $FASTA
+NUMSEQS=$(grep -c "^>" $FASTA)
+awk -v nseqs="$NUMSEQS" '
+    BEGIN {{n_seq=1; 
+            file_cnt=1;
+            seqspfile=int(nseqs/{subsample_num}); 
+            numbigfiles=nseqs%{subsample_num};
+            file=sprintf("{use_dir}{sample}.subsample%04d.fa",file_cnt); 
+            }}
+    /^>/ {{
+        if((n_seq==seqspfile+2 && file_cnt<=numbigfiles) || 
+            (n_seq==seqspfile+1 && file_cnt>numbigfiles)){{
+            file_cnt++; 
+            file=sprintf("{use_dir}{sample}.subsample%04d.fa",file_cnt); 
+            n_seq=1;
+        }} 
+        print >> file; 
+        n_seq++; 
+        next;
+    }} 
+    {{ print >> file; }}
+' < $FASTA 
 
 """.format(sample_fasta = self.sample_data[sample][self.params["type"]],
            sample = sample,
