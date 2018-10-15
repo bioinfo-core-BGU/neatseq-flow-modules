@@ -140,23 +140,44 @@ class Step_split_fasta(Step):
             self.script = """
 FASTA={project_fasta}
             
-awk 'BEGIN {{file_cnt=1;}} 
+# awk 'BEGIN {{file_cnt=1;}} 
+#     /^>/ {{
+#         file=sprintf("{use_dir}subsample%d.fa",file_cnt);
+#         if(file_cnt%{subsample_num}==0)
+#             {{ file_cnt = 0}}
+#         file_cnt++; 
+#         print > file; 
+#         next;}} \
+#     {{ print > file; }}' < $FASTA
+
+
+
+NUMSEQS=$(grep -c "^>" $FASTA)
+awk -v nseqs="$NUMSEQS" '
+    BEGIN {{n_seq=1; 
+            file_cnt=1;
+            seqspfile=int(nseqs/{subsample_num}); 
+            numbigfiles=nseqs%{subsample_num};
+            file=sprintf("{use_dir}subsample%d.fa",file_cnt); 
+            }}
     /^>/ {{
-        file=sprintf("{use_dir}subsample%d.fa",file_cnt);
-        if(file_cnt%{subsample_num}==0)
-            {{ file_cnt = 0}}
-        file_cnt++; 
+        if((n_seq==seqspfile+2 && file_cnt<=numbigfiles) || 
+            (n_seq==seqspfile+1 && file_cnt>numbigfiles)){{
+            file_cnt++; 
+            file=sprintf("{use_dir}subsample%d.fa",file_cnt); 
+            n_seq=1;
+        }} 
         print > file; 
-        next;}} \
-    {{ print > file; }}' < $FASTA
+        n_seq++; 
+        next;
+    }} 
+    {{ print > file; }}
+' < $FASTA 
             
 """.format(project_fasta = self.sample_data[self.params["type"]],
             subsample_num = self.params["subsample_num"],
             use_dir = use_dir)
 
-
-            # self.sample_data["samples.old"] = self.sample_data["samples"]
-            # self.sample_data["samples"] = ["subsample{num}".format(num=num) for num in range(1,self.params["subsample_num"]+1)]
             try:
                 sample_list = ["subsample{num}".format(num=num) for num in range(1,int(self.params["subsample_num"])+1)]
             except ValueError:
