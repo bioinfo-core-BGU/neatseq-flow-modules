@@ -189,9 +189,13 @@ class Step_manage_types(Step):
                         if type_trg in self.sample_data:
                             self.write_warning("type %s exists in project. Overwriting!" % type_trg)
                         for sample in self.sample_data["samples"]:
-                            self.sample_data[type_trg] = self.sample_data[sample][type_src]
-                            if operation == "mv":
-                                del self.sample_data[sample][type_src]
+                            try:
+                                self.sample_data[type_trg] = self.sample_data[sample][type_src]
+                                if operation == "mv":
+                                    del self.sample_data[sample][type_src]
+                            except KeyError:
+                                raise AssertionExcept("type '{src}' does not exist in sample!".format(src=type_src),
+                                                      sample)
                             
                 elif scope_src == "project":
                     if type_src not in self.sample_data:

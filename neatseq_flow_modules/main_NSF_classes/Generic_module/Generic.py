@@ -147,8 +147,8 @@ class Step_Generic(Step):
                     
                     source_sample_data=self.sample_data
                     if base!=None:
-                        if base in self.base_sample_data.keys():
-                            source_sample_data=self.base_sample_data[base]
+                        if base in self.get_base_sample_data().keys():
+                            source_sample_data=self.get_base_sample_data()[base]
                         else:
                             raise AssertionExcept("The step name %s is not one of the previous steps of the %%s step" % base  % self.step )
                     else:
@@ -205,8 +205,8 @@ class Step_Generic(Step):
                 base=get_File_Type_data(self.params["inputs"],[inputs,"base"],None)                
                 inputs_sample_data=self.sample_data
                 if base!=None:
-                    if base in self.base_sample_data.keys():
-                        inputs_sample_data=self.base_sample_data[base]
+                    if base in self.get_base_sample_data().keys():
+                        inputs_sample_data=self.get_base_sample_data()[base]
                     else:
                         raise AssertionExcept("The step name %s is not one of the previous steps of the %%s step" % base  % self.step )
                 else:
@@ -254,8 +254,8 @@ class Step_Generic(Step):
                 base=get_File_Type_data(self.params["inputs"],[inputs,"base"],None)                
                 inputs_sample_data=self.sample_data
                 if base!=None:
-                    if base in self.base_sample_data.keys():
-                        inputs_sample_data=self.base_sample_data[base]
+                    if base in self.get_base_sample_data().keys():
+                        inputs_sample_data=self.get_base_sample_data()[base]
                     else:
                         raise AssertionExcept("The step name %s is not one of the previous steps of the %%s step" % base  % self.step )
                 else:
@@ -351,8 +351,8 @@ class Step_Generic(Step):
                     base=get_File_Type_data(self.params["inputs"],[inputs,"base"],None)                
                     inputs_sample_data=self.sample_data
                     if base!=None:
-                        if base in self.base_sample_data.keys():
-                            inputs_sample_data=self.base_sample_data[base]
+                        if base in self.get_base_sample_data().keys():
+                            inputs_sample_data=self.get_base_sample_data()[base]
                         else:
                             raise AssertionExcept("The step name %s is not one of the previous steps of the %%s step" % base  % self.step )
                     else:
@@ -379,8 +379,8 @@ class Step_Generic(Step):
                         base=get_File_Type_data(self.params["inputs"],[inputs,"base"],None)                
                         inputs_sample_data=self.sample_data
                         if base!=None:
-                            if base in self.base_sample_data.keys():
-                                inputs_sample_data=self.base_sample_data[base]
+                            if base in self.get_base_sample_data().keys():
+                                inputs_sample_data=self.get_base_sample_data()[base]
                             else:
                                 raise AssertionExcept("The step name %s is not one of the previous steps of the %%s step" % base  % self.step )
                         else:
@@ -470,8 +470,8 @@ class Step_Generic(Step):
                 base=get_File_Type_data(self.params["inputs"],[inputs,"base"],None)                
                 inputs_sample_data=self.sample_data
                 if base!=None:
-                    if base in self.base_sample_data.keys():
-                        inputs_sample_data=self.base_sample_data[base]
+                    if base in self.get_base_sample_data().keys():
+                        inputs_sample_data=self.get_base_sample_data()[base]
                     else:
                         raise AssertionExcept("The step name %s is not one of the previous steps of the %%s step" % base  % self.step )
                 else:
@@ -512,8 +512,8 @@ class Step_Generic(Step):
                     base=get_File_Type_data(self.params["inputs"],[inputs,"base"],None)                
                     inputs_sample_data=self.sample_data
                     if base!=None:
-                        if base in self.base_sample_data.keys():
-                            inputs_sample_data=self.base_sample_data[base]
+                        if base in self.get_base_sample_data().keys():
+                            inputs_sample_data=self.get_base_sample_data()[base]
                         else:
                             raise AssertionExcept("The step name %s is not one of the previous steps of the %%s step" % base  % self.step )
                     else:
