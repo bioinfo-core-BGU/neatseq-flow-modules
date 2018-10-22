@@ -25,17 +25,17 @@ Output
 
     
     * puts result Tree file location of all analyzed samples in the slot:
-        ``self.sample_data["newick"]``
+        ``self.sample_data["project_data"]["newick"]``
     * update the Multi-FASTA alignment in the slot:
-        ``self.sample_data["fasta.nucl"]``
+        ``self.sample_data["project_data"]["fasta.nucl"]``
     * puts the filtered vcf file in the slot:
-        ``self.sample_data["vcf"]``
+        ``self.sample_data["project_data"]["vcf"]``
             
     if pars is set to run, puts phyloviz ready to use files in the slots:
         * Alleles:
-            ``self.sample_data["phyloviz_Alleles"]``
+            ``self.sample_data["project_data"]["phyloviz_Alleles"]``
         * MetaData:
-            ``self.sample_data["phyloviz_MetaData"]``
+            ``self.sample_data["project_data"]["phyloviz_MetaData"]``
 
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -131,11 +131,11 @@ class Step_Gubbins(Step):
             self.script +="cd '%s' \n\n" % Gubbins_results_dir 
             # Get constant part of script:
             self.script += self.get_script_const()
-            self.script +="%s  \n\n" % self.sample_data["fasta.nucl"]
-            prefix=re.sub('\.\w+$','',os.path.basename(self.sample_data["fasta.nucl"]))
-            self.sample_data["vcf"]=os.sep.join([Gubbins_results_dir.rstrip(os.sep),prefix+".summary_of_snp_distribution.vcf"])
-            self.sample_data["fasta.nucl"]=os.sep.join([Gubbins_results_dir.rstrip(os.sep),prefix+".filtered_polymorphic_sites.fasta"])
-            self.sample_data["newick"]=os.sep.join([Gubbins_results_dir.rstrip(os.sep),prefix+".final_tree.tre"])
+            self.script +="%s  \n\n" % self.sample_data["project_data"]["fasta.nucl"]
+            prefix=re.sub('\.\w+$','',os.path.basename(self.sample_data["project_data"]["fasta.nucl"]))
+            self.sample_data["project_data"]["vcf"]=os.sep.join([Gubbins_results_dir.rstrip(os.sep),prefix+".summary_of_snp_distribution.vcf"])
+            self.sample_data["project_data"]["fasta.nucl"]=os.sep.join([Gubbins_results_dir.rstrip(os.sep),prefix+".filtered_polymorphic_sites.fasta"])
+            self.sample_data["project_data"]["newick"]=os.sep.join([Gubbins_results_dir.rstrip(os.sep),prefix+".final_tree.tre"])
             
 
 
@@ -157,11 +157,11 @@ class Step_Gubbins(Step):
                                                                    % self.params["phyloviz"][par]
                                 else:
                                     self.script +="%s  \\\n\t" % par
-                    self.script += " -F %s \\\n\t" %  self.sample_data["fasta.nucl"]
+                    self.script += " -F %s \\\n\t" %  self.sample_data["project_data"]["fasta.nucl"]
                     self.script += " --FASTA  \\\n\t"
                     self.script += " -O %s \n\n" % pars_dir
-                    self.sample_data["phyloviz_Alleles"]= os.path.join(pars_dir,"phyloviz_Alleles.tab")  
-                    self.sample_data["phyloviz_MetaData"]= os.path.join(pars_dir,"phyloviz_MetaData.tab")  
+                    self.sample_data["project_data"]["phyloviz_Alleles"]= os.path.join(pars_dir,"phyloviz_Alleles.tab")  
+                    self.sample_data["project_data"]["phyloviz_MetaData"]= os.path.join(pars_dir,"phyloviz_MetaData.tab")  
                 else:
                     raise AssertionExcept("The file %s is not found in the Snippy module directory" % "MLST_parser.py" )
 

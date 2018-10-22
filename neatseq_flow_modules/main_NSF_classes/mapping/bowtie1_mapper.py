@@ -118,7 +118,7 @@ class Step_bowtie1_mapper(Step):
                 for sample in self.sample_data["samples"]:
                     if self.params["scope"] == "project":
                         # Set project wide reference:
-                        self.sample_data[sample]["reference"] = self.sample_data["bowtie1_fasta"]
+                        self.sample_data[sample]["reference"] = self.sample_data["project_data"]["bowtie1_fasta"]
                     elif self.params["scope"] == "sample":
                         # Set per-sample reference:
                         self.sample_data[sample]["reference"] = self.sample_data[sample]["bowtie1_fasta"]
@@ -206,7 +206,7 @@ class Step_bowtie1_mapper(Step):
             #    Id that dosent exist either, throw up and balk away:
             try:  # If scope was passed, include either project or sample bowtie2 index
                 if self.params["scope"] == "project":
-                    self.script += "%s \\\n\t" % self.sample_data["bowtie1_index"]
+                    self.script += "%s \\\n\t" % self.sample_data["project_data"]["bowtie1_index"]
                 else:
                     self.script += "%s \\\n\t" % self.sample_data[sample]["bowtie1_index"]
             except KeyError:  # Otherwise do nothing - '-x' is included through redirect params

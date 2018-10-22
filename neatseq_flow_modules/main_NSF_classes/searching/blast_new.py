@@ -150,9 +150,7 @@ class Step_blast_new(Step):
             raise AssertionExcept("You must supply a 'db' parameter\n")
         if "query" not in self.params:
             raise AssertionExcept("You must supply a 'query' parameter\n")
-        
-        
-        
+
         if self.params["db"] in ["sample","project"]:
             if "dbtype" not in self.params:
                 raise AssertionExcept("No 'dbtype' passed. Please specify the db type to use.")
@@ -180,7 +178,10 @@ class Step_blast_new(Step):
         
         
         # Store output format
-        outfmt_txt = ["pairwise", "query-anchored showing identities", "query-anchored no identities", "flat query-anchored, show identities", "flat query-anchored, no identities", "XML Blast output", "tabular", "tabular with comment lines", "Text ASN.1", "Binary ASN.1", "Comma-separated values", "BLAST archive format (ASN.1)"]
+        outfmt_txt = ["pairwise", "query-anchored showing identities", "query-anchored no identities",
+                      "flat query-anchored, show identities", "flat query-anchored, no identities", "XML Blast output",
+                      "tabular", "tabular with comment lines", "Text ASN.1", "Binary ASN.1", "Comma-separated values",
+                      "BLAST archive format (ASN.1)"]
         if "-outfmt" in self.params["redir_params"]:
             if isinstance(self.params["redir_params"]["-outfmt"], str):
                 num_type = re.search("[\'\"]*(\d+)",self.params["redir_params"]["-outfmt"])
@@ -206,75 +207,41 @@ class Step_blast_new(Step):
         
         if self.params["query"] == "sample" or self.params["db"] == "sample":
             self.params["scope"] = "sample"
-            self.step_sample_initiation_bysample()
+            sample_list = self.sample_data["samples"]
         else:
             self.params["scope"] = "project"
-            self.step_sample_initiation_byproject()
+            sample_list = ["project_data"]
 
-        # Moving the redirected values of -query and -db to self.
-        self.db = self.params["db"]
-        self.query = self.params["query"]
-        # # Removing from redirects. Get treated individually.
-        # del self.params["redir_params"]["-db"]
-        # del self.params["redir_params"]["-query"]
-        
-        
-        
-    def step_sample_initiation_bysample(self):
-        """ A place to do initiation stages following setting of sample_data
-            This set of tests is performed for sample-level BLAST
-        """
-        
-            
-        for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
+        for sample in sample_list:
 
             if self.params["query"] == "sample":
                 if "fasta." + self.params["querytype"] not in self.sample_data[sample]:
                     raise AssertionExcept("No fasta of type %s in sample" % self.params["querytype"], sample)
             if self.params["query"] == "project":
-                if "fasta." + self.params["querytype"] not in self.sample_data:
+                if "fasta." + self.params["querytype"] not in self.sample_data["project_data"]:
                     raise AssertionExcept("No fasta of type %s in project" % self.params["querytype"])
             if self.params["db"] == "sample":
                 if "blastdb." + self.params["dbtype"] not in self.sample_data[sample]:
                     raise AssertionExcept("No blastdb of type %s in sample. Did you run makeblastdb module "
                                           "with sample scope?" % self.params["dbtype"], sample)
             if self.params["db"] == "project":
-                if "blastdb." + self.params["dbtype"] not in self.sample_data:
+                if "blastdb." + self.params["dbtype"] not in self.sample_data["project_data"]:
                     raise AssertionExcept("No blastdb of type %s in project. "
                                           "Did you run makeblastdb module with project scope?" % self.params["dbtype"])
-            
-       
-            self.sample_data[sample]["blast.outfmt"]     = self.outfmt
+
+            self.sample_data[sample]["blast.outfmt"] = self.outfmt
             self.sample_data[sample]["blast.outfmt.txt"] = self.outfmt_txt
 
-        
-        
-        
-
-    def step_sample_initiation_byproject(self):
-        """ A place to do initiation stages following setting of sample_data
-            This set of tests is performed for project-level BLAST
-        """
-        
-
-        if self.params["query"] == "project":
-            if "fasta." + self.params["querytype"] not in self.sample_data:
-                raise AssertionExcept("No fasta of type %s in project" % self.params["querytype"])
-        if self.params["db"] == "project":
-            if "blastdb." + self.params["dbtype"] not in self.sample_data:
-                raise AssertionExcept("No blastdb of type %s in project. "
-                                      "Did you run makeblastdb module with project scope?" % self.params["dbtype"])
-                   
-        self.sample_data["blast.outfmt"]     = self.outfmt
-        self.sample_data["blast.outfmt.txt"] = self.outfmt_txt
+        self.db = self.params["db"]
+        self.query = self.params["query"]
+        # # Removing from redirects. Get treated individually.
+        # del self.params["redir_params"]["-db"]
+        # del self.params["redir_params"]["-query"]
 
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
 
-        
-
-          
         if self.params["scope"]=="project":
             pass
         elif self.params["scope"]=="sample":
@@ -286,18 +253,16 @@ class Step_blast_new(Step):
         """
 
         if self.params["scope"]=="project":
-            self.build_scripts_byproject()
+            sample_list = ["project_data"]
         elif self.params["scope"]=="sample":
-            self.build_scripts_bysample()
+            sample_list = self.sample_data["samples"]
         else:
             raise AssertionExcept("'scope' must be either 'sample' or 'project'")
 
-    def build_scripts_bysample(self):
-        """ Script building function for sample-level BLAST
-            
-        """
-        for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-            
+        for sample in sample_list:
+
+            sample_title = sample if sample != "project_data" else self.sample_data["Title"]
+
             # Name of specific script:
             self.spec_script_name = self.set_spec_script_name(sample)
             self.script = ""
@@ -308,26 +273,26 @@ class Step_blast_new(Step):
             # This line should be left before every new script. It sees to local issues.
             # Use the dir it returns as the base_dir for this step.
             use_dir = self.local_start(sample_dir)
-                
-                
+
             # Define output filename 
-            output_filename = "".join([use_dir , sample , self.file_tag])
+            output_filename = "".join([use_dir , sample_title , self.file_tag])
 
             self.script += self.get_script_const()
 
             # Adding -db :
-            ## If -db scope is 'project':
+            ## If db scope is 'project':
             if self.db == "project":
-                ## If dbtype is specified by user, look for the equivalent db in blastdb.nucl or blastdb.prot (both set by makeblastdb module)
+                # If dbtype is specified by user, look for the equivalent db in blastdb.nucl or blastdb.prot
+                # (both set by makeblastdb module)
                 if "dbtype" in self.params:
                     try:
-                        self.script += "-db %s \\\n\t" % self.sample_data["blastdb." + self.params["dbtype"]]
+                        self.script += "-db %s \\\n\t" % self.sample_data["project_data"]["blastdb." + self.params["dbtype"]]
                     except KeyError:
                         raise AssertionExcept("No blastdb of type %s exists" % self.params["dbtype"])
                 ## If dbtype is NOT specified by user, use default blastdb set by makeblastdb. Let the user beware...
                 else:
-                    self.script += "-db %s \\\n\t" % self.sample_data["blastdb"]
-            ## Same as above but for -db in sample scope.
+                    self.script += "-db %s \\\n\t" % self.sample_data["project_data"]["blastdb"]
+            # Same as above but for -db in sample scope.
             elif self.db == "sample":
                 if "dbtype" in self.params:
                     try:
@@ -344,7 +309,7 @@ class Step_blast_new(Step):
             if self.query == "project":
                 if "querytype" in self.params:
                     try:
-                        self.script += "-query %s \\\n\t" % self.sample_data["fasta." + self.params["querytype"]]
+                        self.script += "-query %s \\\n\t" % self.sample_data["project_data"]["fasta." + self.params["querytype"]]
                     except KeyError:
                         raise AssertionExcept("No fasta of type %s exists" % self.params["querytype"])
                 else:
@@ -366,77 +331,9 @@ class Step_blast_new(Step):
             self.sample_data[sample]["blast"] = (sample_dir + os.path.basename(output_filename))
             self.sample_data[sample]["blast." + self.params["querytype"]] = self.sample_data[sample]["blast"]
             self.stamp_file(self.sample_data[sample]["blast"])
-            
-            # Wrapping up function. Leave these lines at the end of every iteration:
-            self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)
-            
-            
+
+            self.local_finish(use_dir,sample_dir)
             self.create_low_level_script()
-                    
-    def build_scripts_byproject(self):
-        """ Script building function for project-level BLAST
-
-        """
-
-
-        # Each iteration must define the following class variables:
-        # spec_script_name
-        # script
-        
-        # Name of specific script:
-        self.spec_script_name = self.set_spec_script_name()
-        self.script = ""
-
-        
-        # This line should be left before every new script. It sees to local issues.
-        # Use the dir it returns as the base_dir for this step.
-        use_dir = self.local_start(self.base_dir)
-                
-                
-        # Define output filename 
-        output_filename = "".join([use_dir , self.sample_data["Title"] , self.file_tag])
-
-        self.script += self.get_script_const()
-        # Adding -db :
-        if self.db == "project":
-            if "dbtype" in self.params:
-                try:
-                    self.script += "-db %s \\\n\t" % self.sample_data["blastdb." + self.params["dbtype"]]
-                except KeyError:
-                    raise AssertionExcept("No blastdb of type %s exists" % self.params["dbtype"])
-            else:
-                self.script += "-db %s \\\n\t" % self.sample_data["blastdb"]
-        else: # Path
-            self.script += "-db %s \\\n\t" % self.db
-                
-        # Adding -query :
-        if self.query == "project":
-            if "querytype" in self.params:
-                try:
-                    self.script += "-query %s \\\n\t" % self.sample_data["fasta." + self.params["querytype"]]
-                except KeyError:
-                    print "in here"
-                    raise AssertionExcept("No fasta of type %s exists" % self.params["querytype"])
-            else:
-                raise AssertionExcept("You must specify querytype")
-        else: # Path
-            self.script += "-query %s \\\n\t" % self.query
-            
-        self.script += "-out %s\n\n" % output_filename
-            
-        # Store BLAST result file:
-        self.sample_data["blast"] = (self.base_dir + os.path.basename(output_filename))
-        self.sample_data["blast." + self.params["querytype"]] = self.sample_data["blast"]
-        self.stamp_file(self.sample_data["blast"])
-
-
-
-        # Wrapping up function. Leave these lines at the end of every iteration:
-        self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
-                  
-        
-        self.create_low_level_script()
-                
 
                     
     def make_sample_file_index(self):

@@ -121,7 +121,7 @@ class Step_Multiqc(Step):
         self.script += "-s -f \\\n\t"
         self.script += "-o %s \n\n" % use_dir
         
-        self.sample_data["Multiqc_report"] = self.base_dir
+        self.sample_data["project_data"]["Multiqc_report"] = self.base_dir
        
         # Wrapping up function. Leave these lines at the end of every iteration:
         self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)

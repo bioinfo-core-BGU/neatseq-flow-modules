@@ -16,11 +16,11 @@ Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     
 * A transcripts file in 
-    * self.sample_data["transcripts.fasta.nucl"],
+    * self.sample_data["project_data"]["transcripts.fasta.nucl"],
 * A gene to transcript mapping file in: (produced by ``Trinity_gene_to_trans_map`` module)
-    * self.sample_data["gene_trans_map"], 
+    * self.sample_data["project_data"]["gene_trans_map"], 
 * A protein fasta file (produced by ``TransDecoder``)
-    * self.sample_data["fasta.prot"])
+    * self.sample_data["project_data"]["fasta.prot"])
 * Results of ``blastp`` of protein file against swissprot database:
     * self.sample_data["blast.prot"],
 * Results of ``blastx`` of transcripts file against swissprot database:

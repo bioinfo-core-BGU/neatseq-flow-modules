@@ -44,7 +44,7 @@ Output
 * puts output Gecko directory location in the following slot:
     * ``sample_data["Gecko_results_dir"]``
 * puts Accessory genes or virulence/resistance hierarchical-clustering tree file in the following slot:
-    * ``self.sample_data["newick"]``
+    * ``self.sample_data["project_data"]["newick"]``
 
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -197,7 +197,7 @@ class Step_Roary(Step):
             
         else:
             if "GFF_dir" in self.sample_data.keys():
-                GFF_dir = self.sample_data["GFF_dir"]
+                GFF_dir = self.sample_data["project_data"]["GFF_dir"]
             if len(GFF_dir)==0:
                 #Make a dir for the GFF files:
                 GFF_dir = self.make_folder_for_sample("GFF")
@@ -207,7 +207,7 @@ class Step_Roary(Step):
                     else:
                         self.script +="cp -s %s*.gff %%s \n\n" % self.sample_data[sample]["GFF"] % GFF_dir
         
-        self.sample_data["GFF_dir"]=GFF_dir
+        self.sample_data["project_data"]["GFF_dir"]=GFF_dir
         pass
         
     def build_scripts(self):
@@ -215,7 +215,7 @@ class Step_Roary(Step):
             Most, if not all, editing should be done here 
             HOWEVER, DON'T FORGET TO CHANGE THE CLASS NAME AND THE FILENAME!
         """
-        GFF_dir=self.sample_data["GFF_dir"]
+        GFF_dir=self.sample_data["project_data"]["GFF_dir"]
         sample='Pan_Genome'
         # Name of specific script:
         self.spec_script_name = self.set_spec_script_name(sample)
@@ -237,9 +237,9 @@ class Step_Roary(Step):
         self.script += " %s*.gff \n\n" % GFF_dir
         
         # Adding the results data
-        self.sample_data["pan_genome_results_dir"]=output_filename
-        self.sample_data["presence_absence_matrix"]=os.path.join(output_filename , "gene_presence_absence.csv") 
-        self.sample_data["pan_genome_clustered_proteins"]=os.path.join(output_filename , "clustered_proteins") 
+        self.sample_data["project_data"]["pan_genome_results_dir"]=output_filename
+        self.sample_data["project_data"]["presence_absence_matrix"]=os.path.join(output_filename , "gene_presence_absence.csv")
+        self.sample_data["project_data"]["pan_genome_clustered_proteins"]=os.path.join(output_filename , "clustered_proteins")
         
         # Creating the plots
         if "plot" in self.params.keys():
@@ -260,22 +260,22 @@ class Step_Roary(Step):
                             self.script += " --tag %s \\\n\t" % self.params["virulence_resistance_tag"]
                         if 'Tree' in self.params["plot"].keys():
                             if self.params["plot"]['Tree']=='virulence_resistance_tag':
-                                self.sample_data["newick"]=os.path.join(self.sample_data["pan_genome_results_dir"],'virulence_resistance.newick')
+                                self.sample_data["project_data"]["newick"]=os.path.join(self.sample_data["project_data"]["pan_genome_results_dir"],'virulence_resistance.newick')
                     if 'Tree' in self.params["plot"].keys():
                         if self.params["plot"]['Tree']=='Accessory':  
-                            self.sample_data["newick"]=os.path.join(self.sample_data["pan_genome_results_dir"],'Accessory.newick')
+                            self.sample_data["project_data"]["newick"]=os.path.join(self.sample_data["project_data"]["pan_genome_results_dir"],'Accessory.newick')
                             
                     if "Clustering_method" in self.params["plot"].keys():
                         self.script += " -C %s \\\n\t" % self.params["plot"]["Clustering_method"]
-                self.script += " -O %s \\\n\t" % self.sample_data["pan_genome_results_dir"]
-                self.script += " -P %s \n\n"   % self.sample_data["presence_absence_matrix"]
+                self.script += " -O %s \\\n\t" % self.sample_data["project_data"]["pan_genome_results_dir"]
+                self.script += " -P %s \n\n"   % self.sample_data["project_data"]["presence_absence_matrix"]
             else:
                 raise AssertionExcept("The file %s is not found in the Roary module directory" % "Roary_matrix_plot.py" )
         
         
         # Pan-genome wide association studies using scoary
         scoary_traits_file=''     
-        gene_presence_absence_file_loc=self.sample_data["presence_absence_matrix"]
+        gene_presence_absence_file_loc=self.sample_data["project_data"]["presence_absence_matrix"]
         if "scoary" in self.params.keys():
             if is_it_dict(self.params["scoary"]):
                 if self.params["scoary"]["script_path"]!=None:
@@ -319,7 +319,7 @@ class Step_Roary(Step):
                         self.script += " -g %s \\\n\t"  % gene_presence_absence_file_loc
                         self.script += " -t %s \\\n\t"  % scoary_traits_file
                         if ("use_cluster_tree" in self.params["scoary"].keys()) & ("plot" in self.params.keys()):
-                            self.script += " -n %s \\\n\t"  % os.path.join(self.sample_data["pan_genome_results_dir"],"pangenome_matrix.newick")
+                            self.script += " -n %s \\\n\t"  % os.path.join(self.sample_data["project_data"]["pan_genome_results_dir"],"pangenome_matrix.newick")
                         else:
                             self.script += " -u  \\\n\t"   
                         if "Bonferroni_cutoff" in self.params["scoary"].keys():
@@ -329,12 +329,12 @@ class Step_Roary(Step):
                         if "permutations" in self.params["scoary"].keys():
                             self.script += " -e %s  \n\n"  % self.params["scoary"]["permutations"]
                         # Adding the results data
-                        self.sample_data["GWAS_results_dir"]=GWAS_dir
+                        self.sample_data["project_data"]["GWAS_results_dir"]=GWAS_dir
         self.script +=" \n\n"
 
         if "Bi_cluster" in self.params.keys():
             if "Biclustering.R" in os.listdir(self.module_location):
-                gene_presence_absence_file_loc=self.sample_data["presence_absence_matrix"]
+                gene_presence_absence_file_loc=self.sample_data["project_data"]["presence_absence_matrix"]
                 # Make a dir for the results file:
                 bicluster_results_dir = self.make_folder_for_sample("Bicluster")         
                 #Running the bicluster script
@@ -372,8 +372,8 @@ class Step_Roary(Step):
                 self.script +=temp_self_script
                 self.script +="-o %s  \\\n\t" % bicluster_results_dir
                 self.script +=" \n\n"
-                self.sample_data["Bicluster_results_dir"]=bicluster_results_dir
-                self.sample_data["Bicluster_clusters"]=os.path.join(bicluster_results_dir,"Bicluster_clusters")
+                self.sample_data["project_data"]["Bicluster_results_dir"]=bicluster_results_dir
+                self.sample_data["project_data"]["Bicluster_clusters"]=os.path.join(bicluster_results_dir,"Bicluster_clusters")
 
                 # Run Gecko gene clusters analysis based on the Bi_clustering analysis
                 if "Gecko" in self.params.keys():
@@ -381,7 +381,7 @@ class Step_Roary(Step):
                         if "script_path" in self.params["Gecko"].keys():  
                             if (self.params["Gecko"]["script_path"]!=None)&(self.params["Gecko"]["script_path"]!=''):
                                 if "GFF2Gecko3.py" in os.listdir(self.module_location):
-                                    Bicluster_clusters=self.sample_data["Bicluster_clusters"] 
+                                    Bicluster_clusters=self.sample_data["project_data"]["Bicluster_clusters"]
                                     # Make a dir for the results file:
                                     Gecko_results_dir = self.make_folder_for_sample("Gecko")         
                                     #Running the GFF2Gecko3 script
@@ -394,7 +394,7 @@ class Step_Roary(Step):
                                     if "-p" in self.params["redir_params"]:
                                         self.script += "-P  %s \\\n\t"  % self.params["redir_params"]["-p"]
                                     self.script += "-D  %s \\\n\t"  % GFF_dir
-                                    self.script += "-C  %s \\\n\t"  % self.sample_data["pan_genome_clustered_proteins"]
+                                    self.script += "-C  %s \\\n\t"  % self.sample_data["project_data"]["pan_genome_clustered_proteins"]
                                     self.script += "-B  %s \\\n\t"  % Bicluster_clusters
                                     self.script += "-o  %s \n\n"    % os.path.join(Gecko_results_dir,"Gecko.cog")
                                     if "env" in self.params.keys():
@@ -438,7 +438,7 @@ class Step_Roary(Step):
                                     self.script +="-out %s  \\\n\t" % os.path.join(Gecko_results_dir,"Gecko.gck")
                                     self.script +=temp_self_script
                                     self.script +=" \n\n"
-                                    self.sample_data["Gecko_results_dir"]=Gecko_results_dir                            
+                                    self.sample_data["project_data"]["Gecko_results_dir"]=Gecko_results_dir
                                 else:
                                     raise AssertionExcept("The file %s is not found in the Roary module directory" % "GFF2Gecko3.py" )
                             else:
@@ -449,7 +449,7 @@ class Step_Roary(Step):
         
         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
             # Store Roary result location:
-            self.sample_data[sample]["pan_genome_results_dir"]=self.sample_data["pan_genome_results_dir"]
+            self.sample_data[sample]["pan_genome_results_dir"]=self.sample_data["project_data"]["pan_genome_results_dir"]
 
         # Wrapping up function. Leave these lines at the end of every iteration:
         #self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)

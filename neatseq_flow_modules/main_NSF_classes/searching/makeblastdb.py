@@ -86,55 +86,38 @@ class Step_makeblastdb(Step):
         # Checking this once and then applying to each sample:
         if not "-dbtype" in self.params["redir_params"]:
             raise AssertionExcept("You must define a -dbtype parameter\n")
-        if not self.params["redir_params"]["-dbtype"] in ["nucl","prot"]:
+        self.dbtype = self.params["redir_params"]["-dbtype"]
+        if not self.dbtype in ["nucl","prot"]:
             raise AssertionExcept("-dbtype must be either nucl or prot\n")
-        
-        
+
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
         
-        if "scope" in self.params:
-          
-            if self.params["scope"]=="project":
-                self.step_sample_initiation_byproject()
-            elif self.params["scope"]=="sample":
-                self.step_sample_initiation_bysample()
-            else:
-                raise AssertionExcept("'scope' must be either 'sample' or 'project'")
-        else:
+        if not "scope" in self.params:
             raise AssertionExcept("No 'scope' specified.")
-            
-        
-    def step_sample_initiation_bysample(self):
+
+        if self.params["scope"]=="project":
+            sample_list = ["project_data"]
+        elif self.params["scope"]=="sample":
+            sample_list = self.sample_data["samples"]
+        else:
+            raise AssertionExcept("'scope' must be either 'sample' or 'project'")
 
         # Creating holder for output:
-        for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
+        for sample in sample_list:      # Getting list of samples out of samples_hash
             # Make sure a file exists in the sample equivalent to dbtype:
             try:
                 # In version 1.0.2, nucl and prot slots have been renamed to fasta.nucl and fasta.prot
-                self.dbtype = self.params["redir_params"]["-dbtype"]
                 self.sample_data[sample]["fasta." + self.dbtype]
             except KeyError:
                 raise AssertionExcept("No file exists in sample for specified -dbtype (%s)\n" % self.dbtype, sample)
 
-    def step_sample_initiation_byproject(self):
-
-        # Make sure a file exists in the sample equivalent to dbtype:
-        try:
-            self.dbtype = self.params["redir_params"]["-dbtype"]
-            self.sample_data["fasta." + self.dbtype]
-        except KeyError:
-            raise AssertionExcept("No file exists in project for specified -dbtype (%s)\n" % self.dbtype)
-  
-  
-        
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
-        
-        
-    
+        pass
+
     def build_scripts(self):
         """ This is the actual script building function
             Most, if not all, editing should be done here 
@@ -142,26 +125,16 @@ class Step_makeblastdb(Step):
         """
 
         if self.params["scope"]=="project":
-            self.build_scripts_byproject()
+            sample_list = ["project_data"]
+        elif self.params["scope"]=="sample":
+            sample_list = self.sample_data["samples"]
         else:
-            self.build_scripts_bysample()
+            raise AssertionExcept("'scope' must be either 'sample' or 'project'")
 
-            
-            
-    def build_scripts_bysample(self):
+        for sample in sample_list:
+        
+            sample_title = sample if sample != "project_data" else self.sample_data["Title"]
 
-        
-        # Prepare a list to store the qsub names of this steps scripts (will then be put in pipe_data and returned somehow)
-        self.qsub_names=[]
-        
-        # dbtype = "fatsa." + self.params["redir_params"]["-dbtype"]
-        
-        # Each iteration must define the following class variables:
-            # spec_script_name
-            # script
-        for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-        
-        
             # Name of specific script:
             self.spec_script_name = self.set_spec_script_name(sample)
             self.script = ""
@@ -175,7 +148,7 @@ class Step_makeblastdb(Step):
 
          
             # Define output filename 
-            output_filename = ".".join([sample, self.name, self.file_tag])
+            output_filename = ".".join([sample_title, self.name, self.file_tag])
             blastdb_title = os.path.basename(output_filename)
 
             self.script += self.get_script_const()
@@ -184,76 +157,12 @@ class Step_makeblastdb(Step):
             self.script += "-title %s \\\n\t" % blastdb_title
             self.script += "-logfile %s \n\n" % "%s.log" % output_filename
 
-            
-                
             self.sample_data[sample]["blastdb." + self.dbtype] = (sample_dir + output_filename)
-            self.sample_data[sample]["blastdb." + self.dbtype + ".log"] = "{dir}{fn}.log".format(dir= sample_dir, fn=output_filename)
+            self.sample_data[sample]["blastdb." + self.dbtype + ".log"] = "{dir}{fn}.log".format(dir= sample_dir,
+                                                                                                 fn=output_filename)
 
             self.sample_data[sample]["blastdb"] = self.sample_data[sample]["blastdb." + self.dbtype]
             
-            # self.stamp_dir_files(sample_dir)
-            
-            # Move all files from temporary local dir to permanent base_dir
-            self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
-                       
-            
+            self.local_finish(use_dir,sample_dir)
             self.create_low_level_script()
-
-            
-            
-            
-    def build_scripts_byproject(self):
-
-    
-    
-        
-        # Prepare a list to store the qsub names of this steps scripts (will then be put in pipe_data and returned somehow)
-        self.qsub_names=[]
-        
-        # dbtype = self.params["redir_params"]["-dbtype"]
-        
-        # Each iteration must define the following class variables:
-            # spec_script_name
-            # script
-    
-        # Check that -dbtype has equivalen file in "fasta" stricture
-        # Tested in step_sample_initiation_byproject()
-        # if not dbtype in self.sample_data["fasta"]:
-            # raise AssertionExcept("No file matching the -dbtype you suppplied.\n")
-    
-        # Name of specific script:
-        self.spec_script_name = self.set_spec_script_name()
-        self.script = ""
-
-        
-        # This line should be left before every new script. It sees to local issues.
-        # Use the dir it returns as the base_dir for this step.
-        use_dir = self.local_start(self.base_dir)
-             
-
-     
-        # Define output filename 
-        output_filename = ".".join([self.sample_data["Title"], self.name, self.file_tag])
-        blastdb_title = os.path.basename(output_filename)
-
-        self.script += self.get_script_const()
-        self.script += "-out {dir}{fn} \\\n\t".format(dir= use_dir, fn=output_filename)
-        self.script += "-in %s \\\n\t" % self.sample_data["fasta." + self.dbtype]
-        self.script += "-title %s \\\n\t" % blastdb_title
-        self.script += "-logfile %s.log \n\n" % output_filename
-
-        
-            
-        self.sample_data["blastdb." + self.dbtype] = (self.base_dir + output_filename)
-        self.sample_data["blastdb." + self.dbtype + ".log"] = "{dir}{fn}.log".format(dir= self.base_dir, fn=output_filename)
-        
-        self.sample_data["blastdb"] = self.sample_data["blastdb." + self.dbtype]
-        # self.stamp_dir_files(self.base_dir)
-            
-        # Wrapping up function. Leave these lines at the end of every iteration:
-        self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
-                            
-                    
-        
-        self.create_low_level_script()
 

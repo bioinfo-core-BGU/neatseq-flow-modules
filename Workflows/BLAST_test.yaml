@@ -47,6 +47,7 @@ Step_params:
         trg:                [null,null   ,bed]
         ext:                [null,null   ,bed]
         scope:              project
+        # stop_and_show:
 
     Mkblst_smp:
         module:             makeblastdb
@@ -57,6 +58,7 @@ Step_params:
             -pe:            shared 20
         redirects:
             -dbtype:        nucl
+            
     Mkblst_prj:
         module:             makeblastdb
         base:               [Merge_prj, Merge_smp]

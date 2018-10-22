@@ -38,7 +38,7 @@ Output
 
 * Puts the core diversity directory name in  
 
-    * ``self.sample_data["diversity"]``
+    * ``self.sample_data["project_data"]["diversity"]``
     
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -117,7 +117,7 @@ class Step_qiime_divers(Step):
         
         # # If does not exist 
         # try:
-            # self.sample_data["qiime"]
+            # self.sample_data["project_data"]["qiime"]
         # except KeyError:
             # raise AssertionExcept("It seems like qiime_demult is the first qiime step. At the moment, it must come after qiime_prep...\n" )
         

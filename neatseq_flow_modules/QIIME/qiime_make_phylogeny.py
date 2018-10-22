@@ -27,7 +27,7 @@ Output
 
 * Puts the resulting OTU table in: 
 
-    * ``self.sample_data["phylotree"]``
+    * ``self.sample_data["project_data"]["phylotree"]``
     
     
 
@@ -81,7 +81,7 @@ class Step_qiime_make_phylogeny(Step):
         
         # # If does not exist 
         # try:
-            # self.sample_data["qiime"]
+            # self.sample_data["project_data"]["qiime"]
         # except KeyError:
             # raise AssertionExcept("It seems like this is the first qiime step. At the moment, it must come after qiime_prep...\n" )
         
@@ -109,14 +109,14 @@ class Step_qiime_make_phylogeny(Step):
 
         if "fasta.aligned" not in self.sample_data.keys():
             raise AssertionExcept("You are trying to run 'make_phylogeny' on an unaligned fasta file!\n")
-        outfile = os.path.basename(self.sample_data["fasta.nucl"])
+        outfile = os.path.basename(self.sample_data["project_data"]["fasta.nucl"])
         outfile = re.sub("\.(fas|fasta|fna|fa)$","",outfile) + ".tre"
         logfile = ".".join([outfile,"log"])
 
         ### Step 1b: Adding demultiplexing tyo script:
         self.script += self.get_script_const()        # Gets the "env", "script_path" and "redir_params" part of the script which is always the same...
 
-        self.script += "-i %s \\\n\t" % self.sample_data["fasta.nucl"]
+        self.script += "-i %s \\\n\t" % self.sample_data["project_data"]["fasta.nucl"]
         # self.script += "-o %s \n\n" % self.base_dir
         self.script += "-o %s \\\n\t" % "".join([use_dir,outfile])
         self.script += "-l %s \n\n" % "".join([use_dir,logfile])
@@ -126,7 +126,7 @@ class Step_qiime_make_phylogeny(Step):
 
 
         # Store location of the phylogenetic tree:
-        self.sample_data["phylotree"] = self.base_dir + outfile;
+        self.sample_data["project_data"]["phylotree"] = self.base_dir + outfile;
         
 
         # self.stamp_dir_files(self.base_dir)

@@ -130,19 +130,19 @@ class Step_Trinity_gene_to_trans_map(Step):
         # Use the dir it returns as the base_dir for this step.
         use_dir = self.local_start(self.base_dir)
 
-        output_basefn = "%s.gene_trans_map" % os.path.basename(self.sample_data["fasta.nucl"])
+        output_basefn = "%s.gene_trans_map" % os.path.basename(self.sample_data["project_data"]["fasta.nucl"])
         
         self.script = """
 {script_path}{transcriptome} \\
 	> {map} 
-""".format(transcriptome = "%s" % self.sample_data["fasta.nucl"],
+""".format(transcriptome = "%s" % self.sample_data["project_data"]["fasta.nucl"],
            script_path   = self.get_script_const(),
            map           = os.path.join(use_dir, output_basefn))
            
         
         
-        self.sample_data["gene_trans_map"] = os.path.join(self.base_dir, output_basefn)
-        self.stamp_file(self.sample_data["gene_trans_map"])
+        self.sample_data["project_data"]["gene_trans_map"] = os.path.join(self.base_dir, output_basefn)
+        self.stamp_file(self.sample_data["project_data"]["gene_trans_map"])
        
         # Move all files from temporary local dir to permanent base_dir
         self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)

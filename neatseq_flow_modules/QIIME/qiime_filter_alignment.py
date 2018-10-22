@@ -26,11 +26,11 @@ Output
 
 * Puts the resulting aligned fasta file in: 
 
-    * ``self.sample_data["fasta.nucl"]``
+    * ``self.sample_data["project_data"]["fasta.nucl"]``
     
 * Saves the original unaligned fasta file in: 
 
-    * ``self.sample_data["fasta.aligned_unfiltered"]``
+    * ``self.sample_data["project_data"]["fasta.aligned_unfiltered"]``
     
 
     
@@ -85,17 +85,17 @@ class Step_qiime_filter_alignment(Step):
         
         # # If does not exist 
         # try:
-            # self.sample_data["qiime"]
+            # self.sample_data["project_data"]["qiime"]
         # except KeyError:
             # raise AssertionExcept("It seems like qiime_demult is the first qiime step. At the moment, it must come after qiime_prep...\n" )
 
         try:
-            self.sample_data["fasta.nucl"]
+            self.sample_data["project_data"]["fasta.nucl"]
         except KeyError:
             raise AssertionExcept("fasta dir does not exist.")
 
         # try:
-            # self.links_dir = self.sample_data["otu_table"]
+            # self.links_dir = self.sample_data["project_data"]["otu_table"]
         # except KeyError:
             # raise AssertionExcept("otu table does not exist.\n")
 
@@ -135,15 +135,15 @@ class Step_qiime_filter_alignment(Step):
         self.script += self.get_script_env_path()
         for key in self.params["redir_params"].keys():
             self.script += "%s %s \\\n\t" % (key,self.params["redir_params"][key] if self.params["redir_params"][key] else "")
-        self.script += "-i %s \\\n\t" % self.sample_data["fasta.nucl"]
+        self.script += "-i %s \\\n\t" % self.sample_data["project_data"]["fasta.nucl"]
         self.script += "-o %s  \n\n" % use_dir
 
-        outfile = os.path.basename(self.sample_data["fasta.nucl"])
+        outfile = os.path.basename(self.sample_data["project_data"]["fasta.nucl"])
         outfile = re.sub("\.(fas|fasta|fna|fa)$","",outfile) + "_pfiltered.fasta"
 
-        self.sample_data["fasta.aligned_unfiltered"] = self.sample_data["fasta.nucl"]
-        # self.sample_data["fasta.aligned"] = self.base_dir + outfile
-        self.sample_data["fasta.nucl"] = self.base_dir + outfile
+        self.sample_data["project_data"]["fasta.aligned_unfiltered"] = self.sample_data["project_data"]["fasta.nucl"]
+        # self.sample_data["project_data"]["fasta.aligned"] = self.base_dir + outfile
+        self.sample_data["project_data"]["fasta.nucl"] = self.base_dir + outfile
 
 
         # Move all files from temporary local dir to permanent base_dir

@@ -28,7 +28,7 @@ Output:
 * Stores output directory in:
 
     * self.sample_data[<sample>]["BUSCO"] (``scope = sample``)
-    * self.sample_data["BUSCO"] (``scope = project``)
+    * self.sample_data["project_data"]["BUSCO"] (``scope = project``)
 
 Parameters that can be set        
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -170,13 +170,13 @@ You must specify a 'mode':
 
         # The results will be put in data/step_name/name/Title
         self.script += "--out %s \\\n\t" % self.sample_data["Title"]
-        self.script += "--in %s \\\n\t"  % self.sample_data["fasta.%s" % self.type]
+        self.script += "--in %s \\\n\t"  % self.sample_data["project_data"]["fasta.%s" % self.type]
         self.script += "--tmp %s \\\n\t"  % os.path.join(use_dir,"tmp")
             
         
 
         # Store results to fasta and assembly slots:
-        self.sample_data["BUSCO"] = os.path.join(self.base_dir,"run_%s" % self.sample_data["Title"])
+        self.sample_data["project_data"]["BUSCO"] = os.path.join(self.base_dir,"run_%s" % self.sample_data["Title"])
 
         # Move all files from temporary local dir to permanent base_dir
         self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)

@@ -30,11 +30,11 @@ Output
 
 * Puts the resulting fasta file in: 
 
-    * ``self.sample_data["fasta.nucl"]``
+    * ``self.sample_data["project_data"]["fasta.nucl"]``
     
 * Saves the original fasta file in: 
 
-    * ``self.sample_data["qiime.full_fasta"]``
+    * ``self.sample_data["project_data"]["qiime.full_fasta"]``
     
     
     
@@ -88,17 +88,17 @@ class Step_qiime_pick_rep_set(Step):
         
         # If does not exist 
         # try:
-            # self.sample_data["qiime"]
+            # self.sample_data["project_data"]["qiime"]
         # except KeyError:
             # raise AssertionExcept("It seems like this is the first qiime step. At the moment, it must come after qiime_prep...\n" )
 
         try:
-            self.sample_data["fasta.nucl"]
+            self.sample_data["project_data"]["fasta.nucl"]
         except KeyError:
             raise AssertionExcept("fasta dir does not exist.\n")
 
         try:
-            self.sample_data["otu_table"]
+            self.sample_data["project_data"]["otu_table"]
         except KeyError:
             raise AssertionExcept("OTU table does not exist.\n")
 
@@ -134,22 +134,22 @@ class Step_qiime_pick_rep_set(Step):
         self.script += self.get_script_const()
         # for key in self.params["redir_params"].keys():
             # self.script += "%s %s \\\n\t" % (key,self.params["redir_params"][key])
-        self.script += "-i %s \\\n\t" % self.sample_data["otu_table"]
-        self.script += "-f %s \\\n\t" % self.sample_data["fasta.nucl"]
+        self.script += "-i %s \\\n\t" % self.sample_data["project_data"]["otu_table"]
+        self.script += "-f %s \\\n\t" % self.sample_data["project_data"]["fasta.nucl"]
         self.script += "-l %s \\\n\t" % (self.base_dir + "logfile.log")
         # self.script += "-o %s \n\n" % self.base_dir
         self.script += "-o %s/rep_set.fna \n\n" % use_dir
 
 
         # Store location of demultiplexed folder
-        self.sample_data["qiime.full_fasta"] = self.sample_data["fasta.nucl"]
-        self.sample_data["qiime.rep_set"] = self.base_dir + "rep_set.fna"
-        self.sample_data["fasta.nucl"] = self.sample_data["qiime.rep_set"]
+        self.sample_data["project_data"]["qiime.full_fasta"] = self.sample_data["project_data"]["fasta.nucl"]
+        self.sample_data["project_data"]["qiime.rep_set"] = self.base_dir + "rep_set.fna"
+        self.sample_data["project_data"]["fasta.nucl"] = self.sample_data["project_data"]["qiime.rep_set"]
         
         # Move all files from temporary local dir to permanent base_dir
         self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
 
-        self.stamp_file(self.sample_data["qiime.rep_set"])
+        self.stamp_file(self.sample_data["project_data"]["qiime.rep_set"])
         
         self.create_low_level_script()
                     

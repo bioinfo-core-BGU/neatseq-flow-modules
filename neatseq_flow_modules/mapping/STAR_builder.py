@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``STAR_builder``
+```STAR_builder``
 -----------------------------------------------------------------
 :Authors: Menachem Sklarz
 :Affiliation: Bioinformatics core facility
@@ -104,68 +104,64 @@ class Step_STAR_builder(Step):
         # See below
         self.use_internal_GTF_file = False
         self.use_internal_SJ_file = False
-        if "scope" not in self.params.keys():
-            # Try guessing scope:
-            try:  # Does a nucl fasta exist for project?
-                self.sample_data["fasta.nucl"]
-            except KeyError:
-                self.params["scope"] = "sample"
-            else:
-                self.params["scope"] = "project"
+        if self.params["scope"]=="project":
+            sample_list = ["project_data"]
+        elif self.params["scope"]=="sample":
+            sample_list = self.sample_data["samples"]
         else:
-            # Check scope is legitimate
-            if not self.params["scope"] in ["project","sample"]:
-                raise AssertionExcept("Scope must be either 'sample' or 'project'\n")
+            raise AssertionExcept("'scope' must be either 'sample' or 'project'")
 
-        if self.params["scope"] == "sample":
-            for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-                try:
-                    self.sample_data[sample]["fasta.nucl"]
-                except KeyError:
-                    raise AssertionExcept("Sample does not have a nucl fasta defined. Can't build index\n", sample)
-                # Checking the the splice junctions file exists, if requested:
-                # 1. --sjdbFileChrStartEnd exists in params
-                # 2. --sjdbFileChrStartEnd is empty
-                if "--sjdbFileChrStartEnd" in self.params["redir_params"] and \
-                    not self.params["redir_params"]["--sjdbFileChrStartEnd"]:
-                    if "SJ.out.tab" in self.sample_data[sample]:
-                        self.use_internal_SJ_file = True
-                    else:
-                        raise AssertionExcept("You passed an empty '--sjdbFileChrStartEnd' but sample does not have "
-                                              "a 'SJ.out.tab' file defined. "
-                                              "Can't build index\n", sample)
-                if "--sjdbGTFfile" in self.params["redir_params"] and \
-                    not self.params["redir_params"]["--sjdbGTFfile"]:
-                    if "gtf" in self.sample_data[sample]:
-                        self.use_internal_GTF_file = True
-                    else:
-                        raise AssertionExcept("You passed an empty '--sjdbGTFfile' but sample does not have "
-                                              "a 'gtf' file defined. "
-                                              "Can't build index\n", sample)
-        else:
+        for sample in sample_list:
+
+        # if self.params["scope"] == "sample":
+        #     for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
             try:
-                self.sample_data["fasta.nucl"]
+                self.sample_data[sample]["fasta.nucl"]
             except KeyError:
-                raise AssertionExcept("Project does not have a nucl fasta defined. Can't build index\n")
+                raise AssertionExcept("No nucl fasta defined. Can't build index\n", sample)
             # Checking the the splice junctions file exists, if requested:
             # 1. --sjdbFileChrStartEnd exists in params
             # 2. --sjdbFileChrStartEnd is empty
             if "--sjdbFileChrStartEnd" in self.params["redir_params"] and \
                 not self.params["redir_params"]["--sjdbFileChrStartEnd"]:
-                if "SJ.out.tab" in self.sample_data:
+                if "SJ.out.tab" in self.sample_data[sample]:
                     self.use_internal_SJ_file = True
                 else:
-                    raise AssertionExcept("You passed an empty '--sjdbFileChrStartEnd' but project does not have "
-                                          "a 'SJ.out.tab' file defined. "
-                                          "Can't build index\n")
+                    raise AssertionExcept("You passed an empty '--sjdbFileChrStartEnd' but no "
+                                          "'SJ.out.tab' file defined. "
+                                          "Can't build index\n", sample)
             if "--sjdbGTFfile" in self.params["redir_params"] and \
-                    not self.params["redir_params"]["--sjdbGTFfile"]:
-                if "gtf" in self.sample_data:
+                not self.params["redir_params"]["--sjdbGTFfile"]:
+                if "gtf" in self.sample_data[sample]:
                     self.use_internal_GTF_file = True
                 else:
-                    raise AssertionExcept("You passed an empty '--sjdbGTFfile' but project does not have "
-                                          "a 'gtf' file defined. "
-                                          "Can't build index\n")
+                    raise AssertionExcept("You passed an empty '--sjdbGTFfile' but no "
+                                          "'gtf' file defined. "
+                                          "Can't build index\n", sample)
+        # else:
+        #     try:
+        #         self.sample_data["project_data"]["fasta.nucl"]
+        #     except KeyError:
+        #         raise AssertionExcept("Project does not have a nucl fasta defined. Can't build index\n")
+        #     # Checking the the splice junctions file exists, if requested:
+        #     # 1. --sjdbFileChrStartEnd exists in params
+        #     # 2. --sjdbFileChrStartEnd is empty
+        #     if "--sjdbFileChrStartEnd" in self.params["redir_params"] and \
+        #         not self.params["redir_params"]["--sjdbFileChrStartEnd"]:
+        #         if "SJ.out.tab" in self.sample_data:
+        #             self.use_internal_SJ_file = True
+        #         else:
+        #             raise AssertionExcept("You passed an empty '--sjdbFileChrStartEnd' but project does not have "
+        #                                   "a 'SJ.out.tab' file defined. "
+        #                                   "Can't build index\n")
+        #     if "--sjdbGTFfile" in self.params["redir_params"] and \
+        #             not self.params["redir_params"]["--sjdbGTFfile"]:
+        #         if "gtf" in self.sample_data:
+        #             self.use_internal_GTF_file = True
+        #         else:
+        #             raise AssertionExcept("You passed an empty '--sjdbGTFfile' but project does not have "
+        #                                   "a 'gtf' file defined. "
+        #                                   "Can't build index\n")
 
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
@@ -178,72 +174,78 @@ class Step_STAR_builder(Step):
             HOWEVER, DON'T FORGET TO CHANGE THE CLASS NAME AND THE FILENAME!
         """
 
-        # Each iteration must define the following class variables:
-            # self.spec_script_name
-            # self.script
-        if self.params["scope"] == "sample":
-            
-            for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-
-                # Make a dir for the current sample:
-                sample_dir = self.make_folder_for_sample(sample)
-
-                # Name of specific script:
-                self.spec_script_name = self.set_spec_script_name(sample)
-                self.script = ""
-
-                # This line should be left before every new script. It sees to local issues.
-                # Use the dir it returns as the base_dir for this step.
-                use_dir = self.local_start(sample_dir)
-
-                # Requested internal SJ.out.tab file.
-                # Setting in redir_params in each instance to sample SJ.out.tab file
-                if self.use_internal_SJ_file:
-                    self.params["redir_params"]["--sjdbFileChrStartEnd"] = self.sample_data[sample]["SJ.out.tab"]
-                # Requested internal gtf file.
-                # Setting in redir_params in each instance to sample gtf
-                if self.use_internal_GTF_file:
-                    self.params["redir_params"]["--sjdbGTFfile"] = self.sample_data[sample]["gtf"]
-
-                # Get constant part of script:
-                self.script += self.get_script_const()
-                self.script += "--runMode genomeGenerate \\\n\t"
-                self.script += "--genomeDir %s \\\n\t"  % use_dir
-                self.script += "--genomeFastaFiles %s \n\n"  % self.sample_data[sample]["fasta.nucl"]
-
-                self.sample_data[sample]["STAR.index"] = sample_dir
-                self.sample_data[sample]["STAR.fasta"] = self.sample_data[sample]["fasta.nucl"]
-
-                # Move all files from temporary local dir to permanent base_dir
-                self.local_finish(use_dir,self.base_dir)
-                self.create_low_level_script()
+        if self.params["scope"]=="project":
+            sample_list = ["project_data"]
+        elif self.params["scope"]=="sample":
+            sample_list = self.sample_data["samples"]
         else:
-            self.spec_script_name = self.set_spec_script_name()
+            raise AssertionExcept("'scope' must be either 'sample' or 'project'")
 
+        for sample in sample_list:
+
+        # if self.params["scope"] == "sample":
+            
+        # for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
+
+            # Make a dir for the current sample:
+            sample_dir = self.make_folder_for_sample(sample)
+
+            # Name of specific script:
+            self.spec_script_name = self.set_spec_script_name(sample)
             self.script = ""
 
             # This line should be left before every new script. It sees to local issues.
             # Use the dir it returns as the base_dir for this step.
-            use_dir = self.local_start(self.base_dir)
+            use_dir = self.local_start(sample_dir)
 
             # Requested internal SJ.out.tab file.
             # Setting in redir_params in each instance to sample SJ.out.tab file
             if self.use_internal_SJ_file:
-                self.params["redir_params"]["--sjdbFileChrStartEnd"] = self.sample_data["SJ.out.tab"]
-            # Requested internal GTF file.
-            # Setting in redir_params in each instance to project gtf file
+                self.params["redir_params"]["--sjdbFileChrStartEnd"] = self.sample_data[sample]["SJ.out.tab"]
+            # Requested internal gtf file.
+            # Setting in redir_params in each instance to sample gtf
             if self.use_internal_GTF_file:
-                self.params["redir_params"]["--sjdbGTFfile"] = self.sample_data["gtf"]
+                self.params["redir_params"]["--sjdbGTFfile"] = self.sample_data[sample]["gtf"]
 
             # Get constant part of script:
             self.script += self.get_script_const()
             self.script += "--runMode genomeGenerate \\\n\t"
             self.script += "--genomeDir %s \\\n\t"  % use_dir
-            self.script += "--genomeFastaFiles %s \n\n"  % self.sample_data["fasta.nucl"]
+            self.script += "--genomeFastaFiles %s \n\n"  % self.sample_data[sample]["fasta.nucl"]
 
-            self.sample_data["STAR.index"] = self.base_dir
-            self.sample_data["STAR.fasta"] = self.sample_data["fasta.nucl"]
-        
+            self.sample_data[sample]["STAR.index"] = sample_dir
+            self.sample_data[sample]["STAR.fasta"] = self.sample_data[sample]["fasta.nucl"]
+
             # Move all files from temporary local dir to permanent base_dir
-            self.local_finish(use_dir,self.base_dir)
+            self.local_finish(use_dir,sample_dir)
             self.create_low_level_script()
+        # else:
+        #     self.spec_script_name = self.set_spec_script_name()
+        #
+        #     self.script = ""
+        #
+        #     # This line should be left before every new script. It sees to local issues.
+        #     # Use the dir it returns as the base_dir for this step.
+        #     use_dir = self.local_start(self.base_dir)
+        #
+        #     # Requested internal SJ.out.tab file.
+        #     # Setting in redir_params in each instance to sample SJ.out.tab file
+        #     if self.use_internal_SJ_file:
+        #         self.params["redir_params"]["--sjdbFileChrStartEnd"] = self.sample_data["SJ.out.tab"]
+        #     # Requested internal GTF file.
+        #     # Setting in redir_params in each instance to project gtf file
+        #     if self.use_internal_GTF_file:
+        #         self.params["redir_params"]["--sjdbGTFfile"] = self.sample_data["gtf"]
+        #
+        #     # Get constant part of script:
+        #     self.script += self.get_script_const()
+        #     self.script += "--runMode genomeGenerate \\\n\t"
+        #     self.script += "--genomeDir %s \\\n\t"  % use_dir
+        #     self.script += "--genomeFastaFiles %s \n\n"  % self.sample_data["fasta.nucl"]
+        #
+        #     self.sample_data["STAR.index"] = self.base_dir
+        #     self.sample_data["STAR.fasta"] = self.sample_data["fasta.nucl"]
+        #
+        #     # Move all files from temporary local dir to permanent base_dir
+        #     self.local_finish(use_dir,self.base_dir)
+        #     self.create_low_level_script()

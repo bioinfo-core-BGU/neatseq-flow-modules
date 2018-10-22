@@ -24,7 +24,7 @@ output
    
 Puts output index files in one of the following slot:
     * ``self.sample_data[<sample>]["bowtie1_index"]``
-    * ``self.sample_data["bowtie1_index"]``
+    * ``self.sample_data["project_data"]["bowtie1_index"]``
             
 
 Parameters that can be set
@@ -77,7 +77,7 @@ class Step_bowtie1_builder(Step):
         if "scope" not in self.params.keys():
             # Try guessing scope:
             try:  # Does a nucl fasta exist for project?
-                self.sample_data["fasta.nucl"]
+                self.sample_data["project_data"]["fasta.nucl"]
             except KeyError:
                 self.params["scope"] = "sample"
             else:
@@ -116,7 +116,7 @@ class Step_bowtie1_builder(Step):
             # self.script
         
         # try:    # Check if fasta nucl exists:
-            # self.sample_data["fasta.nucl"]
+            # self.sample_data["project_data"]["fasta.nucl"]
             
         # except KeyError:   # If not, search in samples
         
@@ -176,13 +176,13 @@ class Step_bowtie1_builder(Step):
             # Get constant part of script:
             self.script += self.get_script_const()
             
-            self.script += "%s \\\n\t" % self.sample_data["fasta.nucl"]
+            self.script += "%s \\\n\t" % self.sample_data["project_data"]["fasta.nucl"]
             self.script += "%s \n\n" % output_prefix
 
 
-            self.sample_data["bowtie1_index"] = output_prefix
-            self.sample_data["bowtie1_fasta"] = self.sample_data["fasta.nucl"]
-            # self.stamp_dir_files(self.sample_data["bowtie1"]["index"])
+            self.sample_data["project_data"]["bowtie1_index"] = output_prefix
+            self.sample_data["project_data"]["bowtie1_fasta"] = self.sample_data["project_data"]["fasta.nucl"]
+            # self.stamp_dir_files(self.sample_data["project_data"]["bowtie1"]["index"])
         
             # Move all files from temporary local dir to permanent base_dir
             self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)

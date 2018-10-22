@@ -30,7 +30,7 @@ Output
     * Will generate file for each of the base steps with the file ending with .merg
     * Can also generate Excel file with sheet for each base step 
     * Put results file in:
-        `self.sample_data["results"]`
+        `self.sample_data["project_data"]["results"]`
 
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -142,7 +142,7 @@ class Step_Collect_results(Step):
                                 self.script += "%s  \\\n\t"  % par 
                     self.script += "-D %s \\\n\t" % base.base_dir
                     self.script += "-O %s \n\n" % os.sep.join([use_dir.rstrip(os.sep),"Collected_results.xlsx"])
-                    self.sample_data["results"]=os.sep.join([sample_dir.rstrip(os.sep),"Collected_results.xlsx"])
+                    self.sample_data["project_data"]["results"]=os.sep.join([sample_dir.rstrip(os.sep),"Collected_results.xlsx"])
             else:
                 if "env" in self.params.keys():
                     self.script +="env %s  \\\n" % self.params["env"]
@@ -159,7 +159,7 @@ class Step_Collect_results(Step):
                     self.script += " %s " % base.base_dir
                 self.script += " \\\n\t"
                 self.script += "-O %s \n\n" % os.sep.join([use_dir.rstrip(os.sep),self.name+self.file_tag])
-                self.sample_data["results"]=os.sep.join([sample_dir.rstrip(os.sep),self.name+self.file_tag])
+                self.sample_data["project_data"]["results"]=os.sep.join([sample_dir.rstrip(os.sep),self.name+self.file_tag])
         # Wrapping up function. Leave these lines at the end of every iteration:
         self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)
                   

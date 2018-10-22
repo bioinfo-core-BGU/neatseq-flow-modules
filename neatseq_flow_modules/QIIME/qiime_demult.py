@@ -31,9 +31,9 @@ Output
 
 * Puts the resulting ``seqs.fna`` file in the following slots:
 
-    * ``self.sample_data["qiime.demult_seqs"]``
-    * ``self.sample_data["qiime.fasta"]``
-    * ``self.sample_data["fasta.nucl"]``
+    * ``self.sample_data["project_data"]["qiime.demult_seqs"]``
+    * ``self.sample_data["project_data"]["qiime.fasta"]``
+    * ``self.sample_data["project_data"]["fasta.nucl"]``
 
     
     
@@ -91,7 +91,7 @@ class Step_qiime_demult(Step):
         
         # If does not exist 
         try:
-            self.sample_data["qiime.prep_links_dir"]
+            self.sample_data["project_data"]["qiime.prep_links_dir"]
         except KeyError:
             raise AssertionExcept("It seems like qiime_demult is the first qiime step. At the moment, it must come after qiime_prep...\n" )
         
@@ -136,7 +136,7 @@ class Step_qiime_demult(Step):
 
         ### Step 1b: Adding demultiplexing tyo script:
         self.script += self.get_script_const()        # Gets the "env", "script_path" and "redir_params" part of the script which is always the same...
-        self.script += "-i %s \\\n\t" % self.sample_data["qiime.prep_links_dir"]
+        self.script += "-i %s \\\n\t" % self.sample_data["project_data"]["qiime.prep_links_dir"]
         # self.script += "-o %s \n\n" % self.base_dir
         self.script += "-o %s \n\n" % use_dir
 
@@ -147,10 +147,10 @@ class Step_qiime_demult(Step):
 
         # Store location of demultiplexed folder
         #   Static: Stores the position of the demulted fasta throughout the pipeline
-        self.sample_data["qiime.demult_seqs"] = self.base_dir + "seqs.fna";
+        self.sample_data["project_data"]["qiime.demult_seqs"] = self.base_dir + "seqs.fna";
         #   Dynamic: Later steps that modify the fasta will set this to the modified filename
-        # self.sample_data["qiime.fasta"] = self.base_dir + "seqs.fna";
-        self.sample_data["fasta.nucl"]  = self.base_dir + "seqs.fna";
+        # self.sample_data["project_data"]["qiime.fasta"] = self.base_dir + "seqs.fna";
+        self.sample_data["project_data"]["fasta.nucl"]  = self.base_dir + "seqs.fna";
         
 
         # self.stamp_dir_files(self.base_dir)

@@ -26,19 +26,19 @@ Output
 
 * Puts the resulting BIOM table in: 
 
-    * ``self.sample_data["biom_table"]``
+    * ``self.sample_data["project_data"]["biom_table"]``
     
 * Puts the BIOM table summary in:
 
-    * ``self.sample_data["biom_table_summary"]``
+    * ``self.sample_data["project_data"]["biom_table_summary"]``
 
 * Puts the BIOM table in tab-delimited format in:
 
-    * ``self.sample_data["biom_table_tsv"]``
+    * ``self.sample_data["project_data"]["biom_table_tsv"]``
 
 * Puts the unfiltered BIOM table in: 
 
-    * ``self.sample_data["prefilter_biom_table"]``
+    * ``self.sample_data["project_data"]["prefilter_biom_table"]``
     
 
     
@@ -108,7 +108,7 @@ class Step_qiime_filter_otus(Step):
         
         # # If does not exist 
         # try:
-            # self.sample_data["qiime"]
+            # self.sample_data["project_data"]["qiime"]
         # except KeyError:
             # raise AssertionExcept("It seems like this is the first qiime step. At the moment, it must come after qiime_prep...\n")
         
@@ -147,12 +147,12 @@ class Step_qiime_filter_otus(Step):
         
         self.script += self.get_script_const()        # Gets the "env", "script_path" and "redir_params" part of the script which is always the same...
 
-        self.script += "-i %s \\\n\t" % self.sample_data["biom_table"]
+        self.script += "-i %s \\\n\t" % self.sample_data["project_data"]["biom_table"]
         self.script += "-o %s \n\n" % "".join([use_dir,biom_table])
         
             
-        self.sample_data["prefilter_biom_table"] = self.sample_data["biom_table"]
-        self.sample_data["biom_table"] = "".join([self.base_dir,biom_table])
+        self.sample_data["project_data"]["prefilter_biom_table"] = self.sample_data["project_data"]["biom_table"]
+        self.sample_data["project_data"]["biom_table"] = "".join([self.base_dir,biom_table])
         
 
 
@@ -184,7 +184,7 @@ fi
             "cmd_text":cmd_text}
            
             
-            self.sample_data["biom_table_summary"] = "".join([self.base_dir,biom_table_summary])
+            self.sample_data["project_data"]["biom_table_summary"] = "".join([self.base_dir,biom_table_summary])
 
         ################################################################################################
         ## 
@@ -214,7 +214,7 @@ fi
             "cmd_text":cmd_text}
             
             # Store location of the tsv biom_table:
-            self.sample_data["biom_table_tsv"] = "".join([self.base_dir,biom_table_tsv])
+            self.sample_data["project_data"]["biom_table_tsv"] = "".join([self.base_dir,biom_table_tsv])
 
         
         

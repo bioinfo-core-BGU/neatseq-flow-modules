@@ -115,7 +115,7 @@ class Step_Prokka(Step):
         if "generate_GFF_dir" in self.params.keys():
             #Make a dir for the GFF files:
             GFF_dir = self.make_folder_for_sample("GFF")
-            self.sample_data["GFF_dir"]=GFF_dir
+            self.sample_data["project_data"]["GFF_dir"]=GFF_dir
             
             
         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
