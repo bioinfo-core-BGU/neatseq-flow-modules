@@ -203,7 +203,7 @@ class Step_STAR_mapper(Step):
                 if self.params["scope"] == "project":
                     # Set project wide reference:
                     try:
-                        self.sample_data[sample]["reference"] = self.sample_data["STAR.fasta"]
+                        self.sample_data[sample]["reference"] = self.sample_data["project_data"]["STAR.fasta"]
                     except:
                         raise AssertionExcept("No reference exists at 'project' scope. Do you have a STAR_builder step defined?")
                 elif self.params["scope"] == "sample":
@@ -273,7 +273,7 @@ class Step_STAR_mapper(Step):
                 if self.params["scope"] == "sample":
                     self.params["redir_params"]["--genomeDir"] = self.sample_data[sample]["STAR.index"]
                 else:   
-                    self.params["redir_params"]["--genomeDir"] = self.sample_data["STAR.index"]
+                    self.params["redir_params"]["--genomeDir"] = self.sample_data["project_data"]["STAR.index"]
 
             # Get constant part of script:
             self.script += self.get_script_const()

@@ -37,7 +37,7 @@ Output
 * Puts the parsed report in:
 
     * ``self.sample_data[<sample>]["blast.parsed"]``  if ``scope = sample``
-    * ``self.sample_data["blast.parsed"]``            if ``scope = project``
+    * ``self.sample_data["project_data"]["blast.parsed"]``            if ``scope = project``
 
     
 
@@ -138,7 +138,7 @@ class Step_parse_blast(Step):
             self.script = ""
         else:
             self.script = "%s \\\n\t--blastind %s \\\n\t--output %s\n\n" % (self.params["blast_merge_path"], \
-                                                                            self.sample_data["BLAST_files_index"], \
+                                                                            self.sample_data["project_data"]["BLAST_files_index"], \
                                                                             self.base_dir + "merged_parsed_blast.tsv")
     
     def build_scripts(self):
@@ -173,12 +173,12 @@ class Step_parse_blast(Step):
                 raise AssertionExcept("No BLAST Results defined\n")
 
             self.script += self.get_script_const()
-            self.script += "--blast %s \\\n\t" % self.sample_data["blast." + fasta2use]
+            self.script += "--blast %s \\\n\t" % self.sample_data["project_data"]["blast." + fasta2use]
             
             # FASTA Extraction
             if "extract_fasta" in self.params:
                 try:
-                    self.script += "--fasta2extract %s \\\n\t" % self.sample_data["fasta." + fasta2use]
+                    self.script += "--fasta2extract %s \\\n\t" % self.sample_data["project_data"]["fasta." + fasta2use]
                 except keyError:
                     raise AssertionExcept("In order to extract the fasta sequences, you need to have a project wide fasta file defined with the same type as the blast type.")
 
@@ -187,9 +187,9 @@ class Step_parse_blast(Step):
             
             
             # Store BLAST result file:
-            self.sample_data["blast.parsed"] = "".join([self.base_dir, output_filename])
-            self.sample_data["blast.parsed." + fasta2use] = self.sample_data["blast.parsed"]
-            self.stamp_file(self.sample_data["blast.parsed"])
+            self.sample_data["project_data"]["blast.parsed"] = "".join([self.base_dir, output_filename])
+            self.sample_data["project_data"]["blast.parsed." + fasta2use] = self.sample_data["project_data"]["blast.parsed"]
+            self.stamp_file(self.sample_data["project_data"]["blast.parsed"])
 
             # Wrapping up function. Leave these lines at the end of every iteration:
             self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
@@ -274,8 +274,8 @@ class Step_parse_blast(Step):
             with open(self.base_dir + "parsed_BLAST_files_index.txt", "w") as index_fh:
                 index_fh.write("""\
 #Sample\tBLAST_report
-{project}\t{file}""".format(project=self.sample_data["Title"], file=self.sample_data["blast.parsed"]))
+{project}\t{file}""".format(project=self.sample_data["Title"], file=self.sample_data["project_data"]["blast.parsed"]))
         
-        self.sample_data["BLAST_files_index"] = self.base_dir + "parsed_BLAST_files_index.txt"
+        self.sample_data["project_data"]["BLAST_files_index"] = self.base_dir + "parsed_BLAST_files_index.txt"
         
   

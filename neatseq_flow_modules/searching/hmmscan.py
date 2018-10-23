@@ -173,14 +173,14 @@ Please specify the output_type to use:
         self.script = self.get_script_const()
         self.script += "--{output_type} {outfile} \\\n\t".format(output_type = self.params["output_type"], outfile = use_dir+output_basename)
         self.script += "{hmmdb} \\\n\t".format(hmmdb = self.params["hmmdb"])
-        self.script += "{seqfile} \\\n\t".format(seqfile = self.sample_data["fasta.{type}".format(type=self.params["type"])])
-        # self.script += "> {logfile} \n\n".format(logfile = self.sample_data["fasta.{type}".format(type=self.params["type"])])
+        self.script += "{seqfile} \\\n\t".format(seqfile = self.sample_data["project_data"]["fasta.{type}".format(type=self.params["type"])])
+        # self.script += "> {logfile} \n\n".format(logfile = self.sample_data["project_data"]["fasta.{type}".format(type=self.params["type"])])
         self.script += "> {outfile}.log \n\n".format(outfile=use_dir + output_basename)
 
         # Store results to fasta and assembly slots:
-        self.sample_data["hmmscan.%s" % self.params["type"]] = "%s%s" % (self.base_dir, output_basename)
+        self.sample_data["project_data"]["hmmscan.%s" % self.params["type"]] = "%s%s" % (self.base_dir, output_basename)
         
-        self.stamp_file(self.sample_data["hmmscan.%s" % self.params["type"]])
+        self.stamp_file(self.sample_data["project_data"]["hmmscan.%s" % self.params["type"]])
         
         # Move all files from temporary local dir to permanent base_dir
         self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)

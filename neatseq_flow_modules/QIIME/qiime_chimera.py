@@ -33,12 +33,12 @@ Output
 
 * Puts the resulting list of chimeras in 
 
-    * ``self.sample_data["chimeras"]``
+    * ``self.sample_data["project_data"]["chimeras"]``
     
 * Puts the filtered fasta file in:
 
-    * ``self.sample_data["fasta.chimera_removed"]``
-    * ``self.sample_data["fasta.nucl"]``
+    * ``self.sample_data["project_data"]["fasta.chimera_removed"]``
+    * ``self.sample_data["project_data"]["fasta.nucl"]``
 
 
     
@@ -107,12 +107,12 @@ class Step_qiime_chimera(Step):
         
         # # If does not exist 
         # try:
-            # self.sample_data["qiime"]
+            # self.sample_data["project_data"]["qiime"]
         # except KeyError:
             # raise AssertionExcept("It seems like qiime_demult is the first qiime step. At the moment, it must come after qiime_prep...\n" )
 
         # try:
-            # self.sample_data["qiime.fasta"]
+            # self.sample_data["project_data"]["qiime.fasta"]
         # except KeyError:
             # self.write_warning("fasta file does not exist. Did you intend to run a step before chimera searching?\n")
 
@@ -178,10 +178,10 @@ class Step_qiime_chimera(Step):
 
 
         if self.method == "ChimeraSlayer":
-            if "fasta.aligned_unfiltered" in self.sample_data["qiime"].keys():
-                self.script += "-i %s \\\n\t" % self.sample_data["fasta.aligned_unfiltered"]
+            if "fasta.aligned_unfiltered" in self.sample_data["project_data"]:
+                self.script += "-i %s \\\n\t" % self.sample_data["project_data"]["fasta.aligned_unfiltered"]
             else:
-                self.script += "-i %s \\\n\t" % self.sample_data["fasta.aligned"]
+                self.script += "-i %s \\\n\t" % self.sample_data["project_data"]["fasta.aligned"]
 
             # For ChimeraSlayer, the following must be set. If not set by user, setting to default:
             if not set(["-a","--aligned_reference_seqs_fp"]) & set(self.params["redir_params"].keys()):      # no template_fp was passed in redir_params:
@@ -190,7 +190,7 @@ class Step_qiime_chimera(Step):
             # For ChimeraSlayer, output is a file
             self.script += "-o %schimeras_CS.txt  \\\n\t" % use_dir
         else:   # Method is usearch61:
-            self.script += "-i %s  \\\n\t" % self.sample_data["fasta.nucl"]
+            self.script += "-i %s  \\\n\t" % self.sample_data["project_data"]["fasta.nucl"]
             # For usearch61, output is a folder
             self.script += "-o %s \\\n\t" % use_dir
     
@@ -200,12 +200,12 @@ class Step_qiime_chimera(Step):
 
         if self.method == "ChimeraSlayer":
             if "fasta.aligned_unfiltered" in self.sample_data:
-                self.sample_data["chimeras"] = (self.base_dir + "chimeras_CS.txt")
+                self.sample_data["project_data"]["chimeras"] = (self.base_dir + "chimeras_CS.txt")
             else:
-                self.sample_data["chimeras"] = (self.base_dir + "chimeras_CS.txt")
+                self.sample_data["project_data"]["chimeras"] = (self.base_dir + "chimeras_CS.txt")
 
         else:
-            self.sample_data["chimeras"] = (self.base_dir + "chimeras.txt")
+            self.sample_data["project_data"]["chimeras"] = (self.base_dir + "chimeras.txt")
 
 
            
@@ -221,23 +221,23 @@ class Step_qiime_chimera(Step):
         self.script += self.get_setenv_part()
         # Assuming filter_fasta.py is in the same location as chimera checking script used above...
         self.script += "%s \\\n\t" % os.sep.join([os.path.split(os.path.normpath(self.params["script_path"]))[0] , "filter_fasta.py"])
-        self.script += "-f %s \\\n\t" % self.sample_data["fasta.nucl"]
+        self.script += "-f %s \\\n\t" % self.sample_data["project_data"]["fasta.nucl"]
         self.script += "-o " + use_dir + "seqs_chimeras_filtered.fna \\\n\t";
-        self.script += "-s %s%s \\\n\t" %  (use_dir ,"chimeras_CS.txt" if self.method == "ChimeraSlayer" else "chimeras.txt")#self.sample_data["qiime"]["chimeras"]
+        self.script += "-s %s%s \\\n\t" %  (use_dir ,"chimeras_CS.txt" if self.method == "ChimeraSlayer" else "chimeras.txt")#self.sample_data["project_data"]["qiime"]["chimeras"]
         self.script += "-n \n\n";
 
         # Storing product in samples_hash, depending on the method used. At any case, storing product in active fasta
         if self.method == "ChimeraSlayer":
             if "fasta.aligned_unfiltered" in self.sample_data:
-                self.sample_data["fasta.chimera_removed"] = self.base_dir + "seqs_chimeras_filtered.fna";
-                self.sample_data["fasta.nucl"] = self.base_dir + "seqs_chimeras_filtered.fna";
+                self.sample_data["project_data"]["fasta.chimera_removed"] = self.base_dir + "seqs_chimeras_filtered.fna";
+                self.sample_data["project_data"]["fasta.nucl"] = self.base_dir + "seqs_chimeras_filtered.fna";
             else:
-                self.sample_data["fasta.chimera_removed"] = self.base_dir + "seqs_chimeras_filtered.fna";
-                self.sample_data["fasta.nucl"] = self.base_dir + "seqs_chimeras_filtered.fna";
+                self.sample_data["project_data"]["fasta.chimera_removed"] = self.base_dir + "seqs_chimeras_filtered.fna";
+                self.sample_data["project_data"]["fasta.nucl"] = self.base_dir + "seqs_chimeras_filtered.fna";
 
         else:
-            self.sample_data["fasta.chimera_removed"] = self.base_dir + "seqs_chimeras_filtered.fna";
-            self.sample_data["fasta.nucl"] = self.base_dir + "seqs_chimeras_filtered.fna";
+            self.sample_data["project_data"]["fasta.chimera_removed"] = self.base_dir + "seqs_chimeras_filtered.fna";
+            self.sample_data["project_data"]["fasta.nucl"] = self.base_dir + "seqs_chimeras_filtered.fna";
 
        
         # Move all files from temporary local dir to permanent base_dir

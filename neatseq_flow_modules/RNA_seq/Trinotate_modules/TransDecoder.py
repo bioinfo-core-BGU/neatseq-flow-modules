@@ -23,10 +23,10 @@ Output:
 
 * If ``scope = project``:
 
-    * Protein fasta in ``self.sample_data["fasta.prot"]``
-    * Gene fasta in ``self.sample_data["fasta.nucl"]``
-    * Original transcripts in ``self.sample_data["transcripts.fasta.nucl"]``
-    * GFF file in ``self.sample_data["gff3"]``
+    * Protein fasta in ``self.sample_data["project_data"]["fasta.prot"]``
+    * Gene fasta in ``self.sample_data["project_data"]["fasta.nucl"]``
+    * Original transcripts in ``self.sample_data["project_data"]["transcripts.fasta.nucl"]``
+    * GFF file in ``self.sample_data["project_data"]["gff3"]``
 
 * If ``scope = sample``:
 
@@ -134,25 +134,25 @@ class Step_TransDecoder(Step):
         # Use the dir it returns as the base_dir for this step.
         use_dir = self.local_start(self.base_dir)
 
-        output_dir_base = "%s.transdecoder_dir" % os.path.basename(self.sample_data["fasta.nucl"])
+        output_dir_base = "%s.transdecoder_dir" % os.path.basename(self.sample_data["project_data"]["fasta.nucl"])
          
         self.script = "cd {usedir}\n\n".format(usedir=use_dir)
         self.script += self.get_script_const()
-        self.script += "-t {fasta_nucl}\n\n".format(fasta_nucl = self.sample_data["fasta.nucl"])
+        self.script += "-t {fasta_nucl}\n\n".format(fasta_nucl = self.sample_data["project_data"]["fasta.nucl"])
         
         self.script += "cd {home_dir}\n\n".format(home_dir = self.pipe_data["home_dir"])
 
         
 
         # Store results to fasta and assembly slots:
-        self.sample_data["fasta.prot"] = os.path.join(self.base_dir, output_dir_base, "longest_orfs.pep")
-        self.sample_data["transcripts.fasta.nucl"] = self.sample_data["fasta.nucl"]
-        self.sample_data["fasta.nucl"] = os.path.join(self.base_dir, output_dir_base, "longest_orfs.cds")
-        self.sample_data["gff3"] = os.path.join(self.base_dir, output_dir_base, "longest_orfs.gff3")
+        self.sample_data["project_data"]["fasta.prot"] = os.path.join(self.base_dir, output_dir_base, "longest_orfs.pep")
+        self.sample_data["project_data"]["transcripts.fasta.nucl"] = self.sample_data["project_data"]["fasta.nucl"]
+        self.sample_data["project_data"]["fasta.nucl"] = os.path.join(self.base_dir, output_dir_base, "longest_orfs.cds")
+        self.sample_data["project_data"]["gff3"] = os.path.join(self.base_dir, output_dir_base, "longest_orfs.gff3")
         
-        self.stamp_file(self.sample_data["fasta.prot"])
-        self.stamp_file(self.sample_data["fasta.nucl"])
-        self.stamp_file(self.sample_data["gff3"])
+        self.stamp_file(self.sample_data["project_data"]["fasta.prot"])
+        self.stamp_file(self.sample_data["project_data"]["fasta.nucl"])
+        self.stamp_file(self.sample_data["project_data"]["gff3"])
 
         
         # Move all files from temporary local dir to permanent base_dir

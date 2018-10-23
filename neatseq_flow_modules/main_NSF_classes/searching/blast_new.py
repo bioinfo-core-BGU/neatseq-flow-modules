@@ -346,7 +346,7 @@ class Step_blast_new(Step):
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
                 index_fh.write("%s\t%s\n" % (sample,self.sample_data[sample]["blast." + self.fasta2use]))
                 
-        self.sample_data["BLAST_files_index"] = self.base_dir + "BLAST_files_index.txt"
+        self.sample_data["project_data"]["BLAST_files_index"] = self.base_dir + "BLAST_files_index.txt"
         
   
         

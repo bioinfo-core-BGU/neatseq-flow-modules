@@ -161,11 +161,11 @@ class Step_clc_assembl(Step):
             self.script = self.script.rstrip("\\\n\t") + "\n\n"
 
             # Store results to fasta and assembly slots:
-            self.sample_data["fasta.nucl"] = output_file
-            self.sample_data[self.step + ".contigs"] = output_file
-            self.sample_data["assembler"] = self.get_step_step()
+            self.sample_data["project_data"]["fasta.nucl"] = output_file
+            self.sample_data["project_data"][self.step + ".contigs"] = output_file
+            self.sample_data["project_data"]["assembler"] = self.get_step_step()
 
-            self.stamp_file(self.sample_data[self.step + ".contigs"])
+            self.stamp_file(self.sample_data["project_data"][self.step + ".contigs"])
 
             # Wrapping up function. Leave these lines at the end of every iteration:
             self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)

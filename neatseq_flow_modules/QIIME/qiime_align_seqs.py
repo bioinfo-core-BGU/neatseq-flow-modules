@@ -27,12 +27,12 @@ Output
 
 * Puts the resulting aligned fasta file in:
 
-    * ``self.sample_data["fasta.nucl"]``
-    * ``self.sample_data["fasta.aligned"]``
+    * ``self.sample_data["project_data"]["fasta.nucl"]``
+    * ``self.sample_data["project_data"]["fasta.aligned"]``
     
 * Stores the old, unaligned version in:
 
-    * ``self.sample_data["fasta.unaligned"]``
+    * ``self.sample_data["project_data"]["fasta.unaligned"]``
 
 
     
@@ -97,17 +97,17 @@ class Step_qiime_align_seqs(Step):
         
         # # If does not exist 
         # try:
-            # self.sample_data["qiime"]
+            # self.sample_data["project_data"]["qiime"]
         # except KeyError:
             # raise AssertionExcept("It seems like qiime_demult is the first qiime step. At the moment, it must come after qiime_prep...\n" )
 
         try:
-            self.sample_data["fasta.nucl"]
+            self.sample_data["project_data"]["fasta.nucl"]
         except KeyError:
             raise AssertionExcept("fasta file does not exist.\n")
 
         try:
-            self.sample_data["otu_table"]
+            self.sample_data["project_data"]["otu_table"]
         except KeyError:
             self.write_warning("otu table does not exist.\n")
 
@@ -153,22 +153,22 @@ class Step_qiime_align_seqs(Step):
         if not set(["-t","--template_fp"]) & set(self.params["redir_params"].keys()):      # no template_fp was passed in redir_params:
             self.write_warning("Template file not defined. Using default (find it with print_qiime_config.py\n")
     
-        self.script += "-i %s \\\n\t" % self.sample_data["fasta.nucl"]
+        self.script += "-i %s \\\n\t" % self.sample_data["project_data"]["fasta.nucl"]
         self.script += "-o %s \n\n" % use_dir
 
 
-        outfile = os.path.basename(self.sample_data["fasta.nucl"])
+        outfile = os.path.basename(self.sample_data["project_data"]["fasta.nucl"])
         outfile = re.sub("\.(fas|fasta|fna|fa)$","",outfile)
 
         # Store location of demultiplexed folder
-        self.sample_data["fasta.aligned"] = self.base_dir + outfile + "_aligned.fasta";    # Saving aligned fasta separately
-        self.sample_data["fasta.unaligned"] = self.sample_data["fasta.nucl"]  # Saving unaligned fasta in case someone wants it...
-        self.sample_data["fasta.nucl"] = self.sample_data["fasta.aligned"]      # Using aligned as active fasta file.
+        self.sample_data["project_data"]["fasta.aligned"] = self.base_dir + outfile + "_aligned.fasta";    # Saving aligned fasta separately
+        self.sample_data["project_data"]["fasta.unaligned"] = self.sample_data["project_data"]["fasta.nucl"]  # Saving unaligned fasta in case someone wants it...
+        self.sample_data["project_data"]["fasta.nucl"] = self.sample_data["project_data"]["fasta.aligned"]      # Using aligned as active fasta file.
 
         # Move all files from temporary local dir to permanent base_dir
         self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
 
-        self.stamp_file(self.sample_data["fasta.aligned"])
+        self.stamp_file(self.sample_data["project_data"]["fasta.aligned"])
         
         self.create_low_level_script()
                     

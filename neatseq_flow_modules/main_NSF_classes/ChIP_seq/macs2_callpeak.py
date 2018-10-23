@@ -302,5 +302,5 @@ fi
                                     self.sample_data[sample]["peak_xls"],\
                                     "macs"))
                                     
-        self.sample_data["DiffBind_files_index"] = self.base_dir + "DiffBind_files_index.txt"
+        self.sample_data["project_data"]["DiffBind_files_index"] = self.base_dir + "DiffBind_files_index.txt"
         

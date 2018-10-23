@@ -26,7 +26,7 @@ Output
 
 * Puts the resulting OTU table in: 
 
-    * ``self.sample_data["otu_table"]``
+    * ``self.sample_data["project_data"]["otu_table"]``
     
 
     
@@ -78,17 +78,10 @@ class Step_qiime_pick_otus(Step):
         """ A place to do initiation stages following setting of sample_data
             Here you should do testing for dependency output. These will NOT exist at initiation of this instance. They are set only following sample_data updating
         """
-        
-        # # If does not exist 
-        # try:
-            # self.sample_data["qiime"]
-        # except KeyError:
-            # raise AssertionExcept("It seems like this is the first qiime step. At the moment, it must come after qiime_prep...\n" )
-        
-        
+
         
         try:
-            self.sample_data["fasta.nucl"]
+            self.sample_data["project_data"]["fasta.nucl"]
         except KeyError:
             raise AssertionExcept("fasta file does not exist.\n")
 
@@ -123,7 +116,7 @@ class Step_qiime_pick_otus(Step):
         self.script += self.get_script_env_path()
         for key in self.params["redir_params"].keys():
             self.script += "%s %s \\\n\t" % (key,self.params["redir_params"][key])
-        self.script += "-i %s \\\n\t" % self.sample_data["fasta.nucl"]
+        self.script += "-i %s \\\n\t" % self.sample_data["project_data"]["fasta.nucl"]
         # self.script += "-o %s \n\n" % self.base_dir
         self.script += "-o %s \n\n" % use_dir
 
@@ -134,12 +127,12 @@ class Step_qiime_pick_otus(Step):
 
         # Store location of demultiplexed folder
         # the OTU table is named like the input fasta, with the extension (.fna) replaced with _otus.txt
-        self.sample_data["otu_table"] = self.base_dir + \
-                    os.path.basename(os.path.splitext(self.sample_data["fasta.nucl"])[0]) + \
+        self.sample_data["project_data"]["otu_table"] = self.base_dir + \
+                    os.path.basename(os.path.splitext(self.sample_data["project_data"]["fasta.nucl"])[0]) + \
                     "_otus.txt";
         
 
-        self.stamp_file(self.sample_data["otu_table"])
+        self.stamp_file(self.sample_data["project_data"]["otu_table"])
         
         self.create_low_level_script()
                     

@@ -124,7 +124,9 @@ class Step_qiime_divers(Step):
         if not "sampling_depth" in self.params.keys() and \
            not "--sampling_depth" in self.params["redir_params"] and \
            not "-e" in self.params["redir_params"]:
-            raise AssertionExcept("You must supply sampling depth for diversity analysis with redirected parameter --sampling_depth!! The location of the biom table is:\n%s\n" % self.sample_data["qiime"]["biom_table_summary"])
+            raise AssertionExcept("You must supply sampling depth for diversity analysis with redirected parameter "
+                                  "--sampling_depth!! The location of the biom table is:\n{biom}\n".
+                                  format(biom=self.sample_data["project_data"]["biom_table"]))
         # This is for backwards compatibility:
         if "sampling_depth" in self.params.keys():
             self.params["redir_params"]["--sampling_depth"] = self.params["sampling_depth"]
@@ -133,13 +135,13 @@ class Step_qiime_divers(Step):
         # Check if mapping file exists in parameters (overrides mapping from sample_data)
         if "--mapping_fp" in self.params["redir_params"].keys() or "-m" in self.params["redir_params"].keys():
             # Check if mapping file exists in sample_data
-            if "qiime.mapping" in self.sample_data.keys():
+            if "qiime.mapping" in self.sample_data["project_data"]:
                 self.write_warning("Overriding existing mapping file. Make sure this is OK")
-                # mapping_fp = self.sample_data["qiime.mapping"]
+                # mapping_fp = self.sample_data["project_data"]["qiime.mapping"]
 
-            self.sample_data["qiime.mapping"] = self.params["redir_params"]["--mapping_fp"] if "--mapping_fp" in self.params["redir_params"].keys() else self.params["redir_params"]["-m"]
+            self.sample_data["project_data"]["qiime.mapping"] = self.params["redir_params"]["--mapping_fp"] if "--mapping_fp" in self.params["redir_params"].keys() else self.params["redir_params"]["-m"]
         else:
-            if "qiime.mapping" not in self.sample_data.keys():
+            if "qiime.mapping" not in self.sample_data["project_data"]:
                 raise AssertionExcept("No mapping file exists nor was it passed with -m")
 
         # # Check if mapping_fp was defined:
@@ -188,15 +190,15 @@ class Step_qiime_divers(Step):
         
         self.script += self.get_script_const()
         # Add tree if it exists:
-        if "phylotree" in self.sample_data.keys():
-            self.script += "--tree_fp %s \\\n\t" % self.sample_data["phylotree"]
+        if "phylotree" in self.sample_data["project_data"]:
+            self.script += "--tree_fp %s \\\n\t" % self.sample_data["project_data"]["phylotree"]
         # Add mapping file if not passed as redir parameter
         if not "--mapping_fp" in self.params["redir_params"].keys() and not "-m" in self.params["redir_params"].keys():
-            self.script += "--mapping_fp %s \\\n\t" % self.sample_data["qiime.mapping"]
-        self.script += "-i %(input)s \\\n\t-o %(output)s  \n\n" % {"input" : self.sample_data["biom_table"],\
+            self.script += "--mapping_fp %s \\\n\t" % self.sample_data["project_data"]["qiime.mapping"]
+        self.script += "-i %(input)s \\\n\t-o %(output)s  \n\n" % {"input" : self.sample_data["project_data"]["biom_table"],\
                                                                                      "output" : use_dir + "core_div/"}
                                                                                     
-        self.sample_data["diversity"] = self.base_dir
+        self.sample_data["project_data"]["diversity"] = self.base_dir
 
         
         # Move all files from temporary local dir to permanent base_dir

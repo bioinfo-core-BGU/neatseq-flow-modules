@@ -19,10 +19,10 @@ Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     
 * A nucleotide fasta file in 
-    * self.sample_data["fasta.nucl"]
+    * self.sample_data["project_data"]["fasta.nucl"]
     * self.sample_data[sample]["fasta.nucl"]
 * A ``gtf`` file in:
-    * self.sample_data["gtf"]
+    * self.sample_data["project_data"]["gtf"]
     * self.sample_data[sample]["gtf"]
 
 .. Attention:: If ``scope`` is set to ``sample``, all of the above files should be in the sample scope!
@@ -104,7 +104,7 @@ class Step_MakePICARDfiles(Step):
         if "scope" not in self.params:
             raise AssertionExcept("No 'scope' specified.")
         elif self.params["scope"]=="project":
-            if "fasta.nucl" not in self.sample_data or "gtf" not in self.sample_data:
+            if "fasta.nucl" not in self.sample_data["project_data"] or "gtf" not in self.sample_data["project_data"]:
                 raise AssertionExcept("Project does not have fasta.nucl and gtf files.")
 
         elif self.params["scope"]=="sample":
@@ -183,8 +183,8 @@ grep -i rrna {bed} |
 """.format(PICARD=self.params["script_path"],
            gtf2bed=self.params["gtf2bed_path"],
            gtfToGenePred=self.params["gtfToGenePred_path"],
-           gtf=self.sample_data["gtf"],
-           fasta=self.sample_data["fasta.nucl"],
+           gtf=self.sample_data["project_data"]["gtf"],
+           fasta=self.sample_data["project_data"]["fasta.nucl"],
            bed=use_dir + bed_file,
            dict=use_dir + dict_file,
            interval_list=use_dir + interval_list_file,
@@ -192,17 +192,17 @@ grep -i rrna {bed} |
            refFlat=use_dir + refFlat_file)
     
         # Store results to fasta and assembly slots:
-        self.sample_data["bed"]                = self.base_dir +  bed_file
-        self.sample_data["sequence.dict"]               = self.base_dir +  dict_file
-        self.sample_data["INTERVAL_LIST"]      = self.base_dir +  interval_list_file
-        self.sample_data["RIBOSOMAL_INTERVALS"] = self.base_dir +  rRNA_interval_list_file
-        self.sample_data["REF_FLAT"]            = self.base_dir +  refFlat_file
+        self.sample_data["project_data"]["bed"]                = self.base_dir +  bed_file
+        self.sample_data["project_data"]["sequence.dict"]               = self.base_dir +  dict_file
+        self.sample_data["project_data"]["INTERVAL_LIST"]      = self.base_dir +  interval_list_file
+        self.sample_data["project_data"]["RIBOSOMAL_INTERVALS"] = self.base_dir +  rRNA_interval_list_file
+        self.sample_data["project_data"]["REF_FLAT"]            = self.base_dir +  refFlat_file
  
-        self.stamp_file(self.sample_data["bed"])
-        self.stamp_file(self.sample_data["sequence.dict"])
-        self.stamp_file(self.sample_data["INTERVAL_LIST"])
-        self.stamp_file(self.sample_data["RIBOSOMAL_INTERVALS"])
-        self.stamp_file(self.sample_data["REF_FLAT"])
+        self.stamp_file(self.sample_data["project_data"]["bed"])
+        self.stamp_file(self.sample_data["project_data"]["sequence.dict"])
+        self.stamp_file(self.sample_data["project_data"]["INTERVAL_LIST"])
+        self.stamp_file(self.sample_data["project_data"]["RIBOSOMAL_INTERVALS"])
+        self.stamp_file(self.sample_data["project_data"]["REF_FLAT"])
     
         # Move all files from temporary local dir to permanent base_dir
         self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
@@ -270,8 +270,8 @@ grep -i rrna {bed} |
 """.format(PICARD=self.params["script_path"],
            gtf2bed=self.params["gtf2bed_path"],
            gtfToGenePred=self.params["gtfToGenePred_path"],
-           gtf=self.sample_data["gtf"],
-           fasta=self.sample_data["fasta.nucl"],
+           gtf=self.sample_data["project_data"]["gtf"],
+           fasta=self.sample_data["project_data"]["fasta.nucl"],
            bed=use_dir + bed_file,
            dict=use_dir + dict_file,
            interval_list=use_dir + interval_list_file,

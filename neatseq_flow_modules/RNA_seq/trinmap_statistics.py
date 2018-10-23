@@ -28,10 +28,10 @@ Output:
 
 * Creates the following files in the following slots:
     
-        * ``<project>.counts.matrix``                        in ``self.sample_data["counts.matrix"]``
-        * ``<project>.not_cross_norm.fpkm.tmp``              in ``self.sample_data["not_cross_norm.fpkm.tmp"]``
-        * ``<project>.not_cross_norm.fpkm.tmp.TMM_info.txt`` in ``self.sample_data["not_cross_norm.fpkm.tmp.TMM_info.txt"]``
-        * ``<project>.TMM.fpkm.matrix``                      in ``self.sample_data["TMM.fpkm.matrix"]``
+        * ``<project>.counts.matrix``                        in ``self.sample_data["project_data"]["counts.matrix"]``
+        * ``<project>.not_cross_norm.fpkm.tmp``              in ``self.sample_data["project_data"]["not_cross_norm.fpkm.tmp"]``
+        * ``<project>.not_cross_norm.fpkm.tmp.TMM_info.txt`` in ``self.sample_data["project_data"]["not_cross_norm.fpkm.tmp.TMM_info.txt"]``
+        * ``<project>.TMM.fpkm.matrix``                      in ``self.sample_data["project_data"]["TMM.fpkm.matrix"]``
 
         
 Parameters that can be set        
@@ -101,7 +101,7 @@ class Step_trinmap_statistics(Step):
             # Otherwise, use existing
         if "--gene_trans_map" not in self.params["redir_params"]:
             if "gene_trans_map" in self.sample_data:
-                self.params["redir_params"]["--gene_trans_map"] = self.sample_data["gene_trans_map"]
+                self.params["redir_params"]["--gene_trans_map"] = self.sample_data["project_data"]["gene_trans_map"]
                 self.use_gene_trans_map = True
             else:
                 self.params["redir_params"]["--gene_trans_map"] = "none"
@@ -113,7 +113,7 @@ class Step_trinmap_statistics(Step):
             elif self.params["redir_params"]["--gene_trans_map"] == "none":
                 self.use_gene_trans_map = False
             else:
-                self.sample_data["gene_trans_map"] = self.params["redir_params"]["--gene_trans_map"]
+                self.sample_data["project_data"]["gene_trans_map"] = self.params["redir_params"]["--gene_trans_map"]
                 self.use_gene_trans_map = True
             
                 
@@ -160,17 +160,17 @@ class Step_trinmap_statistics(Step):
         if not "version" in self.params or self.params["version"].lower() == "new":
 
         # Storing all output files even though probably not very useful downstream...
-            self.sample_data["isoform.raw_counts"] = os.sep.join([self.base_dir,  "%s.isoform.counts.matrix" % prefix])
-            self.sample_data["isoform.norm_counts"] = os.sep.join([self.base_dir, "%s.isoform.TPM.not_cross_norm" % prefix])
+            self.sample_data["project_data"]["isoform.raw_counts"] = os.sep.join([self.base_dir,  "%s.isoform.counts.matrix" % prefix])
+            self.sample_data["project_data"]["isoform.norm_counts"] = os.sep.join([self.base_dir, "%s.isoform.TPM.not_cross_norm" % prefix])
             
-            self.stamp_file(self.sample_data["isoform.raw_counts"] )
-            self.stamp_file(self.sample_data["isoform.norm_counts"])
+            self.stamp_file(self.sample_data["project_data"]["isoform.raw_counts"] )
+            self.stamp_file(self.sample_data["project_data"]["isoform.norm_counts"])
 
             if(self.use_gene_trans_map):  # True when --gene_trans_map is not "none"
-                self.sample_data["gene.raw_counts"] = os.sep.join([self.base_dir,  "%s.gene.counts.matrix" % prefix])
-                self.sample_data["gene.norm_counts"] = os.sep.join([self.base_dir, "%s.gene.TPM.not_cross_norm" % prefix])
-                self.stamp_file(self.sample_data["gene.raw_counts"] )
-                self.stamp_file(self.sample_data["gene.norm_counts"])
+                self.sample_data["project_data"]["gene.raw_counts"] = os.sep.join([self.base_dir,  "%s.gene.counts.matrix" % prefix])
+                self.sample_data["project_data"]["gene.norm_counts"] = os.sep.join([self.base_dir, "%s.gene.TPM.not_cross_norm" % prefix])
+                self.stamp_file(self.sample_data["project_data"]["gene.raw_counts"] )
+                self.stamp_file(self.sample_data["project_data"]["gene.norm_counts"])
 
         else:
             self.write_warning("Not storing output files for old version of trinity. "

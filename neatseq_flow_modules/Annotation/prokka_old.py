@@ -152,7 +152,7 @@ class Step_prokka_old(Step):
                     raise AssertionExcept("Sample does not have a fasta file\n", sample)
         elif self.params["scope"] == "project":
             try:
-                self.sample_data["fasta.nucl"]
+                self.sample_data["project_data"]["fasta.nucl"]
             except KeyError:
                 raise AssertionExcept("Project does not have a fasta file\n")
         
@@ -249,14 +249,14 @@ class Step_prokka_old(Step):
             self.script += "--outdir %s \\\n\t"  % self.base_dir
             self.script += "--prefix %s \\\n\t"  % (self.sample_data["Title"] + self.file_tag)
 
-            self.script += "%s \n\n"           % (self.sample_data["fasta.nucl"])
+            self.script += "%s \n\n"           % (self.sample_data["project_data"]["fasta.nucl"])
 
 
             # Store results to fasta and assembly slots:
-            self.sample_data["fasta.prot"]  = self.base_dir + self.sample_data["Title"] + self.file_tag + ".faa"
-            self.sample_data["fasta.nucl"]  = self.base_dir + self.sample_data["Title"] + self.file_tag + ".fna"
-            self.sample_data["gff"]         = self.base_dir + self.sample_data["Title"] + self.file_tag + ".gff"
-            self.sample_data["prokka.dir"]  = self.base_dir 
+            self.sample_data["project_data"]["fasta.prot"]  = self.base_dir + self.sample_data["Title"] + self.file_tag + ".faa"
+            self.sample_data["project_data"]["fasta.nucl"]  = self.base_dir + self.sample_data["Title"] + self.file_tag + ".fna"
+            self.sample_data["project_data"]["gff"]         = self.base_dir + self.sample_data["Title"] + self.file_tag + ".gff"
+            self.sample_data["project_data"]["prokka.dir"]  = self.base_dir 
                 
                 
             # Wrapping up function. Leave these lines at the end of every iteration:

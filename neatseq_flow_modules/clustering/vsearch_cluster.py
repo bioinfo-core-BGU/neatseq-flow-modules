@@ -44,12 +44,12 @@ Output
 * Puts required output in similarly named slots, e.g.:
 
     ``self.sample_data[<sample>]["vsearch.centroids"]`` or
-    ``self.sample_data["vsearch.centroids"]``
+    ``self.sample_data["project_data"]["vsearch.centroids"]``
 
 
 * Puts the required fasta in the fasta slot:
 
-    ``self.sample_data[<sample>]["fasta.nucl"]`` or ``self.sample_data["fasta.nucl"]``
+    ``self.sample_data[<sample>]["fasta.nucl"]`` or ``self.sample_data["project_data"]["fasta.nucl"]``
 
 
 Parameters that can be set
@@ -153,7 +153,7 @@ class Step_vsearch_cluster(Step):
                     raise AssertionExcept("Sample does not have fasta nucl data" , sample)
         elif self.params["scope"] == "project":
             try:
-                self.sample_data["fasta.nucl"]
+                self.sample_data["project_data"]["fasta.nucl"]
             except KeyError:
                 raise AssertionExcept("No project-wide fasta nucl data" )
 
@@ -192,7 +192,7 @@ class Step_vsearch_cluster(Step):
             # Define location and prefix for output files:
             # output_prefix = sample + "_bowtie2_map"
 
-            input_file = self.sample_data["fasta.nucl"]
+            input_file = self.sample_data["project_data"]["fasta.nucl"]
             
             output_prefix = os.path.basename(input_file)
             
@@ -208,9 +208,9 @@ class Step_vsearch_cluster(Step):
             self.script += "--%s %s \n\n" % (self.params["type"], input_file)
             
 
-            self.sample_data["fasta.nucl"] = "%s_centroids.fasta" % (self.base_dir + output_prefix)
-            self.sample_data["vsearch.centroids"] = self.sample_data["fasta.nucl"]
-            self.stamp_file(self.sample_data["fasta.nucl"])
+            self.sample_data["project_data"]["fasta.nucl"] = "%s_centroids.fasta" % (self.base_dir + output_prefix)
+            self.sample_data["project_data"]["vsearch.centroids"] = self.sample_data["project_data"]["fasta.nucl"]
+            self.stamp_file(self.sample_data["project_data"]["fasta.nucl"])
                     
         
             # Move all files from temporary local dir to permanent base_dir

@@ -34,13 +34,13 @@ Output
 Puts output index files in one of the following slot:
 
     * ``self.sample_data[<sample>]["STAR.index"]``
-    * ``self.sample_data["STAR.index"]``
+    * ``self.sample_data["project_data"]["STAR.index"]``
 
 
 Puts the reference fasta file in one of the following slot:
 
     * ``self.sample_data[<sample>]["STAR.fasta"]``
-    * ``self.sample_data["STAR.fasta"]``
+    * ``self.sample_data["project_data"]["STAR.fasta"]``
 
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -231,20 +231,20 @@ class Step_STAR_builder(Step):
         #     # Requested internal SJ.out.tab file.
         #     # Setting in redir_params in each instance to sample SJ.out.tab file
         #     if self.use_internal_SJ_file:
-        #         self.params["redir_params"]["--sjdbFileChrStartEnd"] = self.sample_data["SJ.out.tab"]
+        #         self.params["redir_params"]["--sjdbFileChrStartEnd"] = self.sample_data["project_data"]["SJ.out.tab"]
         #     # Requested internal GTF file.
         #     # Setting in redir_params in each instance to project gtf file
         #     if self.use_internal_GTF_file:
-        #         self.params["redir_params"]["--sjdbGTFfile"] = self.sample_data["gtf"]
+        #         self.params["redir_params"]["--sjdbGTFfile"] = self.sample_data["project_data"]["gtf"]
         #
         #     # Get constant part of script:
         #     self.script += self.get_script_const()
         #     self.script += "--runMode genomeGenerate \\\n\t"
         #     self.script += "--genomeDir %s \\\n\t"  % use_dir
-        #     self.script += "--genomeFastaFiles %s \n\n"  % self.sample_data["fasta.nucl"]
+        #     self.script += "--genomeFastaFiles %s \n\n"  % self.sample_data["project_data"]["fasta.nucl"]
         #
-        #     self.sample_data["STAR.index"] = self.base_dir
-        #     self.sample_data["STAR.fasta"] = self.sample_data["fasta.nucl"]
+        #     self.sample_data["project_data"]["STAR.index"] = self.base_dir
+        #     self.sample_data["project_data"]["STAR.fasta"] = self.sample_data["project_data"]["fasta.nucl"]
         #
         #     # Move all files from temporary local dir to permanent base_dir
         #     self.local_finish(use_dir,self.base_dir)

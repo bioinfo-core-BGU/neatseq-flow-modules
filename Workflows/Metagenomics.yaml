@@ -200,6 +200,7 @@ Step_params:
         scope:              sample
         redirects:
             --meta:
+        # stop_and_show:
     quast_spades:
         module:             quast
         base:               spades1
@@ -256,6 +257,7 @@ Step_params:
         scope:              sample
         redirects:
             --meta:
+
 
     quast_all:
         module:             quast

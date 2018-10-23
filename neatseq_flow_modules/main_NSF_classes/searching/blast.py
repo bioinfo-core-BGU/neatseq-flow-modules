@@ -206,7 +206,7 @@ class Step_blast(Step):
         
             
         # if not "blast" in self.sample_data.keys():
-            # self.sample_data["blast"] = dict()
+            # self.sample_data["project_data"]["blast"] = dict()
 
         # if not "fasta" in self.sample_data.keys():
             # raise AssertionExcept("You need a 'fasta' file defined to run BLAST.\n\tIf the 'fasta' files are per sample, remove the 'projectBLAST' parameter.\n")
@@ -351,19 +351,19 @@ class Step_blast(Step):
         # Define query and db files:
         # If db is defined by user, set the query to the correct 'fasta2use'
         if "-db" in self.params["redir_params"].keys():
-            self.script += "-query %s \\\n\t" % self.sample_data["fasta." + self.fasta2use]
+            self.script += "-query %s \\\n\t" % self.sample_data["project_data"]["fasta." + self.fasta2use]
         # If -db is not defined by user, set the -db to the correct blastdb, with 'fasta2use'
         # -query must be set by user. assertion is made in step_specific_init()
         else:
-            self.script += "-db %s \\\n\t" % self.sample_data["blastdb." + self.fasta2use]
+            self.script += "-db %s \\\n\t" % self.sample_data["project_data"]["blastdb." + self.fasta2use]
                 
         self.script += "-out %s\n\n" % output_filename
             
         # Store BLAST result file:
-        self.sample_data["blast." + self.fasta2use] = (self.base_dir + os.path.basename(output_filename))
-        self.stamp_file(self.sample_data["blast." + self.fasta2use])
+        self.sample_data["project_data"]["blast." + self.fasta2use] = (self.base_dir + os.path.basename(output_filename))
+        self.stamp_file(self.sample_data["project_data"]["blast." + self.fasta2use])
 
-        self.sample_data["blast"] = self.sample_data["blast." + self.fasta2use] 
+        self.sample_data["project_data"]["blast"] = self.sample_data["project_data"]["blast." + self.fasta2use] 
 
         # Wrapping up function. Leave these lines at the end of every iteration:
         self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
@@ -383,7 +383,7 @@ class Step_blast(Step):
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
                 index_fh.write("%s\t%s\n" % (sample,self.sample_data[sample]["blast." + self.fasta2use]))
                 
-        self.sample_data["BLAST_files_index"] = self.base_dir + "BLAST_files_index.txt"
+        self.sample_data["project_data"]["BLAST_files_index"] = self.base_dir + "BLAST_files_index.txt"
         
   
         

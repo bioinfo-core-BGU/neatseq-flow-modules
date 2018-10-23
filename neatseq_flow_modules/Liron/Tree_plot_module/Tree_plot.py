@@ -151,7 +151,7 @@ class Step_Tree_plot(Step):
                     self.script +="env %s  \\\n" % self.params["env"]
                 self.script += "%s \\\n\t"  % self.params["script_path"]
                 if ('--tree' or '-t') not in self.params["redir_params"]:
-                    if 'newick' in self.sample_data:
+                    if 'newick' in self.sample_data["project_data"]:
                         self.script += "--tree %s \\\n\t" % self.sample_data["project_data"]['newick']
                     elif 'tree_by_heatmap' not in self.params.keys():
                         raise AssertionExcept("\tThere is no project level tree information found [No newick slot] \n"  )
@@ -161,16 +161,16 @@ class Step_Tree_plot(Step):
                         
                         
                 if '--Meta_Data' not in self.params["redir_params"]:
-                    if 'MetaData' in self.sample_data.keys():
+                    if 'MetaData' in self.sample_data["project_data"].keys():
                         self.script += "--Meta_Data %s \\\n\t" % self.sample_data["project_data"]['MetaData']  
-                    elif 'results' in self.sample_data.keys():
+                    elif 'results' in self.sample_data["project_data"].keys():
                         self.script += "--Meta_Data %s \\\n\t" % self.sample_data["project_data"]['results']
                     else:
                         raise AssertionExcept("\tThere is no project level MetaData information found [No MetaData/results slots] \n"  )
                 
                 if '--heatmap' in self.params["redir_params"]:
                     if self.params["redir_params"]['--heatmap']==None:
-                        if 'results' in self.sample_data.keys():
+                        if 'results' in self.sample_data["project_data"].keys():
                             self.params["redir_params"]['--heatmap']= self.sample_data["project_data"]['results']
                         else:
                             raise AssertionExcept("\t You must specify external heatmap file \n"  )
@@ -198,23 +198,23 @@ class Step_Tree_plot(Step):
                         self.script +="env %s  \\\n" % self.params["env"]
                     self.script += "%s \\\n\t"  % self.params["script_path"]
                     if ('--tree' or '-t') not in self.params["redir_params"]:
-                        if 'newick' in sample_data.keys():
-                            self.script += "--tree %s \\\n\t" % sample_data['newick']
+                        if 'newick' in sample_data["project_data"].keys():
+                            self.script += "--tree %s \\\n\t" % sample_data["project_data"]['newick']
                         else:
                             raise AssertionExcept("\tThere is no project level tree information found in base step : %s [No newick slot] \n"  % base.name  )
                     else:
                         raise AssertionExcept("\t you can't give external tree file when iterate_on_bases is set !!!\n"  )
                     if '--Meta_Data' not in self.params["redir_params"]:
-                        if 'MetaData' in self.sample_data.keys():
+                        if 'MetaData' in self.sample_data["project_data"].keys():
                             self.script += "--Meta_Data %s \\\n\t" % self.sample_data["project_data"]['MetaData']  
-                        elif 'results' in self.sample_data.keys():
+                        elif 'results' in self.sample_data["project_data"].keys():
                             self.script += "--Meta_Data %s \\\n\t" % self.sample_data["project_data"]['results']
                         else:
                             raise AssertionExcept("\tThere is no project level MetaData information found [No MetaData/results slots] \n"  )
                     
                     if '--heatmap' in self.params["redir_params"]:
                         if self.params["redir_params"]['--heatmap']==None:
-                            if 'results' in self.sample_data.keys():
+                            if 'results' in self.sample_data["project_data"].keys():
                                 self.params["redir_params"]['--heatmap']= self.sample_data["project_data"]['results']
                             else:
                                 raise AssertionExcept("\t You must specify external heatmap file \n"  )
@@ -241,16 +241,16 @@ class Step_Tree_plot(Step):
                     self.script += "--tree_by_heatmap \\\n\t" 
                     
                     if '--Meta_Data' not in self.params["redir_params"]:
-                        if 'MetaData' in self.sample_data.keys():
+                        if 'MetaData' in self.sample_data["project_data"].keys():
                             self.script += "--Meta_Data %s \\\n\t" % self.sample_data["project_data"]['MetaData']  
-                        elif 'results' in self.sample_data.keys():
+                        elif 'results' in self.sample_data["project_data"].keys():
                             self.script += "--Meta_Data %s \\\n\t" % self.sample_data["project_data"]['results']
                         else:
                             raise AssertionExcept("\tThere is no project level MetaData information found [No MetaData/results slots] \n"  )
                     
                     if '--heatmap' in self.params["redir_params"]:
                         if self.params["redir_params"]['--heatmap']==None:
-                            if 'results' in self.sample_data.keys():
+                            if 'results' in self.sample_data["project_data"].keys():
                                 self.params["redir_params"]['--heatmap']= self.sample_data["project_data"]['results']
                             else:
                                 raise AssertionExcept("\t You must specify external heatmap file \n"  )

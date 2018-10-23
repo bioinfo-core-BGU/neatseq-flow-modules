@@ -119,8 +119,8 @@ class Step_STAR_LoadRemoveGenome(Step):
 
         else:
             # If --genomeDir is not set, try using project genomeDir 
-            if "STAR.index" in self.sample_data:
-                self.params["redir_params"]["--genomeDir"] = self.sample_data["STAR.index"]
+            if "STAR.index" in self.sample_data["project_data"]:
+                self.params["redir_params"]["--genomeDir"] = self.sample_data["project_data"]["STAR.index"]
             else:
                 raise AssertionExcept("No reference exists at 'project' scope. Do you have a STAR_builder step defined?")
 

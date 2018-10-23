@@ -26,7 +26,7 @@ Output
 Puts output index files in one of the following slot:
 
     * ``self.sample_data[<sample>]["RSEM_index"]``
-    * ``self.sample_data["RSEM_index"]``
+    * ``self.sample_data["project_data"]["RSEM_index"]``
 
 
 Parameters that can be set
@@ -44,6 +44,17 @@ Lines for parameter file
 
 
 ::
+
+
+    RSEM_prep_ind:
+        module:             RSEM_prep
+        base:               merge1
+        script_path:        /path/to/RSEM
+        reference:              /path/to/fasta
+        redir_params:
+            --gtf:          /path/to/gtf
+            --transcript-to-gene-map: /path/to/map_file
+
 
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -82,7 +93,7 @@ class Step_RSEM_mapper(Step):
                 if "RSEM_index" not in self.sample_data[sample]:
                     raise AssertionExcept("No RSEM_index exists for RSEM mapper in sample!", sample)
         else:    #if self.params["scope"] == "project":
-            if "RSEM_index" not in self.sample_data:
+            if "RSEM_index" not in self.sample_data["project_data"]:
                 raise AssertionExcept("No RSEM_index exists for RSEM mapper!")
 
             
@@ -103,12 +114,13 @@ class Step_RSEM_mapper(Step):
 {path}{sep}rsem-generate-data-matrix \\
     {result_list} \\
     > {output}
+    
         """.format(path=os.path.dirname(self.params["script_path"]),
                    sep=os.sep,
                    result_list=results_list,
                    output=use_dir+output_basename)
-        self.sample_data[self.params["result2use"]+".matrix"] = self.base_dir + output_basename
-        self.stamp_file(self.sample_data[self.params["result2use"]+".matrix"])
+        self.sample_data["project_data"][self.params["result2use"]+".matrix"] = self.base_dir + output_basename
+        self.stamp_file(self.sample_data["project_data"][self.params["result2use"]+".matrix"])
 
         # Move all files from temporary local dir to permanent base_dir
         self.local_finish(use_dir, self.base_dir)  # Sees to copying local files to final destination (and other stuff)
@@ -163,9 +175,9 @@ class Step_RSEM_mapper(Step):
             if self.params["scope"] == "sample":
                 self.script += "%s \\\n\t" % self.sample_data[sample]["RSEM_index"]
             else:    # if self.params["scope"] == "project":
-                self.script += "%s \\\n\t" % self.sample_data["RSEM_index"]
+                self.script += "%s \\\n\t" % self.sample_data["project_data"]["RSEM_index"]
 
-            self.script += "{dir}{sample}".format(dir=sample_dir,sample=sample)
+            self.script += "{dir}{sample}\n\n".format(dir=sample_dir,sample=sample)
             # Saving bam files:
             if "--output-genome-bam" in self.params["redir_params"].keys():
                 if "--sort-bam-by-read-name" in self.params["redir_params"] or "--sort-bam-by-coordinate" in self.params["redir_params"]:

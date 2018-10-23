@@ -113,7 +113,8 @@ You must specify a 'mode':
         elif self.params["redir_params"]["--mode"] in ['prot', 'proteins']:
             self.type = "prot"
         else:
-            raise AssertionExcept("The value you passed to --mode (%s) is not a valid value" % self.params["redir_params"]["--mode"])
+            raise AssertionExcept("The value you passed to --mode ({mode}) is not a valid value".
+                                  format(mode=self.params["redir_params"]["--mode"]))
 
         if self.params["scope"] == "sample":
             # Check that "fasta" and "assembly" exist (signs that trinity has been executed)
@@ -121,8 +122,8 @@ You must specify a 'mode':
                 if ("fasta.%s" % self.type) not in self.sample_data[sample]:
                     raise AssertionExcept("It seems there is no sample-wide %s fasta file." % self.type, sample)
         elif self.params["scope"] == "project":
-            # print self.sample_data.keys()
-            if ("fasta.%s" % self.type) not in self.sample_data.keys():
+            if ("fasta.%s" % self.type) not in self.sample_data["project_data"]:
+                print "in here"
                 raise AssertionExcept("It seems there is no project-wide %s fasta file." % self.type)
         else:
             raise AssertionExcept("'scope' must be either 'sample' or 'project'.")

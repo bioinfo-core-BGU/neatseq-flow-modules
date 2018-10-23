@@ -205,10 +205,10 @@ class Step_trinity_new(Step):
         output_basename += ".Trinity.fasta"
 
         # Store results to fasta and assembly slots:
-        self.sample_data["fasta.nucl"] = os.path.join(self.base_dir, output_basename) 
-        self.sample_data[self.get_step_step() + ".contigs"] = self.sample_data["fasta.nucl"]
+        self.sample_data["project_data"]["fasta.nucl"] = os.path.join(self.base_dir, output_basename)
+        self.sample_data["project_data"][self.get_step_step() + ".contigs"] = self.sample_data["project_data"]["fasta.nucl"]
 
-        self.stamp_file(self.sample_data["fasta.nucl"])
+        self.stamp_file(self.sample_data["project_data"]["fasta.nucl"])
 
 
         #######################################################################################
@@ -238,8 +238,8 @@ fi
            cmd_text = cmd_text)
            
             
-            self.sample_data["gene_trans_map"] = "{contigs}.gene_trans_map".format(contigs=os.path.join(self.base_dir, output_basename))
-            self.stamp_file(self.sample_data["gene_trans_map"])
+            self.sample_data["project_data"]["gene_trans_map"] = "{contigs}.gene_trans_map".format(contigs=os.path.join(self.base_dir, output_basename))
+            self.stamp_file(self.sample_data["project_data"]["gene_trans_map"])
               
         # Move all files from temporary local dir to permanent base_dir
         self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)

@@ -6,39 +6,16 @@
 :Affiliation: Bioinformatics core facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
-A class that defines a module for RNA_seq assembly annotation using `Trinotate`_.
-
-.. _Trinotate: https://trinotate.github.io/
-
-.. Note:: This module will be updated in the future to support uploading of other sources of information such as RNAMMER output. See `Trinotate`_ documentation.
-
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    
-* A transcripts file in 
-    * self.sample_data["transcripts.fasta.nucl"],
-* A gene to transcript mapping file in: (produced by ``Trinity_gene_to_trans_map`` module)
-    * self.sample_data["gene_trans_map"], 
-* A protein fasta file (produced by ``TransDecoder``)
-    * self.sample_data["fasta.prot"])
-* Results of ``blastx`` of protein file against swissprot database:
-    * self.sample_data["blast.prot"], 
-* Results of ``blastn`` of transcripts file against swissprot database:
-    * self.sample_data["blast.nucl"], 
-* Results of ``hmmscan`` of protein file against pfam database:
-    * self.sample_data["hmmscan.prot"])
-    
-.. Attention:: If ``scope`` is set to ``sample``, all of the above files should be in the sample scope!
+
 
     
 Output:
 ~~~~~~~~~~~~~
 
-* puts Trinotate report file in:
 
-    * ``sample_data[<sample>]["trino.rep"]`` (``scope = sample``)
-    * ``sample_data["trino.rep"]`` (``scope = project``)
-        
+
 
                 
 Parameters that can be set        
@@ -47,26 +24,15 @@ Parameters that can be set
 .. csv-table:: 
     :header: "Parameter", "Values", "Comments"
 
-    "scope", "sample|project", ""
-    "sqlitedb","","Path to Trinotate sqlitedb"
-    "cp_sqlitedb","","Create local copy of the sqlitedb, before loading teh data (recommended)"
-    
+
+
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ::
 
-    trino_Trinotate:
-        module:             Trinotate
-        base:               
-                            - trino_blastp_sprot
-                            - trino_blastx_sprot
-                            - trino_hmmscan1
-        script_path:        {Vars.paths.Trinotate}
-        scope:              project
-        sqlitedb:           {Vars.databases.trinotate.sqlitedb}
-        cp_sqlitedb:    
-        
+
+
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -143,7 +109,7 @@ class Step_CollectRnaSeqMetrics(Step):
     #     output_basename = "{title}.RNAseqMetrics.out".format(title = self.sample_data["Title"])
     #
     #     if "bam" in self.sample_data:
-    #         input = self.sample_data["bam"]
+    #         input = self.sample_data["project_data"]["bam"]
     #     else:
     #         input = self.sample_data["sam"]
     #
@@ -153,15 +119,15 @@ class Step_CollectRnaSeqMetrics(Step):
     #         # If files are NOT in redirects but ARE in file index:
     #         if other_file not in self.params["redir_params"] and other_file in self.sample_data:
     #             self.script += "{filetype}={filename} \\\n\t".format(filetype=other_file,
-    #                                                                  filename=self.sample_data[other_file])
+    #                                                                  filename=self.sample_data["project_data"][other_file])
     #     self.script += "I={input} \\\n\tO={output}\n\n".format(input=input, output=use_dir+output_basename)
     #
     #     # Store results to fasta and assembly slots:
-    #     self.sample_data["RNAseqMetrics"] = self.base_dir + output_basename
-    #     self.stamp_file(self.sample_data["RNAseqMetrics"])
+    #     self.sample_data["project_data"]["RNAseqMetrics"] = self.base_dir + output_basename
+    #     self.stamp_file(self.sample_data["project_data"]["RNAseqMetrics"])
     #     for other_file in ["REF_FLAT","RIBOSOMAL_INTERVALS"]:
     #         if other_file in self.params["redir_params"]:
-    #             self.sample_data[other_file] = self.params["redir_params"][other_file]
+    #             self.sample_data["project_data"][other_file] = self.params["redir_params"][other_file]
     #
     #     # Move all files from temporary local dir to permanent base_dir
     #     self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)

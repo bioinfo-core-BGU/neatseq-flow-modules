@@ -187,11 +187,11 @@ class Step_megahit_assembl(Step):
             self.script += "--out-prefix %s \n\n" % out_prefix
             
             # Store results to fasta and assembly slots:
-            self.sample_data["fasta.nucl"] = self.base_dir + out_prefix + ".contigs.fa"
-            self.sample_data[self.get_step_step() + "_contigs"] = self.sample_data["fasta.nucl"]
-            self.sample_data["assembler"] = self.get_step_step()
+            self.sample_data["project_data"]["fasta.nucl"] = self.base_dir + out_prefix + ".contigs.fa"
+            self.sample_data["project_data"][self.get_step_step() + "_contigs"] = self.sample_data["project_data"]["fasta.nucl"]
+            self.sample_data["project_data"]["assembler"] = self.get_step_step()
 
-            self.stamp_file(self.sample_data[self.get_step_step() + "_contigs"])
+            self.stamp_file(self.sample_data["project_data"][self.get_step_step() + "_contigs"])
                 
 
                 

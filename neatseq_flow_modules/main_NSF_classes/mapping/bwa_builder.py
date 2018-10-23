@@ -26,7 +26,7 @@ Output
 
 * Puts output index files in one of the following slots:
     * ``self.sample_data[<sample>]["bwa_index"]``
-    * ``self.sample_data["bwa_index"]``
+    * ``self.sample_data["project_data"]["bwa_index"]``
 
 * Puts the fasta file in one of the following slot:
     * ``self.sample_data[<sample>]["reference"]``
@@ -83,7 +83,7 @@ class Step_bwa_builder(Step):
         if self.params["scope"] == "project":
             # Initializing project bwa slot
             try:
-                self.sample_data["fasta.nucl"]
+                self.sample_data["project_data"]["fasta.nucl"]
             except KeyError:
                 raise AssertionExcept("Project does not have a nucl fasta defined. Check your 'scope'\n", sample)
             else:
@@ -125,7 +125,7 @@ class Step_bwa_builder(Step):
             # self.script
         
         # try:    # Check if fasta nucl exists:
-            # self.sample_data["fasta.nucl"]
+            # self.sample_data["project_data"]["fasta.nucl"]
         if self.params["scope"] == "sample":
         
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
@@ -187,11 +187,11 @@ class Step_bwa_builder(Step):
             # Add target for index
             self.script += "-p %s \\\n\t" % (use_dir + output_prefix)
             # Add source for index
-            self.script += "%s \n\n" % self.sample_data["fasta.nucl"]
+            self.script += "%s \n\n" % self.sample_data["project_data"]["fasta.nucl"]
 
 
-            self.sample_data["bwa_index"] = (self.base_dir + output_prefix)
-            self.sample_data["bwa_fasta"] = self.sample_data["fasta.nucl"]
+            self.sample_data["project_data"]["bwa_index"] = (self.base_dir + output_prefix)
+            self.sample_data["project_data"]["bwa_fasta"] = self.sample_data["project_data"]["fasta.nucl"]
             
             
         

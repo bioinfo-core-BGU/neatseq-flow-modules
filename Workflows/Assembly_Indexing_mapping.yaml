@@ -116,7 +116,8 @@ Step_params:
         base:               megahit1
         script_path:        '{Vars.paths.bwa} index'
         scope:              project
-
+        # stop_and_show:
+        
     bwa_1:
         module:             bwa_mapper
         base:               bwa_bld_ind

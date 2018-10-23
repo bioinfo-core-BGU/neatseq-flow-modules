@@ -74,7 +74,8 @@ Step_params:
             --seqType:          fq
             --min_kmer_cov:     2
             # --full_cleanup:
-            
+        # stop_and_show:
+        
     Get_Trans_Map:
         module:             Trinity_gene_to_trans_map
         base:               Trinity_assembl
@@ -134,7 +135,7 @@ Step_params:
             --min_count:    1
             --min_sample:   2 
             --min_groups:   1
-
+        # stop_and_show:
 
 
     BUSCO1:

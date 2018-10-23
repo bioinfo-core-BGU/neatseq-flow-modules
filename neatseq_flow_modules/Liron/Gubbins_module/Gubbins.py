@@ -107,7 +107,7 @@ class Step_Gubbins(Step):
         
         # Assert that there is no project level nucleotide FASTA file :
         if (self.params["script_path"]!=None)&(self.params["script_path"]!=''):
-            assert {"fasta.nucl"} & set(self.sample_data.keys()), "No project level nucleotide FASTA file in step %s\n" % ( self.name)
+            assert {"fasta.nucl"} & set(self.sample_data["project_data"].keys()), "No project level nucleotide FASTA file in step %s\n" % ( self.name)
         
         pass
         

@@ -26,15 +26,15 @@ Output
 
 * Puts the resulting BIOM table in: 
 
-    * ``self.sample_data["biom_table"]``
+    * ``self.sample_data["project_data"]["biom_table"]``
     
 * Puts the BIOM table summary in:
 
-    * ``self.sample_data["biom_table_summary"]``
+    * ``self.sample_data["project_data"]["biom_table_summary"]``
 
 * Puts the BIOM table in tab-delimited format in:
 
-    * ``self.sample_data["biom_table_tsv"]``
+    * ``self.sample_data["project_data"]["biom_table_tsv"]``
 
 
     
@@ -106,9 +106,9 @@ class Step_qiime_sort_otu_table(Step):
             # Check if mapping file exists in sample_data
             if "qiime.mapping" in self.sample_data.keys():
                 self.write_warning("Overriding existing mapping file. Make sure this is OK")
-                # mapping_fp = self.sample_data["qiime.mapping"]
+                # mapping_fp = self.sample_data["project_data"]["qiime.mapping"]
 
-            self.sample_data["qiime.mapping"] = self.params["redir_params"]["--mapping_fp"] if "--mapping_fp" in self.params["redir_params"].keys() else self.params["redir_params"]["-m"]
+            self.sample_data["project_data"]["qiime.mapping"] = self.params["redir_params"]["--mapping_fp"] if "--mapping_fp" in self.params["redir_params"].keys() else self.params["redir_params"]["-m"]
         else:
             if "qiime.mapping" not in self.sample_data.keys():
                 raise AssertionExcept("No mapping file exists nor was it passed with -m")
@@ -149,13 +149,13 @@ class Step_qiime_sort_otu_table(Step):
 
         # Add mapping file if not passed as redir parameter
         if not "--mapping_fp" in self.params["redir_params"].keys() and not "-m" in self.params["redir_params"].keys():
-            self.script += "--mapping_fp %s \\\n\t" % self.sample_data["qiime.mapping"]
+            self.script += "--mapping_fp %s \\\n\t" % self.sample_data["project_data"]["qiime.mapping"]
 
-        self.script += "-i %s \\\n\t" % self.sample_data["biom_table"]
+        self.script += "-i %s \\\n\t" % self.sample_data["project_data"]["biom_table"]
         self.script += "-o %s \n\n" % "".join([use_dir,biom_table])
         
             
-        self.sample_data["biom_table"] = "".join([self.base_dir,biom_table])
+        self.sample_data["project_data"]["biom_table"] = "".join([self.base_dir,biom_table])
         
 
 
@@ -187,7 +187,7 @@ fi
             "cmd_text":cmd_text}
            
             
-            self.sample_data["biom_table_summary"] = "".join([self.base_dir,biom_table_summary])
+            self.sample_data["project_data"]["biom_table_summary"] = "".join([self.base_dir,biom_table_summary])
 
         ################################################################################################
         ## 
@@ -217,7 +217,7 @@ fi
             "cmd_text":cmd_text}
             
             # Store location of the tsv biom_table:
-            self.sample_data["biom_table_tsv"] = "".join([self.base_dir,biom_table_tsv])
+            self.sample_data["project_data"]["biom_table_tsv"] = "".join([self.base_dir,biom_table_tsv])
 
         
         

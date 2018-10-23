@@ -137,7 +137,7 @@ class Step_trinity_mapping(Step):
                     raise AssertionExcept("It seems there is no sample-wide assembly.", sample)
         elif self.params["scope"] == "project":
             # print self.sample_data.keys()
-            if "fasta.nucl" not in self.sample_data.keys():
+            if "fasta.nucl" not in self.sample_data["project_data"]:
                 raise AssertionExcept("It seems there is no project-wide assembly.")
         else:
             raise AssertionExcept("'scope' must be either 'sample' or 'project'.")
@@ -155,15 +155,15 @@ class Step_trinity_mapping(Step):
             if "--gene_trans_map" in self.params["redir_params"]:
                 self.use_gene_trans_map = True
                 if self.params["redir_params"]["--gene_trans_map"]:  # If value was passed
-                    self.sample_data["gene_trans_map"] = self.params["redir_params"]["--gene_trans_map"]
+                    self.sample_data["project_data"]["gene_trans_map"] = self.params["redir_params"]["--gene_trans_map"]
                 else:  # If passed empty, use internal:
                     if "gene_trans_map" in self.sample_data:
-                        self.params["redir_params"]["--gene_trans_map"] = self.sample_data["gene_trans_map"]
+                        self.params["redir_params"]["--gene_trans_map"] = self.sample_data["project_data"]["gene_trans_map"]
                     else:
                         raise AssertionExcept("Expecting 'gene_trans_map' in project but none found.\n")
 
             elif "--trinity_mode" in self.params["redir_params"]:
-                self.sample_data["gene_trans_map"] = "%s.gene_trans_map" % self.sample_data["fasta.nucl"]
+                self.sample_data["project_data"]["gene_trans_map"] = "%s.gene_trans_map" % self.sample_data["project_data"]["fasta.nucl"]
                 self.use_gene_trans_map = True
             else:
                 self.use_gene_trans_map = False
@@ -211,14 +211,14 @@ cp -rs \\
     {ref} \\
     {dir}
 
-""".format(ref=self.sample_data["fasta.nucl"],
+""".format(ref=self.sample_data["project_data"]["fasta.nucl"],
                              dir=self.base_dir+"Reference")
-            self.sample_data["fasta.nucl"] = self.base_dir+"Reference/"+os.path.basename(self.sample_data["fasta.nucl"])
+            self.sample_data["project_data"]["fasta.nucl"] = self.base_dir+"Reference/"+os.path.basename(self.sample_data["project_data"]["fasta.nucl"])
             # Create script and write to SCRPT
             # First: transcript preparation (with --pre_reference arg)
             self.script += self.get_script_const()
             self.script += "--aln_method %s \\\n\t"   % self.params["aln_method"]
-            self.script += "--transcripts %s \\\n\t"   % self.sample_data["fasta.nucl"]
+            self.script += "--transcripts %s \\\n\t"   % self.sample_data["project_data"]["fasta.nucl"]
             self.script += "--prep_reference \n\n"
             
 
@@ -284,7 +284,7 @@ cp -rs \\
             
             transcripts = self.sample_data[sample]["fasta.nucl"] \
                 if self.params["scope"] == "sample" \
-                else  self.sample_data["fasta.nucl"]
+                else  self.sample_data["project_data"]["fasta.nucl"]
                 
 
             if all([self.params["scope"] == "sample",   \

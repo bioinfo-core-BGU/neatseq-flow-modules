@@ -174,8 +174,8 @@ class Step_mash_sketch(Step):
                                 self.script += "rm -rf %s \n\n" % file
 
                     # Store msh file:
-                    self.sample_data["msh." + type] = (output_filename + ".msh")
-                    self.stamp_file(self.sample_data["msh." + type])
+                    self.sample_data["project_data"]["msh." + type] = (output_filename + ".msh")
+                    self.stamp_file(self.sample_data["project_data"]["msh." + type])
 
     def build_scripts(self):
         """ This is the actual script building function
@@ -300,7 +300,7 @@ class Step_mash_sketch(Step):
             # If there is only one file, use it
             # final_input_filename points to source file
             if len(filetype_lists[filetype]) == 1:  # Only one file
-                input_filename = self.sample_data[filetype_lists[filetype][0]]
+                input_filename = self.sample_data["project_data"][filetype_lists[filetype][0]]
                 final_input_filename = input_filename
             # If there is are more than one file, concatenate them
             # final_input_filename points to the new concatenated file
@@ -309,7 +309,7 @@ class Step_mash_sketch(Step):
                 final_input_filename = self.base_dir + self.sample_data["Title"] + ".merged." + filetype
                 self.script += "cat \\\n\t"
                 for spec_type in filetype_lists[filetype]:
-                    self.script += "%s \\\n\t" % self.sample_data[spec_type]
+                    self.script += "%s \\\n\t" % self.sample_data["project_data"][spec_type]
                 self.script += "> %s\n\n" % input_filename
 
             # Define output filename 
@@ -324,10 +324,10 @@ class Step_mash_sketch(Step):
                 self.script += "rm -rf %s \n\n" % input_filename
 
             # Store msh file:
-            self.sample_data["msh." + filetype] = (self.base_dir + output_filename + ".msh")
-            self.sample_data[filetype] = final_input_filename
-            self.stamp_file(self.sample_data["msh." + filetype])
-            self.stamp_file(self.sample_data[filetype])
+            self.sample_data["project_data"]["msh." + filetype] = (self.base_dir + output_filename + ".msh")
+            self.sample_data["project_data"][filetype] = final_input_filename
+            self.stamp_file(self.sample_data["project_data"]["msh." + filetype])
+            self.stamp_file(self.sample_data["project_data"][filetype])
             
             # Leave these lines at the end of every iteration:
             self.local_finish(use_dir,self.base_dir)

@@ -82,30 +82,37 @@ class Step_bowtie2_builder(Step):
         """
 
         if self.params["scope"] == "project":
-            # Initializing project bowtie2 slot
-            try:
-                self.sample_data["project_data"]["fasta.nucl"]
-            except KeyError:
-                raise AssertionExcept("Project does not have a nucl fasta defined. Check your 'scope'\n", sample)
-            # else:
-                # if "bowtie2_index" in self.sample_data.keys():
-                    # raise AssertionExcept("bowtie2 index already seems to exist.\n")
+            sample_list = ["project_data"]
+        elif self.params["scope"] == "sample":
+            sample_list = self.sample_data["samples"]
+        else:
+            raise AssertionExcept("'scope' must be either 'sample' or 'project'")
+
+        # if self.params["scope"] == "project":
+        #     # Initializing project bowtie2 slot
+        #     try:
+        #         self.sample_data["project_data"]["fasta.nucl"]
+        #     except KeyError:
+        #         raise AssertionExcept("Project does not have a nucl fasta defined. Check your 'scope'\n", sample)
+        #     # else:
+        #         # if "bowtie2_index" in self.sample_data.keys():
+        #             # raise AssertionExcept("bowtie2 index already seems to exist.\n")
             
                 
 
-        elif self.params["scope"] == "sample":
-            for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-                try:
-                    self.sample_data[sample]["fasta.nucl"]
-                except KeyError:
-                    raise AssertionExcept("Sample does not have a nucl fasta defined. Can't build index\n", sample)
-                else:
-                    if "bowtie2_index" in self.sample_data[sample].keys():
-                        raise AssertionExcept("bowtie2 index already exists for sample.\n", sample)
+        # elif self.params["scope"] == "sample":
+        for sample in sample_list:      # Getting list of samples out of samples_hash
+            try:
+                self.sample_data[sample]["fasta.nucl"]
+            except KeyError:
+                raise AssertionExcept("No 'fasta.nucl' defined. Can't build index\n", sample)
+            else:
+                if "bowtie2_index" in self.sample_data[sample].keys():
+                    raise AssertionExcept("bowtie2 index already exists for sample.\n", sample)
             
-        else:
-            raise AssertionExcept("Scope must be either 'sample' or 'project'")
-                
+        # else:
+        #     raise AssertionExcept("Scope must be either 'sample' or 'project'")
+        #
              
         
     def create_spec_wrapping_up_script(self):

@@ -55,7 +55,7 @@ Can take one of two values:
 
 Will be replaced with the filename specified in the named output. *e.g.* ``{{o:fasta.nucl}}`` will be replced according to the specifications in the output block named ``fasta.nucl``.
 
-Each output block must contain 2 fields: ``scope`` and ``name``. The name contains a string describing the file to be stored in the equivalent slot. In the example above, there must be a block called ``fasta.nucl`` in the ``output`` block which can be defined as shown in the example in section **Lines for parameter file** below.
+Each output block must contain 2 fields: ``scope`` and ``string``. The string contains a string describing the file to be stored in the equivalent slot. In the example above, there must be a block called ``fasta.nucl`` in the ``output`` block which can be defined as shown in the example in section **Lines for parameter file** below.
 
 
 Requires:
@@ -74,7 +74,7 @@ Parameters that can be set
     :header: "Parameter", "Values", "Comments"
     :widths: 5,10,10
 
-    "output", "", "A block including 'scope' and 'name' definining the script outputs"
+    "output", "", "A block including 'scope' and 'string' definining the script outputs"
 
 
 Lines for parameter file
@@ -99,7 +99,7 @@ Demonstration of embedding various files and titles in a script file::
         output:
             fasta.nucl:
                 scope:      project
-                name:       "{{base_dir}}{{project}}_new_pipegen3.fasta"
+                string:       "{{base_dir}}{{project}}_new_pipegen3.fasta"
 
 
 """
@@ -134,13 +134,16 @@ class Step_pipe_generic(Step):
 
         # Get all user defined variables in string
         variables = list(set(re.findall(pattern="\{\{(.*?)\}\}", string=self.params["script_path"])))
-
+        # Find all variables in outputs:
+        for result in [re.findall(pattern="\{\{(.*?)\}\}",string=v["string"]) for a,v in self.params["output"].iteritems()]:
+            variables.extend(result)
+        # print list(set(variables))
         # Default scope is project
         self.params["scope"] = "project"
 
         # Check the definition of all variables
         for variable in variables:
-            var_def = re.findall(pattern="([^\:]*)\:?",string=variable)
+            var_def = re.findall(pattern="([^\:]*)\:?", string=variable)
             # print variable
             # print var_def
             # If variable scope is sample and the separator field (3rd slot) is not defined, change scope to sample
@@ -163,13 +166,13 @@ class Step_pipe_generic(Step):
         """
         
         # TODO: Check that files exist for the analysis
-        # print [self.params["output"][outp]["name"]
+        # print [self.params["output"][outp]["string"]
         #        for outp
         #        in self.params["output"]
         #        if self.params["output"][outp]["scope"]=="project"]
         # for outp in self.params["output"]:
         #     if self.params["output"][outp]["scope"]=="project"]:
-        #         self.params["output"][outp]["name"] = self.format_script_path()
+        #         self.params["output"][outp]["string"] = self.format_script_path()
         # sys.exit()
         pass
 
@@ -199,93 +202,70 @@ class Step_pipe_generic(Step):
         """ This is the actual script building function
             
         """
-
-
-        if self.params["scope"] =="sample":
-            for sample in self.sample_data["samples"]:
-
-                # Name of specific script:
-                self.spec_script_name = self.set_spec_script_name(sample)
-                self.script = ""
-
-                # Make a dir for the current sample:
-                sample_dir = self.make_folder_for_sample(sample)
-
-                # This line should be left before every new script. It sees to local issues.
-                # Use the dir it returns as the base_dir for this step.
-                use_dir = self.local_start(sample_dir)
-
-                if "output" in self.params:
-                    self.params_output = deepcopy(self.params["output"])
-                else:
-                    self.params_output = {}
-                for outp in self.params_output:
-                    self.params_output[outp]["name"] = self.format_script_path(string=self.params_output[outp]["name"],
-                                                                                  use_dir=use_dir,
-                                                                                  sample=sample)
-
-                self.script = self.format_script_path(self.params["script_path"],
-                                                      use_dir=use_dir,
-                                                      sample=sample)
-                # # Try using function to include export (setenv) etc...
-
-                # if "output" in self.params:
-                for outp in self.params_output:
-                    if self.params_output[outp]["scope"] == "sample":
-                        self.sample_data[sample][outp] = self.format_script_path(string=self.params_output[outp]["name"],
-                                                                                 use_dir=use_dir,
-                                                                                 sample=sample)
-                        self.stamp_file(self.sample_data[sample][outp])
-                    else:
-                        self.sample_data[outp] = self.format_script_path(
-                            string=self.params_output[outp]["name"],
-                            use_dir=use_dir)
-                        self.stamp_file(self.sample_data[outp])
-
-                # Wrapping up function. Leave these lines at the end of every iteration:
-                self.local_finish(use_dir, sample_dir)
-                self.create_low_level_script()
+        if self.params["scope"] == "project":
+            sample_list = ["project_data"]
+        elif self.params["scope"] == "sample":
+            sample_list = self.sample_data["samples"]
         else:
+            raise AssertionExcept("'scope' must be either 'sample' or 'project'")
+
+        for sample in sample_list:  # Getting list of samples out of samples_hash
 
             # Name of specific script:
-            self.spec_script_name = self.set_spec_script_name()
+            self.spec_script_name = self.set_spec_script_name(sample)
             self.script = ""
 
             # Make a dir for the current sample:
-            sample_dir = self.base_dir  #self.make_folder_for_sample()
+            sample_dir = self.make_folder_for_sample(sample)
 
             # This line should be left before every new script. It sees to local issues.
             # Use the dir it returns as the base_dir for this step.
             use_dir = self.local_start(sample_dir)
 
+            # Creating new copy of params output so that samples don't modify the global version
             if "output" in self.params:
                 self.params_output = deepcopy(self.params["output"])
             else:
                 self.params_output = {}
             for outp in self.params_output:
-                self.params_output[outp]["name"] = self.format_script_path(string=self.params_output[outp]["name"],
-                                                                           use_dir=use_dir)
+                self.params_output[outp]["string"] = self.format_script_path(string=self.params_output[outp]["string"],
+                                                                           use_dir=use_dir,
+                                                                           sample=sample)
 
-            self.script = self.format_script_path(self.params["script_path"],
-                                                  use_dir=use_dir)
+            self.script = self.format_script_path(string=self.params["script_path"],
+                                                  use_dir=use_dir,
+                                                  sample=sample)
             # # Try using function to include export (setenv) etc...
 
             # if "output" in self.params:
             for outp in self.params_output:
-                if self.params_output[outp]["scope"] == "sample":
+                # If script and output scopes are identical:
+                if self.params_output[outp]["scope"] == self.params["scope"]:
+                    # Store type after formatting:
+                    self.sample_data[sample][outp] = \
+                        self.format_script_path(string=self.params_output[outp]["string"],
+                                                use_dir=use_dir,
+                                                sample=sample)
+                    self.stamp_file(self.sample_data[sample][outp])
+                # If script is project and output is sample:
+                elif self.params_output[outp]["scope"] == "sample":
                     self.write_warning("Writing sample scope output for project scope script!")
-                    for sample in self.sample_data["samples"]:
-                        self.sample_data[sample][outp] = self.format_script_path(
-                            string=self.params_output[outp]["name"],
-                            use_dir=use_dir,
-                            sample=sample)
-                        self.stamp_file(self.sample_data[sample][outp])
+                    for outp_sample in self.sample_data["samples"]:
+                        self.sample_data[outp_sample][outp] = \
+                            self.format_script_path(string=self.params_output[outp]["string"],
+                                                    use_dir=use_dir,
+                                                    sample=outp_sample)
+                        self.stamp_file(self.sample_data[outp_sample][outp])
+                # If script is sample and output is project:
+                elif self.params_output[outp]["scope"] == "project":
+                    self.write_warning("Writing project scope output for sample scope script!")
+                    self.sample_data["project_data"][outp] = \
+                        self.format_script_path(string=self.params_output[outp]["string"],
+                                                use_dir=use_dir,
+                                                sample=sample)
+                    self.stamp_file(self.sample_data["project_data"][outp])
                 else:
-                    self.sample_data[outp] = self.format_script_path(
-                        string=self.params_output[outp]["name"],
-                        use_dir=use_dir)
-                    self.stamp_file(self.sample_data[outp])
-
+                    pass
             # Wrapping up function. Leave these lines at the end of every iteration:
             self.local_finish(use_dir, sample_dir)
             self.create_low_level_script()
@@ -296,6 +276,8 @@ class Step_pipe_generic(Step):
         :return:
         """
 
+        if sample == "project_data":
+            sample = None
         # Use self.get_base_sample_data() to get historic files (4th entry in input strings)
 
         rawstring=string
@@ -328,14 +310,11 @@ class Step_pipe_generic(Step):
             if var_def[0] == "project":
                 repl_str=""
                 if not var_def[1]:  # Type not defined, use title
-                    # rawstring = re.sub(pattern=re.escape(variable),
-                    #                      repl=self.sample_data["Title"],
-                    #                      string=rawstring)
                     repl_str = self.sample_data["Title"]
                 else:                # Type defined
                     if not var_def[3]:  # Base not defined. Use current
                         try:
-                            repl_str = ("{!r}".format(self.sample_data[var_def[1]])).strip("'")
+                            repl_str = ("{!r}".format(self.sample_data["project_data"][var_def[1]])).strip("'")
                         except KeyError:
                             raise AssertionExcept(
                                 "File type '{type}' not found in project scope".format(type=var_def[1]))
@@ -344,15 +323,13 @@ class Step_pipe_generic(Step):
                         if var_def[3] not in self.get_base_sample_data():
                             raise AssertionExcept("No base '{base}' defined!".format(base=var_def[3]))
                         try:
-                            repl_str = ("{!r}".format(self.get_base_sample_data()[var_def[3]][var_def[1]])).strip("'")
+                            repl_str = ("{!r}".format(self.get_base_sample_data()[var_def[3]]["project_data"][var_def[1]])).strip("'")
                         except KeyError:
                             raise AssertionExcept("No file of type '{type}' in project scope for base '{base}'".
                                                   format(type=var_def[1],
                                                          base=var_def[3]))
 
                 rawstring = re.sub(pattern=re.escape(variable),
-                                     # repl=("{!r}".format(self.sample_data[re_match.group(1)])).strip("'"),
-                                     # repl=("{!r}".format(self.sample_data[var_def[1]])).strip("'"),
                                    repl=repl_str,
                                    string=rawstring)
 
@@ -401,7 +378,7 @@ class Step_pipe_generic(Step):
             if var_def[0] == "o":
                 try:
                     rawstring = re.sub(pattern=re.escape(variable),
-                                         repl=("{!r}".format(self.params_output[var_def[1]]["name"])).strip("'"),
+                                         repl=("{!r}".format(self.params_output[var_def[1]]["string"])).strip("'"),
                                          string=rawstring)
                 except KeyError:
                     raise AssertionExcept("Error embedding output '{var}'".format(var=variable), sample)

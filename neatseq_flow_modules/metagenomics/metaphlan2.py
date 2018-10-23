@@ -34,11 +34,11 @@ Output
     
 * If ``ktImportText_path`` parameter was passed, puts the krona reports in 
 
-    * ``self.sample_data["krona"]``
+    * ``self.sample_data["project_data"]["krona"]``
 
 * If ``merge_metaphlan_tables`` was passed, puts the merged reports in 
 
-    * ``self.sample_data["merged_metaphlan2"]``
+    * ``self.sample_data["project_data"]["merged_metaphlan2"]``
 
 
 * If '--biom' is set in ``redirects``, the biom table is put in:
@@ -180,8 +180,8 @@ class Step_metaphlan2(Step):
             self.script = self.script.rstrip("\\\n\t") 
             self.script += "\n\n\n"
             # Storing and stamping results:
-            self.sample_data["krona"] = krona_report_fn
-            self.stamp_file(self.sample_data["krona"])
+            self.sample_data["project_data"]["krona"] = krona_report_fn
+            self.stamp_file(self.sample_data["project_data"]["krona"])
             
         if "merge_metaphlan_tables" in self.params:
             self.script += "# Merging all metaphlan2 reports into single table\n\n"
@@ -190,7 +190,7 @@ class Step_metaphlan2(Step):
                 self.script += "%s \\\n\t" % self.sample_data[sample]["raw_classification"]
             self.script += "> %s%s \n\n" % (self.base_dir, self.sample_data["Title"]+"_merged_table.txt")
 
-            self.sample_data["merged_metaphlan2"] = (self.base_dir, self.sample_data["Title"]+"_merged_table.txt")
+            self.sample_data["project_data"]["merged_metaphlan2"] = (self.base_dir, self.sample_data["Title"]+"_merged_table.txt")
         
         
     def build_scripts(self):
@@ -287,5 +287,5 @@ class Step_metaphlan2(Step):
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
                 index_fh.write("%s\t%s\n" % (sample,self.sample_data[sample]["classification"]))
                 
-        self.sample_data["metaphlan2_files_index"] = self.base_dir + "metaphlan2_files_index.txt"
+        self.sample_data["project_data"]["metaphlan2_files_index"] = self.base_dir + "metaphlan2_files_index.txt"
         
