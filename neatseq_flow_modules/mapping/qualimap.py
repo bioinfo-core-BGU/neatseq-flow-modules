@@ -16,7 +16,7 @@ Requires
 * bam files in one of the following slots:
 
     * ``sample_data[<sample>]["bam"]``
-    * ``sample_data["bam"]``
+    * ``sample_data["project_data"]["bam"]``
 
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

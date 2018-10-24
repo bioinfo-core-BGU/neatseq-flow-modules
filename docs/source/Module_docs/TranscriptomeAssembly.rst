@@ -21,6 +21,6 @@ Transcriptome Assembly
 
 .. automodule:: neatseq_flow_modules.main_NSF_classes.Assembly.quast
 
-.. automodule:: neatseq_flow_modules.mapping.htseq_count.py
+.. automodule:: neatseq_flow_modules.mapping.htseq_count
 
 
