@@ -52,15 +52,15 @@ The samtools programs included in the module are the following:
 
 * If ``fastq`` was called, will also create the following files:
 
-    * ``self.sample_data[<sample>]["fastq.F"]
-    * ``self.sample_data[<sample>]["fastq.R"]
-    * ``self.sample_data[<sample>]["fastq.S"]
+    * ``self.sample_data[<sample>]["fastq.F"]``
+    * ``self.sample_data[<sample>]["fastq.R"]``
+    * ``self.sample_data[<sample>]["fastq.S"]``
 
 * If ``fasta`` was called, will also create the following files:
 
-    * ``self.sample_data[<sample>]["fasta.F"]
-    * ``self.sample_data[<sample>]["fasta.R"]
-    * ``self.sample_data[<sample>]["fasta.S"]
+    * ``self.sample_data[<sample>]["fasta.F"]``
+    * ``self.sample_data[<sample>]["fasta.R"]``
+    * ``self.sample_data[<sample>]["fasta.S"]``
 
 
 .. Note:: If ``sample`` is set to ``project``, the above mentioned output files will be created in the project
