@@ -11,7 +11,7 @@ A class that defines a module for RNA_seq assembly using the `Trinity assembler`
 
 .. Attention:: This module was tested on release 2.5.x. It should also work with 2.4.x 
     
-    For old versions of Trinity, you might need to use ``trinity`` module.
+    For old versions of Trinity, you might need to use ``trinity_old`` module.
     
     The main difference between the modules is that ``trinity`` creates an output directory with the word `trinity` in it as required by the newer release of Trinity.
     
