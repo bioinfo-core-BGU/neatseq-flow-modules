@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``trinity`` :sup:`*`
+``trinity_old`` :sup:`*`
 -----------------------------------------------------------------
 :Authors: Menachem Sklarz
 :Affiliation: Bioinformatics core facility
@@ -8,19 +8,8 @@
 
 A class that defines a module for RNA_seq assembly using the `Trinity assembler`_.
 
-
-.. Attention:: This module was tested on release 2.5.x. It should also work with 2.4.x 
-    
-    For old versions of Trinity, you might need to use ``trinity`` module.
-    
-    The main difference between the modules is that ``trinity_new`` creates an output directory with the word `trinity` in it as required by the newer release of Trinity.
-    
-    In order to run on the cluster, you need to install `HpcGridRunner`_.     
-    
 .. _Trinity assembler: https://github.com/trinityrnaseq/trinityrnaseq/wiki
-.. _HpcGridRunner: http://hpcgridrunner.github.io/
-
-
+ 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     
@@ -53,7 +42,8 @@ Parameters that can be set
 .. csv-table:: 
     :header: "Parameter", "Values", "Comments"
 
-    "scope", "sample|project", "Set if project-wide fasta slot should be used"
+    "scope", "sample|project", "Create one assembly for all samples or one assembly per sample."
+    "skip_gene_to_trans_map", "", "Set to skip executing get_Trinity_gene_to_trans_map.pl on assembly"
     
     
 Lines for parameter file
@@ -62,18 +52,18 @@ Lines for parameter file
 ::
 
     trinity1:
-        module:                 trinity
-        base:                   trin_tags1
-        script_path:            {Vars.paths.Trinity}
+        module:     trinity_old
+        base:       trin_tags1
+        script_path: /path/to/Trinity
         qsub_params:
-            node:               sge213
-            -pe:                shared 20
+            node:      sge213
+            -pe:       shared 20
+        # skip_gene_to_trans_map:
         redirects:
-            --grid_exec:        "{Vars.paths.hpc_cmds_GridRunner} --grid_conf {Vars.paths.SGE_Trinity_conf} -c" 
-            --grid_node_CPU:    40 
-            --grid_node_max_memory: 80G 
-            --max_memory:        80G 
+            --grid_conf:        /path/to/SGE_Trinity_conf.txt
+            --CPU:              20
             --seqType:          fq
+            --JM:               140G
             --min_kmer_cov:     2
             --full_cleanup:
 
@@ -96,11 +86,12 @@ __author__ = "Menachem Sklarz"
 __version__ = "1.1.0"
 
 
-class Step_trinity_new(Step):
+class Step_trinity_old(Step):
     
     def step_specific_init(self):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = ".Trinity.fasta"
+        
         
         
     def step_sample_initiation(self):
@@ -188,11 +179,8 @@ class Step_trinity_new(Step):
 
         self.script += self.get_script_const()
 
-        # Adding 'trinity' to output dir:
-        # "output directory must contain the word 'trinity' as a safety precaution, given that auto-deletion can take place."
-        output_basename = "{title}_trinity".format(title = self.sample_data["Title"])
         # The results will be put in data/step_name/name/Title
-        self.script += "--output %s \\\n\t" % os.path.join(use_dir, output_basename)
+        self.script += "--output %s \\\n\t" % os.sep.join([use_dir, self.sample_data["Title"]])
             
         #add if single or paired!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if (forward): 
@@ -201,15 +189,13 @@ class Step_trinity_new(Step):
         elif (single):
             self.script += "--single %s \n\n" % single
         
-        # The assembly itself is stored in the prefix + .Trinity.fasta:
-        output_basename += ".Trinity.fasta"
+        
 
         # Store results to fasta and assembly slots:
-        self.sample_data["fasta.nucl"] = os.path.join(self.base_dir, output_basename) 
+        self.sample_data["fasta.nucl"] = "%s%s%s%s" % (self.base_dir, os.sep, self.sample_data["Title"], self.file_tag)
         self.sample_data[self.get_step_step() + ".contigs"] = self.sample_data["fasta.nucl"]
 
-        self.stamp_file(self.sample_data["fasta.nucl"])
-
+        self.stamp_file(self.sample_data[self.get_step_step() + ".contigs"])
 
         #######################################################################################
         ## 
@@ -221,26 +207,26 @@ class Step_trinity_new(Step):
     {script_path} \\
         {transcriptome} \\
         > {map} 
-""".format(transcriptome = os.path.join(use_dir, output_basename) ,\
+""".format(transcriptome = "%s%s%s%s" % (use_dir, os.sep, self.sample_data["Title"], self.file_tag),\
            script_path   = os.path.join(os.path.dirname(os.path.normpath(self.params["script_path"])) , \
                                           "util/support_scripts/get_Trinity_gene_to_trans_map.pl"),\
-           map           = "{contigs}.gene_trans_map".format(contigs=os.path.join(use_dir, output_basename)))
+           map           = "%s%s%s%s.gene_trans_map" % (use_dir, os.sep, self.sample_data["Title"], self.file_tag))
            
             
             self.script += """
-# Creating transcript to gene mapping file:
+# Create summary of biom table for use in rarefaction later
 
 if [ -e {transcriptome} ]
 then
 	{cmd_text}
 fi
-""".format(transcriptome = os.path.join(use_dir, output_basename),
+""".format(transcriptome = "%s%s%s%s" % (use_dir, os.sep, self.sample_data["Title"], self.file_tag),\
            cmd_text = cmd_text)
            
             
-            self.sample_data["gene_trans_map"] = "{contigs}.gene_trans_map".format(contigs=os.path.join(self.base_dir, output_basename))
+            self.sample_data["gene_trans_map"] = "%s%s%s%s.gene_trans_map" % (self.base_dir, os.sep, self.sample_data["Title"], self.file_tag)
             self.stamp_file(self.sample_data["gene_trans_map"])
-              
+       
         # Move all files from temporary local dir to permanent base_dir
         self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
      
@@ -267,11 +253,8 @@ fi
             use_dir = self.local_start(sample_dir)
 
             self.script += self.get_script_const()
-            # Adding 'trinity' to output dir:
-            # "output directory must contain the word 'trinity' as a safety precaution, given that auto-deletion can take place."
-            output_basename = "{title}_trinity".format(title = sample)
 
-            self.script += "--output %s \\\n\t" % os.path.join(use_dir,output_basename)
+            self.script += "--output %s \\\n\t" % use_dir
             
             if "fastq.F" in self.sample_data[sample].keys():
                 self.script += "--left %s \\\n\t" % self.sample_data[sample]["fastq.F"]
@@ -282,16 +265,11 @@ fi
             # If there is an extra "\\\n\t" at the end of the script, remove it.
             self.script = self.script.rstrip("\\\n\t") + "\n\n"
 
-            # The assembly itself is stored in the prefix + .Trinity.fasta:
-            output_basename += ".Trinity.fasta"
-
             # Store results to fasta and assembly slots:
-            self.sample_data[sample]["fasta.nucl"] = os.path.join(sample_dir, output_basename) 
+            self.sample_data[sample]["fasta.nucl"] = sample_dir + "Trinity.fasta"
+            self.sample_data[sample][self.get_step_step() + ".contigs"] = sample_dir + "Trinity.fasta"
 
-            self.sample_data[sample][self.get_step_step() + ".contigs"] = self.sample_data[sample]["fasta.nucl"]
-
-            self.stamp_file(self.sample_data[sample]["fasta.nucl"])
-
+            self.stamp_file(self.sample_data[sample][self.get_step_step() + ".contigs"])
 
             #######################################################################################
             ## 
@@ -303,10 +281,10 @@ fi
         {script_path} \\
             {transcriptome} \\
             > {map} 
-""".format(transcriptome = os.path.join(use_dir,output_basename),\
+""".format(transcriptome = use_dir + "Trinity.fasta",\
            script_path   = os.sep.join([os.path.split(os.path.normpath(self.params["script_path"]))[0] , \
                                           "util/support_scripts/get_Trinity_gene_to_trans_map.pl"]),\
-           map           = "{contigs}.gene_trans_map".format(contigs=os.path.join(use_dir, output_basename)))
+           map           = use_dir + "Trinity.fasta.gene_trans_map")
            
             
                 self.script += """
@@ -316,14 +294,14 @@ if [ -e {transcriptome} ]
 then
     {cmd_text}
 fi
-""".format(transcriptome = os.path.join(use_dir, output_basename),
+""".format(transcriptome = use_dir + "Trinity.fasta",\
            cmd_text = cmd_text)
            
                 
-                self.sample_data[sample]["gene_trans_map"] = "{contigs}.gene_trans_map".format(contigs=os.path.join(sample_dir, output_basename))
+                self.sample_data[sample]["gene_trans_map"] = "%s%s%s.gene_trans_map" % (sample_dir, os.sep, self.file_tag)
                 self.stamp_file(self.sample_data[sample]["gene_trans_map"])
            
-                                
+                
             # Wrapping up function. Leave these lines at the end of every iteration:
             self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)
 
