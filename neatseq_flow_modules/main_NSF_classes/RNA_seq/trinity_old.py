@@ -294,21 +294,12 @@ if [ -e {transcriptome} ]
 then
     {cmd_text}
 fi
-""".format(transcriptome = use_dir + "Trinity.fasta",\
+""".format(transcriptome = use_dir + "Trinity.fasta",
            cmd_text = cmd_text)
            
                 
                 self.sample_data[sample]["gene_trans_map"] = "%s%s%s.gene_trans_map" % (sample_dir, os.sep, self.file_tag)
                 self.stamp_file(self.sample_data[sample]["gene_trans_map"])
-           
-                
-            # Wrapping up function. Leave these lines at the end of every iteration:
-            self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)
 
+            self.local_finish(use_dir,sample_dir)
             self.create_low_level_script()
-                        
-            
-            
-                 
-            
-     
