@@ -10,7 +10,7 @@ Generic Module
 
 .. automodule:: neatseq_flow_modules.main_NSF_classes.Generic_module.Generic
 
-.. automodule:: neatseq_flow_modules.miscellaneous.pipe_generic
+.. .. automodule:: neatseq_flow_modules.main_NSF_classes.miscellaneous.pipe_generic
 
 
 

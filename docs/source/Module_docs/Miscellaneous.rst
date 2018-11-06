@@ -9,13 +9,13 @@ Miscellaneous Modules
 
 
 
-.. automodule:: neatseq_flow_modules.miscellaneous.manage_types
+.. automodule:: neatseq_flow_modules.main_NSF_classes.miscellaneous.manage_types
 
-.. automodule:: neatseq_flow_modules.miscellaneous.merge_table
+.. automodule:: neatseq_flow_modules.main_NSF_classes.miscellaneous.merge_table
 
-.. automodule:: neatseq_flow_modules.miscellaneous.split_fasta
+.. automodule:: neatseq_flow_modules.main_NSF_classes.miscellaneous.split_fasta
 
-.. automodule:: neatseq_flow_modules.miscellaneous.ProjectToSample
+.. automodule:: neatseq_flow_modules.main_NSF_classes.miscellaneous.ProjectToSample
 
 
 

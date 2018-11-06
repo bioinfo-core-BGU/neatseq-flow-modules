@@ -121,7 +121,7 @@ Altschul, S.F., Madden, T.L., Schäffer, A.A., Zhang, J., Zhang, Z., Miller, W. 
 import os
 import sys
 import re
-from neatseq_flow.PLC_step import Step,AssertionExcept
+from neatseq_flow.PLC_step import Step, AssertionExcept
 
 
 __author__ = "Menachem Sklarz"

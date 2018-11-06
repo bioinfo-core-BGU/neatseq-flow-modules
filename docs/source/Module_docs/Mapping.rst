@@ -32,6 +32,6 @@ Mapping
 
 .. automodule:: neatseq_flow_modules.Liron.RSEM_module.RSEM
 
-.. automodule:: neatseq_flow_modules.mapping.htseq_count.py
+.. automodule:: neatseq_flow_modules.mapping.htseq_count
 
 
