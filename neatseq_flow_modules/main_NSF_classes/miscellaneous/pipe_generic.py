@@ -133,10 +133,23 @@ class Step_pipe_generic(Step):
         # sys.exit()
 
         # Get all user defined variables in string
-        variables = list(set(re.findall(pattern="\{\{(.*?)\}\}", string=self.params["script_path"])))
+        variables = list(set(re.findall(pattern="\{\{(.*?)\}\}",
+                                        string=self.params["script_path"])))
         # Find all variables in outputs:
-        for result in [re.findall(pattern="\{\{(.*?)\}\}",string=v["string"]) for a,v in self.params["output"].iteritems()]:
-            variables.extend(result)
+        try:
+            for outp in self.params["output"].keys():
+                # Check each 'output' has a 'string' and a 'scope' defined
+                try:
+                    # Extract the string from the {} and append to results:
+                    result = re.findall(pattern="\{\{(.*?)\}\}",
+                                        string=self.params["output"][outp]["string"])
+                except KeyError:
+                    raise AssertionExcept("Make sure you have a 'string' and 'scope' defined "
+                                          "for output {output}!".format(output=outp))
+                variables.extend(result)
+        except KeyError:
+            self.write_warning("No 'output' section defined. Are you sure this is what you intended?")
+
         # print list(set(variables))
         # Default scope is project
         self.params["scope"] = "project"
