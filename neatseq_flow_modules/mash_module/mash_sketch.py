@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``mash_sketch`` 
+``mash_sketch``
 ----------------------------------------------------
 
 :Authors: Menachem Sklarz
@@ -45,8 +45,8 @@ Output:
 
 * puts 'msh' output files in the following slots for (scope=project):
 
-    * ``sample_data["msh.fasta"]``
-    * ``sample_data["msh.fastq"]``
+    * ``sample_data["project_data"]["ms["project_data"]h.fasta"]``
+    * ``sample_data["project_data"]["msh.fastq"]``
 
 
 
@@ -288,8 +288,8 @@ class Step_mash_sketch(Step):
             self.spec_script_name = self.jid_name_sep.join([self.step, self.name, self.sample_data["Title"], filetype])
             self.script = ""
 
-            filetype_lists = {"fastq": list(set(self.sample_data.keys()) & {"fastq.F", "fastq.R", "fastq.S"}),
-                              "fasta": list(set(self.sample_data.keys()) & {"fasta.nucl"})}
+            filetype_lists = {"fastq": list(set(self.sample_data["project_data"].keys()) & {"fastq.F", "fastq.R", "fastq.S"}),
+                              "fasta": list(set(self.sample_data["project_data"].keys()) & {"fasta.nucl"})}
 
             # Move on if no files exist for type
             if not filetype_lists[filetype]:
