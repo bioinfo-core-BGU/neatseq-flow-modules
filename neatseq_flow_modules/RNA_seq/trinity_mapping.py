@@ -157,7 +157,7 @@ class Step_trinity_mapping(Step):
                 if self.params["redir_params"]["--gene_trans_map"]:  # If value was passed
                     self.sample_data["project_data"]["gene_trans_map"] = self.params["redir_params"]["--gene_trans_map"]
                 else:  # If passed empty, use internal:
-                    if "gene_trans_map" in self.sample_data:
+                    if "gene_trans_map" in self.sample_data["project_data"]:
                         self.params["redir_params"]["--gene_trans_map"] = self.sample_data["project_data"]["gene_trans_map"]
                     else:
                         raise AssertionExcept("Expecting 'gene_trans_map' in project but none found.\n")
@@ -174,7 +174,7 @@ class Step_trinity_mapping(Step):
                     for sample in self.sample_data["samples"]:
                         self.sample_data[sample]["gene_trans_map"] = self.params["redir_params"]["--gene_trans_map"]
                 else:  # If passed empty, use internal:
-                    if "gene_trans_map" in self.sample_data:
+                    if "gene_trans_map" in self.sample_data[sample]:
                         self.params["redir_params"]["--gene_trans_map"] = self.sample_data[sample]["gene_trans_map"]
                     else:
                         raise AssertionExcept("Expecting 'gene_trans_map' in sample but none found.\n", sample)

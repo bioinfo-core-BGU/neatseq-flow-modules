@@ -108,6 +108,13 @@ class Step_Trinotate(Step):
                     raise AssertionExcept("Project does not have a prot fasta.")
                 if "hmmscan.prot" not in self.sample_data["project_data"]:
                     raise AssertionExcept("Project does not have a prot hmmscan output file.")
+                for type in ["gene_trans_map", "transcripts.fasta.nucl", "fasta.prot"]:
+                    if type not in self.sample_data["project_data"]:
+                        raise AssertionExcept("Project does not have a {type} file.".format(type=type))
+            #
+            # trans_map = self.sample_data["project_data"]["gene_trans_map"],
+            # trans_fa = self.sample_data["project_data"]["transcripts.fasta.nucl"],
+            # pep_fa = self.sample_data["project_data"]["fasta.prot"])
 
             elif self.params["scope"]=="sample":
                 
@@ -118,6 +125,10 @@ class Step_Trinotate(Step):
                         raise AssertionExcept("Project does not have a prot fasta.")
                     if "hmmscan.prot" not in self.sample_data[sample]:
                         raise AssertionExcept("Project does not have a prot hmmscan output file.")
+                    for type in ["gene_trans_map", "transcripts.fasta.nucl", "fasta.prot"]:
+                        if type not in self.sample_data[sample]:
+                            raise AssertionExcept("Project does not have a {type} file.".format(type=type))
+
             else:
                 raise AssertionExcept("'scope' must be either 'sample' or 'project'")
         else:

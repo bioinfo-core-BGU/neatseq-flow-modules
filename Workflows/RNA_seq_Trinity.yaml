@@ -4,6 +4,8 @@ Global_params:
     Qsub_path: /path/to/qsub/bin
     Qsub_q: queue.q
     module_path:      ../neatseq_flow_modules
+    
+    
 Description: |
     A pipeline for basic RNA-seq analysis using Trinity
     ---------------------------------------------------
@@ -40,7 +42,7 @@ Vars:
         BUSCO:              /path/to/BUSCO.py
         filter_trinity_by_counts:   /path/to/filter_trinity_by_counts.R
 # -------- Trinotate
-        TransDecoder:       /path/to/Trinity/TransDecoder-v5.0.2/TransDecoder.LongOrfs
+        TransDecoder:       /path/to/Trinity/TransDecoder-v5.0.2/TransDecoder
         Trinotate:          /path/to/Trinity/Trinotate-v3.1.1/Trinotate    
         hmmscan:            /path/to/HMMER/HMMER_v3.1b1/bin/hmmscan
         hmm:                /path/to/HMMER/HMMER_v3.1b1/bin
@@ -79,10 +81,9 @@ Step_params:
     Get_Trans_Map:
         module:             Trinity_gene_to_trans_map
         base:               Trinity_assembl
-        SKIP:
         script_path:        '{Vars.paths.Trinity}/util/support_scripts/get_Trinity_gene_to_trans_map.pl'
         scope:              project
-            
+        # stop_and_show:
 
 ######################
 
@@ -98,10 +99,10 @@ Step_params:
             --aln_method:   bowtie
             # --output_prefix:        # Pass to add output_prefix. This is for older versions of trinity...
             # --gene_trans_map:
-            # --trinity_mode:
+            --trinity_mode:
             --coordsort_bam:
             --seqType:      fq
-
+        # stop_and_show:
     Trinity_Map_Stats:
         module:             trinmap_statistics
         base:               Trinity_Map
@@ -179,7 +180,7 @@ Step_params:
     trino_Transdecode_highExpr:
         module:             TransDecoder
         base:               Split_Fasta
-        script_path:        {Vars.paths.TransDecoder}
+        script_path:        "{Vars.paths.TransDecoder}.LongOrfs"
         scope:              sample
     trino_blastp_sprot_highExpr:
         module:             blast_new
@@ -213,7 +214,18 @@ Step_params:
         scope:              sample
         redirects:
             --path_to_rnammer:  /gpfs0/bioinfo/apps/RNAMMER/RNAMMER_v1.2/rnammer
-
+    
+    trino_Transdecode_Predict:
+        module:             TransDecoder
+        base:               
+            - trino_Transdecode_highExpr
+            - trino_blastp_sprot_highExpr
+            - trino_hmmscan1_highExpr
+        script_path:        "{Vars.paths.TransDecoder}.Predict"
+        scope:              sample
+        redirects:
+            --single_best_only:
+        # Predict:
 
     trino_merge_blast_highExpr:
         module:             merge_table
@@ -229,7 +241,9 @@ Step_params:
         script_path:        
         type:               hmmscan.prot
         header:             3
-        
+        # stop_and_show:
+
+
     # temp1:
         # module:             manage_types
         # base:                           
@@ -248,8 +262,56 @@ Step_params:
         base:               
             - trino_merge_blast_highExpr
             - trino_merge_hmm_highExpr
+            - Get_Trans_Map
         # stop_and_show:
         script_path:        {Vars.paths.Trinotate}
         scope:              project
         sqlitedb:           {Vars.databases.trinotate.sqlitedb}
         cp_sqlitedb:        
+
+
+
+#####################################################
+
+    trino_Transdecode_proj:
+        module:             TransDecoder
+        base:               Trinity_assembl
+        script_path:        "{Vars.paths.TransDecoder}.LongOrfs"
+        scope:              project
+    trino_blastp_sprot_proj:
+        module:             blast_new
+        base:               trino_Transdecode_proj
+        script_path:        {Vars.paths.blastp}
+        query:              project
+        db:            {Vars.databases.trinotate.sprot}
+        querytype:          prot
+        redirects:
+            -max_target_seqs: 1
+            -num_threads:   1
+            -outfmt:        6
+    trino_hmmscan1_proj:
+        module:             hmmscan
+        base:               trino_Transdecode_proj
+        script_path:        {Vars.paths.hmmscan}
+        scope:              project
+        type:               prot
+        output_type:        domtblout  # one of tblout (parseable table of per-sequence hits to file), domtblout (parseable table of per-domain hits to file) and pfamtblout (table of hits and domains in Pfam format)
+        hmmdb:              {Vars.databases.trinotate.pfam}
+        qsub_params:
+            -q:             bioinfo.q
+            # -pe:            shared 10
+        redirects:
+            --cpu:          1
+
+    
+    trino_Transdecode_Predict_proj:
+        module:             TransDecoder
+        base:               
+            - trino_Transdecode_proj
+            - trino_blastp_sprot_proj
+            - trino_hmmscan1_proj
+        script_path:        "{Vars.paths.TransDecoder}.Predict"
+        scope:              project
+        redirects:
+            --single_best_only:
+        # Predict:

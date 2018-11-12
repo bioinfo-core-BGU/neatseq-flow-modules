@@ -100,7 +100,7 @@ class Step_trinmap_statistics(Step):
             # If with value, use the value and set project "gene_trans_map" to value
             # Otherwise, use existing
         if "--gene_trans_map" not in self.params["redir_params"]:
-            if "gene_trans_map" in self.sample_data:
+            if "gene_trans_map" in self.sample_data["project_data"]:
                 self.params["redir_params"]["--gene_trans_map"] = self.sample_data["project_data"]["gene_trans_map"]
                 self.use_gene_trans_map = True
             else:
