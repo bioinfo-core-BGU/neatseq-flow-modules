@@ -166,7 +166,7 @@ awk -v nseqs="$NUMSEQS" '
             use_dir = use_dir)
 
             try:
-                sample_list = ["subsample{num}".format(num=num) for num in range(1,int(self.params["subsample_num"])+1)]
+                sample_list = ["subsample{num:0=4}".format(num=num) for num in range(1,int(self.params["subsample_num"])+1)]
             except ValueError:
                 raise AssertionExcept("'subsample_num' must be an integer")
             self.stash_sample_list(sample_list)
@@ -248,7 +248,7 @@ awk -v nseqs="$NUMSEQS" '
                 # self.sample_data["samples"] = ["subsample{num}".format(num=num) for num in range(1,self.params["subsample_num"]+1)]
                 
                 # A list of this sample's subsamples
-                subsample_list = ["{sample}.subsample{num}".format(sample=sample, num=num)
+                subsample_list = ["{sample}.subsample{num:0=4}".format(sample=sample, num=num)
                                   for num
                                   in range(1,self.params["subsample_num"]+1)]
                 new_sample_list.extend(subsample_list)
