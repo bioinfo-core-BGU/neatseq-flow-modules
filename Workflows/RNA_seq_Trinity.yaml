@@ -272,7 +272,7 @@ Step_params:
 
 
 #####################################################
-
+# Project-wide decoder with Predict
     trino_Transdecode_proj:
         module:             TransDecoder
         base:               Trinity_assembl
@@ -312,6 +312,7 @@ Step_params:
             - trino_hmmscan1_proj
         script_path:        "{Vars.paths.TransDecoder}.Predict"
         scope:              project
+        # keep_previous:
         redirects:
             --single_best_only:
         # Predict:

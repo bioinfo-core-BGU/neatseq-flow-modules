@@ -12,3 +12,6 @@ G.VCF:          [g.vcf,                 g.vcf               ]
 GTF:            [gtf,                   gtf                 ]
 GFF:            [gff,                   gff                 ]
 GFF3:           [gff3,                  gff3                ]
+manifest:       [qiime2.manifest,       manifest            ]   # For QIIME2
+barcodes:       [barcodes,              fastq               ]   # For QIIME2
+

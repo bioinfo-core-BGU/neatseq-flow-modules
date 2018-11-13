@@ -152,7 +152,8 @@ class Step_pipe_generic(Step):
 
         # print list(set(variables))
         # Default scope is project
-        self.params["scope"] = "project"
+        if "scope" not in self.params:
+            self.params["scope"] = "project"
 
         # Check the definition of all variables
         for variable in variables:
@@ -401,4 +402,3 @@ class Step_pipe_generic(Step):
             raise AssertionExcept('Variable {var} in script_path not identified'.format(var=variable))
         # print "Return: ", rawstring
         return rawstring
-
