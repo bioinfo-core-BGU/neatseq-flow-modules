@@ -122,6 +122,7 @@ import os
 import sys
 import re
 from neatseq_flow.PLC_step import Step,AssertionExcept
+from pprint import pprint as pp
 
 
 __author__ = "Menachem Sklarz"
@@ -178,30 +179,44 @@ class Step_blast_new(Step):
         
         
         # Store output format
-        outfmt_txt = ["pairwise", "query-anchored showing identities", "query-anchored no identities",
-                      "flat query-anchored, show identities", "flat query-anchored, no identities", "XML Blast output",
-                      "tabular", "tabular with comment lines", "Text ASN.1", "Binary ASN.1", "Comma-separated values",
-                      "BLAST archive format (ASN.1)"]
+        outfmt_txt = {     0 : "Pairwise",
+                           1 : "Query-anchored showing identities",
+                           2 : "Query-anchored no identities",
+                           3 : "Flat query-anchored showing identities",
+                           4 : "Flat query-anchored no identities",
+                           5 : "BLAST XML",
+                           6 : "Tabular",
+                           7 : "Tabular with comment lines",
+                           8 : "Seqalign (Text ASN.1)",
+                           9 : "Seqalign (Binary ASN.1)",
+                           10 : "Comma-separated values",
+                           11 : "BLAST archive (ASN.1)",
+                           12 : "Seqalign (JSON)",
+                           13 : "Multiple-file BLAST JSON",
+                           14 : "Multiple-file BLAST XML2",
+                           15 : "Single-file BLAST JSON",
+                           16 : "Single-file BLAST XML2",
+                           18 : "Organism Report"}
+
+
         if "-outfmt" in self.params["redir_params"]:
             if isinstance(self.params["redir_params"]["-outfmt"], str):
                 num_type = re.search("[\'\"]*(\d+)",self.params["redir_params"]["-outfmt"])
                 try:
-                    
-                    blast_type_num = int(num_type.groups()[0])
-                    if not 0 <= blast_type_num <= 18:
-                        raise AssertionExcept("-outfmt must be between 0 and 18\n")
-                    self.outfmt = blast_type_num
+                    self.outfmt = int(num_type.groups()[0])
                 except:
-                    raise
+                    raise AssertionExcept("Unrecognized outfmt '{outfmt}".
+                                          format(outfmt=self.params["redir_params"]["-outfmt"]))
             elif isinstance(self.params["redir_params"]["-outfmt"], int):
-                if not 0 < self.params["redir_params"]["-outfmt"] < 18:
-                    raise AssertionExcept("-outfmt must be between 0 and 18\n")
                 self.outfmt = self.params["redir_params"]["-outfmt"]
             else:
                 raise AssertionExcept("Unrecognized -outfmt format")
         else:
             self.outfmt = 0
-        
+
+        if self.outfmt not in outfmt_txt.keys():
+            raise AssertionExcept("'outfmt' value ({outfmt}) is not defined.".format(outfmt=self.outfmt))
+
         self.outfmt_txt = outfmt_txt[self.outfmt]
 
         

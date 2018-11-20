@@ -113,10 +113,11 @@ Step_params:
             -evalue:        0.0001
             -num_descriptions: 20
             -num_threads:   20
-            -outfmt:        '"6 qseqid sallseqid qlen slen qstart qend sstart send length
-                            evalue bitscore score pident qframe"'
+            # -outfmt:        '"6 qseqid sallseqid qlen slen qstart qend sstart send length
+                            # evalue bitscore score pident qframe"'
+            -outfmt:
             -query:         {Vars.databases.VFDB.fasta}
-        # stop_and_show:
+
     merge_blast_asmbl:
         module:             merge_table
         base:               blst_asmbl

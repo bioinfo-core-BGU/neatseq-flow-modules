@@ -90,3 +90,4 @@ Step_params:
         script_path:    {Vars.paths.multiqc}        
         redirects:
             --interactive:
+        stop_and_show:
