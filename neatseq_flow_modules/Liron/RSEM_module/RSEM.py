@@ -116,6 +116,8 @@ class Step_RSEM(Step):
             "you should  provide mapper script location in step %s\n" % self.get_step_name()
         assert not ("--output-genome-bam" in self.params["redir_params"].keys()) &("transcriptome" in self.params["mode"]) , \
             "you can't use '--output-genome-bam' option when the mode is 'transcriptome' in step  %s\n" % self.get_step_name()
+        assert not ("--output-genome-bam" in self.params["redir_params"].keys()) &("--bam" in self.params["redir_params"].keys()) , \
+            "you can't use '--output-genome-bam' option when using bam files as inputs in step  %s\n" % self.get_step_name()
         assert "rsem_prepare_reference_script_path"  in self.params.keys() , \
             "you should  provide rsem_prepare_reference script location in step %s\n" % self.get_step_name()
         if "plot_stat" in self.params.keys():
@@ -270,17 +272,18 @@ class Step_RSEM(Step):
             
             # Get constant part of script:
             self.script += self.get_script_const()
-            # Adding the mapper type and script location
-            if  "bowtie" == self.params["mapper"]:
-                self.script +="--%s-path %%s  \\\n\t" % self.params["mapper"] \
-                                                      % self.params["mapper_path"]
-
-            else:
-                self.script +="--%s --%%s-path %%%%s  \\\n\t" % self.params["mapper"] \
-                                                              % self.params["mapper"] \
-                                                              % self.params["mapper_path"]
+            
             #Check if to use bam or fastq files
             if "--bam" not in self.params["redir_params"].keys(): 
+                # Adding the mapper type and script location
+                if  "bowtie" == self.params["mapper"]:
+                    self.script +="--%s-path %%s  \\\n\t" % self.params["mapper"] \
+                                                          % self.params["mapper_path"]
+
+                else:
+                    self.script +="--%s --%%s-path %%%%s  \\\n\t" % self.params["mapper"] \
+                                                                  % self.params["mapper"] \
+                                                                  % self.params["mapper_path"]
                 #if fastq check if it is a paired-end
                 if len({"fastq.F", "fastq.R"} & set(self.sample_data[sample].keys()))==2:
                     self.script +="--paired-end \\\n\t"

@@ -159,8 +159,10 @@ else:
                 else:
                     Data.to_csv(Output ,sep='\t',index=index, float_format="%s")
         else:
-            Data.columns=map(lambda x:x.strip(" "),Data.columns) 
-                      
+            try:
+                Data.columns=map(lambda x:x.strip(" "),Data.columns)
+            except:
+                pass
             if args.Trans:
                 Data.T.to_csv(Output ,sep='\t',index=index, float_format="%s")
             else:

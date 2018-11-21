@@ -130,7 +130,7 @@ class Step_Tree_plot(Step):
         """
         
         # Name of specific script:
-        self.spec_script_name = self.jid_name_sep.join([self.step,self.name])
+        self.spec_script_name = self.set_spec_script_name()
         self.script = ""
         sample_dir=self.base_dir
         # This line should be left before every new script. It sees to local issues.
@@ -192,6 +192,7 @@ class Step_Tree_plot(Step):
             if self.params["script_path"]!=None:
                 for base in self.get_base_step_list():
                     if len(self.get_base_step_list())>1:
+                        print base.name
                         sample_data=self.get_base_sample_data()[base.name]
                     #Tree_plot main command
                     if "env" in self.params.keys():
