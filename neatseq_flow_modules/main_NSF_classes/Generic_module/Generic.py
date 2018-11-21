@@ -520,7 +520,7 @@ class Step_Generic(Step):
                     for File_Type_slot in str(get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])).replace("'",'').replace(" ",'').replace('[','').replace(']','').split(','):
                         if len(File_Type)>0:
                             File_Type+=sep
-                        File_Type+=inputs_sample_data[File_Type_slot]
+                        File_Type+=inputs_sample_data["project_data"][File_Type_slot]
                 else:
                     for sample in self.sample_data["samples"]:
                         if len(File_Type)>0:
