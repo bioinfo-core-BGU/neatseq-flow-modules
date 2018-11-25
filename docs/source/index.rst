@@ -49,6 +49,7 @@ Following is a list of modules included in this repository.
 .. Modules included in the repository 
 .. -----------------------------------
 
+.. _neatseq_flow_modules:
 
 .. toctree::
    :maxdepth: 2
@@ -78,6 +79,8 @@ Following is a list of modules included in this repository.
    
 .. Workflows included in the repository
 .. -------------------------------------
+
+.. _neatseq_flow_workflows:
 
 .. toctree::
    :maxdepth: 1
