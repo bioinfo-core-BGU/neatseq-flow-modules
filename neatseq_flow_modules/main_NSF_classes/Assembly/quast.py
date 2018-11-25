@@ -33,7 +33,7 @@ Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * Puts output directory in one of:
-    * ``self.sample_data["quast"]``
+    * ``self.sample_data["project_data"]["quast"]``
     * ``self.sample_data[<sample>]["quast"]``
 
 Parameters that can be set
@@ -127,7 +127,7 @@ class Step_quast(Step):
         if "scope" in self.params.keys():
             if self.params["scope"] == "project":
                 try:  # Is there a mega-assembly?
-                    self.sample_data["fasta.nucl"]
+                    self.sample_data["project_data"]["fasta.nucl"]
                 except KeyError:   # No. Check if all samples have assemblies:
                     raise AssertionExcept("No project wide assembly!")
                 else:
@@ -156,7 +156,7 @@ class Step_quast(Step):
             self.write_warning("'scope' not passed. Will try guessing...")
 
             try:  # Is there a mega-assembly?
-                self.sample_data["fasta.nucl"]
+                self.sample_data["project_data"]["fasta.nucl"]
             except KeyError:   # No. Check if all samples have assemblies:
                 for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
                 
@@ -226,7 +226,7 @@ class Step_quast(Step):
                 
 
             
-                self.sample_data["quast"] = self.base_dir
+                self.sample_data["project_data"]["quast"] = self.base_dir
             
 
                 # Wrapping up function. Leave these lines at the end of every iteration:
@@ -268,7 +268,7 @@ class Step_quast(Step):
                         for base in self.params["base"]:
                             # print base
                             try:
-                                self.script += "%s \\\n\t" % self.base_sample_data[base][sample]["fasta.nucl"]
+                                self.script += "%s \\\n\t" % self.get_base_sample_data()[base][sample]["fasta.nucl"]
                             except:
                                 raise AssertionExcept("'fasta.nucl' file for sample not found in base %s" % base, sample)
                     else:
@@ -311,19 +311,19 @@ class Step_quast(Step):
                 self.script += "--labels %s \\\n\t" % ",".join(self.params["base"])
                 pp( self.params["base"])
                 for base in self.params["base"]:
-                    print base
-                    pp(self.base_sample_data[base].keys())
+                    # print base
+                    # pp(self.get_base_sample_data()[base].keys())
                     try:
-                        self.script += "%s \\\n\t" % self.base_sample_data[base]["fasta.nucl"]
+                        self.script += "%s \\\n\t" % self.get_base_sample_data()[base]["fasta.nucl"]
                     except:
                         raise AssertionExcept("'fasta.nucl' file not found in base %s" % base)
             else:
-                self.script += "%s \n\n" % self.sample_data["fasta.nucl"]
+                self.script += "%s \n\n" % self.sample_data["project_data"]["fasta.nucl"]
             
 
         
             # Store BLAST result file:
-            self.sample_data["quast"] = self.base_dir
+            self.sample_data["project_data"]["quast"] = self.base_dir
 
 
             # Wrapping up function. Leave these lines at the end of every iteration:

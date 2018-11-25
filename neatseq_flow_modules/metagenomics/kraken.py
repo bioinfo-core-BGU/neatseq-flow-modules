@@ -41,7 +41,7 @@ Output
     
     * If ``ktImportTaxonomy_path`` parameter was passed, puts the krona reports in 
 
-    * ``self.sample_data["krona"]``
+    * ``self.sample_data["project_data"]["krona"]``
 
 
     
@@ -139,9 +139,9 @@ class Step_kraken(Step):
             self.script = self.script.rstrip("\\\n\t")
             self.script += "\n\n"
 
-            self.sample_data["krona"] = self.base_dir + "krona_report.html"
+            self.sample_data["project_data"]["krona"] = self.base_dir + "krona_report.html"
     
-            self.stamp_file(self.sample_data["krona"])
+            self.stamp_file(self.sample_data["project_data"]["krona"])
             
 
         
@@ -262,5 +262,5 @@ fi
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
                 index_fh.write("%s\t%s\n" % (sample,self.sample_data[sample]["classification_report"]))
                 
-        self.sample_data["kraken_file_index"] = self.base_dir + "kraken_files_index.txt"
+        self.sample_data["project_data"]["kraken_file_index"] = self.base_dir + "kraken_files_index.txt"
         

@@ -154,10 +154,10 @@ class Step_manage_types(Step):
                         else:
                             del self.sample_data[sample][type]
                 elif scope_src == "project":
-                    if type not in self.sample_data:
+                    if type not in self.sample_data["project_data"]:
                         self.write_warning("type %s does not exist for project." % type)
                     else:
-                        del self.sample_data[type]
+                        del self.sample_data["project_data"][type]
                 else:
                     pass
 
@@ -186,11 +186,11 @@ class Step_manage_types(Step):
 
                     else:  # scope_trg=project
                         self.write_warning("Copying type from sample to project should be done with caution!")
-                        if type_trg in self.sample_data:
+                        if type_trg in self.sample_data["project_data"]:
                             self.write_warning("type %s exists in project. Overwriting!" % type_trg)
                         for sample in self.sample_data["samples"]:
                             try:
-                                self.sample_data[type_trg] = self.sample_data[sample][type_src]
+                                self.sample_data["project_data"][type_trg] = self.sample_data[sample][type_src]
                                 if operation == "mv":
                                     del self.sample_data[sample][type_src]
                             except KeyError:
@@ -198,21 +198,21 @@ class Step_manage_types(Step):
                                                       sample)
                             
                 elif scope_src == "project":
-                    if type_src not in self.sample_data:
+                    if type_src not in self.sample_data["project_data"]:
                         raise AssertionExcept("'type' does not exist in project!")
                     if scope_trg == "sample":
                         for sample in self.sample_data["samples"]:
                             if type_trg in self.sample_data[sample]:
                                 self.write_warning("type %s exists in sample. Overwriting!" % type_trg, sample)
-                            self.sample_data[sample][type_trg] = self.sample_data[type_src]
+                            self.sample_data[sample][type_trg] = self.sample_data["project_data"][type_src]
                         if operation == "mv":
-                            del self.sample_data[type_src]
+                            del self.sample_data["project_data"][type_src]
                     else:  # scope_trg=project
-                        if type_trg in self.sample_data:
+                        if type_trg in self.sample_data["project_data"]:
                             self.write_warning("type %s exists in project. Overwriting!" % type_trg, sample)
-                        self.sample_data[type_trg] = self.sample_data[type_src]
+                        self.sample_data["project_data"][type_trg] = self.sample_data["project_data"][type_src]
                         if operation == "mv":
-                            del self.sample_data[type_src]
+                            del self.sample_data["project_data"][type_src]
                 else:
                     pass
 
@@ -232,9 +232,9 @@ class Step_manage_types(Step):
                             self.write_warning("type '%s' exists in sample. Overwriting!" % type, sample)
                         self.sample_data[sample][type] = path
                 elif scope == "project":
-                    if type in self.sample_data:
+                    if type in self.sample_data["project_data"]:
                         self.write_warning("type '%s' exists in project. Overwriting!" % type)
-                    self.sample_data[type] = path
+                    self.sample_data["project_data"][type] = path
                 else:
                     pass
 

@@ -122,26 +122,18 @@ Please specify the output_type to use:
         """ A place to do initiation stages following setting of sample_data
             Here you should do testing for dependency output. These will NOT exist at initiation of this instance. They are set only following sample_data updating
         """
-        
-        if "scope" in self.params:
-          
-            if self.params["scope"]=="project":
-                if "fasta.{type}".format(type=self.params["type"]) not in self.sample_data:
-                    raise AssertionExcept("Project does not have a {type} fasta.".format(type=self.params["type"]))
 
-            elif self.params["scope"]=="sample":
-                
-                for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-                    if "fasta.{type}".format(type=self.params["type"]) not in self.sample_data[sample]:
-                        raise AssertionExcept("Sample does not have a {type} fasta.".format(type=self.params["type"]), sample)
-            else:
-                raise AssertionExcept("'scope' must be either 'sample' or 'project'")
+        if self.params["scope"]=="project":
+            sample_list = ["project_data"]
+        elif self.params["scope"]=="sample":
+            sample_list = self.sample_data["samples"]
         else:
-            raise AssertionExcept("No 'scope' specified.")
-        
-         
+            raise AssertionExcept("'scope' must be either 'sample' or 'project'")
 
-        
+        for sample in sample_list:
+            if "fasta.{type}".format(type=self.params["type"]) not in self.sample_data[sample]:
+                raise AssertionExcept("No 'fasta.{type}' defined".format(type=self.params["type"]), sample)
+
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
@@ -149,89 +141,47 @@ Please specify the output_type to use:
         pass
 
     def build_scripts(self):
-    
-        if self.params["scope"] == "project":
-            self.build_scripts_project()
+
+
+
+        if self.params["scope"]=="project":
+            sample_list = ["project_data"]
+        elif self.params["scope"]=="sample":
+            sample_list = self.sample_data["samples"]
         else:
-            self.build_scripts_sample()
-            
-            
-    def build_scripts_project(self):
-        
-        
-        # Name of specific script:
-        self.spec_script_name = self.set_spec_script_name()
+            raise AssertionExcept("'scope' must be either 'sample' or 'project'")
 
-        self.script = ""
+        for sample in sample_list:
 
-        # This line should be left before every new script. It sees to local issues.
-        # Use the dir it returns as the base_dir for this step.
-        use_dir = self.local_start(self.base_dir)
-
-        output_basename = "{title}.hmmscan.{type}".format(title = self.sample_data["Title"], type = self.params["output_type"])
-
-        self.script = self.get_script_const()
-        self.script += "--{output_type} {outfile} \\\n\t".format(output_type = self.params["output_type"], outfile = use_dir+output_basename)
-        self.script += "{hmmdb} \\\n\t".format(hmmdb = self.params["hmmdb"])
-        self.script += "{seqfile} \\\n\t".format(seqfile = self.sample_data["fasta.{type}".format(type=self.params["type"])])
-        # self.script += "> {logfile} \n\n".format(logfile = self.sample_data["fasta.{type}".format(type=self.params["type"])])
-        self.script += "> {outfile}.log \n\n".format(outfile=use_dir + output_basename)
-
-        # Store results to fasta and assembly slots:
-        self.sample_data["hmmscan.%s" % self.params["type"]] = "%s%s" % (self.base_dir, output_basename)
-        
-        self.stamp_file(self.sample_data["hmmscan.%s" % self.params["type"]])
-        
-        # Move all files from temporary local dir to permanent base_dir
-        self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
-     
-            
-        
-        
-        self.create_low_level_script()
-                    
-#################################################
-    def build_scripts_sample(self):
-        
-        for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-
-        # Name of specific script:
+            # Name of specific script:
             self.spec_script_name = self.set_spec_script_name(sample)
             self.script = ""
 
-
             # Make a dir for the current sample:
             sample_dir = self.make_folder_for_sample(sample)
-            
+
             # This line should be left before every new script. It sees to local issues.
             # Use the dir it returns as the base_dir for this step.
             use_dir = self.local_start(sample_dir)
-            
-            output_basename = "{title}.hmmscan.{type}".format(title = sample, type = self.params["output_type"])
-            
+
+            output_basename = "{title}.hmmscan.{type}".format(title=sample,
+                                                              type=self.params["output_type"])
+
             self.script = self.get_script_const()
-            self.script += "--{output_type} {outfile} \\\n\t".format(output_type = self.params["output_type"], outfile = use_dir+output_basename)
+            self.script += "--{output_type} {outfile} \\\n\t".format(output_type=self.params["output_type"],
+                                                                     outfile=use_dir+output_basename)
             self.script += "{hmmdb} \\\n\t".format(hmmdb = self.params["hmmdb"])
             self.script += "{seqfile} \\\n\t".format(seqfile = self.sample_data[sample]["fasta.{type}".format(type=self.params["type"])])
             self.script += "> {outfile}.log \n\n".format(outfile = use_dir+output_basename)
-            
-            
 
             # Store results to fasta and assembly slots:
             self.sample_data[sample]["hmmscan.%s" % self.params["type"]] = "%s%s" % (sample_dir, output_basename)
             self.sample_data[sample]["hmmscan.%s.log" % self.params["type"]] = "%s%s.log" % (sample_dir, output_basename)
-            
+
             self.stamp_file(self.sample_data[sample]["hmmscan.%s" % self.params["type"]])
             self.stamp_file(self.sample_data[sample]["hmmscan.%s.log" % self.params["type"]])
 
-                
-            # Wrapping up function. Leave these lines at the end of every iteration:
-            self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)
-
+            self.local_finish(use_dir,sample_dir)
             self.create_low_level_script()
-                        
-            
-            
-                 
-            
-     
+
+

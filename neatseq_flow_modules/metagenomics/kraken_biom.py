@@ -25,9 +25,9 @@ Output
 
 * Puts the resulting *biom* output files in:  
 
-    * ``self.sample_data["kraken_biom"]``
-    * ``self.sample_data["biom_table"]``
-    * ``self.sample_data["biom_table_tsv"]`` (if ``skip_tsv`` is not set)
+    * ``self.sample_data["project_data"]["kraken_biom"]``
+    * ``self.sample_data["project_data"]["biom_table"]``
+    * ``self.sample_data["project_data"]["biom_table_tsv"]`` (if ``skip_tsv`` is not set)
     
 
     
@@ -142,12 +142,12 @@ class Step_kraken_biom(Step):
 
         
         # Storing the output file in $samples_hash
-        self.sample_data["kraken_biom"]        = "{base_dir}{prefix}.kraken.biom{suffix}".format(base_dir = self.base_dir,
+        self.sample_data["project_data"]["kraken_biom"]        = "{base_dir}{prefix}.kraken.biom{suffix}".format(base_dir = self.base_dir,
                                                                                                  prefix = prefix,
                                                                                                  suffix = dotgz)
-        self.sample_data["biom_table"]        = self.sample_data["kraken_biom"]
+        self.sample_data["project_data"]["biom_table"]        = self.sample_data["project_data"]["kraken_biom"]
             
-        self.stamp_file(self.sample_data["kraken_biom"])
+        self.stamp_file(self.sample_data["project_data"]["kraken_biom"])
 
 
 
@@ -180,7 +180,7 @@ fi
            
             
             # Store location of the biom_table summary:
-            self.sample_data["biom_table_summary"] = "{base_dir}{prefix}.kraken.biom.summary.txt".format(base_dir = self.base_dir,prefix = prefix)
+            self.sample_data["project_data"]["biom_table_summary"] = "{base_dir}{prefix}.kraken.biom.summary.txt".format(base_dir = self.base_dir,prefix = prefix)
 
             
         ################################################################################################
@@ -212,7 +212,7 @@ fi
            cmd_text = cmd_text)
             
             # Store location of the tsv biom_table:
-            self.sample_data["biom_table_tsv"] = "{base_dir}{prefix}.kraken.biom.tsv".format(base_dir = self.base_dir,prefix = prefix)
+            self.sample_data["project_data"]["biom_table_tsv"] = "{base_dir}{prefix}.kraken.biom.tsv".format(base_dir = self.base_dir,prefix = prefix)
 
 
         

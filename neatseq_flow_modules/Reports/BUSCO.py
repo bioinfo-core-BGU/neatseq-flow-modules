@@ -28,7 +28,7 @@ Output:
 * Stores output directory in:
 
     * self.sample_data[<sample>]["BUSCO"] (``scope = sample``)
-    * self.sample_data["BUSCO"] (``scope = project``)
+    * self.sample_data["project_data"]["BUSCO"] (``scope = project``)
 
 Parameters that can be set        
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -113,7 +113,8 @@ You must specify a 'mode':
         elif self.params["redir_params"]["--mode"] in ['prot', 'proteins']:
             self.type = "prot"
         else:
-            raise AssertionExcept("The value you passed to --mode (%s) is not a valid value" % self.params["redir_params"]["--mode"])
+            raise AssertionExcept("The value you passed to --mode ({mode}) is not a valid value".
+                                  format(mode=self.params["redir_params"]["--mode"]))
 
         if self.params["scope"] == "sample":
             # Check that "fasta" and "assembly" exist (signs that trinity has been executed)
@@ -121,8 +122,8 @@ You must specify a 'mode':
                 if ("fasta.%s" % self.type) not in self.sample_data[sample]:
                     raise AssertionExcept("It seems there is no sample-wide %s fasta file." % self.type, sample)
         elif self.params["scope"] == "project":
-            # print self.sample_data.keys()
-            if ("fasta.%s" % self.type) not in self.sample_data.keys():
+            if ("fasta.%s" % self.type) not in self.sample_data["project_data"]:
+                print "in here"
                 raise AssertionExcept("It seems there is no project-wide %s fasta file." % self.type)
         else:
             raise AssertionExcept("'scope' must be either 'sample' or 'project'.")
@@ -170,13 +171,13 @@ You must specify a 'mode':
 
         # The results will be put in data/step_name/name/Title
         self.script += "--out %s \\\n\t" % self.sample_data["Title"]
-        self.script += "--in %s \\\n\t"  % self.sample_data["fasta.%s" % self.type]
+        self.script += "--in %s \\\n\t"  % self.sample_data["project_data"]["fasta.%s" % self.type]
         self.script += "--tmp %s \\\n\t"  % os.path.join(use_dir,"tmp")
             
         
 
         # Store results to fasta and assembly slots:
-        self.sample_data["BUSCO"] = os.path.join(self.base_dir,"run_%s" % self.sample_data["Title"])
+        self.sample_data["project_data"]["BUSCO"] = os.path.join(self.base_dir,"run_%s" % self.sample_data["Title"])
 
         # Move all files from temporary local dir to permanent base_dir
         self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)

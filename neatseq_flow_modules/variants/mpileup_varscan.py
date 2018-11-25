@@ -121,9 +121,9 @@ class Step_mpileup_varscan(Step):
         # If scope is project, open variants slot for project
         if self.params["scope"] == "project":
             try:
-                self.sample_data["variants"]
+                self.sample_data["project_data"]["variants"]
             except KeyError:
-                self.sample_data["variants"] = dict()
+                self.sample_data["project_data"]["variants"] = dict()
         
             
             
@@ -207,11 +207,11 @@ class Step_mpileup_varscan(Step):
             
             
             if output_suffix == "vcf":
-                self.sample_data["vcf"] = (self.base_dir + ".".join([self.sample_data["Title"],output_suffix]))
-                self.stamp_file(self.sample_data["vcf"])
+                self.sample_data["project_data"]["vcf"] = (self.base_dir + ".".join([self.sample_data["Title"],output_suffix]))
+                self.stamp_file(self.sample_data["project_data"]["vcf"])
             else:
-                self.sample_data["variants"] = (self.base_dir + ".".join([self.sample_data["Title"],output_suffix]))
-                self.stamp_file(self.sample_data["variants"])
+                self.sample_data["project_data"]["variants"] = (self.base_dir + ".".join([self.sample_data["Title"],output_suffix]))
+                self.stamp_file(self.sample_data["project_data"]["variants"])
 
 
         

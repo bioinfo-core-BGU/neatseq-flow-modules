@@ -43,15 +43,15 @@ self.sample_data[sample]["HUMAnN2.pathabundance.norm"]
     
 * If "join_tables" is set in params:
     
-    * ``self.sample_data["HUMAnN2.genefamilies"]``
-    * ``self.sample_data["HUMAnN2.pathabundance"]``
-    * ``self.sample_data["HUMAnN2.pathcoverage"]``
+    * ``self.sample_data["project_data"]["HUMAnN2.genefamilies"]``
+    * ``self.sample_data["project_data"]["HUMAnN2.pathabundance"]``
+    * ``self.sample_data["project_data"]["HUMAnN2.pathcoverage"]``
 
 * If "join_tables" and "renorm_table" are set in params:
     
-    * ``self.sample_data["HUMAnN2.genefamilies.norm"]``
-    * ``self.sample_data["HUMAnN2.pathabundance.norm"]``
-    * ``self.sample_data["HUMAnN2.pathcoverage"]``
+    * ``self.sample_data["project_data"]["HUMAnN2.genefamilies.norm"]``
+    * ``self.sample_data["project_data"]["HUMAnN2.pathabundance.norm"]``
+    * ``self.sample_data["project_data"]["HUMAnN2.pathcoverage"]``
     
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -171,8 +171,8 @@ class Step_HUMAnN2(Step):
             self.script += "-o %smerged.%s.tsv \n\n" % (self.base_dir, output_filename)
 
             ## Storing in dict and stamping
-            self.sample_data["HUMAnN2." + output_filename] = "%smerged.%s.tsv" % (self.base_dir,  output_filename)
-            self.stamp_file(self.sample_data["HUMAnN2." + output_filename])
+            self.sample_data["project_data"]["HUMAnN2." + output_filename] = "%smerged.%s.tsv" % (self.base_dir,  output_filename)
+            self.stamp_file(self.sample_data["project_data"]["HUMAnN2." + output_filename])
 
             # Merging pathabundance:
             self.script += "%s \\\n\t" % (humann2_dir + os.sep + "humann2_join_tables")
@@ -187,8 +187,8 @@ class Step_HUMAnN2(Step):
             self.script += "-o %smerged.%s.tsv \n\n" % (self.base_dir, output_filename)
 
             ## Storing in dict and stamping
-            self.sample_data["HUMAnN2." + output_filename] = "%smerged.%s.tsv" % (self.base_dir,  output_filename)
-            self.stamp_file(self.sample_data["HUMAnN2." + output_filename])
+            self.sample_data["project_data"]["HUMAnN2." + output_filename] = "%smerged.%s.tsv" % (self.base_dir,  output_filename)
+            self.stamp_file(self.sample_data["project_data"]["HUMAnN2." + output_filename])
 
             # Merging pathcoverage:
             self.script += "%s \\\n\t" % (humann2_dir + os.sep + "humann2_join_tables")
@@ -200,8 +200,8 @@ class Step_HUMAnN2(Step):
             self.script += "-o %smerged.%s.tsv \n\n" % (self.base_dir, output_filename)
 
             ## Storing in dict and stamping
-            self.sample_data["HUMAnN2." + output_filename] = "%smerged.%s.tsv" % (self.base_dir,  output_filename)
-            self.stamp_file(self.sample_data["HUMAnN2." + output_filename])
+            self.sample_data["project_data"]["HUMAnN2." + output_filename] = "%smerged.%s.tsv" % (self.base_dir,  output_filename)
+            self.stamp_file(self.sample_data["project_data"]["HUMAnN2." + output_filename])
 
             
         
@@ -308,5 +308,5 @@ class Step_HUMAnN2(Step):
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
                 index_fh.write("%s\t%s\n" % (sample,self.sample_data[sample]["classification"]))
                 
-        self.sample_data["HUMAnN2.files_index"] = self.base_dir + "HUMAnN2_files_index.txt"
+        self.sample_data["project_data"]["HUMAnN2.files_index"] = self.base_dir + "HUMAnN2_files_index.txt"
         

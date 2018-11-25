@@ -33,7 +33,7 @@ Output
 
 * Puts directory of links to files to use with QIIME:
 
-    * ``self.sample_data["qiime.prep_links_dir"]``
+    * ``self.sample_data["project_data"]["qiime.prep_links_dir"]``
 
 * If join is performed:
     
@@ -146,11 +146,11 @@ class Step_qiime_prep(Step):
         """
         
         try:
-            self.sample_data["qiime.parameters"] = self.params["parameters"]
+            self.sample_data["project_data"]["qiime.parameters"] = self.params["parameters"]
         except KeyError:
             self.write_warning("You did not supply a parameter file.\n" )
         try:
-            self.sample_data["qiime.mapping"] = self.params["mapping"]
+            self.sample_data["project_data"]["qiime.mapping"] = self.params["mapping"]
         except KeyError:
             self.write_warning("You did not supply a QIIME mapping file.\n" )
         # else:
@@ -282,7 +282,7 @@ class Step_qiime_prep(Step):
                     # Define what to do if we want join + cat.
                     raise AssertionExcept("join_cat not yet defined!!\n")
 
-            self.sample_data["qiime.prep_links_dir"] = self.links_dir
+            self.sample_data["project_data"]["qiime.prep_links_dir"] = self.links_dir
             
             # Move all files from temporary local dir to permanent base_dir
             self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)

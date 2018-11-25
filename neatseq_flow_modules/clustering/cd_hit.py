@@ -42,7 +42,7 @@ Output
 
 * Or
 
-    ``self.sample_data["fasta.nucl"|"fasta.prot"]``
+    ``self.sample_data["project_data"]["fasta.nucl"|"fasta.prot"]``
 
 
 Parameters that can be set
@@ -151,12 +151,12 @@ class Step_cd_hit(Step):
 
             if self.type == "nucl":
                 try:
-                    input_file = self.sample_data["fasta.nucl"]
+                    input_file = self.sample_data["project_data"]["fasta.nucl"]
                 except:
                     raise AssertionExcept("`nucl` fasta file does not exist at project scope. Did you mean cd-hit instead of cd-hit-est?")
             else: # == "prot"
                 try:
-                    input_file = self.sample_data["fasta.prot"]
+                    input_file = self.sample_data["project_data"]["fasta.prot"]
                 except:
                     raise AssertionExcept("`prot` fasta file does not exist at project scope. Did you mean cd-hit-est instead of cd-hit?")
             
@@ -168,9 +168,9 @@ class Step_cd_hit(Step):
             self.script += "-o {outdir}{ossep}{outfn} \n\n".format(outdir=use_dir, ossep = os.sep, outfn = output_prefix)
 
             
-            self.sample_data["fasta." + self.type] = "{outdir}{ossep}{outfn}".format(outdir = self.base_dir, ossep = os.sep, outfn = output_prefix)
-            self.sample_data["cd_hit." + self.type] = self.sample_data["fasta." + self.type]
-            self.stamp_file(self.sample_data["fasta." + self.type])
+            self.sample_data["project_data"]["fasta." + self.type] = "{outdir}{ossep}{outfn}".format(outdir = self.base_dir, ossep = os.sep, outfn = output_prefix)
+            self.sample_data["project_data"]["cd_hit." + self.type] = self.sample_data["project_data"]["fasta." + self.type]
+            self.stamp_file(self.sample_data["project_data"]["fasta." + self.type])
                     
         
             # Move all files from temporary local dir to permanent base_dir

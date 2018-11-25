@@ -34,4 +34,7 @@ Mapping
 
 .. automodule:: neatseq_flow_modules.mapping.htseq_count
 
+.. automodule:: neatseq_flow_modules.mapping.RSEM_prep
+
+.. automodule:: neatseq_flow_modules.mapping.RSEM_mapper
 

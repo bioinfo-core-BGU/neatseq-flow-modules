@@ -80,7 +80,7 @@ class Step_fastqc_html(Step):
         
         
         # Assert that all samples have reads files:
-        for sample in self.sample_data["samples"]:    
+        for sample in self.sample_data["samples"]:
             if not filter(lambda x: x in ["fastq.F", "fastq.R", "fastq.S"], self.sample_data[sample].keys()):
                 raise AssertionExcept("No read files defined\n", sample)
 

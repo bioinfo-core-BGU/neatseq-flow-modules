@@ -26,7 +26,7 @@ Output
 
 * Puts output index files in one of the following slots:
     * ``self.sample_data[<sample>]["bowtie2_index"]``
-    * ``self.sample_data["bowtie2_index"]``
+    * ``self.sample_data["project_data"]["bowtie2_index"]``
 
 * Puts the fasta file in the following slot:
     * ``self.sample_data[<sample>]["reference"]``
@@ -82,30 +82,37 @@ class Step_bowtie2_builder(Step):
         """
 
         if self.params["scope"] == "project":
-            # Initializing project bowtie2 slot
-            try:
-                self.sample_data["fasta.nucl"]
-            except KeyError:
-                raise AssertionExcept("Project does not have a nucl fasta defined. Check your 'scope'\n", sample)
-            # else:
-                # if "bowtie2_index" in self.sample_data.keys():
-                    # raise AssertionExcept("bowtie2 index already seems to exist.\n")
+            sample_list = ["project_data"]
+        elif self.params["scope"] == "sample":
+            sample_list = self.sample_data["samples"]
+        else:
+            raise AssertionExcept("'scope' must be either 'sample' or 'project'")
+
+        # if self.params["scope"] == "project":
+        #     # Initializing project bowtie2 slot
+        #     try:
+        #         self.sample_data["project_data"]["fasta.nucl"]
+        #     except KeyError:
+        #         raise AssertionExcept("Project does not have a nucl fasta defined. Check your 'scope'\n", sample)
+        #     # else:
+        #         # if "bowtie2_index" in self.sample_data.keys():
+        #             # raise AssertionExcept("bowtie2 index already seems to exist.\n")
             
                 
 
-        elif self.params["scope"] == "sample":
-            for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-                try:
-                    self.sample_data[sample]["fasta.nucl"]
-                except KeyError:
-                    raise AssertionExcept("Sample does not have a nucl fasta defined. Can't build index\n", sample)
-                else:
-                    if "bowtie2_index" in self.sample_data[sample].keys():
-                        raise AssertionExcept("bowtie2 index already exists for sample.\n", sample)
+        # elif self.params["scope"] == "sample":
+        for sample in sample_list:      # Getting list of samples out of samples_hash
+            try:
+                self.sample_data[sample]["fasta.nucl"]
+            except KeyError:
+                raise AssertionExcept("No 'fasta.nucl' defined. Can't build index\n", sample)
+            else:
+                if "bowtie2_index" in self.sample_data[sample].keys():
+                    raise AssertionExcept("bowtie2 index already exists for sample.\n", sample)
             
-        else:
-            raise AssertionExcept("Scope must be either 'sample' or 'project'")
-                
+        # else:
+        #     raise AssertionExcept("Scope must be either 'sample' or 'project'")
+        #
              
         
     def create_spec_wrapping_up_script(self):
@@ -126,7 +133,7 @@ class Step_bowtie2_builder(Step):
             # self.script
         
         # try:    # Check if fasta nucl exists:
-            # self.sample_data["fasta.nucl"]
+            # self.sample_data["project_data"]["fasta.nucl"]
         if self.params["scope"] == "sample":
         
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
@@ -183,12 +190,12 @@ class Step_bowtie2_builder(Step):
             # Get constant part of script:
             self.script += self.get_script_const()
             
-            self.script += "%s \\\n\t" % self.sample_data["fasta.nucl"]
+            self.script += "%s \\\n\t" % self.sample_data["project_data"]["fasta.nucl"]
             self.script += "%s \n\n" % output_prefix
 
 
-            self.sample_data["bowtie2_index"] = output_prefix
-            self.sample_data["bowtie2_fasta"] = self.sample_data["fasta.nucl"]
+            self.sample_data["project_data"]["bowtie2_index"] = output_prefix
+            self.sample_data["project_data"]["bowtie2_fasta"] = self.sample_data["project_data"]["fasta.nucl"]
 
         
             # Move all files from temporary local dir to permanent base_dir

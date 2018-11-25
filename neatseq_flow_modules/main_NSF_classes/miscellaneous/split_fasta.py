@@ -22,8 +22,8 @@ Requires
 
 * A `fasta` file in one of the following slots (scope = "project"):
 
-    * ``sample_data["fasta.nucl"]``
-    * ``sample_data["fasta.prot"]``
+    * ``sample_data["project_data"]["fasta.nucl"]``
+    * ``sample_data["project_data"]["fasta.prot"]``
 
     
 
@@ -98,7 +98,7 @@ class Step_split_fasta(Step):
 
         self.params["type"] = "fasta.{type}".format(type=self.params["type"])
         if self.params["scope"]=="project":
-            if self.params["type"] not in self.sample_data:
+            if self.params["type"] not in self.sample_data["project_data"]:
                 raise AssertionExcept("{type} does not exist in project".format(type=self.params["type"]))
         else:
             for sample in self.sample_data["samples"]:
@@ -133,7 +133,7 @@ class Step_split_fasta(Step):
 # SEQPERFRAG=$[$(grep -c "^>" $FASTA)/$[{subsample_num}-1]]
 # awk -v seqs="$SEQPERFRAG" 'BEGIN {{n_seq=0; file_cnt=1;}} /^>/ {{ if(n_seq%seqs==0){{file=sprintf("{use_dir}subsample%d.fa",file_cnt); file_cnt++; }} print > file; n_seq++; next;}} {{ print > file; }}' < $FASTA
 #
-# """.format(project_fasta = self.sample_data[self.params["type"]],
+# """.format(project_fasta = self.sample_data["project_data"][self.params["type"]],
 #             subsample_num = self.params["subsample_num"],
 #             use_dir = use_dir)
 
@@ -161,16 +161,12 @@ awk -v nseqs="$NUMSEQS" '
     {{ print > file; }}
 ' < $FASTA 
             
-""".format(project_fasta = self.sample_data[self.params["type"]],
+""".format(project_fasta = self.sample_data["project_data"][self.params["type"]],
             subsample_num = self.params["subsample_num"],
             use_dir = use_dir)
 
             try:
-                # sample_list = ["subsample{num}".format(num=num) for num in range(1,int(self.params["subsample_num"])+1)]
-                sample_list = ["subsample{num:0=4}".format(num=num)
-                               for num
-                               in range(1, int(self.params["subsample_num"]) + 1)]
-
+                sample_list = ["subsample{num:0=4}".format(num=num) for num in range(1,int(self.params["subsample_num"])+1)]
             except ValueError:
                 raise AssertionExcept("'subsample_num' must be an integer")
             self.stash_sample_list(sample_list)
@@ -188,7 +184,7 @@ awk -v nseqs="$NUMSEQS" '
 
             self.create_low_level_script()
                     
-        else: # self.params["scope"] == "sample"
+        else:  # self.params["scope"] == "sample"
         
             # raise AssertionExcept("Not defined yet...")
             # Each iteration must define the following class variables:
@@ -252,9 +248,6 @@ awk -v nseqs="$NUMSEQS" '
                 # self.sample_data["samples"] = ["subsample{num}".format(num=num) for num in range(1,self.params["subsample_num"]+1)]
                 
                 # A list of this sample's subsamples
-                # subsample_list = ["{sample}.subsample{num}".format(sample=sample, num=num)
-                #                   for num
-                #                   in range(1,self.params["subsample_num"]+1)]
                 subsample_list = ["{sample}.subsample{num:0=4}".format(sample=sample, num=num)
                                   for num
                                   in range(1, self.params["subsample_num"] + 1)]

@@ -40,19 +40,19 @@ Output
 
 * Puts the BIOM table in  
 
-    * ``self.sample_data["biom_table"]``
+    * ``self.sample_data["project_data"]["biom_table"]``
     
 * Puts the BIOM table summary in:
 
-    * ``self.sample_data["biom_table_summary"]``
+    * ``self.sample_data["project_data"]["biom_table_summary"]``
 
 * Puts the BIOM table in tab-delimited format in:
 
-    * ``self.sample_data["biom_table_tsv"]``
+    * ``self.sample_data["project_data"]["biom_table_tsv"]``
 
 * If a fasta.chimera_removed file exists, will put the unfiltered BIOM table in:
 
-    * ``self.sample_data["unfiltered_biom_table"]``
+    * ``self.sample_data["project_data"]["unfiltered_biom_table"]``
 
     
 Parameters that can be set
@@ -124,7 +124,7 @@ class Step_qiime_make_otu_table(Step):
         
         # # If does not exist 
         # try:
-            # self.sample_data["qiime"]
+            # self.sample_data["project_data"]["qiime"]
         # except KeyError:
             # raise AssertionExcept("It seems like this is the first qiime step. At the moment, it must come after qiime_prep...\n" )
         
@@ -136,7 +136,7 @@ class Step_qiime_make_otu_table(Step):
                 # raise AssertionExcept("The mapping file specified does not exist!!\n")
             if "qiime.mapping" in self.sample_data:
                 self.write_warning("Overriding mapping file!")
-            self.sample_data["qiime.mapping"] = temp_pf
+            self.sample_data["project_data"]["qiime.mapping"] = temp_pf
         
         
     def create_spec_wrapping_up_script(self):
@@ -171,13 +171,13 @@ class Step_qiime_make_otu_table(Step):
         
         self.script += self.get_script_const()        # Gets the "env", "script_path" and "redir_params" part of the script which is always the same...
 
-        self.script += "-i %s \\\n\t" % self.sample_data["otu_table"]
+        self.script += "-i %s \\\n\t" % self.sample_data["project_data"]["otu_table"]
         if "taxonomy" in self.sample_data.keys():
-            self.script += "-t %s \\\n\t" % self.sample_data["taxonomy"]
+            self.script += "-t %s \\\n\t" % self.sample_data["project_data"]["taxonomy"]
         self.script += "-o %s \n\n" % "".join([use_dir,biom_table])
         
             
-        self.sample_data["biom_table"] = "".join([self.base_dir,biom_table])
+        self.sample_data["project_data"]["biom_table"] = "".join([self.base_dir,biom_table])
         
             
             
@@ -192,13 +192,13 @@ class Step_qiime_make_otu_table(Step):
             self.script += "\n\n# Adding code for removal of chimeric sequences from the BIOM table:\n"
             self.script += "%s \\\n\t" % os.sep.join([os.path.split(os.path.normpath(self.params["script_path"]))[0] , "filter_otus_from_otu_table.py"])
             self.script += "-i %s \\\n\t" % (use_dir + biom_table) 
-            self.script += "--otu_ids_to_exclude_fp %s \\\n\t" % self.sample_data["fasta.nucl"] 
+            self.script += "--otu_ids_to_exclude_fp %s \\\n\t" % self.sample_data["project_data"]["fasta.nucl"] 
             self.script += "--negate_ids_to_exclude \\\n\t"
             self.script += "-o %s \n\n" % "".join([use_dir,filtered_biom_table])
 
             # Store location of unfiltered and active biom tables:
-            self.sample_data["unfiltered_biom_table"] = self.sample_data["biom_table"]
-            self.sample_data["biom_table"] = "".join([self.base_dir,filtered_biom_table])
+            self.sample_data["project_data"]["unfiltered_biom_table"] = self.sample_data["project_data"]["biom_table"]
+            self.sample_data["project_data"]["biom_table"] = "".join([self.base_dir,filtered_biom_table])
             # Change working biom_table to the filtered biom_table:
             biom_table = filtered_biom_table
             biom_table_summary = biom_table + ".summary"
@@ -233,7 +233,7 @@ fi
             "cmd_text":cmd_text}
            
             
-            self.sample_data["biom_table_summary"] = "".join([self.base_dir,biom_table_summary])
+            self.sample_data["project_data"]["biom_table_summary"] = "".join([self.base_dir,biom_table_summary])
 
         ################################################################################################
         ## 
@@ -263,7 +263,7 @@ fi
             "cmd_text":cmd_text}
             
             # Store location of the tsv biom_table:
-            self.sample_data["biom_table_tsv"] = "".join([self.base_dir,biom_table_tsv])
+            self.sample_data["project_data"]["biom_table_tsv"] = "".join([self.base_dir,biom_table_tsv])
 
         # Move all files from temporary local dir to permanent base_dir
         self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)

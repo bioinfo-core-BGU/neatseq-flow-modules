@@ -1,6 +1,9 @@
 Title	Example_WF_From_the_manuscript	
-		
-		
+
+
+#Type	Path	
+Nucleotide	ftp.sra.ebi.ac.uk/genome.fna.gz
+
 #SampleID	Type	Path
 Sample1	Forward	ftp.sra.ebi.ac.uk/vol1/fastq/ERR578/ERR578458/ERR578458_1.fastq.gz
 Sample1	Reverse	ftp.sra.ebi.ac.uk/vol1/fastq/ERR578/ERR578458/ERR578458_2.fastq.gz

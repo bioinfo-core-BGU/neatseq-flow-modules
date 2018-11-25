@@ -135,7 +135,7 @@ class Step_RnammerTranscriptome(Step):
         # Use the dir it returns as the base_dir for this step.
         use_dir = self.local_start(self.base_dir)
 
-        output_basename = "{fasta}.rnammer.gff".format(fasta=os.path.basename(self.sample_data["fasta.nucl"]))
+        output_basename = "{fasta}.rnammer.gff".format(fasta=os.path.basename(self.sample_data["project_data"]["fasta.nucl"]))
 
         self.script = """\
 cd {dir}
@@ -146,13 +146,13 @@ cd {dir}
 cd -
 """.format(dir=use_dir,
            const=self.get_script_const().rstrip("\n\t"),
-           fasta_nucl=self.sample_data["fasta.nucl"])
+           fasta_nucl=self.sample_data["project_data"]["fasta.nucl"])
 
         # Store results to fasta and assembly slots:
-        self.sample_data["rnammer"] = "{dir}{name}".format(dir=self.base_dir, name=output_basename)
-        self.sample_data["gff"] = self.sample_data["rnammer"]
+        self.sample_data["project_data"]["rnammer"] = "{dir}{name}".format(dir=self.base_dir, name=output_basename)
+        self.sample_data["project_data"]["gff"] = self.sample_data["project_data"]["rnammer"]
 
-        self.stamp_file(self.sample_data["rnammer"])
+        self.stamp_file(self.sample_data["project_data"]["rnammer"])
         
         # Move all files from temporary local dir to permanent base_dir
         # Sees to copying local files to final destination (and other stuff)

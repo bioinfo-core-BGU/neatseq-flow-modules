@@ -24,12 +24,12 @@ Output
     * Typing results in:
         ``self.sample_data[<sample>]["Typing"]``
     * Merge of typing results in: 
-        ``self.sample_data["Typing"]``
+        ``self.sample_data["project_data"]["Typing"]``
     * Files for phyloviz in:
-        ``self.sample_data["phyloviz_MetaData"]``
-        ``self.sample_data["phyloviz_Alleles"]``
+        ``self.sample_data["project_data"]["phyloviz_MetaData"]``
+        ``self.sample_data["project_data"]["phyloviz_Alleles"]``
     * Tree file (if --Tree flag is set) in newick format in: 
-        ``self.sample_data["newick"]``
+        ``self.sample_data["project_data"]["newick"]``
 
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -142,7 +142,7 @@ class Step_cgMLST_and_MLST_typing(Step):
             self.script += " -O %s \\\n\t" % merge_file
             self.script += " -R %s$ \n\n" % self.file_tag
             
-            self.sample_data["Typing"]=merge_file
+            self.sample_data["project_data"]["Typing"]=merge_file
             
             if "MLST_parser.py" in os.listdir(self.module_location):                
                 # Make a dir for the parsed files:
@@ -169,11 +169,11 @@ class Step_cgMLST_and_MLST_typing(Step):
                     self.script += " --Tree  \\\n\t" 
                     if "Tree_method" in self.params.keys():
                         self.script += " --Tree_method %s \\\n\t" % self.params["Tree_method"]
-                    self.sample_data["newick"]=os.path.join(pars_dir,"Tree.newick")
+                    self.sample_data["project_data"]["newick"]=os.path.join(pars_dir,"Tree.newick")
  
                 self.script += " -O %s \n\n" % pars_dir
-                self.sample_data["phyloviz_MetaData"]=os.path.join(pars_dir,"New_MetaData.tab")
-                self.sample_data["phyloviz_Alleles"]=os.path.join(pars_dir,"New_Merged_cut.tab")
+                self.sample_data["project_data"]["phyloviz_MetaData"]=os.path.join(pars_dir,"New_MetaData.tab")
+                self.sample_data["project_data"]["phyloviz_Alleles"]=os.path.join(pars_dir,"New_Merged_cut.tab")
                 
     def build_scripts(self):
         """ This is the actual script building function
@@ -224,9 +224,9 @@ class Step_cgMLST_and_MLST_typing(Step):
 
 def set_global_Sample_data_dir(self,category,info,data):
     if category not in self.sample_data.keys():
-        self.sample_data[category] = {}
-    if self.name not in self.sample_data[category].keys():
-        self.sample_data[category][self.name] = {}
-    if info not in self.sample_data[category][self.name].keys():
-        self.sample_data[category][self.name][info] = {}
-    self.sample_data[category][self.name][info] = data
+        self.sample_data["project_data"][category] = {}
+    if self.name not in self.sample_data["project_data"][category].keys():
+        self.sample_data["project_data"][category][self.name] = {}
+    if info not in self.sample_data["project_data"][category][self.name].keys():
+        self.sample_data["project_data"][category][self.name][info] = {}
+    self.sample_data["project_data"][category][self.name][info] = data

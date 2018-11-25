@@ -39,7 +39,7 @@ Output
     
 * If ``ktImportTaxonomy_path`` parameter was passed, puts the krona reports in 
 
-    * ``self.sample_data["krona"]``
+    * ``self.sample_data["project_data"]["krona"]``
 
 
     
@@ -143,9 +143,9 @@ class Step_centrifuge(Step):
             self.script = re.sub("\\\\\s*$","\n\n",self.script)
 
             
-            self.sample_data["krona"] = self.base_dir + "krona_report.html"
+            self.sample_data["project_data"]["krona"] = self.base_dir + "krona_report.html"
     
-            self.stamp_file(self.sample_data["krona"])
+            self.stamp_file(self.sample_data["project_data"]["krona"])
             
 
         
@@ -257,5 +257,5 @@ fi
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
                 index_fh.write("%s\t%s\n" % (sample,self.sample_data[sample]["classification_report"]))
                 
-        self.sample_data["centrifuge_file_index"] = self.base_dir + "centrifuge_files_index.txt"
+        self.sample_data["project_data"]["centrifuge_file_index"] = self.base_dir + "centrifuge_files_index.txt"
         

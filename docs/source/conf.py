@@ -21,6 +21,8 @@ import os
 # sys.path.insert(0, os.path.abspath('../../neatseq_flow_modules'))
 # sys.path.append(os.path.abspath('../../../../release_1.0.1'))
 # sys.path.insert(0, os.path.abspath('../../Modules/Main_NSF_modules'))
+sys.path.insert(0, os.path.abspath('../../../neatseq_flow'))
+
 
 # print sys.path
 # sys.exit(sys.path)

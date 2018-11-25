@@ -213,7 +213,7 @@ class Step_mash_dist(Step):
                     if "msh" in self.params["reference"]:
                         # if msh2use not in self.sample_data[sample]:
                         try:
-                            ref_path = self.sample_data["msh." + type2use]
+                            ref_path = self.sample_data["project_data"]["msh." + type2use]
                         except KeyError:
                             raise AssertionExcept(
                                 "No {type} mash sketch (in reference) for project".format(type=type2use))
@@ -222,7 +222,7 @@ class Step_mash_dist(Step):
                         if type2use == "fasta":
                             type2use = "fasta.nucl"
                         try:
-                            ref_path = self.sample_data[type2use]
+                            ref_path = self.sample_data["project_data"][type2use]
                         except KeyError:
                             raise AssertionExcept("No {type} file (in reference) for project".format(type=type2use))
                 else:
@@ -304,7 +304,7 @@ class Step_mash_dist(Step):
             if "msh" in self.params["reference"]:
                 # if msh2use not in self.sample_data[sample]:
                 try:
-                    ref_path = self.sample_data["msh." + type2use]
+                    ref_path = self.sample_data["project_data"]["msh." + type2use]
                 except KeyError:
                     raise AssertionExcept("No {type} mash sketch (in reference) for project".format(type=type2use))
 
@@ -312,7 +312,7 @@ class Step_mash_dist(Step):
                 if type2use == "fasta":
                     type2use = "fasta.nucl"
                 try:
-                    ref_path = self.sample_data[type2use]
+                    ref_path = self.sample_data["project_data"][type2use]
                 except KeyError:
                     raise AssertionExcept("No {type} file (in reference) for project".format(type=type2use))
 
@@ -325,7 +325,7 @@ class Step_mash_dist(Step):
 
             if self.params["query"]["scope"] == "project":
                 try:
-                    query_path = self.sample_data["msh." + type2use]
+                    query_path = self.sample_data["project_data"]["msh." + type2use]
                 except KeyError:
                     raise AssertionExcept("No {type} mash sketch (in query) for project".format(type=type2use))
             else: # scope = "all_samples"
@@ -341,7 +341,7 @@ class Step_mash_dist(Step):
                 type2use = "fasta.nucl"
             if self.params["query"]["scope"] == "project":
                 try:
-                    query_path = self.sample_data[type2use]
+                    query_path = self.sample_data["project_data"][type2use]
                 except KeyError:
                     raise AssertionExcept("No {type} file (in query) for project".format(type=type2use))
             else: # scope = "all_samples"
@@ -361,8 +361,8 @@ class Step_mash_dist(Step):
         self.script += "> %s \n\n" % (use_dir + output_filename)
 
         # Store results table
-        self.sample_data["mash.dist.table"] = (self.base_dir + output_filename)
-        self.stamp_file(self.sample_data["mash.dist.table"])
+        self.sample_data["project_data"]["mash.dist.table"] = (self.base_dir + output_filename)
+        self.stamp_file(self.sample_data["project_data"]["mash.dist.table"])
 
         # Wrapping up function. Leave these lines at the end of every iteration:
         self.local_finish(use_dir,self.base_dir)

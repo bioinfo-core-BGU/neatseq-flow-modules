@@ -37,7 +37,7 @@ Output
 
 * If ``ktImportText_path`` parameter was passed, puts the krona reports in 
 
-    * ``self.sample_data["krona"]``
+    * ``self.sample_data["project_data"]["krona"]``
 
     
 Parameters that can be set
@@ -150,8 +150,8 @@ class Step_kaiju(Step):
             self.script = self.script.rstrip("\\\n\t") 
 
             # Storing and stamping results:
-            self.sample_data["krona"] = krona_report_fn
-            self.stamp_file(self.sample_data["krona"])
+            self.sample_data["project_data"]["krona"] = krona_report_fn
+            self.stamp_file(self.sample_data["project_data"]["krona"])
             
     def build_scripts(self):
         """ This is the actual script building function
@@ -230,5 +230,5 @@ class Step_kaiju(Step):
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
                 index_fh.write("%s\t%s\n" % (sample,self.sample_data[sample]["raw_classification"]))
                 
-        self.sample_data["kaiju_file_index"] = self.base_dir + "kaiju_files_index.txt"
+        self.sample_data["project_data"]["kaiju_file_index"] = self.base_dir + "kaiju_files_index.txt"
         

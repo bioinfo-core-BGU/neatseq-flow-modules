@@ -119,7 +119,7 @@ class Step_vsearch_derepel(Step):
                         self.write_warning("Both 'nucl' and 'fastq.S' exist and no 'source' param passed. Using 'nucl'")
                         self.params["source"] = "fasta.nucl"
                 if "fasta.nucl" not in self.sample_data[sample] and "fastq.S" not in self.sample_data[sample]:
-                    raise AssertionExcept("Neither 'nucl' nor 'fastq.S' exist!")
+                    raise AssertionExcept("Neither 'nucl' nor 'fastq.S' exist!",sample)
                 if "fasta.nucl" in self.sample_data[sample]:
                     self.params["source"] = "fasta.nucl"
                 if "fastq.S" in self.sample_data[sample]:
@@ -127,14 +127,14 @@ class Step_vsearch_derepel(Step):
 
         elif self.params["scope"] == "project":
             # Use the fasta->nucl by preference (should be a user defined param...)
-            if "fasta.nucl" in self.sample_data and "fastq.S" in self.sample_data:
+            if "fasta.nucl" in self.sample_data["project_data"] and "fastq.S" in self.sample_data["project_data"]:
                 self.write_warning("Both 'fasta.nucl' and 'fastq.S' exist. Using 'nucl'")
                 self.params["source"] = "fasta.nucl"
-            if "fasta.nucl" not in self.sample_data and "fastq.S" not in self.sample_data:
+            if "fasta.nucl" not in self.sample_data["project_data"] and "fastq.S" not in self.sample_data["project_data"]:
                 raise AssertionExcept("Neither 'fasta.nucl' nor 'fastq.S' exist!")
-            if "fasta.nucl" in self.sample_data:
+            if "fasta.nucl" in self.sample_data["project_data"]:
                 self.params["source"] = "fasta.nucl"
-            if "fastq.S" in self.sample_data:
+            if "fastq.S" in self.sample_data["project_data"]:
                 self.params["source"] = "fastq.S"
 
 
@@ -174,7 +174,7 @@ class Step_vsearch_derepel(Step):
             # output_prefix = sample + "_bowtie2_map"
 
              
-            input_file = self.sample_data[self.params["source"]]
+            input_file = self.sample_data["project_data"][self.params["source"]]
             
             output_prefix = os.path.basename(input_file)
             
@@ -190,9 +190,9 @@ class Step_vsearch_derepel(Step):
             
             
 
-            self.sample_data["fasta.nucl"] = "%s%s.fasta" % (self.base_dir , output_prefix)
-            self.sample_data["vsearch_derepl"] = self.sample_data["fasta.nucl"]
-            self.stamp_file(self.sample_data["fasta.nucl"])
+            self.sample_data["project_data"]["fasta.nucl"] = "%s%s.fasta" % (self.base_dir , output_prefix)
+            self.sample_data["project_data"]["vsearch_derepl"] = self.sample_data["project_data"]["fasta.nucl"]
+            self.stamp_file(self.sample_data["project_data"]["fasta.nucl"])
                     
         
             # Move all files from temporary local dir to permanent base_dir

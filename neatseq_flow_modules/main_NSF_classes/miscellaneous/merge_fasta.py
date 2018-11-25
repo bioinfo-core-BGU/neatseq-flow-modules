@@ -139,8 +139,8 @@ class Step_merge_fasta(Step):
             self.script += "> %s%s" % (use_dir, output_fn)
             
           
-            self.sample_data[type] = "%s%s" % (self.base_dir, output_fn)
-            self.stamp_file(self.sample_data[type])
+            self.sample_data["project_data"][type] = "%s%s" % (self.base_dir, output_fn)
+            self.stamp_file(self.sample_data["project_data"][type])
                     
         
             # Move all files from temporary local dir to permanent base_dir

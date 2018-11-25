@@ -80,13 +80,13 @@ Step_params:
         module:         bwa_builder
         base:           Trimmomatic
         script_path:    '{Vars.Programs.BWA} index'
-        scope:          sample
+        scope:          project
 
     BWA:
         module:         bwa_mapper
         base:           BWA_Index_Builder
         script_path:    {Vars.Programs.BWA}
-        scope:          sample
+        scope:          project
         mod:            mem
         redirects:
             -t:         1
@@ -96,13 +96,13 @@ Step_params:
         module:         bowtie2_builder
         base:           Trimmomatic
         script_path:    {Vars.Programs.bowtie2_builder}
-        scope:          sample
+        scope:          project
 
     Bwt2:
         module:         bowtie2_mapper
         base:           Bwt2_Index_Builder
         script_path:    {Vars.Programs.bowtie2}
-        scope:          sample
+        scope:          project
         get_map_log:
         get_stderr:
         redirects:

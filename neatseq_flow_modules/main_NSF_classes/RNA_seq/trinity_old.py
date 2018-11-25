@@ -192,10 +192,10 @@ class Step_trinity_old(Step):
         
 
         # Store results to fasta and assembly slots:
-        self.sample_data["fasta.nucl"] = "%s%s%s%s" % (self.base_dir, os.sep, self.sample_data["Title"], self.file_tag)
-        self.sample_data[self.get_step_step() + ".contigs"] = self.sample_data["fasta.nucl"]
+        self.sample_data["project_data"]["fasta.nucl"] = "%s%s%s%s" % (self.base_dir, os.sep, self.sample_data["Title"], self.file_tag)
+        self.sample_data["project_data"][self.get_step_step() + ".contigs"] = self.sample_data["project_data"]["fasta.nucl"]
 
-        self.stamp_file(self.sample_data[self.get_step_step() + ".contigs"])
+        self.stamp_file(self.sample_data["project_data"][self.get_step_step() + ".contigs"])
 
         #######################################################################################
         ## 
@@ -224,9 +224,9 @@ fi
            cmd_text = cmd_text)
            
             
-            self.sample_data["gene_trans_map"] = "%s%s%s%s.gene_trans_map" % (self.base_dir, os.sep, self.sample_data["Title"], self.file_tag)
-            self.stamp_file(self.sample_data["gene_trans_map"])
-       
+            self.sample_data["project_data"]["gene_trans_map"] = "%s%s%s%s.gene_trans_map" % (self.base_dir, os.sep, self.sample_data["Title"], self.file_tag)
+            self.stamp_file(self.sample_data["project_data"]["gene_trans_map"])
+
         # Move all files from temporary local dir to permanent base_dir
         self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
      
@@ -294,21 +294,12 @@ if [ -e {transcriptome} ]
 then
     {cmd_text}
 fi
-""".format(transcriptome = use_dir + "Trinity.fasta",\
+""".format(transcriptome = use_dir + "Trinity.fasta",
            cmd_text = cmd_text)
            
                 
                 self.sample_data[sample]["gene_trans_map"] = "%s%s%s.gene_trans_map" % (sample_dir, os.sep, self.file_tag)
                 self.stamp_file(self.sample_data[sample]["gene_trans_map"])
-           
-                
-            # Wrapping up function. Leave these lines at the end of every iteration:
-            self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)
 
+            self.local_finish(use_dir,sample_dir)
             self.create_low_level_script()
-                        
-            
-            
-                 
-            
-     

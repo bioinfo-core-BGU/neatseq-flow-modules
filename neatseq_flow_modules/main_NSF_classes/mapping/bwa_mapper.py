@@ -196,7 +196,7 @@ class Step_bwa_mapper(Step):
                 for sample in self.sample_data["samples"]:
                     if self.params["scope"] == "project":
                         # Set project wide reference:
-                        self.sample_data[sample]["reference"] = self.sample_data["bwa_fasta"]
+                        self.sample_data[sample]["reference"] = self.sample_data["project_data"]["bwa_fasta"]
                     elif self.params["scope"] == "sample":
                         # Set per-sample reference:
                         self.sample_data[sample]["reference"] = self.sample_data[sample]["bwa_fasta"]
@@ -279,7 +279,7 @@ class Step_bwa_mapper(Step):
                     # Add ref_index (depends on scope)
                     if "scope" in self.params:  # If scope was passed, include either project or sample bwa index
                         if self.params["scope"] == "project":
-                            self.script += "%s \\\n\t" % self.sample_data["bwa_index"]
+                            self.script += "%s \\\n\t" % self.sample_data["project_data"]["bwa_index"]
                         else:
                             self.script += "%s \\\n\t" % self.sample_data[sample]["bwa_index"]
                     else:  # Otherwise add ref_index
@@ -331,7 +331,7 @@ class Step_bwa_mapper(Step):
                 # Add ref_index (depends on scope)
                 if "scope" in self.params:  # If scope was passed, include either project or sample bwa index
                     if self.params["scope"] == "project":
-                        self.script += "%s \\\n\t" % self.sample_data["bwa_index"]
+                        self.script += "%s \\\n\t" % self.sample_data["project_data"]["bwa_index"]
                     else:
                         self.script += "%s \\\n\t" % self.sample_data[sample]["bwa_index"]
                 else:  # Otherwise add ref_index

@@ -20,7 +20,7 @@
 
 **NeatSeq-Flow** is available for download on `github <https://github.com/bioinfo-core-BGU/neatseq-flow>`_.
 
-Following is a list of modules included in this repository.
+Following is a list of :ref:`modules <neatseq_flow_modules>` and :ref:`workflows <neatseq_flow_workflows>` included in this repository.
 
 .. attention:: 
    In order to include these modules in your workflow, please:
@@ -43,12 +43,13 @@ Following is a list of modules included in this repository.
    Some of the modules in this package are included in the main **NeatSeq-Flow** repository. These are indicated below with a :sup:`*`.
    
 .. important::
-   **NeatSeq-Flow** enables users to program their own modules and workflows. You are encouraged to share your modules with the public by adding it to this repository. In order to do so, please fork the repository on github, upload your new module or workflow and open a pull request.
+   **NeatSeq-Flow** enables users to program their own modules workflows. You are encouraged to share your modules with the public by adding it to this repository. In order to do so, please fork the repository on github, upload your new module or workflow and open a pull request.
 
 
 .. Modules included in the repository 
 .. -----------------------------------
 
+.. _neatseq_flow_modules:
 
 .. toctree::
    :maxdepth: 2
@@ -78,6 +79,8 @@ Following is a list of modules included in this repository.
    
 .. Workflows included in the repository
 .. -------------------------------------
+
+.. _neatseq_flow_workflows:
 
 .. toctree::
    :maxdepth: 1

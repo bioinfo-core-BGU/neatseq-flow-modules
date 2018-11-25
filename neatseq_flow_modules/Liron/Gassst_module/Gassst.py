@@ -154,10 +154,10 @@ class Step_Gassst(Step):
         
             
         if not "blast" in self.sample_data.keys():
-            self.sample_data["blast"] = dict()
+            self.sample_data["project_data"]["blast"] = dict()
         
         if not "blast.nucl" in self.sample_data.keys():
-            self.sample_data["blast.nucl"] = dict()
+            self.sample_data["project_data"]["blast.nucl"] = dict()
 
         assert "fasta.nucl" in self.sample_data.keys(), "In %s:\tYou need a 'fasta.nucl' file defined to run Gassst.\nIf the 'fasta.nucl' files are per sample, use 'scope: sample' parameter.\n" % (self.get_step_name())
             
@@ -280,11 +280,11 @@ class Step_Gassst(Step):
         # Define query and db files:
         # If db is defined by user, set the query to the correct 'fasta'
         if "-d" in self.params["redir_params"].keys():
-            self.script += "-i %s \\\n\t" % self.sample_data["fasta.nucl"]
+            self.script += "-i %s \\\n\t" % self.sample_data["project_data"]["fasta.nucl"]
         # If -d is not defined by user, set the -d to the correct fasta, with 'fasta2use'
         # -i must be set by user. assertion is made in step_specific_init()
         else:
-            self.script += "-d %s \\\n\t" % self.sample_data["fasta.nucl"]
+            self.script += "-d %s \\\n\t" % self.sample_data["project_data"]["fasta.nucl"]
                 
         self.script += "-o %s\n\n" % output_filename
         
@@ -293,9 +293,9 @@ class Step_Gassst(Step):
             self.script += "-i %s \\\n\t" % output_filename
             self.script += "-o %s \\\n\t" % output_filename
         # Store BLAST result file:
-        self.sample_data["blast"] = (self.base_dir + os.path.basename(output_filename))
-        self.stamp_file(self.sample_data["blast"])
-        self.sample_data["blast.nucl"] = (self.base_dir + os.path.basename(output_filename))
+        self.sample_data["project_data"]["blast"] = (self.base_dir + os.path.basename(output_filename))
+        self.stamp_file(self.sample_data["project_data"]["blast"])
+        self.sample_data["project_data"]["blast.nucl"] = (self.base_dir + os.path.basename(output_filename))
 
         # Wrapping up function. Leave these lines at the end of every iteration:
         self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
@@ -315,7 +315,7 @@ class Step_Gassst(Step):
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
                 index_fh.write("%s\t%s\n" % (sample,self.sample_data[sample]["blast"]))
                 
-        self.sample_data["BLAST_files_index"] = self.base_dir + "Gassst_files_index.txt"
+        self.sample_data["project_data"]["BLAST_files_index"] = self.base_dir + "Gassst_files_index.txt"
         
   
         

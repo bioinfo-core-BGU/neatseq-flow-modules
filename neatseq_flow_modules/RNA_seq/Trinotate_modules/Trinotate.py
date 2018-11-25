@@ -16,17 +16,17 @@ Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     
 * A transcripts file in 
-    * self.sample_data["transcripts.fasta.nucl"],
+    * self.sample_data["project_data"]["transcripts.fasta.nucl"],
 * A gene to transcript mapping file in: (produced by ``Trinity_gene_to_trans_map`` module)
-    * self.sample_data["gene_trans_map"], 
+    * self.sample_data["project_data"]["gene_trans_map"], 
 * A protein fasta file (produced by ``TransDecoder``)
-    * self.sample_data["fasta.prot"])
+    * self.sample_data["project_data"]["fasta.prot"])
 * Results of ``blastp`` of protein file against swissprot database:
-    * self.sample_data["blast.prot"],
+    * self.sample_data["project_data"]["blast.prot"],
 * Results of ``blastx`` of transcripts file against swissprot database:
-    * self.sample_data["blast.nucl"],
+    * self.sample_data["project_data"]["blast.nucl"],
 * Results of ``hmmscan`` of protein file against pfam database:
-    * self.sample_data["hmmscan.prot"])
+    * self.sample_data["project_data"]["hmmscan.prot"])
     
 .. Attention:: If ``scope`` is set to ``sample``, all of the above files should be in the sample scope!
 
@@ -102,12 +102,19 @@ class Step_Trinotate(Step):
         if "scope" in self.params:
           
             if self.params["scope"]=="project":
-                if "fasta.nucl" not in self.sample_data:
+                if "fasta.nucl" not in self.sample_data["project_data"]:
                     raise AssertionExcept("Project does not have a nucl fasta.")
-                if "fasta.prot" not in self.sample_data:
+                if "fasta.prot" not in self.sample_data["project_data"]:
                     raise AssertionExcept("Project does not have a prot fasta.")
-                if "hmmscan.prot" not in self.sample_data:
+                if "hmmscan.prot" not in self.sample_data["project_data"]:
                     raise AssertionExcept("Project does not have a prot hmmscan output file.")
+                for type in ["gene_trans_map", "transcripts.fasta.nucl", "fasta.prot"]:
+                    if type not in self.sample_data["project_data"]:
+                        raise AssertionExcept("Project does not have a {type} file.".format(type=type))
+            #
+            # trans_map = self.sample_data["project_data"]["gene_trans_map"],
+            # trans_fa = self.sample_data["project_data"]["transcripts.fasta.nucl"],
+            # pep_fa = self.sample_data["project_data"]["fasta.prot"])
 
             elif self.params["scope"]=="sample":
                 
@@ -118,6 +125,10 @@ class Step_Trinotate(Step):
                         raise AssertionExcept("Project does not have a prot fasta.")
                     if "hmmscan.prot" not in self.sample_data[sample]:
                         raise AssertionExcept("Project does not have a prot hmmscan output file.")
+                    for type in ["gene_trans_map", "transcripts.fasta.nucl", "fasta.prot"]:
+                        if type not in self.sample_data[sample]:
+                            raise AssertionExcept("Project does not have a {type} file.".format(type=type))
+
             else:
                 raise AssertionExcept("'scope' must be either 'sample' or 'project'")
         else:
@@ -174,9 +185,9 @@ class Step_Trinotate(Step):
 \t--gene_trans_map {trans_map} \\
 \t--transcript_fasta {trans_fa} \\
 \t--transdecoder_pep  {pep_fa}\n\n""".format(trino_cmd = trino_cmd_sqlite,
-                                             trans_map = self.sample_data["gene_trans_map"],
-                                             trans_fa  = self.sample_data["transcripts.fasta.nucl"],
-                                             pep_fa    = self.sample_data["fasta.prot"])
+                                             trans_map = self.sample_data["project_data"]["gene_trans_map"],
+                                             trans_fa  = self.sample_data["project_data"]["transcripts.fasta.nucl"],
+                                             pep_fa    = self.sample_data["project_data"]["fasta.prot"])
         
         
         ################################ Step 2. Load
@@ -186,16 +197,16 @@ class Step_Trinotate(Step):
 {trino_cmd}LOAD_swissprot_blastx {blastx} \n
 
 """.format(trino_cmd = trino_cmd_sqlite,
-           blastp  = self.sample_data["blast.prot"],
-           blastx = self.sample_data["blast.nucl"])
+           blastp  = self.sample_data["project_data"]["blast.prot"],
+           blastx = self.sample_data["project_data"]["blast.nucl"])
 
-        if "hmmscan.prot" in self.sample_data:
+        if "hmmscan.prot" in self.sample_data["project_data"]:
             self.script += "{trino_cmd}LOAD_pfam {pfam}\n\n".format(trino_cmd = trino_cmd_sqlite,
-                                                                    pfam   = self.sample_data["hmmscan.prot"])
+                                                                    pfam   = self.sample_data["project_data"]["hmmscan.prot"])
 
-        if "rnammer" in self.sample_data:
+        if "rnammer" in self.sample_data["project_data"]:
             self.script += "{trino_cmd}LOAD_rnammer {rnammer}\n\n".format(trino_cmd=trino_cmd_sqlite,
-                                                                    rnammer=self.sample_data["rnammer"])
+                                                                    rnammer=self.sample_data["project_data"]["rnammer"])
 
         ################################ Step 4. Report
         self.script += "### Step 4: Create report\n\n"
@@ -208,9 +219,9 @@ class Step_Trinotate(Step):
         
 
         # Store results to fasta and assembly slots:
-        self.sample_data["trino.rep"] = "%s%s" % (self.base_dir, output_basename)
+        self.sample_data["project_data"]["trino.rep"] = "%s%s" % (self.base_dir, output_basename)
         
-        self.stamp_file(self.sample_data["trino.rep"])
+        self.stamp_file(self.sample_data["project_data"]["trino.rep"])
 
         ################################ Step 5. delete sqlitedb
         # If requested copy, create copy and change active sqlitedb

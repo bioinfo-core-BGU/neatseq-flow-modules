@@ -40,9 +40,9 @@ Lines for parameter file
 ::
 
     Gene_Trans_Map:
-        module:     trinity
-        base:       Trinity_gene_to_trans_map
-        script_path: /path/to/Trinity/util/support_scripts/get_Trinity_gene_to_trans_map.pl
+        module:     Trinity_gene_to_trans_map
+        base:       trinity
+        script_path: {Vars.paths.get_Trinity_gene_to_trans_map.pl}
 
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -67,23 +67,20 @@ class Step_Trinity_gene_to_trans_map(Step):
     
     def step_specific_init(self):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
-        
-        
-        
+
+
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
             Here you should do testing for dependency output. These will NOT exist at initiation of this instance. They are set only following sample_data updating
         """
-        
+
         if "trinity" not in [self.pipe_data["names_index"][step] for step in self.get_depend_list()]:
             self.write_warning("No trinity in history. Are you sure of what you are attempting to do?")
-        
-        
-        
+
         if "scope" in self.params:
           
             if self.params["scope"]=="project":
-                if not "fasta.nucl" in self.sample_data:
+                if not "fasta.nucl" in self.sample_data["project_data"]:
                     raise AssertionExcept("No fasta file of type 'nucl' in project\n")
 
             elif self.params["scope"]=="sample":
@@ -97,12 +94,7 @@ class Step_Trinity_gene_to_trans_map(Step):
         else:
             raise AssertionExcept("No 'scope' specified.")
         
-        
-        ##########################
-        
 
-            
-        
         
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
@@ -130,19 +122,17 @@ class Step_Trinity_gene_to_trans_map(Step):
         # Use the dir it returns as the base_dir for this step.
         use_dir = self.local_start(self.base_dir)
 
-        output_basefn = "%s.gene_trans_map" % os.path.basename(self.sample_data["fasta.nucl"])
+        output_basefn = "%s.gene_trans_map" % os.path.basename(self.sample_data["project_data"]["fasta.nucl"])
         
         self.script = """
 {script_path}{transcriptome} \\
 	> {map} 
-""".format(transcriptome = "%s" % self.sample_data["fasta.nucl"],
+""".format(transcriptome = "%s" % self.sample_data["project_data"]["fasta.nucl"],
            script_path   = self.get_script_const(),
            map           = os.path.join(use_dir, output_basefn))
-           
-        
-        
-        self.sample_data["gene_trans_map"] = os.path.join(self.base_dir, output_basefn)
-        self.stamp_file(self.sample_data["gene_trans_map"])
+
+        self.sample_data["project_data"]["gene_trans_map"] = os.path.join(self.base_dir, output_basefn)
+        self.stamp_file(self.sample_data["project_data"]["gene_trans_map"])
        
         # Move all files from temporary local dir to permanent base_dir
         self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
@@ -169,10 +159,10 @@ class Step_Trinity_gene_to_trans_map(Step):
             
             self.script = """
 {script_path}{transcriptome} \\
-	> {map} 
-""".format(transcriptome = "%s" % self.sample_data[sample]["fasta.nucl"],
-           script_path   = self.get_script_const(),
-           map           = os.path.join(use_dir, output_basefn))
+\t> {map} 
+""".format(transcriptome="%s" % self.sample_data[sample]["fasta.nucl"],
+           script_path=self.get_script_const(),
+           map=os.path.join(use_dir, output_basefn))
                
             
             

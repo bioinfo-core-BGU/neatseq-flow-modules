@@ -36,11 +36,11 @@ Output
 
     * Puts index of output files in:
     
-        ``self.sample_data["CARD_RGI.files_index"]``
+        ``self.sample_data["project_data"]["CARD_RGI.files_index"]``
         
     * If ``merge_script_path`` is specified in parameters, puts the merged file in 
     
-        ``self.sample_data["CARD_RGI.merged_reports"]``
+        ``self.sample_data["project_data"]["CARD_RGI.merged_reports"]``
         
         
 * If ``scope`` is set to ``project``:
@@ -160,7 +160,7 @@ class Step_CARD_RGI(Step):
                     raise AssertionExcept("Sample does not have a fasta file\n", sample)
         elif self.params["scope"] == "project":
             try:
-                self.sample_data["fasta.nucl"]
+                self.sample_data["project_data"]["fasta.nucl"]
             except KeyError:
                 raise AssertionExcept("Project does not have a fasta file\n")
                 
@@ -180,10 +180,10 @@ class Step_CARD_RGI(Step):
                 self.script = ""
             else:
                 self.script = "%s \\\n\t--ind %s \\\n\t--output %s\n\n" % (self.params["merge_script_path"], \
-                                                                            self.sample_data["CARD_RGI.files_index"], \
+                                                                            self.sample_data["project_data"]["CARD_RGI.files_index"], \
                                                                             self.base_dir + "CARD_RGI.merged_reports.tsv")
-                self.sample_data["CARD_RGI.merged_reports"] = self.base_dir + "CARD_RGI.merged_reports.tsv"
-                self.stamp_file(self.sample_data["CARD_RGI.merged_reports"])
+                self.sample_data["project_data"]["CARD_RGI.merged_reports"] = self.base_dir + "CARD_RGI.merged_reports.tsv"
+                self.stamp_file(self.sample_data["project_data"]["CARD_RGI.merged_reports"])
     
     def build_scripts(self):
         """ This is the actual script building function
@@ -255,7 +255,7 @@ class Step_CARD_RGI(Step):
             self.script += "cd %s\n\n" % use_dir
      
             self.script += self.get_script_const()
-            self.script += "-i %s \\\n\t" % self.sample_data["fasta.nucl"]  # Possibly let user decide if to use protein sequences?
+            self.script += "-i %s \\\n\t" % self.sample_data["project_data"]["fasta.nucl"]  # Possibly let user decide if to use protein sequences?
             self.script += "-o %s \n\n" % (self.sample_data["Title"] + ".CARD_RGI")
 
             # Add script to convert from JSON to tsv:
@@ -271,12 +271,12 @@ class Step_CARD_RGI(Step):
             self.script += "cd %s\n\n" % self.pipe_data["home_dir"]
      
 
-            self.sample_data["CARD_RGI.json"] = self.base_dir + self.sample_data["Title"] + ".CARD_RGI.json"
-            self.stamp_file(self.sample_data["CARD_RGI.json"])
+            self.sample_data["project_data"]["CARD_RGI.json"] = self.base_dir + self.sample_data["Title"] + ".CARD_RGI.json"
+            self.stamp_file(self.sample_data["project_data"]["CARD_RGI.json"])
             
             if self.params["JSON2tsv_script"]:
-                self.sample_data["CARD_RGI.tsv"] = self.base_dir + self.sample_data["Title"] + ".CARD_RGI.txt"
-                self.stamp_file(self.sample_data["CARD_RGI.tsv"])
+                self.sample_data["project_data"]["CARD_RGI.tsv"] = self.base_dir + self.sample_data["Title"] + ".CARD_RGI.txt"
+                self.stamp_file(self.sample_data["project_data"]["CARD_RGI.tsv"])
 
             
             
@@ -294,6 +294,6 @@ class Step_CARD_RGI(Step):
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
                 index_fh.write("%s\t%s\n" % (sample,self.sample_data[sample]["CARD_RGI.tsv"]))
                 
-        self.sample_data["CARD_RGI.files_index"] = self.base_dir + "CARD_RGI.files_index.txt"
+        self.sample_data["project_data"]["CARD_RGI.files_index"] = self.base_dir + "CARD_RGI.files_index.txt"
         
   

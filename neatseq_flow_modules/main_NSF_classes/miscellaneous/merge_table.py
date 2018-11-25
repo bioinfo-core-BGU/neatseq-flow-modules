@@ -182,8 +182,8 @@ awk -v header="$HEADER" -v skip="$SKIP" \\
            infiles= ' \\\n    '.join([self.sample_data[sample][type] for sample in self.sample_data["samples"]]),
            outfile=use_dir+output_fn)
 
-            self.sample_data[type] = "%s%s" % (self.base_dir, output_fn)
-            self.stamp_file(self.sample_data[type])
+            self.sample_data["project_data"][type] = "%s%s" % (self.base_dir, output_fn)
+            self.stamp_file(self.sample_data["project_data"][type])
 
             # Move all files from temporary local dir to permanent base_dir
             self.local_finish(use_dir,self.base_dir)

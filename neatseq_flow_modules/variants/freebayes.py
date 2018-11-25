@@ -88,16 +88,7 @@ __version__ = "1.2.0"
 
 
 class Step_freebayes(Step):
-    """ A module for running freebayes:
-        requires:
-            sample_data[sample]["fastq"]["mapping"]["bam"]
-            sample_data[sample]["fastq"]["mapping"]["reference"]
-            
-            output:
-            puts output files in the following slots, respectively:
-            self.sample_data["variants"]["VCF"]
-    """
-   
+
     
     def step_specific_init(self):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
@@ -199,15 +190,15 @@ class Step_freebayes(Step):
             if self.params["output_type"] == "vcf":
                 self.script += "--vcf %s%s_%s.vcf \n\n" % (use_dir, self.sample_data["Title"], self.get_step_name())
 
-                self.sample_data["vcf"] = "%s%s_%s.vcf" % (self.base_dir,self.sample_data["Title"], self.get_step_name())
-                self.sample_data["vcf.source"] = "freebayes"
-                self.stamp_file(self.sample_data["vcf"])
+                self.sample_data["project_data"]["vcf"] = "%s%s_%s.vcf" % (self.base_dir,self.sample_data["Title"], self.get_step_name())
+                self.sample_data["project_data"]["vcf.source"] = "freebayes"
+                self.stamp_file(self.sample_data["project_data"]["vcf"])
             else:   # output_type = "gvcf"
                 self.script += "--gvcf %s%s_%s.gvcf \n\n" % (use_dir, self.sample_data["Title"], self.get_step_name())
 
-                self.sample_data["gvcf"] = "%s%s_%s.gvcf" % (self.base_dir,self.sample_data["Title"], self.get_step_name())
-                self.sample_data["gvcf.source"] = "freebayes"
-                self.stamp_file(self.sample_data["gvcf"])
+                self.sample_data["project_data"]["gvcf"] = "%s%s_%s.gvcf" % (self.base_dir,self.sample_data["Title"], self.get_step_name())
+                self.sample_data["project_data"]["gvcf.source"] = "freebayes"
+                self.stamp_file(self.sample_data["project_data"]["gvcf"])
             
         
             # Move all files from temporary local dir to permanent base_dir

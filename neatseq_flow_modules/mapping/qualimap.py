@@ -16,7 +16,7 @@ Requires
 * bam files in one of the following slots:
 
     * ``sample_data[<sample>]["bam"]``
-    * ``sample_data["bam"]``
+    * ``sample_data["project_data"]["bam"]``
 
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -132,7 +132,7 @@ class Step_qualimap(Step):
             for sample in self.sample_data["samples"]:  # Getting list of samples out of samples_hash
                 index_fh.write("%s\t%s\n" % (sample, self.sample_data[sample]["qualimap"]))
 
-        self.sample_data["qualimap_files_index"] = self.base_dir + "qualimap_files_index.txt"
+        self.sample_data["project_data"]["qualimap_files_index"] = self.base_dir + "qualimap_files_index.txt"
 
     def build_scripts(self):
         """ This is the actual script building function
@@ -210,11 +210,11 @@ class Step_qualimap(Step):
                        mode=self.params["mode"],
                        setenv=self.get_setenv_part(),
                        redir=self.get_redir_parameters_script().rstrip(),
-                       bam=self.sample_data["bam"],
+                       bam=self.sample_data["project_data"]["bam"],
                        outd=use_dir,
                        outf="{proj}_qualimap.report".format(proj=self.sample_data["Title"]))
 
-            self.sample_data["qualimap"] = self.base_dir
+            self.sample_data["project_data"]["qualimap"] = self.base_dir
 
 
         elif self.params["mode"] == "multi-bamqc":
@@ -229,11 +229,11 @@ class Step_qualimap(Step):
             """.format(const=self.params["script_path"],
                        setenv=self.get_setenv_part(),
                        redir=self.get_redir_parameters_script().rstrip(),
-                       report=self.sample_data["qualimap_files_index"],
+                       report=self.sample_data["project_data"]["qualimap_files_index"],
                        outd=use_dir,
                        outf="{proj}_qualimap.report".format(proj=self.sample_data["Title"]))
 
-            self.sample_data["qualimap"] = self.base_dir
+            self.sample_data["project_data"]["qualimap"] = self.base_dir
 
         self.local_finish(use_dir, self.base_dir)
         self.create_low_level_script()

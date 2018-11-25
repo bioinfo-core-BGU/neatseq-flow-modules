@@ -32,7 +32,7 @@ Output
 
 * Puts the resulting list of chimeras in 
 
-    * ``self.sample_data["taxonomy"]``
+    * ``self.sample_data["project_data"]["taxonomy"]``
 
     
 .. Note:: When using the parallel version, the module tries to build the scripts appropriately. **It is wise to check the parallel scripts before running them...**
@@ -95,17 +95,17 @@ class Step_qiime_assign_taxonomy(Step):
         
         # # If does not exist 
         # try:
-            # self.sample_data["qiime"]
+            # self.sample_data["project_data"]["qiime"]
         # except KeyError:
             # raise AssertionExcept("It seems like qiime_demult is the first qiime step. At the moment, it must come after qiime_prep...\n" )
 
         try:
-            self.links_dir = self.sample_data["fasta.nucl"]
+            self.links_dir = self.sample_data["project_data"]["fasta.nucl"]
         except KeyError:
             raise AssertionExcept("fasta dir does not exist. ")
 
         try:
-            self.links_dir = self.sample_data["otu_table"]
+            self.links_dir = self.sample_data["project_data"]["otu_table"]
         except KeyError:
             raise AssertionExcept("otu table does not exist. \n")
 
@@ -156,13 +156,13 @@ class Step_qiime_assign_taxonomy(Step):
 
         for key in self.params["redir_params"].keys():
             self.script += "%s %s \\\n\t" % (key,self.params["redir_params"][key] if self.params["redir_params"][key] else "")
-        self.script += "-i %s \\\n\t" % self.sample_data["fasta.nucl"]
+        self.script += "-i %s \\\n\t" % self.sample_data["project_data"]["fasta.nucl"]
         self.script += "-o %s  \n\n" % use_dir
 
-        outfile = os.path.basename(self.sample_data["fasta.nucl"])
+        outfile = os.path.basename(self.sample_data["project_data"]["fasta.nucl"])
         outfile = re.sub("\.(fas|fasta|fna|fa)$","",outfile) + "_tax_assignments.txt"
 
-        self.sample_data["taxonomy"] = self.base_dir + outfile
+        self.sample_data["project_data"]["taxonomy"] = self.base_dir + outfile
         
 
 

@@ -328,7 +328,6 @@ class Step_merge(Step):
         # For each src in the list of sources:
         for src_ind in range(len(self.params["src"])):  
             src = self.params["src"][src_ind]
-            # print "---> ",src
             scope = self.params["scope"][src_ind]
             script_path = self.params["script_path"][src_ind]
             trg = self.params["trg"][src_ind]
@@ -362,6 +361,7 @@ class Step_merge(Step):
                     raise AssertionExcept("{src} does not exist in all samples or in project. Make sure sample "
                                           "file is correct, or pass 'scope' explicitly.".format(src=src))
             scope = self.params["scope"][src_ind]
+
             # Testing scope and guessing 'script_path':
             if scope=="sample":
                 for sample in self.sample_data["samples"]:
@@ -456,114 +456,82 @@ class Step_merge(Step):
             script_path = self.params["script_path"][scope_ind]
             pipe = self.params["pipe"][scope_ind]
 
-            if scope == "sample":
-                # Each iteration must define the following class variables:
-                    # spec_script_name
-                    # script
-                for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-                    # General comment: If there is a parallel routine for each direction (forward, reverse), add this loop	
-                    # if  in self.sample_data[sample].keys():
+            # Set list of samples to go over. Either self.sample_data["samples"] for sample scope
+            # or ["project_data"] for project scope
+            if scope == "project":
+                sample_list = ["project_data"]
+            elif scope == "sample":
+                sample_list = self.sample_data["samples"]
+            else:
+                raise AssertionExcept("'scope' must be either 'sample' or 'project'")
 
-                    # The following two may be modified per sample. Therefore, reading them again for each sample
-                    script_path = self.params["script_path"][scope_ind]
-                    pipe = self.params["pipe"][scope_ind]
+            for sample in sample_list:  #.sample_data["samples"]:      # Getting list of samples out of samples_hash
+                # General comment: If there is a parallel routine for each direction (forward, reverse), add this loop
+                # if  in self.sample_data[sample].keys():
 
-                    # src_type not defined for this sample. Move on.
-                    if src not in self.sample_data[sample]:
-                        continue
+                sample_title = sample if sample != "project_data" else self.sample_data["Title"]
 
-                    if script_path == "..import..":
-                        self.sample_data[sample][trg] = self.sample_data[sample][src]
-                        return
-                    if script_path == "..skip..":
-                        return
-
-                    self.spec_script_name = self.jid_name_sep.join([self.step,self.name,sample,src])
-                    
-                    # This line should be left before every new script. It sees to local issues.
-                    # Use the dir it returns as the base_dir for this step.
-                    use_dir = self.local_start(self.base_dir)
-                    
-                    fq_fn = ".".join([sample, src, self.file_tag,ext])          #The filename containing the end result. Used both in script and to set reads in $sample_params
-
-                    if not script_path or script_path == "..guess..":
-                        # Not all samples have the same file types. Sample-specific guessing...
-
-                        src_exts = list(set([os.path.splitext(filename)[1]
-                                             for filename
-                                             in self.sample_data[sample][src]]))
-                        if len(src_exts)>1:
-                            raise AssertionExcept("More than one file extension in source '{src}' for sample "
-                                                  "'{sample}' ({ext}). Can't guess 'script_path'".
-                                                  format(src=src, sample = sample, ext=", ".join(src_exts)))
-                        # Convert set to string:
-                        src_exts = src_exts[0]
-                        if src_exts not in self.script_path_map.keys():
-                            raise AssertionExcept("Unidentified extension in source '{src}' for sample {sample} "
-                                                  "({ext}). Can't guess 'script_path'".
-                                                  format(src=src, sample = sample, ext=src_exts))
-                        else:
-                            if isinstance(self.script_path_map[src_exts],list):
-                                script_path = self.script_path_map[src_exts][0]
-                                pipe = self.script_path_map[src_exts][1]
-                            else:
-                                script_path = self.script_path_map[src_exts]
-                    # Composing script:
-                    self.script = ""
-                    self.script += script_path + " \\\n\t"
-                    # The following line concatenates all the files in the direction separated by a " "
-                    self.script += " ".join(self.sample_data[sample][src]) 
-                    self.script += " \\\n\t"
-                    if pipe:  # pipe is not 'None'
-                        self.script += "| {pipe} \\\n\t".format(pipe = pipe)
-                    self.script += "> %s%s \n\n"  % (use_dir, fq_fn)
-
-                    # Move all files from temporary local dir to permanent base_dir
-                    self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
-
-                    # Store file in active file for sample:
-                    self.sample_data[sample][trg] = self.base_dir + fq_fn
-                    
-                    self.stamp_file(self.sample_data[sample][trg])
-
-                    self.create_low_level_script()
-                    
-            elif scope == "project":
+                # The following two may be modified per sample. Therefore, reading them again for each sample
+                script_path = self.params["script_path"][scope_ind]
+                pipe = self.params["pipe"][scope_ind]
 
                 # src_type not defined for this sample. Move on.
-                if src not in self.sample_data["project_data"]:
+                if src not in self.sample_data[sample]:
                     continue
 
                 if script_path == "..import..":
-                    self.sample_data[trg] = self.sample_data["project_data"][src]
+                    self.sample_data[sample][trg] = self.sample_data[sample][src]
                     return
                 if script_path == "..skip..":
                     return
 
-                self.spec_script_name = self.jid_name_sep.join([self.step,self.name,self.sample_data["Title"],src])
-                
+                self.spec_script_name = self.jid_name_sep.join([self.step,self.name,sample_title,src])
+
                 # This line should be left before every new script. It sees to local issues.
                 # Use the dir it returns as the base_dir for this step.
                 use_dir = self.local_start(self.base_dir)
-                
-                fq_fn = ".".join([self.sample_data["Title"], src, self.file_tag,ext])          #The filename containing the end result. Used both in script and to set reads in $sample_params
 
-                # Defining script:
+                fq_fn = ".".join([sample_title, src, self.file_tag,ext])
+                # The filename containing the end result. Used both in script and to set reads in $sample_params
+
+                if not script_path or script_path == "..guess..":
+                    # Not all samples have the same file types. Sample-specific guessing...
+
+                    src_exts = list(set([os.path.splitext(filename)[1]
+                                         for filename
+                                         in self.sample_data[sample][src]]))
+                    if len(src_exts)>1:
+                        raise AssertionExcept("More than one file extension in source '{src}' ({ext}). "
+                                              "Can't guess 'script_path'".format(src=src, ext=", ".join(src_exts)),
+                                              sample=sample)
+                    # Convert set to string:
+                    src_exts = src_exts[0]
+                    if src_exts not in self.script_path_map.keys():
+                        raise AssertionExcept("Unidentified extension in source '{src}' ({ext}). "
+                                              "Can't guess 'script_path'".format(src=src, ext=src_exts),
+                                              sample=sample)
+                    else:
+                        if isinstance(self.script_path_map[src_exts],list):
+                            script_path = self.script_path_map[src_exts][0]
+                            pipe = self.script_path_map[src_exts][1]
+                        else:
+                            script_path = self.script_path_map[src_exts]
+                # Composing script:
                 self.script = ""
                 self.script += script_path + " \\\n\t"
                 # The following line concatenates all the files in the direction separated by a " "
-                self.script += " ".join(self.sample_data["project_data"][src]) 
+                self.script += " ".join(self.sample_data[sample][src])
                 self.script += " \\\n\t"
-                if self.params["pipe"][scope_ind]:  #"pipe" in self.params:
-                    self.script += "| {pipe} \\\n\t".format(pipe = self.params["pipe"][scope_ind])
+                if pipe:  # pipe is not 'None'
+                    self.script += "| {pipe} \\\n\t".format(pipe = pipe)
                 self.script += "> %s%s \n\n"  % (use_dir, fq_fn)
 
                 # Move all files from temporary local dir to permanent base_dir
-                self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
+                self.local_finish(use_dir,self.base_dir)
 
                 # Store file in active file for sample:
-                self.sample_data[trg] = self.base_dir + fq_fn
-                
-                self.stamp_file(self.sample_data[trg])
+                self.sample_data[sample][trg] = self.base_dir + fq_fn
+
+                self.stamp_file(self.sample_data[sample][trg])
 
                 self.create_low_level_script()

@@ -189,9 +189,9 @@ class Step_ProjectToSample(Step):
                 # # Stash old list and create new sample:
                 # self.stash_sample_list(sample_name)
                 # Copy type from project to new sample:
-                self.sample_data[sample_name][type_src] = self.sample_data[type_src]
+                self.sample_data[sample_name][type_src] = self.sample_data["project_data"][type_src]
                 if operation == "mv":
-                    del self.sample_data[type_src]
+                    del self.sample_data["project_data"][type_src]
 
                 print sample_name
             else:   # if direction == "smp2proj":
@@ -201,7 +201,7 @@ class Step_ProjectToSample(Step):
                     raise AssertionExcept("Sample {sample} does not exist, can't move to project".
                                           format(sample=sample_name))
                 # Copy type from sample to project:
-                self.sample_data[type_src] = self.sample_data[sample_name][type_src]
+                self.sample_data["project_data"][type_src] = self.sample_data[sample_name][type_src]
                 if operation == "mv":
                     del self.sample_data[sample_name][type_src]
                 # Recover old sample

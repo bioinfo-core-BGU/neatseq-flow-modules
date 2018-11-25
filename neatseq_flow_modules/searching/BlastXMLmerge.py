@@ -29,7 +29,7 @@ Output
 
 * Puts the merged report in:
 
-    * ``self.sample_data["blast.nucl|blast.prot"]``            if ``scope = project``
+    * ``self.sample_data["project_data"]["blast.nucl|blast.prot"]``            if ``scope = project``
 
     
 
@@ -139,10 +139,10 @@ class Step_BlastXMLmerge(Step):
         self.script += "\n\n"
         
         # Store BLAST result file:
-        self.sample_data["blast"] = "{dir}{file}.blast.xml".format(dir = self.base_dir, file=self.sample_data["Title"])
+        self.sample_data["project_data"]["blast"] = "{dir}{file}.blast.xml".format(dir = self.base_dir, file=self.sample_data["Title"])
         if blast2use != "blast":
-            self.sample_data[blast2use] = self.sample_data["blast"]
-        self.stamp_file(self.sample_data["blast"])
+            self.sample_data["project_data"][blast2use] = self.sample_data["project_data"]["blast"]
+        self.stamp_file(self.sample_data["project_data"]["blast"])
 
         # Wrapping up function. Leave these lines at the end of every iteration:
         self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
