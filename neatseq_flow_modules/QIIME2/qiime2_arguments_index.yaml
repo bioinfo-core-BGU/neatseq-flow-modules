@@ -1,0 +1,978 @@
+alignment:
+  mafft:
+    inputs:
+      --i-sequences: FeatureData[Sequence]
+    outputs:
+      --o-alignment: FeatureData[AlignedSequence]
+    required: --p-parttree
+  mask:
+    inputs:
+      --i-alignment: FeatureData[AlignedSequence]
+    outputs:
+      --o-masked-alignment: FeatureData[AlignedSequence]
+composition:
+  add-pseudocount:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-composition-table: FeatureTable[Composition]
+  ancom:
+    inputs:
+      --i-table: FeatureTable[Composition]
+    outputs:
+      --o-visualization: Visualization
+    required:
+    - --m-metadata-file
+    - --m-metadata-column
+cutadapt:
+  demux-paired:
+    inputs:
+      --i-seqs: MultiplexedPairedEndBarcodeInSequence
+    outputs:
+      --o-per-sample-sequences: SampleData[PairedEndSequencesWithQuality]
+      --o-untrimmed-sequences: MultiplexedPairedEndBarcodeInSequence
+    required:
+    - --m-forward-barcodes-file
+    - --m-forward-barcodes-column
+  demux-single:
+    inputs:
+      --i-seqs: MultiplexedSingleEndBarcodeInSequence
+    outputs:
+      --o-per-sample-sequences: SampleData[SequencesWithQuality]
+      --o-untrimmed-sequences: MultiplexedSingleEndBarcodeInSequence
+    required:
+    - --m-barcodes-file
+    - --m-barcodes-column
+  trim-paired:
+    inputs:
+      --i-demultiplexed-sequences: SampleData[PairedEndSequencesWithQuality]
+    outputs:
+      --o-trimmed-sequences: SampleData[PairedEndSequencesWithQuality]
+  trim-single:
+    inputs:
+      --i-demultiplexed-sequences: SampleData[SequencesWithQuality]
+    outputs:
+      --o-trimmed-sequences: SampleData[SequencesWithQuality]
+dada2:
+  denoise-paired:
+    inputs:
+      --i-demultiplexed-seqs: SampleData[PairedEndSequencesWithQuality]
+    outputs:
+      --o-table: FeatureTable[Frequency]
+      --o-representative-sequences: FeatureData[Sequence]
+      --o-denoising-stats: SampleData[DADA2Stats]
+    required:
+    - --p-trunc-len-f
+    - --p-trunc-len-r
+  denoise-pyro:
+    inputs:
+      --i-demultiplexed-seqs: SampleData[SequencesWithQuality]
+    outputs:
+      --o-table: FeatureTable[Frequency]
+      --o-representative-sequences: FeatureData[Sequence]
+      --o-denoising-stats: SampleData[DADA2Stats]
+    required: --p-trunc-len
+  denoise-single:
+    inputs:
+      --i-demultiplexed-seqs:
+      - SampleData[PairedEndSequencesWithQuality]
+      - SampleData[SequencesWithQuality]
+    outputs:
+      --o-table: FeatureTable[Frequency]
+      --o-representative-sequences: FeatureData[Sequence]
+      --o-denoising-stats: SampleData[DADA2Stats]
+    required: --p-trunc-len
+deblur:
+  denoise-16S:
+    inputs:
+      --i-demultiplexed-seqs:
+      - SampleData[JoinedSequencesWithQuality]
+      - SampleData[PairedEndSequencesWithQuality]
+      - SampleData[SequencesWithQuality]
+    outputs:
+      --o-table: FeatureTable[Frequency]
+      --o-representative-sequences: FeatureData[Sequence]
+      --o-stats: DeblurStats
+    required: --p-trim-length
+  denoise-other:
+    inputs:
+      --i-demultiplexed-seqs:
+      - SampleData[JoinedSequencesWithQuality]
+      - SampleData[PairedEndSequencesWithQuality]
+      - SampleData[SequencesWithQuality]
+      --i-reference-seqs: FeatureData[Sequence]
+    outputs:
+      --o-table: FeatureTable[Frequency]
+      --o-representative-sequences: FeatureData[Sequence]
+      --o-stats: DeblurStats
+    required: --p-trim-length
+  visualize-stats:
+    inputs:
+      --i-deblur-stats: DeblurStats
+    outputs:
+      --o-visualization: Visualization
+demux:
+  emp-paired:
+    inputs:
+      --i-seqs: EMPPairedEndSequences
+    outputs:
+      --o-per-sample-sequences: SampleData[PairedEndSequencesWithQuality]
+    required:
+    - --m-barcodes-file
+    - --m-barcodes-column
+  emp-single:
+    inputs:
+      --i-seqs: EMPSingleEndSequences
+    outputs:
+      --o-per-sample-sequences: SampleData[SequencesWithQuality]
+    required:
+    - --m-barcodes-file
+    - --m-barcodes-column
+  subsample-paired:
+    inputs:
+      --i-sequences: SampleData[PairedEndSequencesWithQuality]
+    outputs:
+      --o-subsampled-sequences: SampleData[PairedEndSequencesWithQuality]
+    required: --p-fraction
+  subsample-single:
+    inputs:
+      --i-sequences:
+      - SampleData[PairedEndSequencesWithQuality]
+      - SampleData[SequencesWithQuality]
+    outputs:
+      --o-subsampled-sequences: SampleData[SequencesWithQuality]
+    required: --p-fraction
+  summarize:
+    inputs:
+      --i-data:
+      - SampleData[JoinedSequencesWithQuality]
+      - SampleData[PairedEndSequencesWithQuality]
+      - SampleData[SequencesWithQuality]
+    outputs:
+      --o-visualization: Visualization
+diversity:
+  beta-correlation:
+    inputs:
+      --i-distance-matrix: DistanceMatrix
+    outputs:
+      --o-metadata-distance-matrix: DistanceMatrix
+      --o-mantel-scatter-visualization: Visualization
+    required:
+    - --m-metadata-file
+    - --m-metadata-column
+  core-metrics:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-rarefied-table: FeatureTable[Frequency]
+      --o-observed-otus-vector: SampleData[AlphaDiversity]
+      --o-shannon-vector: SampleData[AlphaDiversity]
+      --o-evenness-vector: SampleData[AlphaDiversity]
+      --o-jaccard-distance-matrix: DistanceMatrix
+      --o-bray-curtis-distance-matrix: DistanceMatrix
+      --o-jaccard-pcoa-results: PCoAResults
+      --o-bray-curtis-pcoa-results: PCoAResults
+      --o-jaccard-emperor: Visualization
+      --o-bray-curtis-emperor: Visualization
+    required:
+    - --p-sampling-depth
+    - --m-metadata-file
+  core-metrics-phylogenetic:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+      --i-phylogeny: Phylogeny[Rooted]
+    outputs:
+      --o-rarefied-table: FeatureTable[Frequency]
+      --o-faith-pd-vector: SampleData[AlphaDiversity]
+      --o-observed-otus-vector: SampleData[AlphaDiversity]
+      --o-shannon-vector: SampleData[AlphaDiversity]
+      --o-evenness-vector: SampleData[AlphaDiversity]
+      --o-unweighted-unifrac-distance-matrix: DistanceMatrix
+      --o-weighted-unifrac-distance-matrix: DistanceMatrix
+      --o-jaccard-distance-matrix: DistanceMatrix
+      --o-bray-curtis-distance-matrix: DistanceMatrix
+      --o-unweighted-unifrac-pcoa-results: PCoAResults
+      --o-weighted-unifrac-pcoa-results: PCoAResults
+      --o-jaccard-pcoa-results: PCoAResults
+      --o-bray-curtis-pcoa-results: PCoAResults
+      --o-unweighted-unifrac-emperor: Visualization
+      --o-weighted-unifrac-emperor: Visualization
+      --o-jaccard-emperor: Visualization
+      --o-bray-curtis-emperor: Visualization
+    required:
+    - --p-sampling-depth
+    - --m-metadata-file
+  alpha:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-alpha-diversity: SampleData[AlphaDiversity]
+    required: --p-metric
+  alpha-phylogenetic:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+      --i-phylogeny: Phylogeny[Rooted]
+    outputs:
+      --o-alpha-diversity: SampleData[AlphaDiversity]
+    required: --p-metric
+  beta:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-distance-matrix: DistanceMatrix
+    required: --p-metric
+  beta-phylogenetic:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+      --i-phylogeny: Phylogeny[Rooted]
+    outputs:
+      --o-distance-matrix: DistanceMatrix
+    required: --p-metric
+  filter-distance-matrix:
+    inputs:
+      --i-distance-matrix: DistanceMatrix
+    outputs:
+      --o-filtered-distance-matrix: DistanceMatrix
+    required: --m-metadata-file
+  pcoa:
+    inputs:
+      --i-distance-matrix: DistanceMatrix
+    outputs:
+      --o-pcoa: PCoAResults
+  pcoa-biplot:
+    inputs:
+      --i-pcoa: PCoAResults
+      --i-features: FeatureTable[RelativeFrequency]
+    outputs:
+      --o-biplot: PCoAResults
+  procrustes-analysis:
+    inputs:
+      --i-reference: PCoAResults
+      --i-other: PCoAResults
+    outputs:
+      --o-transformed-reference: PCoAResults
+      --o-transformed-other: PCoAResults
+  alpha-correlation:
+    inputs:
+      --i-alpha-diversity: SampleData[AlphaDiversity]
+    outputs:
+      --o-visualization: Visualization
+    required: --m-metadata-file
+  alpha-group-significance:
+    inputs:
+      --i-alpha-diversity: SampleData[AlphaDiversity]
+    outputs:
+      --o-visualization: Visualization
+    required: --m-metadata-file
+  alpha-rarefaction:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+    optional_inputs:
+      --i-phylogeny: Phylogeny[Rooted]
+    outputs:
+      --o-visualization: Visualization
+    required: --p-max-depth
+  beta-group-significance:
+    inputs:
+      --i-distance-matrix: DistanceMatrix
+    outputs:
+      --o-visualization: Visualization
+    required:
+    - --m-metadata-file
+    - --m-metadata-column
+  beta-rarefaction:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+      --i-phylogeny: Phylogeny[Rooted]
+    outputs:
+      --o-visualization: Visualization
+    required:
+    - --p-metric
+    - --p-clustering-method
+    - --m-metadata-file
+    - --p-sampling-depth
+  bioenv:
+    inputs:
+      --i-distance-matrix: DistanceMatrix
+    outputs:
+      --o-visualization: Visualization
+    required: --m-metadata-file
+  mantel:
+    inputs:
+      --i-dm1: DistanceMatrix
+      --i-dm2: DistanceMatrix
+    outputs:
+      --o-visualization: Visualization
+emperor:
+  biplot:
+    inputs:
+      --i-biplot: PCoAResults
+    outputs:
+      --o-visualization: Visualization
+    required: --m-sample-metadata-file
+  plot:
+    inputs:
+      --i-pcoa: PCoAResults
+    outputs:
+      --o-visualization: Visualization
+    required: --m-metadata-file
+  procrustes-plot:
+    inputs:
+      --i-reference-pcoa: PCoAResults
+      --i-other-pcoa: PCoAResults
+    outputs:
+      --o-visualization: Visualization
+    required: --m-metadata-file
+feature-classifier:
+  classify-consensus-blast:
+    inputs:
+      --i-query: FeatureData[Sequence]
+      --i-reference-reads: FeatureData[Sequence]
+      --i-reference-taxonomy: FeatureData[Taxonomy]
+    outputs:
+      --o-classification: FeatureData[Taxonomy]
+  classify-consensus-vsearch:
+    inputs:
+      --i-query: FeatureData[Sequence]
+      --i-reference-reads: FeatureData[Sequence]
+      --i-reference-taxonomy: FeatureData[Taxonomy]
+    outputs:
+      --o-classification: FeatureData[Taxonomy]
+  classify-sklearn:
+    inputs:
+      --i-reads: FeatureData[Sequence]
+      --i-classifier: TaxonomicClassifier
+    outputs:
+      --o-classification: FeatureData[Taxonomy]
+  extract-reads:
+    inputs:
+      --i-sequences: FeatureData[Sequence]
+    outputs:
+      --o-reads: FeatureData[Sequence]
+    required:
+    - --p-f-primer
+    - --p-r-primer
+  fit-classifier-naive-bayes:
+    inputs:
+      --i-reference-reads: FeatureData[Sequence]
+      --i-reference-taxonomy: FeatureData[Taxonomy]
+    optional_inputs:
+      --i-class-weight: FeatureTable[RelativeFrequency]
+    outputs:
+      --o-classifier: TaxonomicClassifier
+  fit-classifier-sklearn:
+    inputs:
+      --i-reference-reads: FeatureData[Sequence]
+      --i-reference-taxonomy: FeatureData[Taxonomy]
+    optional_inputs:
+      --i-class-weight: FeatureTable[RelativeFrequency]
+    outputs:
+      --o-classifier: TaxonomicClassifier
+    required: --p-classifier-specification
+feature-table:
+  filter-features:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-filtered-table: FeatureTable[Frequency]
+  filter-samples:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-filtered-table: FeatureTable[Frequency]
+  filter-seqs:
+    inputs:
+      --i-data: FeatureData[Sequence]
+    optional_inputs:
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-filtered-data: FeatureData[Sequence]
+  group:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-grouped-table: FeatureTable[Frequency]
+    required:
+    - --p-axis
+    - --m-metadata-file
+    - --m-metadata-column
+    - --p-mode
+  merge:
+    inputs:
+      --i-tables: List[FeatureTable[Frequency]
+    outputs:
+      --o-merged-table: FeatureTable[Frequency]
+  merge-seqs:
+    inputs:
+      --i-data: List[FeatureData[Sequence]
+    outputs:
+      --o-merged-data: FeatureData[Sequence]
+  merge-taxa:
+    inputs:
+      --i-data: List[FeatureData[Taxonomy]
+    outputs:
+      --o-merged-data: FeatureData[Taxonomy]
+  presence-absence:
+    inputs:
+      --i-table:
+      - FeatureTable[Frequency]
+      - FeatureTable[RelativeFrequency]
+    outputs:
+      --o-presence-absence-table: FeatureTable[PresenceAbsence]
+  rarefy:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-rarefied-table: FeatureTable[Frequency]
+    required: --p-sampling-depth
+  relative-frequency:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-relative-frequency-table: FeatureTable[RelativeFrequency]
+  subsample:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-sampled-table: FeatureTable[Frequency]
+    required:
+    - --p-subsampling-depth
+    - --p-axis
+  core-features:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-visualization: Visualization
+  heatmap:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-visualization: Visualization
+  summarize:
+    inputs:
+      --i-table:
+      - FeatureTable[Frequency]
+      - FeatureTable[PresenceAbsence]
+      - FeatureTable[RelativeFrequency]
+    outputs:
+      --o-visualization: Visualization
+  tabulate-seqs:
+    inputs:
+      --i-data: FeatureData[Sequence]
+    outputs:
+      --o-visualization: Visualization
+fragment-insertion:
+  classify-otus-experimental:
+    inputs:
+      --i-representative-sequences: FeatureData[Sequence]
+      --i-tree: Phylogeny[Rooted]
+    optional_inputs:
+      --i-reference-taxonomy: FeatureData[Taxonomy]
+    outputs:
+      --o-classification: FeatureData[Taxonomy]
+  filter-features:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+      --i-tree: Phylogeny[Rooted]
+    outputs:
+      --o-filtered-table: FeatureTable[Frequency]
+      --o-removed-table: FeatureTable[Frequency]
+  sepp:
+    inputs:
+      --i-representative-sequences: FeatureData[Sequence]
+    optional_inputs:
+      --i-reference-alignment: FeatureData[AlignedSequence]
+      --i-reference-phylogeny: Phylogeny[Rooted]
+    outputs:
+      --o-tree: Phylogeny[Rooted]
+      --o-placements: Placements
+gneiss:
+  assign-ids:
+    inputs:
+      --i-input-table: FeatureTable[Frequency]
+      --i-input-tree: Phylogeny[Rooted]
+    outputs:
+      --o-output-table: FeatureTable[Frequency]
+      --o-output-tree: Hierarchy
+  correlation-clustering:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-clustering: Hierarchy
+  gradient-clustering:
+    inputs:
+      --i-table:
+      - FeatureTable[Composition]
+      - FeatureTable[Frequency]
+      - FeatureTable[RelativeFrequency]
+    outputs:
+      --o-clustering: Hierarchy
+    required:
+    - --m-gradient-file
+    - --m-gradient-column
+  ilr-hierarchical:
+    inputs:
+      --i-table:
+      - FeatureTable[Composition]
+      - FeatureTable[Frequency]
+      --i-tree: Hierarchy
+    outputs:
+      --o-balances: FeatureTable[Balance]
+  ilr-phylogenetic:
+    inputs:
+      --i-table:
+      - FeatureTable[Composition]
+      - FeatureTable[Frequency]
+      --i-tree: Phylogeny[Rooted]
+    outputs:
+      --o-balances: FeatureTable[Balance]
+      --o-hierarchy: Hierarchy
+  balance-taxonomy:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+      --i-tree: Hierarchy
+      --i-taxonomy: FeatureData[Taxonomy]
+    outputs:
+      --o-visualization: Visualization
+    required: --p-balance-name
+  dendrogram-heatmap:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+      --i-tree: Hierarchy
+    outputs:
+      --o-visualization: Visualization
+    required:
+    - --m-metadata-file
+    - --m-metadata-column
+  lme-regression:
+    inputs:
+      --i-table: FeatureTable[Balance]
+      --i-tree: Hierarchy
+    outputs:
+      --o-visualization: Visualization
+    required:
+    - --m-metadata-file
+    - --p-formula
+    - --p-groups
+  ols-regression:
+    inputs:
+      --i-table: FeatureTable[Balance]
+      --i-tree: Hierarchy
+    outputs:
+      --o-visualization: Visualization
+    required:
+    - --m-metadata-file
+    - --p-formula
+longitudinal:
+  feature-volatility:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-filtered-table: FeatureTable[RelativeFrequency]
+      --o-feature-importance: FeatureData[Importance]
+      --o-volatility-plot: Visualization
+      --o-accuracy-results: Visualization
+      --o-sample-estimator: SampleEstimator[Regressor]
+    required:
+    - --m-metadata-file
+    - --p-state-column
+  maturity-index:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-sample-estimator: SampleEstimator[Regressor]
+      --o-feature-importance: FeatureData[Importance]
+      --o-predictions: SampleData[RegressorPredictions]
+      --o-model-summary: Visualization
+      --o-accuracy-results: Visualization
+      --o-maz-scores: SampleData[RegressorPredictions]
+      --o-clustermap: Visualization
+      --o-volatility-plots: Visualization
+    required:
+    - --m-metadata-file
+    - --p-state-column
+    - --p-group-by
+    - --p-control
+  first-differences:
+    optional_inputs:
+      --i-table: FeatureTable[RelativeFrequency]
+    outputs:
+      --o-first-differences: SampleData[FirstDifferences]
+    required:
+    - --m-metadata-file
+    - --p-state-column
+    - --p-individual-id-column
+    - --p-metric
+  first-distances:
+    inputs:
+      --i-distance-matrix: DistanceMatrix
+    outputs:
+      --o-first-distances: SampleData[FirstDifferences]
+    required:
+    - --m-metadata-file
+    - --p-state-column
+    - --p-individual-id-column
+  nmit:
+    inputs:
+      --i-table: FeatureTable[RelativeFrequency]
+    outputs:
+      --o-distance-matrix: DistanceMatrix
+    required:
+    - --m-metadata-file
+    - --p-individual-id-column
+  linear-mixed-effects:
+    optional_inputs:
+      --i-table: FeatureTable[RelativeFrequency]
+    outputs:
+      --o-visualization: Visualization
+    required:
+    - --m-metadata-file
+    - --p-state-column
+    - --p-individual-id-column
+  pairwise-differences:
+    optional_inputs:
+      --i-table: FeatureTable[RelativeFrequency]
+    outputs:
+      --o-visualization: Visualization
+    required:
+    - --m-metadata-file
+    - --p-metric
+    - --p-state-column
+    - --p-state-1
+    - --p-state-2
+    - --p-individual-id-column
+  pairwise-distances:
+    inputs:
+      --i-distance-matrix: DistanceMatrix
+    outputs:
+      --o-visualization: Visualization
+    required:
+    - --m-metadata-file
+    - --p-group-column
+    - --p-state-column
+    - --p-state-1
+    - --p-state-2
+    - --p-individual-id-column
+  plot-feature-volatility:
+    inputs:
+      --i-table: FeatureTable[RelativeFrequency]
+      --i-importances: FeatureData[Importance]
+    outputs:
+      --o-visualization: Visualization
+    required:
+    - --m-metadata-file
+    - --p-state-column
+  volatility:
+    optional_inputs:
+      --i-table: FeatureTable[RelativeFrequency]
+    outputs:
+      --o-visualization: Visualization
+    required:
+    - --m-metadata-file
+    - --p-state-column
+metadata:
+  distance-matrix:
+    outputs:
+      --o-distance-matrix: DistanceMatrix
+    required:
+    - --m-metadata-file
+    - --m-metadata-column
+  tabulate:
+    outputs:
+      --o-visualization: Visualization
+    required: --m-input-file
+phylogeny:
+  align-to-tree-mafft-fasttree:
+    inputs:
+      --i-sequences: FeatureData[Sequence]
+    outputs:
+      --o-alignment: FeatureData[AlignedSequence]
+      --o-masked-alignment: FeatureData[AlignedSequence]
+      --o-tree: Phylogeny[Unrooted]
+      --o-rooted-tree: Phylogeny[Rooted]
+  fasttree:
+    inputs:
+      --i-alignment: FeatureData[AlignedSequence]
+    outputs:
+      --o-tree: Phylogeny[Unrooted]
+  filter-table:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+      --i-tree:
+      - Phylogeny[Rooted]
+      - Phylogeny[Unrooted]
+    outputs:
+      --o-filtered-table: FeatureTable[Frequency]
+  iqtree:
+    inputs:
+      --i-alignment: FeatureData[AlignedSequence]
+    outputs:
+      --o-tree: Phylogeny[Unrooted]
+  iqtree-ultrafast-bootstrap:
+    inputs:
+      --i-alignment: FeatureData[AlignedSequence]
+    outputs:
+      --o-tree: Phylogeny[Unrooted]
+  midpoint-root:
+    inputs:
+      --i-tree: Phylogeny[Unrooted]
+    outputs:
+      --o-rooted-tree: Phylogeny[Rooted]
+  raxml:
+    inputs:
+      --i-alignment: FeatureData[AlignedSequence]
+    outputs:
+      --o-tree: Phylogeny[Unrooted]
+  raxml-rapid-bootstrap:
+    inputs:
+      --i-alignment: FeatureData[AlignedSequence]
+    outputs:
+      --o-tree: Phylogeny[Unrooted]
+quality-control:
+  exclude-seqs:
+    inputs:
+      --i-query-sequences: FeatureData[Sequence]
+      --i-reference-sequences: FeatureData[Sequence]
+    outputs:
+      --o-sequence-hits: FeatureData[Sequence]
+      --o-sequence-misses: FeatureData[Sequence]
+  evaluate-composition:
+    inputs:
+      --i-expected-features: FeatureTable[RelativeFrequency]
+      --i-observed-features: FeatureTable[RelativeFrequency]
+    outputs:
+      --o-visualization: Visualization
+  evaluate-seqs:
+    inputs:
+      --i-query-sequences: FeatureData[Sequence]
+      --i-reference-sequences: FeatureData[Sequence]
+    outputs:
+      --o-visualization: Visualization
+  evaluate-taxonomy:
+    inputs:
+      --i-expected-taxa: FeatureData[Taxonomy]
+      --i-observed-taxa: FeatureData[Taxonomy]
+    optional_inputs:
+      --i-feature-table: FeatureTable[RelativeFrequency]
+    outputs:
+      --o-visualization: Visualization
+    required: --p-depth
+quality-filter:
+  q-score:
+    inputs:
+      --i-demux:
+      - SampleData[PairedEndSequencesWithQuality]
+      - SampleData[SequencesWithQuality]
+    outputs:
+      --o-filtered-sequences: SampleData[SequencesWithQuality]
+      --o-filter-stats: QualityFilterStats
+  q-score-joined:
+    inputs:
+      --i-demux: SampleData[JoinedSequencesWithQuality]
+    outputs:
+      --o-filtered-sequences: SampleData[JoinedSequencesWithQuality]
+      --o-filter-stats: QualityFilterStats
+sample-classifier:
+  classify-samples:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-sample-estimator: SampleEstimator[Classifier]
+      --o-feature-importance: FeatureData[Importance]
+      --o-predictions: SampleData[ClassifierPredictions]
+      --o-model-summary: Visualization
+      --o-accuracy-results: Visualization
+    required:
+    - --m-metadata-file
+    - --m-metadata-column
+  classify-samples-from-dist:
+    inputs:
+      --i-distance-matrix: DistanceMatrix
+    outputs:
+      --o-predictions: SampleData[ClassifierPredictions]
+      --o-accuracy-results: Visualization
+    required:
+    - --m-metadata-file
+    - --m-metadata-column
+  metatable:
+    optional_inputs:
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-converted-table: FeatureTable[Frequency]
+    required: --m-metadata-file
+  regress-samples:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-sample-estimator: SampleEstimator[Regressor]
+      --o-feature-importance: FeatureData[Importance]
+      --o-predictions: SampleData[RegressorPredictions]
+      --o-model-summary: Visualization
+      --o-accuracy-results: Visualization
+    required:
+    - --m-metadata-file
+    - --m-metadata-column
+  classify-samples-ncv:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-predictions: SampleData[ClassifierPredictions]
+      --o-feature-importance: FeatureData[Importance]
+    required:
+    - --m-metadata-file
+    - --m-metadata-column
+  fit-classifier:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-sample-estimator: SampleEstimator[Classifier]
+      --o-feature-importance: FeatureData[Importance]
+    required:
+    - --m-metadata-file
+    - --m-metadata-column
+  fit-regressor:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-sample-estimator: SampleEstimator[Regressor]
+      --o-feature-importance: FeatureData[Importance]
+    required:
+    - --m-metadata-file
+    - --m-metadata-column
+  predict-classification:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+      --i-sample-estimator: SampleEstimator[Classifier]
+    outputs:
+      --o-predictions: SampleData[ClassifierPredictions]
+  predict-regression:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+      --i-sample-estimator: SampleEstimator[Regressor]
+    outputs:
+      --o-predictions: SampleData[RegressorPredictions]
+  regress-samples-ncv:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-predictions: SampleData[RegressorPredictions]
+      --o-feature-importance: FeatureData[Importance]
+    required:
+    - --m-metadata-file
+    - --m-metadata-column
+  split-table:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-training-table: FeatureTable[Frequency]
+      --o-test-table: FeatureTable[Frequency]
+    required:
+    - --m-metadata-file
+    - --m-metadata-column
+  confusion-matrix:
+    inputs:
+      --i-predictions: SampleData[ClassifierPredictions]
+    outputs:
+      --o-visualization: Visualization
+    required:
+    - --m-truth-file
+    - --m-truth-column
+  scatterplot:
+    inputs:
+      --i-predictions: SampleData[RegressorPredictions]
+    outputs:
+      --o-visualization: Visualization
+    required:
+    - --m-truth-file
+    - --m-truth-column
+  summarize:
+    inputs:
+      --i-sample-estimator:
+      - SampleEstimator[Classifier]
+      - SampleEstimator[Regressor]
+    outputs:
+      --o-visualization: Visualization
+taxa:
+  collapse:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+      --i-taxonomy: FeatureData[Taxonomy]
+    outputs:
+      --o-collapsed-table: FeatureTable[Frequency]
+    required: --p-level
+  filter-seqs:
+    inputs:
+      --i-sequences: FeatureData[Sequence]
+      --i-taxonomy: FeatureData[Taxonomy]
+    outputs:
+      --o-filtered-sequences: FeatureData[Sequence]
+  filter-table:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+      --i-taxonomy: FeatureData[Taxonomy]
+    outputs:
+      --o-filtered-table: FeatureTable[Frequency]
+  barplot:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+      --i-taxonomy: FeatureData[Taxonomy]
+    outputs:
+      --o-visualization: Visualization
+    required: --m-metadata-file
+vsearch:
+  cluster-features-open-reference:
+    inputs:
+      --i-sequences: FeatureData[Sequence]
+      --i-table: FeatureTable[Frequency]
+      --i-reference-sequences: FeatureData[Sequence]
+    outputs:
+      --o-clustered-table: FeatureTable[Frequency]
+      --o-clustered-sequences: FeatureData[Sequence]
+      --o-new-reference-sequences: FeatureData[Sequence]
+    required: --p-perc-identity
+  cluster-features-closed-reference:
+    inputs:
+      --i-sequences: FeatureData[Sequence]
+      --i-table: FeatureTable[Frequency]
+      --i-reference-sequences: FeatureData[Sequence]
+    outputs:
+      --o-clustered-table: FeatureTable[Frequency]
+      --o-clustered-sequences: FeatureData[Sequence]
+      --o-unmatched-sequences: FeatureData[Sequence]
+    required: --p-perc-identity
+  cluster-features-de-novo:
+    inputs:
+      --i-sequences: FeatureData[Sequence]
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-clustered-table: FeatureTable[Frequency]
+      --o-clustered-sequences: FeatureData[Sequence]
+    required: --p-perc-identity
+  dereplicate-sequences:
+    inputs:
+      --i-sequences: SampleData[JoinedSequencesWithQuality]
+    outputs:
+      --o-dereplicated-table: FeatureTable[Frequency]
+      --o-dereplicated-sequences: FeatureData[Sequence]
+  join-pairs:
+    inputs:
+      --i-demultiplexed-seqs: SampleData[PairedEndSequencesWithQuality]
+    outputs:
+      --o-joined-sequences: SampleData[JoinedSequencesWithQuality]
+  uchime-denovo:
+    inputs:
+      --i-sequences: FeatureData[Sequence]
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-chimeras: FeatureData[Sequence]
+      --o-nonchimeras: FeatureData[Sequence]
+      --o-stats: UchimeStats
+  uchime-ref:
+    inputs:
+      --i-sequences: FeatureData[Sequence]
+      --i-table: FeatureTable[Frequency]
+      --i-reference-sequences: FeatureData[Sequence]
+    outputs:
+      --o-chimeras: FeatureData[Sequence]
+      --o-nonchimeras: FeatureData[Sequence]
+      --o-stats: UchimeStats

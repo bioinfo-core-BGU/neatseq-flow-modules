@@ -383,6 +383,8 @@ class Step_merge(Step):
                                 in self.sample_data["samples"]
                                 if src in self.sample_data[sample]]
 
+                    # TODO: src_exts can be empty if assuming sample scope but no files exist!
+
                     # Flatten the list of lists, and uniqify:
                     src_exts = list(set([item for sublist in src_exts for item in sublist]))
 

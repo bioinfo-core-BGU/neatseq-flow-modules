@@ -264,7 +264,7 @@ cp -s {active_file} {here}
 
 {env_path} view \\
 \t-h \\
-\t{active_file} | \\  
+\t{active_file} | \\
 \tawk '$0 ~\"(^@)|({query})\"' | \\
 \t{env_path} view \\
 \t-bh \\
@@ -338,7 +338,7 @@ cp -s {active_file} {here}
 # Calculating {comm}
 #----------------
 {env_path}{comm} \\{params}
-\t{active_file}  \\  
+\t{active_file}  \\
 \t> {outfile}
 
 """.format(env_path=self.get_script_env_path(),
