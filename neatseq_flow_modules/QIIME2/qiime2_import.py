@@ -109,7 +109,7 @@ class Step_qiime2_import(Step):
             self.type = self.params["redir_params"]["--type"]
 
             if "--input-format" not in self.params["redir_params"]:
-                raise AssertionExcept("Please supply an input-format to use!",sample)
+                raise AssertionExcept("Please supply an input-format to use!")
 
             if self.type == "SampleData[SequencesWithQuality]":
                 # Check single reads exist
@@ -182,6 +182,51 @@ class Step_qiime2_import(Step):
         # if self.type in ["SampleData[PairedEndSequencesWithQuality]", "SampleData[SequencesWithQuality]"] and \
         #     self.sample_data["project_data"]:
 
+        self.qiime_types = list(
+            set(self.qiime_types_formats["importable-types"]) & set(self.sample_data["project_data"].keys()))
+        # print self.qiime_types
+        # sys.exit()
+
+        for qtype in self.qiime_types:
+            # print self.sample_data["project_data"][qtype]
+            # Name of specific script:
+            self.spec_script_name = self.jid_name_sep.join([self.step, self.name, edit_qiime_types(qtype)])
+
+            self.script = ""
+
+            # Make a dir for the current sample:
+            sample_dir = self.make_folder_for_sample(sample="project_data")
+
+            # This line should be left before every new script. It sees to local issues.
+            # Use the dir it returns as the base_dir for this step.
+            use_dir = self.local_start(sample_dir)
+
+            # Create script
+
+            self.script = """\
+{script_path} \\
+\t--type {qtype} \\
+\t--input-path {inp_path} \\{inp_format}
+\t--output-path {dir}{title}.{type}.import.qza  
+""".format(script_path=self.params["script_path"],
+           dir=use_dir,
+           qtype=qtype,
+           type=edit_qiime_types(qtype),
+           inp_path=self.sample_data["project_data"][qtype][0],
+           inp_format="" if len(self.sample_data["project_data"][qtype]) == 1
+           else "\n\t--input-format " + self.sample_data["project_data"][qtype][1] + " \\",
+           title=self.sample_data["Title"])
+
+            self.sample_data["project_data"][qtype] = "{dir}{title}.{type}.import.qza". \
+                format(dir=use_dir,
+                       type=edit_qiime_types(qtype),
+                       title=self.sample_data["Title"])
+            self.stamp_file(self.sample_data["project_data"][qtype])
+            self.local_finish(use_dir, sample_dir)
+
+            self.create_low_level_script()
+
+
         if self.type:
 
             # Name of specific script:
@@ -228,48 +273,6 @@ class Step_qiime2_import(Step):
                 format(dir=use_dir,
                        title=self.sample_data["Title"])
             self.stamp_file(self.sample_data["project_data"][self.type])
-            self.local_finish(use_dir, sample_dir)
-
-            self.create_low_level_script()
-
-        self.qiime_types = list(set(self.qiime_types_formats["importable-types"]) & set(self.sample_data["project_data"].keys()))
-        print self.qiime_types
-        # sys.exit()
-
-        for qtype in self.qiime_types:
-            print self.sample_data["project_data"][qtype]
-            # Name of specific script:
-            self.spec_script_name = self.jid_name_sep.join([self.step,self.name,edit_qiime_types(qtype)])
-
-            self.script = ""
-
-            # Make a dir for the current sample:
-            sample_dir = self.make_folder_for_sample(sample="project_data")
-
-            # This line should be left before every new script. It sees to local issues.
-            # Use the dir it returns as the base_dir for this step.
-            use_dir = self.local_start(sample_dir)
-
-            # Create script
-            self.script = self.get_script_const()
-
-            self.script += """\
---type {qtype} \\
-\t--input-path {inp_path} \\{inp_format}
-\t--output-path {dir}{title}.{type}.import.qza  
-""".format(dir=use_dir,
-           qtype=qtype,
-           type=edit_qiime_types(qtype),
-           inp_path=self.sample_data["project_data"][qtype][0],
-           inp_format="" if len(self.sample_data["project_data"][qtype])==1
-               else "\n\t--input-format " + self.sample_data["project_data"][qtype][1] + " \\",
-           title=self.sample_data["Title"])
-
-            self.sample_data["project_data"][qtype] = "{dir}{title}.{type}.import.qza". \
-                format(dir=use_dir,
-                       type=edit_qiime_types(qtype),
-                       title=self.sample_data["Title"])
-            self.stamp_file(self.sample_data["project_data"][qtype])
             self.local_finish(use_dir, sample_dir)
 
             self.create_low_level_script()
