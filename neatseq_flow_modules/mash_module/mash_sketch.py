@@ -45,7 +45,7 @@ Output:
 
 * puts 'msh' output files in the following slots for (scope=project):
 
-    * ``sample_data["project_data"]["ms["project_data"]h.fasta"]``
+    * ``sample_data["project_data"]["msh.fasta"]``
     * ``sample_data["project_data"]["msh.fastq"]``
 
 

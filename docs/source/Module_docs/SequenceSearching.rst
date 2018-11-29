@@ -22,10 +22,6 @@ Sequence-Searching Related Tasks
 
 .. automodule:: neatseq_flow_modules.searching.hmmscan
 
-
-Mash modules
--------------
-
 .. automodule:: neatseq_flow_modules.mash_module.mash_sketch
 
 .. automodule:: neatseq_flow_modules.mash_module.mash_dist

@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-```STAR_builder``
+``STAR_builder``
 -----------------------------------------------------------------
 :Authors: Menachem Sklarz
 :Affiliation: Bioinformatics core facility
