@@ -74,13 +74,25 @@ class Step_fastqc_html(Step):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = "fasqc"
 
+        if "scope" not in self.params:
+            self.params["scope"] = "sample"
+
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
         
-        
+
+        if self.params["scope"] == "project":
+            sample_list = ["project_data"]
+        elif self.params["scope"] == "sample":
+            sample_list = self.sample_data["samples"]
+        else:
+            raise AssertionExcept("'scope' must be either 'sample' or 'project'")
+
+        for sample in sample_list:      # Getting list of samples out of samples_hash
+
         # Assert that all samples have reads files:
-        for sample in self.sample_data["samples"]:
+        # for sample in self.sample_data["samples"]:
             if not filter(lambda x: x in ["fastq.F", "fastq.R", "fastq.S"], self.sample_data[sample].keys()):
                 raise AssertionExcept("No read files defined\n", sample)
 
@@ -89,10 +101,11 @@ class Step_fastqc_html(Step):
         """ Add stuff to check and agglomerate the output data
         """
         if "sum_script" in self.params.keys():
-            self.script = "%(script)s \\\n\t-d %(indir)s \\\n\t-o %(outdir)s\n\n" % \
-                    {"script" : self.params["sum_script"],
-                     "indir"  : self.base_dir,
-                     "outdir" : self.base_dir}
+            raise AssertionExcept("Option 'sum_script' no longer supported. Use MultiQC instead!")
+            # self.script = "%(script)s \\\n\t-d %(indir)s \\\n\t-o %(outdir)s\n\n" % \
+            #         {"script" : self.params["sum_script"],
+            #          "indir"  : self.base_dir,
+            #          "outdir" : self.base_dir}
 
         
     
@@ -103,18 +116,30 @@ class Step_fastqc_html(Step):
         """
         
         
-        # Each iteration must define the following class variables:
-            # spec_script_name
-            # script
-        for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
+        if self.params["scope"] == "project":
+            sample_list = ["project_data"]
+        elif self.params["scope"] == "sample":
+            sample_list = self.sample_data["samples"]
+        else:
+            raise AssertionExcept("'scope' must be either 'sample' or 'project'")
+
+        for sample in sample_list:      # Getting list of samples out of samples_hash
+
+            # Make a dir for the current sample:
+            sample_dir = self.make_folder_for_sample(sample)
 
             # Name of specific script:
             self.spec_script_name = self.set_spec_script_name(sample)
             self.script = ""
+        # for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
+        #
+        #     # Name of specific script:
+        #     self.spec_script_name = self.set_spec_script_name(sample)
+        #     self.script = ""
             
             # This line should be left before every new script. It sees to local issues.
             # Use the dir it returns as the base_dir for this step.
-            use_dir = self.local_start(self.base_dir)
+            use_dir = self.local_start(sample_dir)
             
             
             self.script += self.get_script_const()
@@ -135,11 +160,13 @@ class Step_fastqc_html(Step):
                     file_basename = os.path.basename(self.sample_data[sample][direction])
                     for type in ["zip","html"]:
                         slot_name = "fastqc_{direction}_{type}".format(direction=direction, type=type)
-                        self.sample_data[sample][slot_name] = self.base_dir + file_basename + "_fastqc.{type}".format(type=type) 
+                        self.sample_data[sample][slot_name] = "{dir}{bn}_fastqc.{type}".format(dir=sample_dir,
+                                                                                               bn=file_basename,
+                                                                                               type=type)
 
             
             # Move all files from temporary local dir to permanent base_dir
-            self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
+            self.local_finish(use_dir, sample_dir)       # Sees to copying local files to final destination (and other stuff)
 
             
                     
