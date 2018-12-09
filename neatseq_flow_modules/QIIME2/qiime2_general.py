@@ -155,6 +155,10 @@ class Step_qiime2_general(Step):
                     inptype = inptype[0]
             self.input_dict[inpflag] = inptype
 
+        for redir,redir_val in self.params["redir_params"].iteritems():
+            if redir_val in self.sample_data["project_data"]:
+                self.params["redir_params"][redir] = self.sample_data["project_data"][redir_val]
+
         # print "------------ %s ---------" % self.get_step_name()
         # print self.input_dict
         # sys.exit()
@@ -238,8 +242,11 @@ if [ -e {dir}{outdir} ]; then rm -rf {dir}{outdir}; fi
 
 
         self.script += self.get_script_const()
-        self.script += inputs + " \\\n\t"
-        self.script += outputs
+        if inputs:
+            self.script += inputs + " \\\n\t"
+        if outputs:
+            self.script += outputs
+
         if "store_output" in self.params:
             self.script += " \\\n\t--output-dir {dir}{outdir}".format(dir=use_dir,outdir="more_results")
 
