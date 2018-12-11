@@ -1,5 +1,6 @@
 Title	BlastExperiment
 
+
 #SampleID	Type	Path
 Sample1	Nucleotide	/path/to/Sample1.fna
 Sample1	Protein	/path/to/Sample1.faa

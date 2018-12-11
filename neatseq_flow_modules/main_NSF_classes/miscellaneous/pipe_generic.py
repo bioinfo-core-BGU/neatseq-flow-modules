@@ -10,14 +10,49 @@
 Description
 ~~~~~~~~~~~~
 
-This module enables executing any type of shell script, including pipes and multiple steps.
-Files and directories are embedded in the script by describing the file or directory in a ``{{}}`` block, as follows:
+This module enables executing any type of bash command, including pipes and multiple steps.
+File and directory names are embedded in the script by describing the file or directory in a ``{{}}`` block, as follows:
 
 1. File names:
 ***************
 
-Include 4 ``:``-separated fields: (a) scope, (b) slot, (c) separator and (d) base. For example: ``{{sample:fastq.F:,:merge1}}``
-Leave the field empty if you do not want to pass a value, e.g. ``{{sample:fastq.F}}``
+Include 4 ``:``-separated fields: (a) scope, (b) slot, (c) separator and (d) base.
+For example: ``{{sample:fastq.F:,:merge1}}`` is replaced with sample ``fastq.F`` files from ``merge1`` instance, seperated by commas (only for project scope scripts, of course).
+Leave fields empty if you do not want to pass a value, e.g. ``{{sample:fastq.F}}`` is replaced with the sample ``fastq.F`` file.
+
+2. Sample and project names:
+******************************
+
+You can include the sample or project names in the script by leaving out the file type field. *e.g.* {{sample}} will be replaced by the sample name.
+
+To get a list of sample names, set the separator field to the separator of your choice, *e.g.* {{sample::,}} will be replaced with a comma-separated list of sample names.
+
+3. Directories
+*****************
+
+You can include two directories in your command: the base directory of the instance results (``{{base_dir}}``) and a
+specific directory for the current sample (``{{dir}}``).
+
+.. Note:: For project-scope scripts, ``{{base_dir}}`` and ``{{dir}}`` refer to the same directory.
+
+Can take one of two values:
+
+.. csv-table::
+    :header: "Dir descriptor", "Result"
+    :widths: 5,10
+
+    "``{{base_dir}}``", "Returns the base directory for the step."
+    "``{{dir}}``", "Returns the active directory of the script. For project-scope scripts, this is identical to ``base_dir``. For sample scope scripts, this will be a direcotry within ``base_dir`` for sample related files."
+
+3. Outputs
+***********
+
+Will be replaced with the filename specified in the named output. *e.g.* ``{{o:fasta.nucl}}`` will be replced according to the specifications in the output block named ``fasta.nucl``.
+
+Each output block must contain 2 fields: ``scope`` and ``string``. The string contains a string describing the file to be stored in the equivalent slot. In the example above, there must be a block called ``fasta.nucl`` in the ``output`` block which can be defined as shown in the example in section **Lines for parameter file** below.
+
+
+
 The following examples cover most of the options:
 
 .. csv-table::
@@ -36,26 +71,9 @@ The following examples cover most of the options:
 
 .. Note:: The separator field is ignored for project-scope slots.
 
-If a sample-scope slot is used, in the inputs or the outputs, the scripts will be sample-scope scripts. Otherwise, one project-scope script will be produced.
-
-2. Directories
-+++++++++++++++++++
-
-Can take one of two values:
-
-.. csv-table::
-    :header: "Dir descriptor", "Result"
-    :widths: 5,10
-
-    "``{{base_dir}}``", "Returns the base directory for the step."
-    "``{{dir}}``", "Returns the active directory of the script. For project-scope scripts, this is identical to ``base_dir``. For sample scope scripts, this will be a direcotry within ``base_dir`` for sample related files."
-
-3. Outputs
-+++++++++++++++
-
-Will be replaced with the filename specified in the named output. *e.g.* ``{{o:fasta.nucl}}`` will be replced according to the specifications in the output block named ``fasta.nucl``.
-
-Each output block must contain 2 fields: ``scope`` and ``string``. The string contains a string describing the file to be stored in the equivalent slot. In the example above, there must be a block called ``fasta.nucl`` in the ``output`` block which can be defined as shown in the example in section **Lines for parameter file** below.
+.. Attention::
+    If a sample-scope slot is used, in the inputs or the outputs, the scripts will be sample-scope scripts. Otherwise, one project-scope script will be produced. To override this behaviour, set ``scope`` to ``project``.
+    However, you cannot set ``scope`` to ``project`` if there are sample-scope fields defined.
 
 
 Requires:
@@ -75,6 +93,7 @@ Parameters that can be set
     :widths: 5,10,10
 
     "output", "", "A block including 'scope' and 'string' definining the script outputs"
+    "scope", "``sample|project``", "The scope of the resulting scripts. You cannot set scope to project if there are sample-scope fields defined."
 
 
 Lines for parameter file
@@ -88,12 +107,12 @@ Demonstration of embedding various files and titles in a script file::
         base:               pipe_gen_2
         script_path: |
             project:                    {{project}}
-            project:fasta.nucl:         {{project:fasta.nucl}}
-            project:fasta.nucl:merge1   {{project:fasta.nucl::merge1}}
+            fasta.nucl in project:         {{project:fasta.nucl}}
+            fasta.nucl in project from base merge1:   {{project:fasta.nucl::merge1}}
 
-            sample:             {{sample::,}}
-            sample:fastq.F:     {{sample:fastq.F}}
-            sample:fastq.F:merge1     {{sample:fastq.F::merge1}}
+            sample names:             {{sample::,}}
+            fastq.F in sample:     {{sample:fastq.F}}
+            fastq.F in sample from base merge1:     {{sample:fastq.F::merge1}}
 
             output:fasta.nucl:    {{o:fasta.nucl}}
         output:
@@ -150,30 +169,27 @@ class Step_pipe_generic(Step):
         except KeyError:
             self.write_warning("No 'output' section defined. Are you sure this is what you intended?")
 
-        # print list(set(variables))
         # Default scope is project
-        if "scope" not in self.params:
-            self.params["scope"] = "project"
+        scope = "project"
 
         # Check the definition of all variables
         for variable in variables:
             var_def = re.findall(pattern="([^\:]*)\:?", string=variable)
-            # print variable
-            # print var_def
             # If variable scope is sample and the separator field (3rd slot) is not defined, change scope to sample
-            if var_def[0]=="sample" and (len(var_def)<3 or not var_def[2]):
-                self.params["scope"] = "sample"
+            if var_def[0] == "sample" and (len(var_def) < 3 or not var_def[2]):
+                scope = "sample"
 
-        # print "scope:\n" + self.params["scope"]
-
-        # # Set scope. If any of the variables begins with 'sample:' or is only 'sample', set scope to sample
-        # # Otherwise, scope is project:
-        # if any([re.match(string=match,pattern="\{\{sample[\:\}]") for match in variables]):
-        #     self.params["scope"] = "sample"
-        # else:
-        #     self.params["scope"] = "project"
-
-        # sys.exit()
+        # If scope not passed, use automatically determined scope
+        if "scope" not in self.params:
+            self.params["scope"] = scope
+        else:
+            if self.params["scope"] not in ["sample","project"]:
+                raise AssertionExcept("Scope must be either 'sample' or 'project'")
+            # User cannot require project scope with sample-scope definitions!
+            if self.params["scope"] == "project" and scope=="sample":
+                # If user required project scope and sample scope fields exist, raise an error
+                raise AssertionExcept("You set scope to 'project', but included sample-scope fields. If this is "
+                                      "intended, please define the separator to use in the 3rd field.")
 
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
