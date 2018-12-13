@@ -22,7 +22,6 @@ Vars:
         trimmo:             /path/to/trimmomatic-0.32.jar
         trimmo_dir:         /path/to/trimmo_dir
         fastqc:             /path/to/fastqc
-        fastqc_sum_script:  /path/to/fastqc_sum_script
         trimgal:            /path/to/TrimGalore  
         multiqc:            /path/to/multiQC
         cutadapt:           /path/to/cutadapt  
@@ -37,7 +36,6 @@ Step_params:
         module:         fastqc_html
         base:           merge1
         script_path:    {Vars.paths.fastqc}
-        sum_script:     {Vars.paths.fastqc_sum_script}
         qsub_params:
             -pe:        shared 15
         redirects:
@@ -72,7 +70,6 @@ Step_params:
         module:         fastqc_html
         base:           trim_gal
         script_path:    {Vars.paths.fastqc}
-        sum_script:     {Vars.paths.fastqc_sum_script}
         # exclude_sample_list:    [Sample1, Sample2]
         qsub_params:
             -pe:        shared 15

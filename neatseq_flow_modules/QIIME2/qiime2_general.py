@@ -250,6 +250,8 @@ if [ -e {dir}{outdir} ]; then rm -rf {dir}{outdir}; fi
         if "store_output" in self.params:
             self.script += " \\\n\t--output-dir {dir}{outdir}".format(dir=use_dir,outdir="more_results")
 
+        self.script += "\n\n"
+
         for outp, typ in output_index.iteritems():
             self.sample_data[sample][typ] = "{dir}{title}.{method}.{outp}.{ext}". \
                                                                             format(dir=sample_dir,
@@ -257,6 +259,18 @@ if [ -e {dir}{outdir} ]; then rm -rf {dir}{outdir}; fi
                                                                                    method=self.method,
                                                                                    ext="qzv" if typ == "Visualization" else "qza",
                                                                                    outp=edit_qiime_params(outp))
+            if "export" in self.params:
+                self.script += """
+qiime tools export \\
+    --input-path {inppath} \\ 
+    --output-path {outpath}
+
+""".format(inppath=self.sample_data[sample][typ],
+           outpath="{dir}{title}.{method}.{outp}".format(dir=sample_dir,
+                                                          title=self.sample_data["Title"],
+                                                          method=self.method,
+                                                          outp=edit_qiime_params(outp)))
+
             self.stamp_file(self.sample_data[sample][typ])
 
         self.local_finish(use_dir, sample_dir)

@@ -496,6 +496,38 @@ class Step_merge(Step):
                 fq_fn = ".".join([sample_title, src, self.file_tag,ext])
                 # The filename containing the end result. Used both in script and to set reads in $sample_params
 
+#                 if script_path == "..cp..":
+#                     if len(self.sample_data[sample][src])>1:
+#                         raise AssertionExcept("When copying source file with '..cp..', there must be only one file in "
+#                                               "the file type being copied")
+#
+#                     # Composing script:
+#                     self.script = ""
+#                     self.script += """
+# cp \\
+#     {file_src} \\
+#     {file_trg}
+# """.format(file_src=self.sample_data[sample][src][0],
+#            file_trg=use_dir + fq_fn)
+#                     # The following line concatenates all the files in the direction separated by a " "
+#                     # self.script += " ".join(self.sample_data[sample][src])
+#                     # self.script += " \\\n\t"
+#                     # if pipe:  # pipe is not 'None'
+#                     #     self.script += "| {pipe} \\\n\t".format(pipe=pipe)
+#                     # self.script += "> %s%s \n\n" % (use_dir, fq_fn)
+#
+#                     # Move all files from temporary local dir to permanent base_dir
+#                     self.local_finish(use_dir, self.base_dir)
+#
+#                     # Store file in active file for sample:
+#                     self.sample_data[sample][trg] = self.base_dir + fq_fn
+#
+#                     self.stamp_file(self.sample_data[sample][trg])
+#
+#                     self.create_low_level_script()
+#                     return
+
+
                 if not script_path or script_path == "..guess..":
                     # Not all samples have the same file types. Sample-specific guessing...
 
