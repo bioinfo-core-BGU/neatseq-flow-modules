@@ -262,7 +262,7 @@ if [ -e {dir}{outdir} ]; then rm -rf {dir}{outdir}; fi
             if "export" in self.params:
                 self.script += """
 qiime tools export \\
-    --input-path {inppath} \\ 
+    --input-path {inppath} \\
     --output-path {outpath}
 
 """.format(inppath=self.sample_data[sample][typ],
