@@ -271,19 +271,21 @@ if [ -e {dir}{outdir} ]; then rm -rf {dir}{outdir}; fi
                                                                                    method=self.method,
                                                                                    ext="qzv" if typ == "Visualization" else "qza",
                                                                                    outp=edit_qiime_params(outp))
-            if "export" in self.params:
-                self.script += """
+            self.stamp_file(self.sample_data[sample][typ])
+            if "export" in self.params: # and not outp == "--o-visualization":
+                if not self.params["export"] or outp in self.params["export"]:
+                    # Adding export code if requested
+                    self.script += """
 qiime tools export \\
     --input-path {inppath} \\
     --output-path {outpath}
 
 """.format(inppath=self.sample_data[sample][typ],
            outpath="{dir}{title}.{method}.{outp}".format(dir=sample_dir,
-                                                          title=self.sample_data["Title"],
-                                                          method=self.method,
-                                                          outp=edit_qiime_params(outp)))
+                                                         title=self.sample_data["Title"],
+                                                         method=self.method,
+                                                         outp=edit_qiime_params(outp)))
 
-            self.stamp_file(self.sample_data[sample][typ])
 
         self.local_finish(use_dir, sample_dir)
         self.create_low_level_script()
