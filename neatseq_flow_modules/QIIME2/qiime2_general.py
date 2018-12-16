@@ -88,16 +88,8 @@ class Step_qiime2_general(Step):
         # Get argument index for method
         self.method_index = self.qiime_args[self.plugin][self.method]
 
-        # Convert required into list
-        if "required" in self.method_index:
-            if isinstance(self.method_index["required"], str):
-                self.method_index["required"] = [self.method_index["required"]]
 
-            if not all(map(lambda x: x in self.params["redir_params"], self.method_index["required"])):
-                raise AssertionExcept("The following parameters are required for method {method} of plugin {plugin}: "
-                                      "{required}".format(plugin=self.plugin,
-                                                          method=self.method,
-                                                          required=", ".join(self.method_index["required"])))
+
 
         # print self.method_index
 
@@ -158,6 +150,25 @@ class Step_qiime2_general(Step):
         for redir,redir_val in self.params["redir_params"].iteritems():
             if redir_val in self.sample_data["project_data"]:
                 self.params["redir_params"][redir] = self.sample_data["project_data"][redir_val]
+
+        # Convert required into list and making sure all required exist
+        # Done here so that -m-- files can be included automatically in redirects
+        if "required" in self.method_index:
+            # If a metadata file is required, is not explicit in redirects and 'metadata' slot exists, use it.
+            if "--m-metadata-file" in self.method_index["required"] \
+                    and "--m-metadata-file" not in self.params["redir_params"] \
+                    and "metadata" in self.sample_data["project_data"]:
+                self.params["redir_params"]["--m-metadata-file"] = self.sample_data["project_data"]["metadata"]
+
+
+            if isinstance(self.method_index["required"], str):
+                self.method_index["required"] = [self.method_index["required"]]
+
+            if not all(map(lambda x: x in self.params["redir_params"], self.method_index["required"])):
+                raise AssertionExcept("The following parameters are required for method {method} of plugin {plugin}: "
+                                      "{required}".format(plugin=self.plugin,
+                                                          method=self.method,
+                                                          required=", ".join(self.method_index["required"])))
 
         # print "------------ %s ---------" % self.get_step_name()
         # print self.input_dict
@@ -246,6 +257,7 @@ if [ -e {dir}{outdir} ]; then rm -rf {dir}{outdir}; fi
             self.script += inputs + " \\\n\t"
         if outputs:
             self.script += outputs
+
 
         if "store_output" in self.params:
             self.script += " \\\n\t--output-dir {dir}{outdir}".format(dir=use_dir,outdir="more_results")
