@@ -6,18 +6,35 @@
 :Affiliation: Bioinformatics core facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
+.. Attention:: This module is in Beta version. It is not issue-free and will be improved periodically.
 
+A module to include any QIIME2 plugin method, pipeline or visualiation.
+
+The required plugin and method are specified in the ``script_path`` line, as they would appear in the command line, *e.g.*::
+
+    script_path:   qiime dada2 denoise-paired
+
+The module will identify the required inputs for the method and extract them from the appropriate slots. If they are not found, an exception will be thrown.
+
+If more than one type is legitimate fdr a method, and both exist in the project, NeatSeq-Flow will complain. You can
+either remove the extra type with ``manage_types`` module or specify the type to use with the ``type`` parameter.
+
+Plugins which require metadata files, passed as argument ``--m-metadata-file``, will look for a file in slot ``metadata``.
+In order to specify a metadata file in the parameter file, pass the ``--m-metadata-file`` in the ``redirects`` section.
+
+All ``redirects`` argument values are searched for in the "project_data". Thus, you can specify slots to use for
+redirected arguments.
 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    
 
+Plugin- and method-specific.
 
     
 Output:
 ~~~~~~~~~~~~~
 
-
+Plugin- and method-specific.
 
                 
 Parameters that can be set        
@@ -26,15 +43,54 @@ Parameters that can be set
 .. csv-table:: 
     :header: "Parameter", "Values", "Comments"
 
-
+    "store_output", "list of output parameters", "These parameters will be stored as file types for use by downstream modules"
+    "export", "empty or list of output parameters", "If empty, all outputs will be exported, *i.e.* unzipped with qiime tools export. If list of parameters, only those types will be exported."
 
     
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-::
+DADA2 plugin, with export of stats output::
 
+    dada2:                      # Name of this step
+        module:                     qiime2_general
+        base:                       import
+        script_path:                qiime dada2 denoise-single #paired
+        export:
+            - --o-denoising-stats
+        redirects:
+            --p-trim-left:         10
+            --p-trunc-len:         100
 
+Classical visualization. Only ``base`` and ``script_path``::
+
+    dada2_vis_summary:                      # Name of this step
+        module:                     qiime2_general
+        base:                       dada2
+        script_path:                qiime feature-table summarize
+
+Store only particular outputs in type index::
+
+    diversity:                      # Name of this step
+        module:                     qiime2_general
+        base:                       phylogeny
+        script_path:                qiime diversity core-metrics-phylogenetic
+        export:                     --o-rarefied-table
+        store_output:
+            - --o-rarefied-table
+            - --o-faith-pd-vector
+            - --o-weighted-unifrac-distance-matrix
+            - --o-weighted-unifrac-pcoa-results
+            - --o-weighted-unifrac-emperor
+        redirects:
+            --p-sampling-depth:     50000
+
+    taxonomy_tabulate:                      # Name of this step
+        module:                     qiime2_general
+        base:                       taxonomy
+        script_path:                qiime metadata tabulate
+        redirects:
+            --m-input-file:         "{{FeatureData[Taxonomy]}}"
 
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -147,20 +203,38 @@ class Step_qiime2_general(Step):
                     inptype = inptype[0]
             self.input_dict[inpflag] = inptype
 
-        for redir,redir_val in self.params["redir_params"].iteritems():
-            if redir_val in self.sample_data["project_data"]:
-                self.params["redir_params"][redir] = self.sample_data["project_data"][redir_val]
+        # for redir,redir_val in self.params["redir_params"].iteritems():
+        #     if isinstance(redir_val, str) and redir_val in self.sample_data["project_data"]:
+        #         # redir_val can also be a list, in which case it can't be project_data slots.
+        #         self.params["redir_params"][redir] = self.sample_data["project_data"][redir_val]
+
+        # The following enables passing types through redirects:
+        # Is done like this (see also code at end of loop), to make it easier to perform on sample scope in the future
+        # old_redirs = dict()
+        for redir in self.params["redir_params"]:
+            if isinstance(self.params["redir_params"][redir],str):
+                if re.match("^\{\{.*\}\}$",self.params["redir_params"][redir]):
+                    # old_redirs[redir] = self.params["redir_params"][redir]
+                    type2use = list(set(re.findall(pattern="\{\{(.*?)\}\}", string=self.params["redir_params"][redir])))
+                    if len(type2use)>1:
+                        raise AssertionExcept("You are trying to pass two types through redirect '{redir}'".format(redir=redir))
+                    type2use = type2use[0]
+
+                    try:
+                        self.params["redir_params"][redir] = self.sample_data["project_data"][type2use]
+                    except KeyError:
+                        raise AssertionExcept("Type '{type}' does not exist!".format(type=type2use))
+
+        # If a metadata file is required, is not explicit in redirects and 'metadata' slot exists, use it.
+        for param_type in ["required","optional"]:
+            if param_type in self.method_index and "--m-metadata-file" in self.method_index[param_type]:
+                if "--m-metadata-file" not in self.params["redir_params"] \
+                    and "metadata" in self.sample_data["project_data"]:
+                    self.params["redir_params"]["--m-metadata-file"] = self.sample_data["project_data"]["metadata"]
 
         # Convert required into list and making sure all required exist
         # Done here so that -m-- files can be included automatically in redirects
         if "required" in self.method_index:
-            # If a metadata file is required, is not explicit in redirects and 'metadata' slot exists, use it.
-            if "--m-metadata-file" in self.method_index["required"] \
-                    and "--m-metadata-file" not in self.params["redir_params"] \
-                    and "metadata" in self.sample_data["project_data"]:
-                self.params["redir_params"]["--m-metadata-file"] = self.sample_data["project_data"]["metadata"]
-
-
             if isinstance(self.method_index["required"], str):
                 self.method_index["required"] = [self.method_index["required"]]
 
@@ -198,22 +272,7 @@ class Step_qiime2_general(Step):
         # Use the dir it returns as the base_dir for this step.
         use_dir = self.local_start(sample_dir)
 
-        # The following enables passing types through redirects:
-        # Is done like this (see also code at end of loop), to make it easier to perform on sample scope in the future
-        old_redirs = dict()
-        for redir in self.params["redir_params"]:
-            if isinstance(self.params["redir_params"][redir],str):
-                if re.match("^\{\{.*\}\}$",self.params["redir_params"][redir]):
-                    old_redirs[redir] = self.params["redir_params"][redir]
-                    type2use = list(set(re.findall(pattern="\{\{(.*?)\}\}", string=self.params["redir_params"][redir])))
-                    if len(type2use)>1:
-                        raise AssertionExcept("You are trying to pass two types through redirect '{redir}'".format(redir=redir))
-                    type2use = type2use[0]
 
-                    try:
-                        self.params["redir_params"][redir] = self.sample_data[sample][type2use]
-                    except KeyError:
-                        raise AssertionExcept("Type '{type}' does not exist!".format(type=type2use))
 
 
         # Build inputs part:
@@ -290,5 +349,5 @@ qiime tools export \\
         self.local_finish(use_dir, sample_dir)
         self.create_low_level_script()
 
-        for redir in old_redirs:
-            self.params["redir_params"][redir] = old_redirs[redir]
+        # for redir in old_redirs:
+        #     self.params["redir_params"][redir] = old_redirs[redir]

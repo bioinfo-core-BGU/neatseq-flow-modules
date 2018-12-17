@@ -24,6 +24,7 @@ composition:
     required:
     - --m-metadata-file
     - --m-metadata-column
+    optional: --p-difference-function
 cutadapt:
   demux-paired:
     inputs:
@@ -48,11 +49,22 @@ cutadapt:
       --i-demultiplexed-sequences: SampleData[PairedEndSequencesWithQuality]
     outputs:
       --o-trimmed-sequences: SampleData[PairedEndSequencesWithQuality]
+    optional:
+    - --p-adapter-f
+    - --p-front-f
+    - --p-anywhere-f
+    - --p-adapter-r
+    - --p-front-r
+    - --p-anywhere-r
   trim-single:
     inputs:
       --i-demultiplexed-sequences: SampleData[SequencesWithQuality]
     outputs:
       --o-trimmed-sequences: SampleData[SequencesWithQuality]
+    optional:
+    - --p-adapter
+    - --p-front
+    - --p-anywhere
 dada2:
   denoise-paired:
     inputs:
@@ -122,7 +134,7 @@ demux:
     - --m-barcodes-column
   emp-single:
     inputs:
-      --i-seqs: EMPSingleEndSequences
+      --i-seqs: EMPPairedEndSequences
     outputs:
       --o-per-sample-sequences: SampleData[SequencesWithQuality]
     required:
@@ -228,17 +240,20 @@ diversity:
     outputs:
       --o-distance-matrix: DistanceMatrix
     required: --p-metric
+    optional: --p-alpha
   filter-distance-matrix:
     inputs:
       --i-distance-matrix: DistanceMatrix
     outputs:
       --o-filtered-distance-matrix: DistanceMatrix
     required: --m-metadata-file
+    optional: --p-where
   pcoa:
     inputs:
       --i-distance-matrix: DistanceMatrix
     outputs:
       --o-pcoa: PCoAResults
+    optional: --p-number-of-dimensions
   pcoa-biplot:
     inputs:
       --i-pcoa: PCoAResults
@@ -272,6 +287,9 @@ diversity:
     outputs:
       --o-visualization: Visualization
     required: --p-max-depth
+    optional:
+    - --p-metrics
+    - --m-metadata-file
   beta-group-significance:
     inputs:
       --i-distance-matrix: DistanceMatrix
@@ -310,12 +328,14 @@ emperor:
     outputs:
       --o-visualization: Visualization
     required: --m-sample-metadata-file
+    optional: --m-feature-metadata-file
   plot:
     inputs:
       --i-pcoa: PCoAResults
     outputs:
       --o-visualization: Visualization
     required: --m-metadata-file
+    optional: --p-custom-axes
   procrustes-plot:
     inputs:
       --i-reference-pcoa: PCoAResults
@@ -323,6 +343,7 @@ emperor:
     outputs:
       --o-visualization: Visualization
     required: --m-metadata-file
+    optional: --p-custom-axes
 feature-classifier:
   classify-consensus-blast:
     inputs:
@@ -344,6 +365,7 @@ feature-classifier:
       --i-classifier: TaxonomicClassifier
     outputs:
       --o-classification: FeatureData[Taxonomy]
+    optional: --p-read-orientation
   extract-reads:
     inputs:
       --i-sequences: FeatureData[Sequence]
@@ -375,11 +397,21 @@ feature-table:
       --i-table: FeatureTable[Frequency]
     outputs:
       --o-filtered-table: FeatureTable[Frequency]
+    optional:
+    - --p-max-frequency
+    - --p-max-samples
+    - --m-metadata-file
+    - --p-where
   filter-samples:
     inputs:
       --i-table: FeatureTable[Frequency]
     outputs:
       --o-filtered-table: FeatureTable[Frequency]
+    optional:
+    - --p-max-frequency
+    - --p-max-features
+    - --m-metadata-file
+    - --p-where
   filter-seqs:
     inputs:
       --i-data: FeatureData[Sequence]
@@ -387,6 +419,9 @@ feature-table:
       --i-table: FeatureTable[Frequency]
     outputs:
       --o-filtered-data: FeatureData[Sequence]
+    optional:
+    - --m-metadata-file
+    - --p-where
   group:
     inputs:
       --i-table: FeatureTable[Frequency]
@@ -448,6 +483,10 @@ feature-table:
       --i-table: FeatureTable[Frequency]
     outputs:
       --o-visualization: Visualization
+    optional:
+    - --m-metadata-file
+    - --m-metadata-column
+    - --p-title
   summarize:
     inputs:
       --i-table:
@@ -456,6 +495,7 @@ feature-table:
       - FeatureTable[RelativeFrequency]
     outputs:
       --o-visualization: Visualization
+    optional: --m-sample-metadata-file
   tabulate-seqs:
     inputs:
       --i-data: FeatureData[Sequence]
@@ -535,6 +575,10 @@ gneiss:
     outputs:
       --o-visualization: Visualization
     required: --p-balance-name
+    optional:
+    - --p-threshold
+    - --m-metadata-file
+    - --m-metadata-column
   dendrogram-heatmap:
     inputs:
       --i-table: FeatureTable[Frequency]
@@ -576,6 +620,9 @@ longitudinal:
     required:
     - --m-metadata-file
     - --p-state-column
+    optional:
+    - --p-individual-id-column
+    - --p-random-state
   maturity-index:
     inputs:
       --i-table: FeatureTable[Frequency]
@@ -593,6 +640,9 @@ longitudinal:
     - --p-state-column
     - --p-group-by
     - --p-control
+    optional:
+    - --p-individual-id-column
+    - --p-random-state
   first-differences:
     optional_inputs:
       --i-table: FeatureTable[RelativeFrequency]
@@ -603,6 +653,7 @@ longitudinal:
     - --p-state-column
     - --p-individual-id-column
     - --p-metric
+    optional: --p-baseline
   first-distances:
     inputs:
       --i-distance-matrix: DistanceMatrix
@@ -612,6 +663,7 @@ longitudinal:
     - --m-metadata-file
     - --p-state-column
     - --p-individual-id-column
+    optional: --p-baseline
   nmit:
     inputs:
       --i-table: FeatureTable[RelativeFrequency]
@@ -629,6 +681,11 @@ longitudinal:
     - --m-metadata-file
     - --p-state-column
     - --p-individual-id-column
+    optional:
+    - --p-metric
+    - --p-group-columns
+    - --p-random-effects
+    - --p-formula
   pairwise-differences:
     optional_inputs:
       --i-table: FeatureTable[RelativeFrequency]
@@ -641,6 +698,7 @@ longitudinal:
     - --p-state-1
     - --p-state-2
     - --p-individual-id-column
+    optional: --p-group-column
   pairwise-distances:
     inputs:
       --i-distance-matrix: DistanceMatrix
@@ -662,6 +720,9 @@ longitudinal:
     required:
     - --m-metadata-file
     - --p-state-column
+    optional:
+    - --p-individual-id-column
+    - --p-default-group-column
   volatility:
     optional_inputs:
       --i-table: FeatureTable[RelativeFrequency]
@@ -670,6 +731,10 @@ longitudinal:
     required:
     - --m-metadata-file
     - --p-state-column
+    optional:
+    - --p-individual-id-column
+    - --p-default-group-column
+    - --p-default-metric
 metadata:
   distance-matrix:
     outputs:
@@ -708,11 +773,36 @@ phylogeny:
       --i-alignment: FeatureData[AlignedSequence]
     outputs:
       --o-tree: Phylogeny[Unrooted]
+    optional:
+    - --p-seed
+    - --p-n-init-pars-trees
+    - --p-n-top-init-trees
+    - --p-n-best-retain-trees
+    - --p-n-iter
+    - --p-stop-iter
+    - --p-perturb-nni-strength
+    - --p-spr-radius
+    - --p-alrt
+    - --p-lbp
   iqtree-ultrafast-bootstrap:
     inputs:
       --i-alignment: FeatureData[AlignedSequence]
     outputs:
       --o-tree: Phylogeny[Unrooted]
+    optional:
+    - --p-seed
+    - --p-n-init-pars-trees
+    - --p-n-top-init-trees
+    - --p-n-best-retain-trees
+    - --p-stop-iter
+    - --p-perturb-nni-strength
+    - --p-spr-radius
+    - --p-n-max-ufboot-iter
+    - --p-n-ufboot-steps
+    - --p-min-cor-ufboot
+    - --p-ep-break-ufboot
+    - --p-alrt
+    - --p-lbp
   midpoint-root:
     inputs:
       --i-tree: Phylogeny[Unrooted]
@@ -723,11 +813,15 @@ phylogeny:
       --i-alignment: FeatureData[AlignedSequence]
     outputs:
       --o-tree: Phylogeny[Unrooted]
+    optional: --p-seed
   raxml-rapid-bootstrap:
     inputs:
       --i-alignment: FeatureData[AlignedSequence]
     outputs:
       --o-tree: Phylogeny[Unrooted]
+    optional:
+    - --p-seed
+    - --p-rapid-bootstrap-seed
 quality-control:
   exclude-seqs:
     inputs:
@@ -736,12 +830,16 @@ quality-control:
     outputs:
       --o-sequence-hits: FeatureData[Sequence]
       --o-sequence-misses: FeatureData[Sequence]
+    optional: --p-evalue
   evaluate-composition:
     inputs:
       --i-expected-features: FeatureTable[RelativeFrequency]
       --i-observed-features: FeatureTable[RelativeFrequency]
     outputs:
       --o-visualization: Visualization
+    optional:
+    - --m-metadata-file
+    - --m-metadata-column
   evaluate-seqs:
     inputs:
       --i-query-sequences: FeatureData[Sequence]
@@ -757,6 +855,7 @@ quality-control:
     outputs:
       --o-visualization: Visualization
     required: --p-depth
+    optional: --p-sample-id
 quality-filter:
   q-score:
     inputs:
@@ -785,6 +884,7 @@ sample-classifier:
     required:
     - --m-metadata-file
     - --m-metadata-column
+    optional: --p-random-state
   classify-samples-from-dist:
     inputs:
       --i-distance-matrix: DistanceMatrix
@@ -812,6 +912,7 @@ sample-classifier:
     required:
     - --m-metadata-file
     - --m-metadata-column
+    optional: --p-random-state
   classify-samples-ncv:
     inputs:
       --i-table: FeatureTable[Frequency]
@@ -821,6 +922,7 @@ sample-classifier:
     required:
     - --m-metadata-file
     - --m-metadata-column
+    optional: --p-random-state
   fit-classifier:
     inputs:
       --i-table: FeatureTable[Frequency]
@@ -830,6 +932,7 @@ sample-classifier:
     required:
     - --m-metadata-file
     - --m-metadata-column
+    optional: --p-random-state
   fit-regressor:
     inputs:
       --i-table: FeatureTable[Frequency]
@@ -839,6 +942,7 @@ sample-classifier:
     required:
     - --m-metadata-file
     - --m-metadata-column
+    optional: --p-random-state
   predict-classification:
     inputs:
       --i-table: FeatureTable[Frequency]
@@ -860,6 +964,7 @@ sample-classifier:
     required:
     - --m-metadata-file
     - --m-metadata-column
+    optional: --p-random-state
   split-table:
     inputs:
       --i-table: FeatureTable[Frequency]
@@ -869,6 +974,7 @@ sample-classifier:
     required:
     - --m-metadata-file
     - --m-metadata-column
+    optional: --p-random-state
   confusion-matrix:
     inputs:
       --i-predictions: SampleData[ClassifierPredictions]
@@ -906,12 +1012,18 @@ taxa:
       --i-taxonomy: FeatureData[Taxonomy]
     outputs:
       --o-filtered-sequences: FeatureData[Sequence]
+    optional:
+    - --p-include
+    - --p-exclude
   filter-table:
     inputs:
       --i-table: FeatureTable[Frequency]
       --i-taxonomy: FeatureData[Taxonomy]
     outputs:
       --o-filtered-table: FeatureTable[Frequency]
+    optional:
+    - --p-include
+    - --p-exclude
   barplot:
     inputs:
       --i-table: FeatureTable[Frequency]
@@ -959,6 +1071,12 @@ vsearch:
       --i-demultiplexed-seqs: SampleData[PairedEndSequencesWithQuality]
     outputs:
       --o-joined-sequences: SampleData[JoinedSequencesWithQuality]
+    optional:
+    - --p-truncqual
+    - --p-maxns
+    - --p-minmergelen
+    - --p-maxmergelen
+    - --p-maxee
   uchime-denovo:
     inputs:
       --i-sequences: FeatureData[Sequence]
