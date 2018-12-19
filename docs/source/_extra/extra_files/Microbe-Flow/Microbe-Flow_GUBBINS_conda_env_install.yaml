@@ -1,0 +1,12 @@
+name: gubbins
+channels:
+  - bioconda
+dependencies:
+# Deps of python
+  - python=3.6
+  - pandas=0.21.0
+
+# Software
+  - gubbins
+
+  
