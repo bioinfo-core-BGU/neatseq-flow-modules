@@ -183,6 +183,7 @@ class Step_qiime2_general(Step):
             # inptype = list(set(inptype) or set(self.sample_data["project_data"].keys()))[0]
             # Get list of types that exist in sample_data:
             inptype = list(set(inptype) & set(self.sample_data["project_data"].keys()))
+
             # If type in params, try using type or fail
             if "type" in self.params:
                 if not isinstance(self.params["type"],str):

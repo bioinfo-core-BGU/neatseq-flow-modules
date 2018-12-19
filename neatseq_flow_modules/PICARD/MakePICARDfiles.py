@@ -36,7 +36,7 @@ Also, requires the following programs:
 Output:
 ~~~~~~~~~~~~~
 
-* puts Trinotate report file in:
+* puts output files in:
 
     * ``sample_data["bed"]`` 
     * ``sample_data["dict"]`` 
