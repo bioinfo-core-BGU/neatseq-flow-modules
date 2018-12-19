@@ -91,7 +91,7 @@ class Step_qiime2_import(Step):
 
         # Read YAML of plugin arguments
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                               "importable_types_and_formats.yaml"),"r") as fileh:
+                               "importable_types_and_formats.yml"),"r") as fileh:
             filelines = fileh.readlines()
 
         self.qiime_types_formats = yaml.load("".join(filelines),  Loader=yaml.Loader)

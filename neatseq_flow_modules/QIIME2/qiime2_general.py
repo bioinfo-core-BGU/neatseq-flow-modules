@@ -122,7 +122,7 @@ class Step_qiime2_general(Step):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
 
         # Read YAML of plugin arguments
-        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),"qiime2_arguments_index.yaml"),"r") as fileh:
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),"qiime2_arguments_index.yml"),"r") as fileh:
             filelines = fileh.readlines()
 
         self.qiime_args = yaml.load("".join(filelines),  Loader=yaml.Loader)
