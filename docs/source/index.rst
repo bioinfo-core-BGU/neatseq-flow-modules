@@ -10,6 +10,7 @@
    :scale: 60 %
    :align: center
    :alt: NeatSeq-Flow logo
+   :target: https://neatseq-flow.readthedocs.io/en/latest/index.html#
 
 .. image:: https://readthedocs.org/projects/neatseq-flow-modules/badge/?version=latest
    :target: http://neatseq-flow-modules.readthedocs.io/en/latest/?badge=latest

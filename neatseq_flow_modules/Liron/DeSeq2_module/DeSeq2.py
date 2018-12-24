@@ -1,4 +1,3 @@
-#!/fastspace/bioinfo_apps/python-2.7_SL6/bin/python
 # -*- coding: UTF-8 -*-
 """ 
 ``DeSeq2``
@@ -80,6 +79,7 @@ Lines for parameter file
             --Species:                    # Species Name to Retrieve Annotation Data from ENSEMBL
             --KEGG_Species:               # Species Name to Retrieve Annotation Data from KEGG
             --KEGG_KAAS:                  # Gene to KO file from KEGG KAAS [first column gene id, second column KO number]
+            --Trinotate:                  # Path to a Trinotate annotation file in which the first column is the genes names
             --FILTER_SAMPLES:             # Filter Samples with Low Number of expressed genes OR with Small Library size using 'scater' package 
             --FILTER_GENES:               # Filter Low-Abundance Genes using 'scater' package
             --NORMALIZATION_TYPE:         # The DeSeq2 Normalization Type To Use [VSD , RLOG] The Default is VSD
@@ -88,7 +88,8 @@ Lines for parameter file
             --LRT:                        # The LRT DeSeq2 Design
             --ALPHA:                      # Significant Level Cutoff, The Default is 0.05
             --FoldChange:                 # Fold change Cutoff [testing for fold changes greater in absolute value], The Default is 1
-            --CONTRAST:                   # The DeSeq Contrast Design [Group,Treatment,Control] [Not For LTR] .
+            --CONTRAST:                   # The DeSeq Contrast Design ["Group,Treatment,Control"] [Not For LTR] .
+                                          # It is possible to define more then one contrast Design ["Group,Treatment1,Control1|Group,Treatment2,Control2|..."]
             --modelMatrixType:            # How the DeSeq model matrix of the GLM formula is formed [standard or expanded] ,The Default is standard
             --GENES_PLOT:                 # Genes Id To Plot count Data [separated by ','] 
             --X_AXIS:                     # The Filed In the Sample Data To Use as X Axis
@@ -153,6 +154,9 @@ class Step_DeSeq2(Step):
             elif 'genes.counts' in self.sample_data[sample].keys():
                 self.RSEM_FILES.append(self.sample_data[sample]['genes.counts'])
                 self.RSEM_SAMPLES.append(sample)
+            elif 'genes.results' in self.sample_data[sample].keys():
+                self.RSEM_FILES.append(self.sample_data[sample]['genes.results'])
+                self.RSEM_SAMPLES.append(sample)
             if 'HTSeq.counts' in self.sample_data[sample].keys():
                 self.HTSeq_FILES.append(self.sample_data[sample]['HTSeq.counts'])
                 self.HTSeq_SAMPLES.append(sample)
@@ -193,6 +197,10 @@ class Step_DeSeq2(Step):
             else:
                 raise AssertionExcept("The file %s is not found in the DeSeq2 module directory \n please use the '--CLICK_PATH' option to indicate the full file location or delete the 'use_click' option" % "click.exe" )
         
+        if "--Rmarkdown" not in self.params["redir_params"]:
+            if "DeSeq2_module.Rmd" in os.listdir(self.module_location):
+                self.params["redir_params"]["--Rmarkdown"] = os.path.join(self.module_location,"DeSeq2_module.Rmd")
+        
         if self.params["script_path"]!=None:    
             # Get constant part of script:
             self.script += self.get_script_const()
@@ -224,6 +232,11 @@ class Step_DeSeq2(Step):
                     self.script += "--COUNT_SOURCE %s \\\n\t" %  'Matrix' 
                 else:
                     raise AssertionExcept("Could not fined %s count data " % self.params["redir_params"]["--COUNT_SOURCE"])
+            
+            
+            if ('trino.rep' in self.sample_data["project_data"].keys()) and ("--Trinotate" not in self.params["redir_params"].keys()) :
+                self.script += "--Trinotate %s \\\n\t" % self.sample_data["project_data"]['trino.rep']
+            
             
             self.script += "--outDir %s \n\n" % use_dir
             

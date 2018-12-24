@@ -1,143 +1,58 @@
-library("optparse")
-library("ggplot2")
-library("pheatmap")
-library("mclust")
-library("factoextra")
-library("cowplot")
-library("gridExtra")
-
-args = commandArgs(trailingOnly=TRUE)
-
-option_list = list(
-  make_option(c("-c", "--COUNT_DATA_FILE"), type="character", default=NA, 
-              help="Path to Gene Level Count Data Files [comma sep]", metavar="character"),
-  make_option(c("--COUNT_SOURCE"), type="character", default='Matrix', 
-              help="The Source of the count Data Files ['Matrix'.'RSEM','HTSEQ']", metavar="character"),
-  make_option(c("--SAMPLES"), type="character", default=NA, 
-              help="If the COUNT_SOURCE is RSEM/HTSEQ it is possible to link the count files to samples by listing [comma sep] samples names in the same order as the files [sample1,sample2...]", metavar="character"),
-  make_option(c("-s", "--SAMPLE_DATA_FILE"), type="character", default=NA, 
-              help="Path to Samples Information File", metavar="character"),    
-  make_option(c("-o","--outDir"), type="character", default=NA, 
-              help="path to the output directory", metavar="character"),
-  make_option(c("-t", "--GENE_ID_TYPE"), type="character", default=NA, 
-              help="The Gene ID Type i.e 'ENSEMBL'[for Bioconductor] OR 'ensembl_gene_id'/'ensembl_transcript_id' [for ENSEMBL] DON'T USE IF IT IS DE-NOVO ASSEMBLY ", metavar="character"),
-  make_option(c("-d", "--Annotation_db"), type="character", default=NA, 
-              help="Bioconductor Annotation Data Base Name from https://bioconductor.org/packages/release/BiocViews.html#___OrgDb  ", metavar="character"),
-  make_option(c("--Species"), type="character", default=NA, 
-              help="Species Name to Retrieve Annotation Data from ENSEMBL", metavar="character"),
-  make_option(c("--KEGG_Species"), type="character", default=NA, 
-              help="Species Name to Retrieve Annotation Data from KEGG", metavar="character"),
-  make_option(c("--KEGG_KAAS"), type="character", default=NA, 
-              help="Gene to KO file from KEGG KAAS [first column gene id, second column KO number]", metavar="character"),
-  make_option(c("--FILTER_SAMPLES"), action="store_true",default=FALSE, 
-              help="Filter Samples with Low Number of expressed genes OR with Small Library size using 'scater' package ", metavar="character"),
-  make_option(c("--FILTER_GENES"), action="store_true",default=FALSE, 
-              help="Filter Low-Abundance Genes using 'scater' package ", metavar="character"),
-  make_option(c( "--Trinotate"), type="character", default=NA, 
-              help="Path to a Trinotate annotation file in which the first column is the genes names", metavar="character"),
-  make_option(c( "--Rmarkdown"), type="character", default=NA, 
-              help="Path to a Rmarkdown File [ usually 'DeSeq2_module.Rmd' ]", metavar="character"),
-             
-  make_option(c("-n", "--NORMALIZATION_TYPE"), type="character", default='VSD', 
-              help="The Normalization Type To Use [VSD , RLOG] The Default is VSD", metavar="character"),
-  make_option(c("--BLIND_NORM"), action="store_true",default=FALSE, 
-              help="Perform Blind Normalization", metavar="character"),            
-  make_option(c("--DESIGN"), type="character", default=NA, 
-              help="The Main DeSeq Design", metavar="character"),                      
-  make_option(c("--LRT"), type="character", default=NA, 
-              help="The LRT DeSeq Design", metavar="character"),
-  make_option(c("--ALPHA"), type="numeric", default = 0.05, 
-              help="Significant Level Cutoff, The Default is 0.05", metavar="character"),
-  make_option(c("--FoldChange"), type="numeric", default = 1, 
-              help="Fold change Cutoff [testing for fold changes greater in absolute value], The Default is 1", metavar="character"),
-  make_option(c("--CONTRAST"), type="character", default=NA,
-              help="The DeSeq Contrast Design [Not For LTR]", metavar="character"),
-  make_option(c("--modelMatrixType"), type="character", default="standard",
-              help="How the DeSeq model matrix of the GLM formula is formed [standard or expanded] ,The Default is standard", metavar="character"),
-  
-  
-  make_option(c("--GENES_PLOT"), type="character", default=NA,
-              help="Genes Id To Plot count Data [separated by ,] ", metavar="character"),
-  make_option(c("--X_AXIS"), type="character", default=NA,
-              help="The Filed In the Sample Data To Use as X Axis ", metavar="character"),
-  make_option(c("--GROUP"), type="character", default=NA,
-              help="The Filed In the Sample Data To Group By [can be two fields separated by ,]", metavar="character"),
-  make_option(c("--SPLIT_BY"), type="character", default=NA,
-              help="The Filed In the Sample Data To Split the Analysis By ", metavar="character"),
-  
-  make_option(c("--FUNcluster"), type="character", default='hclust',
-              help='A clustering function including [kmeans,pam,clara,fanny,hclust,agnes,diana,click]. The default is hclust', metavar="character"),
-  make_option(c("--hc_metric"), type="character", default='euclidean',
-              help="Hierarchical clustering metric to be used for calculating dissimilarities between observations. The default is pearson", metavar="character"),
-  make_option(c("--hc_method"), type="character", default='ward.D2',
-              help="Hierarchical clustering agglomeration method to be used. The default is ward.D2 ", metavar="character"),
-  make_option(c("--CLICK_PATH"), type="character", default=NA,
-              help="The path to CLICK program (Shamir et al. 2000). If your using click cite: CLICK and Expander ( Shamir et al. 2000 and Ulitsky et al. 2010) ", metavar="character"),
-  make_option(c("--CLICK_HOMOGENEITY"), type="numeric", default=0.5,
-              help="The HOMOGENEITY [0-1] of clusters using CLICK program (Shamir et al. 2000). The default is 0.5 ", metavar="character"),
-  
-  
-  make_option(c("--k.max"), type="numeric", default=20,
-              help="The maximum number of clusters to consider, must be at least two. The default is 20", metavar="character"),
-  make_option(c("--nboot"), type="numeric", default=10,
-              help="Number of Monte Carlo (bootstrap) samples for determining the number of clusters [Not For Mclust]. The default is 10 ", metavar="character"),
-  make_option(c("--stand"), action="store_true",default=FALSE, 
-              help="The Data will be Standardized Before Clustering", metavar="character"), 
-  make_option(c("--Mclust"), action="store_true",default=FALSE, 
-              help="Use Mclust for determining the number of clusters", metavar="character"), 
-  
-  make_option(c("--Enriched_terms_overlap"), action="store_true",default=FALSE, 
-              help="Test for genes overlap in enriched terms", metavar="character"),
-  
-  make_option(c("--PCA_COLOR"), type="character", default=NA,
-              help="The Filed In the Sample Data To Determine Color In The PCA Plot", metavar="character"),
-  make_option(c("--PCA_SHAPE"), type="character", default=NA,
-              help="The Filed In the Sample Data To Determine Shape In The PCA Plot", metavar="character"),
-  make_option(c("--PCA_SIZE"), type="character", default='Library_sizes',
-              help="The Filed In the Sample Data To Determine Size In The PCA Plot", metavar="character")
-); 
+---
+title: "NeatSeq Flow DeSeq2 module Results"
+output: 
+  html_document:
+    toc: TRUE
+    toc_float: TRUE
+    # fig.height: 10
+    # fig.width:  10
+    # mathjax: local
+    #self_contained: FALSE
+#runtime: shiny
 
 
-#Get user information
-opt_parser = optparse::OptionParser(usage = "usage: %prog [options]", 
-                                    option_list=option_list,
-                                    epilogue="\n\nAuthor:Liron Levin");
-opt = optparse::parse_args(opt_parser);
+params:
+    opt: NA
+    test2do: NA
+    DESeqDataSet_base: NA
+    base_out_dir: NA
+    colData: NA
+    countData: NA
+    Annotation: NA
+    Annotation_flag: NA
+    KEGG_flag: FALSE
+    ORGANISM_KEGG_flag: FALSE
+    KEGG_KAAS_flag: FALSE
+    GO_flag: FALSE
+    
+---
 
-
-
-print("Input var:",,quote = F)
-print.data.frame(as.data.frame(x = unlist(opt),row.names = names(opt)),right = F,quote = F)
-
-# Check if required packages are installed:
-if(!(all(c('DESeq2') %in% installed.packages()))) {
-  if (Sys.getenv("CONDA_PREFIX")!=""){
-    source("http://bioconductor.org/biocLite.R")
-    biocLite('DESeq2')
-    library('DESeq2',character.only =T)
-  }else{
-    cat("The Bioconductor DESeq2 package is not installed. You must install it for this script to work!")
-  }
-}else{
-  library('DESeq2',character.only =T)  
-} 
-
-
-#####################Functions################################
-
-keggLink_retry <- function (Type,Data,RETRY_NUM=10){
-      error_flag=TRUE
-      res=c()
-      try_count=0
-      while ((error_flag)&&(try_count<RETRY_NUM) ){
-          try_count = try_count+1
-          res<-try(keggLink(Type,Data),silent = T)
-          if (inherits(res,"try-error")){
-            error_flag=FALSE
-          }
-      } 
-      return(res)
+<style>
+pre {
+  overflow-x: auto;
 }
+pre code {
+  word-wrap: normal;
+  white-space: pre;
+}
+</style>
+
+## Parameters Used in This Analysis:
+```{r echo = FALSE, error = TRUE, comment='', message = FALSE, warning = FALSE}
+if (test2do=='LTR'){
+    opt$CONTRAST = NA
+}else{
+    opt$CONTRAST = test2do
+}
+
+parameters_used = as.data.frame(x = unlist(opt),row.names = names(opt))
+colnames(parameters_used)=c('values')
+print.data.frame(parameters_used,right = F,quote = F)
+```
+
+
+```{r echo = FALSE, error = TRUE, comment='', message = FALSE, warning = FALSE}
+#####################Functions################################
 
 plotPCA<-function (object, intgroup = "condition", ntop = 500, returnData = FALSE) {
   if (ntop!='all'){
@@ -203,48 +118,77 @@ cluster_enricher<-function(clusters,num,Type,organism,universe,keyType,Ontology=
 
 
 clusters_enricher=function(outDir, clusters,Type,organism,universe,keyType,file_name,Ontology="BP",pvalueCutoff=0.05,pAdjustMethod='fdr',qvalueCutoff=0.05){
-  allRes=list()
-  cluster_names=list()
-  count=1
-  for (i in sort(unique(clusters))){
-    temp=cluster_enricher(clusters,c(i),Type,organism,universe,keyType,Ontology,pvalueCutoff,pAdjustMethod,qvalueCutoff)
-    if (length(temp)>0){
-      allRes[count]<-temp
-      cluster_names[count]=i
-      count=count+1
-    }
-  } 
-  names(allRes)=cluster_names
-  allRes=clusterProfiler::merge_result(enrichResultList =allRes)
-  allRes@fun<-"enrichGO"
-  write.csv(x = allRes@compareClusterResult,
-            file =file.path(outDir,file_name) ,
+    allRes=list()
+    original_allRes=list()
+    cluster_names=list()
+    count=1
+    for (i in sort(unique(clusters))){
+        temp=cluster_enricher(clusters,c(i),Type,organism,universe,keyType,Ontology,pvalueCutoff,pAdjustMethod,qvalueCutoff)
+        if (length(temp)>0){
+          allRes[count]<-temp
+          cluster_names[count]=i
+          count=count+1
+        }
+    } 
+    names(allRes)=cluster_names
+    allRes=clusterProfiler::merge_result(enrichResultList =allRes)
+    allRes@fun<-"enrichGO"
+    write.csv(x = allRes@compareClusterResult,
+            file =file.path(outDir,paste(file_name,'.csv',collapse = "")) ,
             quote = TRUE,
             row.names = TRUE)
-  if (dim(allRes@compareClusterResult)[1]>0){
-    if (Type=="GO"){
-        allRes@fun<-"enrichGO"
-        temp_allRes<-try(clusterProfiler::simplify(allRes, cutoff=0.7, by="p.adjust", select_fun=min),silent = T)
-        if (!inherits(temp_allRes,"try-error")){
-            allRes=temp_allRes
-            file_name=paste("simplify",file_name,collapse = "_")
-            write.csv(x = allRes@compareClusterResult,file =file.path(outDir,file_name) ,quote = FALSE,row.names = TRUE)
+            
+    Enrichment_table  = datatable(allRes@compareClusterResult,
+                                  caption = htmltools::tags$caption(style = 'caption-side: bottom; text-align: center;',
+                                                                            'Table: ', 
+                                                                            htmltools::em(paste("This Table is of",paste(unlist(stringi::stri_split(str = file_name,fixed='_')),collapse  = ' ')))
+                                                                    ),
+                                  options = list(keys = TRUE ,
+                                                 scrollX = TRUE,
+                                                 fixedHeader = FALSE,
+                                                 fixedColumns = TRUE,
+                                                 pageLength = 5,
+                                                 scrollY = 300,
+                                                 orderClasses=TRUE,
+                                                 autoWidth = TRUE,
+                                                 scroller = TRUE,
+                                                 dom = 'Bfrtip',
+                                                 buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                                 deferRender = TRUE),
+                                  class = 'cell-border stripe',
+                                  filter = 'top',
+                                  extensions = c('Buttons','FixedColumns','FixedHeader','KeyTable','Scroller'))
+    original_allRes = allRes
+    Simplify_title = c()
+    if (dim(allRes@compareClusterResult)[1]>0){
+        if (Type=="GO"){
+            allRes@fun<-"enrichGO"
+            temp_allRes<-try(clusterProfiler::simplify(allRes, cutoff=0.7, by="p.adjust", select_fun=min),silent = T)
+            if (!inherits(temp_allRes,"try-error")){
+                Simplify_title = list(htmltools::h6('*Simplify:  Redundant GO Terms Were Removed From the Figure, Showing Only the Most Significant Among Very Similar (>0.7) GO Terms; For more information see GOSemSim and clusterProfiler R packages'))
+                allRes=temp_allRes
+                file_name=paste("Simplify",file_name,collapse = "_")
+                write.csv(x = allRes@compareClusterResult,file =file.path(outDir,paste(file_name,'.csv',sep='',collapse = "")) ,quote = FALSE,row.names = TRUE)
+            }
+        }else{
+            allRes@fun<-"enrichKEGG"
         }
-    }else{
-      allRes@fun<-"enrichKEGG"
-    }
-    if (dim(allRes@compareClusterResult)[1]>50){
-        font.size=4
-    }else{
-        font.size=9
+        if (dim(allRes@compareClusterResult)[1]>50){
+            font.size=4
+        }else{
+            font.size=9
+        }
+
+        if (dim(allRes@compareClusterResult)[1]>0){
+            #cat(sprintf("<h4>%s</h4>", paste(unlist(stringi::stri_split(str = file_name,fixed='_')),collapse = " ") ))
+            x=DOSE::dotplot(allRes,x=allRes@compareClusterResult$Cluster,showCategory=10000,font.size =font.size)+
+            ggplot2::ggsave(filename = file.path(outDir,paste(file_name,".pdf",sep='',collapse = "")),dpi = 600,device = "pdf",width = 20,height = 20)
+            grid::grid.newpage()
+            return(list(original_allRes,list(htmltools::h4(paste(unlist(stringi::stri_split(str = file_name,fixed='_')),collapse = " ")),ggplotly(x),Simplify_title,Enrichment_table)))
+        }
     }
     
-    if (dim(allRes@compareClusterResult)[1]>0){
-        DOSE::dotplot(allRes,x=allRes@compareClusterResult$Cluster,font.size =font.size,showCategory=1000)+
-        ggplot2::ggsave(filename = file.path(outDir,paste(file_name,".pdf",collapse = "")),dpi = 600,device = "pdf",width = 20,height = 20)
-    }
-  }
-  return(allRes)
+     return(list(original_allRes,list(htmltools::h4(paste(unlist(stringi::stri_split(str = file_name,fixed='_')),collapse = " ")))))
 }
 
 
@@ -273,53 +217,83 @@ generat_urls<-function(allRes,gene2ko){
 
 
 Clusters_Enrichment_Test=function(outDir,clusters,TERM2NAME,TERM2GENE,file_name,Type,pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE){
-  allRes=list()
-  cluster_names=list()
-  count=1
-  for (i in sort(unique(clusters))){
-    temp=General_Enrichment_Test(clusters,c(i),TERM2NAME,TERM2GENE,pAdjustMethod,pvalueCutoff )
-    if (length(temp)>0){
-      allRes[count]<-temp
-      cluster_names[count]=i
-      count=count+1
+    allRes=list()
+    original_allRes = list()
+    cluster_names=list()
+    count=1
+    for (i in sort(unique(clusters))){
+        temp=General_Enrichment_Test(clusters,c(i),TERM2NAME,TERM2GENE,pAdjustMethod,pvalueCutoff )
+        if (length(temp)>0){
+          allRes[count]<-temp
+          cluster_names[count]=i
+          count=count+1
+        }
+    } 
+    names(allRes)=cluster_names
+    allRes=clusterProfiler::merge_result(enrichResultList =allRes)
+    if (Type=="KO"){
+        allRes<-generat_urls(allRes,gene2ko)
     }
-  } 
-  names(allRes)=cluster_names
-  allRes=clusterProfiler::merge_result(enrichResultList =allRes)
-  if (Type=="KO"){
-    allRes<-generat_urls(allRes,gene2ko)
-  }
-  write.csv(x = allRes@compareClusterResult,
-            file =file.path(outDir,file_name) ,
+    write.csv(x = allRes@compareClusterResult,
+            file =file.path(outDir,paste(file_name,'.csv',collapse = "")) ,
             quote = TRUE,
             row.names = TRUE)
-  if (Type=="GO"){
-    allRes@fun<-"enrichGO"
-    temp_allRes<-try(clusterProfiler::simplify(allRes, cutoff=0.7, by="p.adjust", select_fun=min),silent = T)
-    if (!inherits(temp_allRes,"try-error")){
-        allRes=temp_allRes
-        file_name=paste("simplify",file_name,collapse = "_")
-        write.csv(x = allRes@compareClusterResult,file =file.path(outDir,file_name) ,quote = FALSE,row.names = TRUE)
+            
+    Enrichment_table  = datatable(allRes@compareClusterResult,
+                                  caption = htmltools::tags$caption(style = 'caption-side: bottom; text-align: center;',
+                                                                            'Table: ', 
+                                                                            htmltools::em(paste("This Table is of",paste(unlist(stringi::stri_split(str = file_name,fixed='_')),collapse  = ' ')))
+                                                                    ),
+                                  options = list(keys = TRUE ,
+                                                 scrollX = TRUE,
+                                                 fixedHeader = FALSE,
+                                                 fixedColumns = TRUE,
+                                                 pageLength = 5,
+                                                 scrollY = 300,
+                                                 orderClasses=TRUE,
+                                                 autoWidth = TRUE,
+                                                 scroller = TRUE,
+                                                 dom = 'Bfrtip',
+                                                 buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                                 deferRender = TRUE),
+                                  class = 'cell-border stripe',
+                                  filter = 'top',
+                                  extensions = c('Buttons','FixedColumns','FixedHeader','KeyTable','Scroller'))
+
+    original_allRes = allRes
+    Simplify_title = c()
+    if (Type=="GO"){
+        allRes@fun<-"enrichGO"
+        temp_allRes<-try(clusterProfiler::simplify(allRes, cutoff=0.7, by="p.adjust", select_fun=min),silent = T)
+        if (!inherits(temp_allRes,"try-error")){
+            Simplify_title = list(htmltools::h6('*Simplify:  Redundant GO Terms Were Removed From the Figure, Showing Only the Most Significant Among Very Similar (>0.7) GO Terms; For more information see GOSemSim and clusterProfiler R packages'))
+            allRes=temp_allRes
+            file_name=paste("Simplify",file_name,collapse = "_")
+            write.csv(x = allRes@compareClusterResult,file =file.path(outDir,paste(file_name,'.csv',sep='',collapse = "")) ,quote = FALSE,row.names = TRUE)
+        }
+    }else{
+        allRes@fun<-"enrichKEGG"
     }
-  }else{
-    allRes@fun<-"enrichKEGG"
-  }
     if (dim(allRes@compareClusterResult)[1]>50){
         font.size=4
     }else{
         font.size=9
     }
-  
-  if (dim(allRes@compareClusterResult)[1]>0){
-    DOSE::dotplot(allRes,showCategory=1000,font.size=font.size)+ 
-    ggplot2::ggsave(filename = file.path(outDir,paste(file_name,".pdf",collapse = "")),dpi = 600,device = "pdf",width = 20,height = 20)
-  }
-  return(allRes)
+
+    if (dim(allRes@compareClusterResult)[1]>0){
+        #cat(sprintf("<h4>%s</h4>", paste(unlist(stringi::stri_split(str = file_name,fixed='_')),collapse = " ") ))
+        x=DOSE::dotplot(allRes,showCategory=10000,font.size=font.size)+ 
+        ggplot2::ggsave(filename = file.path(outDir,paste(file_name,".pdf",sep='',collapse = "")),dpi = 600,device = "pdf",width = 20,height = 20)
+        grid::grid.newpage()
+        return(list(original_allRes,list(htmltools::h4(paste(unlist(stringi::stri_split(str = file_name,fixed='_')),collapse = " ")),ggplotly(x),Simplify_title,Enrichment_table)))
+    }
+    return(list(original_allRes,list(htmltools::h4(paste(unlist(stringi::stri_split(str = file_name,fixed='_')),collapse = " ")),Enrichment_table)))
 }
 
 
 plot_clusters<-function(clusters,vs_ano,color_group=c('Type','Time_int'),titles=c("Type","Time","EXP"),split_by=c(),smooth=T,X_AXIS_ORDER=NA){
-    plot_list=list()
+    plot_list  = list()
+    title_list = list()
     count=1
     for (i in sort(unique(clusters))){
         Df=data.frame()
@@ -342,6 +316,7 @@ plot_clusters<-function(clusters,vs_ano,color_group=c('Type','Time_int'),titles=
             Df$Time <-factor(Df$Time,levels=intersect(X_AXIS_ORDER,unique(Df$Time)))
         }
         if (length(split_by)>0){
+            title_list[count]=list(c(i,length(genes)) ) 
             plot_list[count]=list(ggplot(data=Df, aes(x=Time, y=EXP, group=Type)) + 
                                     facet_wrap(~split_by, ncol=1,scales = "free_y",strip.position = c("right"))+
                                     theme(strip.text.y = element_text(size = 7, colour = "black"))+#,face="bold" ,angle = 90))+
@@ -364,6 +339,7 @@ plot_clusters<-function(clusters,vs_ano,color_group=c('Type','Time_int'),titles=
                                     #scale_y_continuous(breaks=c(seq(0,10,by=2)) )
                                 )
         }else{
+            title_list[count]=list(c(i,length(genes)) ) 
             plot_list[count]=list(ggplot(data=Df, aes(x=Time, y=EXP, group=Type)) + 
                                     ggtitle( paste(paste("Cluster ", i  ,sep="") ,length(genes) ,sep="\n")) +
                                     #theme(plot.title = element_text(colour = "black", size = 12)) + 
@@ -398,29 +374,37 @@ plot_clusters<-function(clusters,vs_ano,color_group=c('Type','Time_int'),titles=
 
         count=count+1  
     }
+    
+    ml_plotly = sapply(X =c(1:length(plot_list)),
+                       FUN = function(x) list(ggplotly(plot_list[[x]]) %>% 
+                                                       style(text=paste(
+                                                                          paste("Cluster:",title_list[[x]][1],sep=" ") ,
+                                                                          paste("Number of Genes:",title_list[[x]][2],sep=" ") ,
+                                                                          sep = "<br />" ),
+                                                              hoverinfo = "text")))
+                       
+    ml_plotly = subplot(c(ml_plotly),
+                        nrows = ceiling(length(plot_list)/3),
+                        titleX = T,
+                        titleY  = F,
+                        shareX = T,
+                        shareY = F) %>%
+                        layout(title='Clusters',legend = list(orientation = 'h', y = -0.2))
     gp2=plot_list[1]
     if (color_group[1]==color_group[2]){
-        ml<-marrangeGrob(plot_list, nrow=3, ncol=3, top=NULL)
+        ml<-marrangeGrob(plot_list, nrow=2, ncol=3, top=NULL)
     }else{
         legend <- get_legend(gp2[[1]] + theme(legend.position  ="right")+guides(color=guide_legend(title=titles[1]),linetype=guide_legend(title=titles[1])))
-        ml<-marrangeGrob(plot_list, nrow=3, ncol=3,right=legend, top=NULL)
+        ml<-marrangeGrob(plot_list, nrow=2, ncol=3,right=legend, top=NULL)
     }
 
-    return(ml)
+    return(list(ml,ml_plotly))
 }
 
-
-convert_agregate<-function(df,index,subject,sep){
-  l1=apply(X = df,MARGIN = 1,FUN = function(x) {
-    m=as.data.frame( x = stringi::stri_split(str = x[subject],regex = sep),col.names = c("v1"))
-    m["index"]<-x[index]
-    return(m[c("index","v1")])
-  })
-  return(do.call(what = "rbind",args = l1) )
-}
 
 
 plot_sheard_genes<-function(allRes,outDir,file_name){
+    heatmaps=list()
     if (length(allRes)>1){
         for (cluster in unique(allRes$Cluster)){
             TEMP = na.omit(allRes[allRes$Cluster==cluster,])
@@ -443,9 +427,9 @@ plot_sheard_genes<-function(allRes,outDir,file_name){
                 
                 if ((length(TEMP$ID)>20) || ((length(genes)>200))){
                     heat_map = pheatmap(mat = mat,cluster_rows = T,
-                             cluster_cols = T,
-                             silent = T,
-                             legend = F)
+                                        cluster_cols = T,
+                                        silent = T,
+                                        legend = F)
                 
                 }else{
                     if (length(unique(as.vector(mat)))==2 ){
@@ -471,7 +455,7 @@ plot_sheard_genes<-function(allRes,outDir,file_name){
                             color = color,
                             legend = F)
                          
-                         }
+                }
                 write.csv(x = mat[heat_map$tree_row$order,heat_map$tree_col$order],
                       quote = T,
                       row.names = T,
@@ -484,29 +468,31 @@ plot_sheard_genes<-function(allRes,outDir,file_name){
 
                 for (x in TEMP$ID){
                   for (y in TEMP$ID){
-                    mat[x,y] = (2*length( unlist(intersect( unlist(stringi::stri_split(TEMP[TEMP$ID==x,'geneID'],fixed = '/')),unlist(stringi::stri_split(TEMP[TEMP$ID==y,'geneID'],fixed = '/'))))))/(length(unlist(stringi::stri_split(TEMP[TEMP$ID==x,'geneID'],fixed = '/'))) +  length(unlist(stringi::stri_split(TEMP[TEMP$ID==y,'geneID'],fixed = '/'))))
+                    mat[x,y] =100*(2*length( unlist(intersect( unlist(stringi::stri_split(TEMP[TEMP$ID==x,'geneID'],fixed = '/')),unlist(stringi::stri_split(TEMP[TEMP$ID==y,'geneID'],fixed = '/'))))))/(length(unlist(stringi::stri_split(TEMP[TEMP$ID==x,'geneID'],fixed = '/'))) +  length(unlist(stringi::stri_split(TEMP[TEMP$ID==y,'geneID'],fixed = '/'))))
                     
                   }
                 }
 
                 rownames(mat) = TEMP$Description
                 colnames(mat) = TEMP$Description
-                
+                if (length(unique(as.vector(mat)))>1 ){
+                    color=colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name ="RdYlBu") ))( 100)
+                    mybreaks=seq(0,1,0.01)
+                }else{
+                    color=colorRampPalette(c('red'))(1)
+                    mybreaks=c(0,1)
+                }
+                    
                 if (length(TEMP$ID)>20){
                     heat_map = pheatmap(mat = mat,cluster_rows = T,
-                                 cluster_cols = T,
-                                 silent = T,
-                                 legend = T)
+                                        main = paste('Cluster ',cluster),
+                                        treeheight_col = 0,
+                                        treeheight_row = 0,
+                                        cluster_cols = T,
+                                        silent = T,
+                                        legend = T)
                 
                 }else{
-                    if (length(unique(as.vector(mat)))>1 ){
-                        color=colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name ="RdYlBu") ))( 100)
-                        mybreaks=seq(0,1,0.01)
-                    }else{
-                        color=colorRampPalette(c('red'))(1)
-                        mybreaks=c(0,1)
-                    }
-                
                     heat_map = pheatmap(mat = mat,cluster_rows = T,
                                 width = 5,
                                 height =5,
@@ -522,16 +508,27 @@ plot_sheard_genes<-function(allRes,outDir,file_name){
                                 filename = file.path(outDir,paste('Cluster',cluster,'_term2term_',file_name,".pdf",collapse = "")),
                                 legend = T)
                 }
+
                 write.csv(x = mat[heat_map$tree_row$order,heat_map$tree_col$order],
                           quote = T,
                           row.names = T,
                           file = file.path(outDir,paste('Cluster',cluster,'_term2term_',file_name,".csv",collapse = "")))
-            
                 
+                heatmap_title=htmltools::h4(paste(unlist(stringi::stri_split(str = paste('Cluster',cluster,file_name,' Terms Genes Overlap',collapse = ""),fixed='_')),collapse = " "))
+                heatmaps = c(heatmaps ,list(heatmap_title))
+                mat = mat[heat_map$tree_row$order,heat_map$tree_col$order]
+                heatmaps = c(heatmaps ,list(plot_ly(z = mat,
+                                                    x=colnames(mat),
+                                                    y=rownames(mat),
+                                                    colors = color,
+                                                    type = "heatmap")
+                                             )
+                            )
             }
         }
         
     }
+    return(heatmaps)
 }
 
 
@@ -559,655 +556,41 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
 
 #####################Functions-End################################
 
-#####################Read count data and pars it##################
+```
 
-if (opt$COUNT_SOURCE=='RSEM'){
-  # Check if required packages are installed:
-  if(!(all(c('tximport') %in% installed.packages()))) {
-    if (Sys.getenv("CONDA_PREFIX")!=""){
-      source("https://bioconductor.org/biocLite.R")
-      biocLite('tximport')
-      library('tximport',character.only =T)
-    }else{
-      cat("The Bioconductor tximport package is not installed. You must install it for this script to work!")
-    }
-  }else{
-    library('tximport',character.only =T)  
-  } 
-  
-  
-  
-  files   = unlist(stringi::stri_split(str = opt$COUNT_DATA_FILE,fixed = ','))
-  if (!is.na(opt$SAMPLES)){
-    samples = unlist(stringi::stri_split(str = opt$SAMPLES,fixed = ','))
-    if (length(files)==length(samples)){
-      names(files) = samples
-    }
-  }
-  txi.rsem <- tximport(files, type = "rsem")
-  if (!is.na(opt$GENE_ID_TYPE)) {
-      rownames(txi.rsem$abundance)=lapply(X =rownames(txi.rsem$abundance),FUN = function(x) unlist(stringi::stri_split(str = x,regex = "_"))[1] )
-      rownames(txi.rsem$abundance)=lapply(X =rownames(txi.rsem$abundance),FUN = function(x) rev(unlist(stringi::stri_split(str = x,regex = ":")))[1] )
-      
-      rownames(txi.rsem$counts)=lapply(X =rownames(txi.rsem$counts),FUN = function(x) unlist(stringi::stri_split(str = x,regex = "_"))[1] )
-      rownames(txi.rsem$counts)=lapply(X =rownames(txi.rsem$counts),FUN = function(x) rev(unlist(stringi::stri_split(str = x,regex = ":")))[1] )
-      
-      rownames(txi.rsem$length)=lapply(X =rownames(txi.rsem$length),FUN = function(x) unlist(stringi::stri_split(str = x,regex = "_"))[1] )
-      rownames(txi.rsem$length)=lapply(X =rownames(txi.rsem$length),FUN = function(x) rev(unlist(stringi::stri_split(str = x,regex = ":")))[1] )
-  }
-  countData = txi.rsem$counts
-  
-  
-}else{
-  print('Reading count data..')
-  countData <- as.matrix(read.csv(opt$COUNT_DATA_FILE,sep="\t",row.names=1))
-  countData=apply(X =countData,MARGIN = c(1,2),FUN =round )
-  colnames(countData)=lapply(X =colnames(countData),FUN = function(x) unlist(stringi::stri_split(str = x,regex = ".genes.results"))[1] )
-  if (!is.na(opt$GENE_ID_TYPE)) {
-    rownames(countData)=lapply(X =rownames(countData),FUN = function(x) unlist(stringi::stri_split(str = x,regex = "_"))[1] )
-    rownames(countData)=lapply(X =rownames(countData),FUN = function(x) rev(unlist(stringi::stri_split(str = x,regex = ":")))[1] )
-  }
-  print('Done reading count data')
-  
-}    
+## Statistical Analysis:
+```{r echo = FALSE, error = TRUE, comment='', message = FALSE, warning = FALSE}
 
-
-#Get Annotation
-Annotation = NA
-Annotation_flag = ''
-if (!is.na(opt$Annotation_db) ){
-  
-  # Check if required packages are installed:
-  if(!(all(c(opt$Annotation_db) %in% installed.packages()))) {
-    if (Sys.getenv("CONDA_PREFIX")!=""){
-      source("https://bioconductor.org/biocLite.R")
-      biocLite(opt$Annotation_db)
-      library(opt$Annotation_db,character.only =T)
-    }else{
-      cat("The Bioconductor Annotation Data Base package is not installed. You must install it for this script to work!")
-    }
-  }else{
-    library(opt$Annotation_db,character.only =T)  
-  } 
-  
-  if (paste("package:",opt$Annotation_db,sep='') %in% search()){
-    Annotation=bitr(rownames(countData), fromType=opt$GENE_ID_TYPE, toType=c("ENTREZID",'UNIPROT',"GO","ONTOLOGY","GENENAME","PATH","SYMBOL","PFAM"), OrgDb=opt$Annotation_db)
-    Annotation$kegg= sapply(X = Annotation$PATH,FUN = function(X) paste('path:map',x,sep='' ) )
-    Annotation_flag = 'OrgDb'
-  }
-}
-
-if (is.na(Annotation)) {
-  if (!is.na(opt$Species)){
-    # Check if required packages are installed:
-    if(!(all(c('biomaRt') %in% installed.packages()))) {
-      if (Sys.getenv("CONDA_PREFIX")!=""){
-        source("https://bioconductor.org/biocLite.R")
-        biocLite('biomaRt')
-        library('biomaRt',character.only =T)
-      }else{
-        cat("The Bioconductor biomaRt Annotation package is not installed. You must install it for this script to work!")
-      }
-    }else{
-      library('biomaRt',character.only =T)  
-    } 
+    library("ggplot2")
+    library("pheatmap")
+    library("mclust")
+    library("factoextra")
+    library("cowplot")
+    library("gridExtra")
+    library("plotly")
+    library("clusterProfiler")
+    library("DT")
+    library('DESeq2')
     
-    if ("package:biomaRt" %in% search()){
-      dataset=c()
-      try_count=0
-      while ((length(dataset) == 0)&&(try_count<10) ){
-          try_count = try_count+1
-          host = "www.ensembl.org"
-          Test_host<-try(biomaRt::listMarts(host=host),silent = T)
-          if (inherits(Test_host,"try-error")){
-            host = "ensembl.org"
-          }
-          biomart = "ENSEMBL_MART_ENSEMBL"
-          M=biomaRt::useMart(biomart = biomart, host = host)
-          ensembl=biomaRt::listDatasets(M)
-          dataset= ensembl$dataset[(sapply(X = ensembl$description,FUN = function(X) stringi::stri_startswith(fixed =  stringi::stri_trans_tolower(opt$Species),str =  stringi::stri_trans_tolower(X)    )))]
-          if (length(dataset) == 0){
-            list_dataset=unlist(stringi::stri_split(str = unlist(stringi::stri_split(str =  unlist( t(ensembl) ),regex = '\n \nTableSet\t')),regex = '\t'))
-            dataset<-try( list_dataset[which(stringi::stri_startswith(str = stringi::stri_trans_tolower(list_dataset),fixed = stringi::stri_trans_tolower(opt$Species)))-1],silent = T) 
-            if (inherits(Test_host,"try-error")){
-                dataset=''
-            }
-          }
-          if (length(dataset) == 0){
-            host = "www.plants.ensembl.org"
-            Test_host<-try(biomaRt::listMarts(host=host),silent = T)
-            if (inherits(Test_host,"try-error")){
-              host = "plants.ensembl.org"
-            }
-            biomart = 'plants_mart'
-            M=biomaRt::useMart(biomart = biomart,host = host)
-            plant=biomaRt::listDatasets(M)
-            dataset= plant$dataset[(sapply(X = plant$description,FUN = function(X) stringi::stri_startswith(fixed =  stringi::stri_trans_tolower(opt$Species),str =  stringi::stri_trans_tolower(X)    )))]
-          }
-          if (length(dataset) == 0){
-            list_dataset=unlist(stringi::stri_split(str = unlist(stringi::stri_split(str =  unlist( t(plant) ),regex = '\n \nTableSet\t')),regex = '\t'))
-            dataset<-try( list_dataset[which(stringi::stri_startswith(str = stringi::stri_trans_tolower(list_dataset),fixed = stringi::stri_trans_tolower(opt$Species)))-1],silent = T) 
-            if (inherits(Test_host,"try-error")){
-                dataset=c()
-            }
-          }
-          try_count2 =0
-          ensembl <- try(biomaRt::useEnsembl(biomart=biomart, dataset=as.character(dataset),host = host),silent = T)
-          while ((inherits(ensembl,"try-error")) &&( try_count2<3) ){
-            try_count2 = try_count2+1
-            ensembl <- try(biomaRt::useEnsembl(biomart=biomart, dataset=as.character(dataset),host = host),silent = T)
-          }
-          if (inherits(ensembl,"try-error")){
-            dataset=c()
-          }
-        }
-        
-      if (length(dataset)==1){
-        print('Found Species:')
-        print(dataset)
-        if ( opt$GENE_ID_TYPE %in% listAttributes(ensembl)$name){
-          Total_Annotation = c()
-          genes <- getBM(attributes = opt$GENE_ID_TYPE, mart = ensembl)
-          for (subset_genes in split(genes[,opt$GENE_ID_TYPE], ceiling(seq_along(genes[,opt$GENE_ID_TYPE] )/100))){
-              Annotation=getBM(values = subset_genes,
-                               filters = opt$GENE_ID_TYPE,
-                               attributes=c(opt$GENE_ID_TYPE,
-                                            'description',
-                                            'external_gene_name',
-                                            'kegg_enzyme',
-                                            'go_id',
-                                            'namespace_1003'),
-                               uniqueRows = TRUE,
-                               mart = ensembl)
-            Total_Annotation = rbind(Total_Annotation,Annotation)
-            }
-          Annotation = Total_Annotation
-          Annotation$kegg= sapply(X = Annotation$kegg_enzyme,FUN = function(X) paste('path:map',unlist(stringi::stri_split(str = X,fixed  = '+'))[1],sep='' ) )
-          Annotation$ontology = Annotation$namespace_1003
-          Annotation$namespace_1003 = NULL
-          Kegg_Annotation = getBM(attributes=c(opt$GENE_ID_TYPE,
-                                               'uniprotsptrembl'),
-                                  mart = ensembl)
-                                  
-          colnames(Kegg_Annotation) = c(opt$GENE_ID_TYPE,"UNIPROT")
-          Annotation_flag = 'ensembl'
+    opt = params$opt
+    test2do = params$test2do
+    DESeqDataSet_base = params$DESeqDataSet_base
+    base_out_dir = params$base_out_dir
+    colData = params$colData
+    countData = params$countData
+    Annotation = params$Annotation
+    Annotation_flag = params$Annotation_flag
+    KEGG_flag = params$KEGG_flag
+    ORGANISM_KEGG_flag = params$ORGANISM_KEGG_flag
+    KEGG_KAAS_flag = params$KEGG_KAAS_flag
+    GO_flag = params$GO_flag
+
+        statistical_string = unlist(stringi::stri_split(str =  test2do,regex = ','))
+        if (length(statistical_string)==3){
+             htmltools::h4(sprintf("The statistical results of %s VS %s in %s:",statistical_string[3],statistical_string[2],statistical_string[1]))
         }else{
-          
-          cat("Your GENE ID TYPE is not recognized ")
+             htmltools::h4(sprintf("The statistical results of %s:",test2do))
         }
-        
-        
-      }else{
-        cat("Unable to find the Species Annotation in Ensembl, choose from:")
-        print(ensembl$description)
-        print(plant$description)
-      }
-      
-    }
-  }
-  
-}
-
-
-# Get KEGG information:
-KEGG_flag          = FALSE
-ORGANISM_KEGG_flag = FALSE
-KEGG_KAAS_flag     = FALSE
-GO_flag            = FALSE
-if(!(all(c('clusterProfiler') %in% installed.packages()))) {
-  if (Sys.getenv("CONDA_PREFIX")!=""){
-    source("https://bioconductor.org/biocLite.R")
-    biocLite('clusterProfiler')
-  }else{
-    cat("The Bioconductor clusterProfiler package is not installed. You must install it for this script to work!")
-  }
-} 
-library("clusterProfiler")
-
-if ("package:clusterProfiler" %in% search()){
-  
-  if(!(all(c('KEGGREST') %in% installed.packages()))) {
-    if (Sys.getenv("CONDA_PREFIX")!=""){
-      source("https://bioconductor.org/biocLite.R")
-      biocLite('KEGGREST')
-    }else{
-      cat("The Bioconductor KEGGREST package is not installed. You must install it for this script to work!")
-    }
-  } 
-  library("KEGGREST") 
-  if ("package:KEGGREST" %in% search()){
-    if (!is.na(Annotation)) {      
-      if (Annotation_flag == 'OrgDb'){
-        x=as.data.frame(eval(parse(text=sub(".db$", "_dbInfo()", opt$Annotation_db))))
-        ORGANISM=x[x["name"]=="ORGANISM","value"]
-        ORGANISM=clusterProfiler::search_kegg_organism(ORGANISM)$kegg_code
-        if (length(ORGANISM)>0){
-          Kegg_Annotation=bitr(rownames(countData), fromType=opt$GENE_ID_TYPE, toType=c('UNIPROT'), OrgDb=opt$Annotation_db)
-        }
-        
-      }else{
-        ORGANISMs = clusterProfiler::search_kegg_organism('')
-        if (!is.na(opt$KEGG_Species)){
-            opt$Species = opt$KEGG_Species
-        }
-        ORGANISM  = ORGANISMs$kegg_code[(sapply(X = ORGANISMs$scientific_name,FUN = function(X) stringi::stri_startswith(fixed =  stringi::stri_trans_tolower(opt$Species),str =  stringi::stri_trans_tolower(X)    )))]
-        if (length(ORGANISM)==0){
-          ORGANISMs = na.omit(ORGANISMs)
-          ORGANISM  = ORGANISMs$kegg_code[(sapply(X = ORGANISMs$common_name,FUN = function(X) stringi::stri_cmp_eq( stringi::stri_replace_last(str = stringi::stri_trans_tolower(opt$Species), fixed = ' genes',replacement = '') , stringi::stri_trans_tolower(X)    )))]
-        }
-      }
-      
-      
-      
-      if (length(ORGANISM)>0){       
-        
-        kegg=keggConv(ORGANISM,"uniprot") #'ncbi-geneid')
-        uniprot =  unlist(lapply(X =names(kegg) ,FUN = function(x) rev(unlist(stringi::stri_split(str = x,regex = ":")))[1]))
-        kegg=as.data.frame(kegg)
-        kegg["uniprot"]=uniprot
-        
-        KO=keggLink(ORGANISM,"ko")
-        ko=names(KO)
-        KO=as.data.frame(KO )
-        colnames(KO)="kegg"
-        KO["ko"]=ko
-        
-        temp=merge.data.frame(kegg,KO,by = "kegg",all = T)
-        
-        Pathway=keggLink(ORGANISM,"pathway")
-        pathway=names(Pathway)
-        Pathway=as.data.frame(Pathway)
-        colnames(Pathway)="kegg"
-        Pathway["pathway"]=pathway
-        
-        temp=merge.data.frame(temp,Pathway,by = "kegg",all = T)
-        Pathway_info=keggList("pathway",organism =ORGANISM )
-        info=names(Pathway_info)
-        Pathway_info=as.data.frame(Pathway_info)
-        colnames(Pathway_info)="info"
-        Pathway_info["pathway"]=info
-        temp=merge.data.frame(temp,Pathway_info,by = "pathway",all.x = T)
-        Kegg_Annotation=merge.data.frame(Kegg_Annotation,temp,by.x ="UNIPROT" ,by.y = "uniprot",all.x = T)
-        
-        Annotation$kegg = NULL 
-        Annotation = merge.data.frame(Annotation,Kegg_Annotation,by.x =opt$GENE_ID_TYPE ,by.y = opt$GENE_ID_TYPE,all.x = T)
-        Annotation$pathway_info = Annotation$info
-        Annotation$info = NULL
-        
-        
-        
-        aggregate_by=Kegg_Annotation[opt$GENE_ID_TYPE]
-        Kegg_Annotation[opt$GENE_ID_TYPE]=NULL
-        Kegg_Annotation=aggregate.data.frame(x =Kegg_Annotation ,by = aggregate_by,FUN =function(x) paste(unique(na.omit(x)),sep = "|",collapse = "|"))
-        
-        ORGANISM_Pathway2gene=convert_agregate(Kegg_Annotation,opt$GENE_ID_TYPE,"pathway","[\\|]")
-        ORGANISM_Pathway2gene=ORGANISM_Pathway2gene[ORGANISM_Pathway2gene$v1!='',]
-        ORGANISM_Pathway2gene=ORGANISM_Pathway2gene[rev(colnames(ORGANISM_Pathway2gene))]
-        ORGANISM_Pathway2name=Pathway_info[rev(colnames(Pathway_info))]
-        ORGANISM_KEGG_flag  = TRUE
-        
-      }else{
-        if ("kegg" %in% colnames(Annotation)){
-          
-          Pathway_info=keggList("pathway")
-          info=names(Pathway_info)
-          Pathway_info=as.data.frame(Pathway_info)
-          colnames(Pathway_info)="info"
-          Pathway_info["pathway"]=info
-          
-          
-          Annotation = merge.data.frame(Annotation,Pathway_info,by.x ="kegg" ,by.y = "pathway",all.x = T)
-          Annotation$pathway = Annotation$kegg
-          Annotation$kegg = NULL
-          Annotation$pathway_info = Annotation$info
-          Annotation$info = NULL
-          General_Kegg_Annotation = Annotation[c(opt$GENE_ID_TYPE,'pathway')]
-          
-          
-          
-          aggregate_by=General_Kegg_Annotation[opt$GENE_ID_TYPE]
-          General_Kegg_Annotation[opt$GENE_ID_TYPE]=NULL
-          General_Kegg_Annotation=aggregate.data.frame(x =General_Kegg_Annotation ,by = aggregate_by,FUN =function(x) paste(unique(na.omit(x)),sep = "|",collapse = "|"))
-          
-          Pathway2gene=convert_agregate(General_Kegg_Annotation,opt$GENE_ID_TYPE,"pathway","[\\|]")
-          Pathway2gene=Pathway2gene[Pathway2gene$v1!='',]
-          Pathway2gene=Pathway2gene[rev(colnames(Pathway2gene))]
-          Pathway2name=Pathway_info[rev(colnames(Pathway_info))]
-          KEGG_flag = TRUE
-          
-          
-        }      
-      }
-    } else if (!is.na(opt$Trinotate)) {
-        Annotation = read.csv(file = opt$Trinotate,sep = '\t')
-        opt$GENE_ID_TYPE = colnames(Annotation)[1]
-        
-        
-        Annotation$GO = apply(X = Annotation[,c('gene_ontology_blast','gene_ontology_pfam')],
-                              FUN = function(x) unlist(paste(unique(x),collapse = ' ')),
-                              MARGIN = 1)
-
-
-        Annotation$GO_CC = sapply(X = Annotation$GO,
-                                  FUN = function(X) stringi::stri_replace_all(str =  paste(unlist(unique(unlist(stringi::stri_extract(regex = 'GO:[0-9]+\\^cellular_component' ,
-                                                                                                                                      str   = X ,
-                                                                                                                                      mode = 'all')))),
-                                                                                            collapse = '/'),
-                                                                              fixed = '^cellular_component',
-                                                                              replacement = '') )
-
-        Annotation$GO_BP = sapply(X = Annotation$GO,
-                                  FUN = function(X) stringi::stri_replace_all(str =  paste(unlist(unique(unlist(stringi::stri_extract(regex = 'GO:[0-9]+\\^biological_process' ,
-                                                                                                                                      str   = X ,
-                                                                                                                                      mode = 'all')))),
-                                                                                           collapse = '/'),
-                                                                              fixed = '^biological_process',
-                                                                              replacement = '') )
-
-        Annotation$GO_MF = sapply(X = Annotation$GO,
-                                  FUN = function(X) stringi::stri_replace_all(str =  paste(unlist(unique(unlist(stringi::stri_extract(regex = 'GO:[0-9]+\\^molecular_function' ,
-                                                                                                                                      str   = X ,
-                                                                                                                                      mode = 'all')))),
-                                                                                           collapse = '/'),
-                                                                              fixed = '^molecular_function',
-                                                                              replacement = '') )
-
-
-
-        Annotation$go_id = sapply(X = Annotation$GO,
-                                  FUN = function(X) stringi::stri_replace_all(str =  paste(unlist(unique(unlist(stringi::stri_extract(regex = 'GO:[0-9]+' ,
-                                                                                                                                      str   = X ,
-                                                                                                                                      mode = 'all')))),
-                                                                                          collapse = '/'),
-                                                                              fixed = '^',
-                                                                              replacement = '') )
-
-        Annotation$KO = sapply(X = Annotation$Kegg,
-                                   FUN = function(X) stringi::stri_replace_all(str =  paste(unlist(stringi::stri_extract(regex = 'KO:K[0-9]+' ,
-                                                                                                                         str   = X ,
-                                                                                                                         mode = 'all')),
-                                                                                            collapse = '/'),
-                                                                               fixed = 'KO:',
-                                                                               replacement = 'ko:') )
-    }
-    
-    
-    
-    KEGG_KAAS_Data=NA
-    if (!is.na(opt$KEGG_KAAS)) { 
-      KEGG_KAAS_Data <- read.csv(opt$KEGG_KAAS,sep="\t",header = FALSE)
-      colnames(KEGG_KAAS_Data) = c("Genes","KO")
-      KEGG_KAAS_Data$KO = sapply(X =KEGG_KAAS_Data$KO, FUN = function(x) if (x!='')  paste( "ko:", x,collapse = "",sep = "") else NA)
-      if (!is.na(opt$GENE_ID_TYPE)) {
-        KEGG_KAAS_Data$Genes = lapply(X =KEGG_KAAS_Data$Genes,FUN = function(x) unlist(stringi::stri_split(str = x,regex = "_"))[1] )
-        KEGG_KAAS_Data$Genes = lapply(X =KEGG_KAAS_Data$Genes,FUN = function(x) rev(unlist(stringi::stri_split(str = x,regex = ":")))[1] )
-      }
-      
-    }else if (!is.na(opt$Trinotate)) {
-      KEGG_KAAS_Data <- Annotation[,c(opt$GENE_ID_TYPE,"KO")] 
-      KEGG_KAAS_Data = convert_agregate(Annotation, opt$GENE_ID_TYPE ,"KO","/")
-      colnames(KEGG_KAAS_Data) = c("Genes","KO")
-      KEGG_KAAS_Data$KO = sapply(X =KEGG_KAAS_Data$KO, FUN = function(x) if (x=='')  NA else x)
-      
-    }
-    
-    if (!is.na(KEGG_KAAS_Data)) { 
-      
-      
-      temp=unique(as.vector(na.omit(KEGG_KAAS_Data$KO)))
-      temp=split(temp, ceiling(seq_along(temp)/50))
-      
-      pathway=unlist(sapply(X =temp,FUN = function(x) keggLink_retry("pathway",x)))
-      
-      pathway= data.frame(KO = names(pathway) , pathway = pathway)
-      pathway$KO = sapply(X =pathway$KO, FUN = function(x)  paste( "ko:",  rev(unlist(stringi::stri_split(str = x,regex = ":")))[1] ,collapse = "",sep = "") )
-      pathway = pathway[!stringi::stri_startswith(str = pathway$pathway ,fixed = 'path:ko'),]
-      
-      KEGG_KAAS_Data = merge.data.frame(KEGG_KAAS_Data,pathway,by.x ="KO" ,by.y = "KO",all.x = T)
-      
-      Pathway_info=keggList("pathway")
-      info=names(Pathway_info)
-      Pathway_info=as.data.frame(Pathway_info)
-      colnames(Pathway_info)="pathway_info"
-      Pathway_info["pathway"]=info
-      KEGG_KAAS_Data = merge.data.frame(KEGG_KAAS_Data,Pathway_info,by = "pathway",all.x = T)
-      
-      KO_info=keggList("ko")
-      info=names(KO_info)
-      KO_info=as.data.frame(KO_info)
-      colnames(KO_info)="ko_info"
-      KO_info["KO"]=info
-      
-      KEGG_KAAS_Data = merge.data.frame(KEGG_KAAS_Data,KO_info,by = "KO",all.x = T)
-      colnames(KEGG_KAAS_Data) = sapply(X =colnames(KEGG_KAAS_Data), FUN = function(x) if (x!='Genes')  paste( "KASS_", x,collapse = "",sep = "") else x)
-      if (!is.na(Annotation)) {  
-        Annotation = merge.data.frame(Annotation,KEGG_KAAS_Data,by.x =opt$GENE_ID_TYPE ,by.y = "Genes",all.x = T)
-      }else{
-        Annotation = data.frame(Genes = rownames(countData))
-        Annotation = merge.data.frame(Annotation,KEGG_KAAS_Data,by = "Genes",all.x = T)
-        opt$GENE_ID_TYPE = 'Genes'
-      }
-      
-      KASS_Pathway2gene = na.omit(Annotation[c('KASS_pathway',opt$GENE_ID_TYPE)])
-      KASS_Pathway2gene = KASS_Pathway2gene[!duplicated.data.frame(KASS_Pathway2gene),]
-      
-      KASS_Pathway2name = na.omit(Annotation[c('KASS_pathway','KASS_pathway_info')])
-      KASS_Pathway2name = KASS_Pathway2name[!duplicated.data.frame(KASS_Pathway2name),]
-      
-      KEGG_KAAS_flag = TRUE
-    }
-    
-  }else{
-    cat("The Bioconductor KEGGREST package is not installed. You must install it for this script to work!")
-  }
-}
-
-if (!is.na(Annotation)) { 
-  aggregate_by=Annotation[opt$GENE_ID_TYPE]
-  Annotation[opt$GENE_ID_TYPE]=NULL
-  Annotation=aggregate.data.frame(x =Annotation ,
-                                  by = aggregate_by,
-                                  FUN =function(x) paste(unique(na.omit(x)),sep = "/",collapse = "/"))
-  rownames(Annotation)=unlist(Annotation[opt$GENE_ID_TYPE])
-  Annotation<-apply(X =Annotation,
-                    MARGIN = c(1,2),
-                    FUN =function(x) stringi::stri_replace_all(str = x,replacement = " ",regex = ",") )
-  Annotation=as.data.frame(Annotation)
-  
-  
-  
-  
-    # Get GO information:
-    if ("package:clusterProfiler" %in% search()){      
-        if ((Annotation_flag != 'OrgDb') & ("go_id" %in% colnames(Annotation))) {
-          
-          GO2gene           = convert_agregate(Annotation,opt$GENE_ID_TYPE,"go_id","/")
-          GO2gene           = GO2gene[GO2gene$v1!='',]
-          GO2gene           = sapply(GO2gene,FUN = function(x) stringi::stri_replace_all(str = x,replacement = "",regex = " "))
-          GO2gene           = GO2gene[,c("v1","index")]
-          #convert GO indirect to direct GOs
-          GO2gene           = clusterProfiler::buildGOmap(GO2gene)
-          # annotate the GO to TERMs
-          Goterm            = merge.data.frame(x= clusterProfiler::go2term(GO2gene$GO), y=clusterProfiler::go2ont(GO2gene$GO) ,by='go_id')
-          Goterm            = Goterm[!duplicated.data.frame(Goterm),]
-          GO2name           = merge.data.frame(x = GO2gene,y = Goterm,by.y = "go_id",by.x ="GO" ,sort = FALSE)
-          
-          GO2name_MF        = GO2name[GO2name$Ontology=="MF",c('GO','Term')]
-          GO2name_BP        = GO2name[GO2name$Ontology=="BP",c('GO','Term')]
-          GO2name_MF        = GO2name_MF[!duplicated.data.frame(GO2name_MF),]
-          GO2name_BP        = GO2name_BP[!duplicated.data.frame(GO2name_BP),]
-          
-          GO2gene_MF        = GO2name[GO2name$Ontology=="MF",c('GO','Gene')]
-          GO2gene_BP        = GO2name[GO2name$Ontology=="BP",c('GO','Gene')]
-          GO2gene_MF        = GO2gene_MF[!duplicated.data.frame(GO2gene_MF),]
-          GO2gene_BP        = GO2gene_BP[!duplicated.data.frame(GO2gene_BP),]
-          
-          GO_flag           = TRUE
-        }
-    }
-  
-}
-print('Reading samples data...')    
-#Read Sample Data
-colData <- read.csv(opt$SAMPLE_DATA_FILE, sep="\t", row.names=1)
-used_samples = intersect(rownames(colData),colnames(countData))
-colData_col <- colnames(colData)
-countData <- countData[, used_samples]
-colData   <- as.data.frame(colData[used_samples ,])
-rownames(colData) <- used_samples
-colnames(colData) <- colData_col
-all(rownames(colData) == colnames(countData))
-Library_sizes=apply(X = countData,MARGIN = 2,FUN = sum)
-colData=merge(colData,as.data.frame(Library_sizes),by="row.names",sort=F)
-rownames(colData)=colData$Row.names
-colData$Row.names=NULL
-countData <- countData[, rownames(colData)]
-print('Done reading samples data')  
-
-
-##############Filttering the data##############################
-
-if ((opt$FILTER_SAMPLES) | (opt$FILTER_GENES)){
-  
-  # Check if required packages are installed:
-  if(!(all(c('scater') %in% installed.packages()))) {
-    if (Sys.getenv("CONDA_PREFIX")!=""){
-      source("https://bioconductor.org/biocLite.R")
-      biocLite('scater')
-    }else{
-      cat("The Bioconductor scater package is not installed. You must install it for this script to work!")
-    }
-  } 
-  library(scater)
-  
-  
-  sce <- newSCESet(countData=countData)
-  dim(sce)
-  sce <- calculateQCMetrics(sce)
-  pdf(file = "Pre_QA_hist.pdf")
-  par(mfrow=c(1,2))
-  hist(sce$total_counts/1e6, xlab="Library sizes (millions)", main="", 
-       breaks=20, col="grey80", ylab="Number of Samples")
-  hist(sce$total_features, xlab="Number of expressed genes", main="", 
-       breaks=20, col="grey80", ylab="Number of Samples")
-  dev.off() 
-  
-  if (opt$FILTER_SAMPLES){
-    #Filtering Samples
-    libsize.drop <- isOutlier(sce$total_counts, nmads=3, type="lower", log=TRUE)
-    feature.drop <- isOutlier(sce$total_features, nmads=3, type="lower", log=TRUE)
-    sce <- sce[,!(libsize.drop | feature.drop )]
-    data.frame(ByLibSize=sum(libsize.drop), ByFeature=sum(feature.drop), Remaining=ncol(sce))
-    use_names=colnames(sce)
-    countData=countData[,use_names]
-    colData=colData[use_names,]
-  }
-  
-  if (opt$FILTER_GENES){
-    #Filtering low-abundance genes
-    ave.counts <- rowMeans(counts(sce))
-    keep <- ave.counts >= 1
-    sum(keep)
-    dim(sce)
-    countData=countData[names(keep[keep==T]),]
-  }
-  
-  pdf(file = "Post_QA_hist.pdf")
-  par(mfrow=c(1,2))
-  hist(sce$total_counts/1e6, xlab="Library sizes (millions)", main="", 
-       breaks=20, col="grey80", ylab="Number of Samples")
-  hist(sce$total_features, xlab="Number of expressed genes", main="", 
-       breaks=20, col="grey80", ylab="Number of Samples")
-  
-  dev.off()
-}        
-##################Filttering the data END######################
-
-##################DeSeq- design and normalization ########################################
-
-
-if (is.na(opt$DESIGN)){
-    opt$DESIGN   = '~ 1'
-    opt$BLIND    = T
-    opt$CONTRAST = NA
-    print('No DESIGN found, will only normalize and cluster all genes')
-}
-if (opt$COUNT_SOURCE=='RSEM'){
-  zero_len           = unique( rownames(which(txi.rsem$length == 0,arr.ind = TRUE)))
-  countData          = countData[!( rownames(countData) %in% zero_len ),]
-  txi.rsem$counts    = countData
-  txi.rsem$abundance = txi.rsem$abundance[row.names(countData),colnames(countData)]
-  txi.rsem$length    = txi.rsem$length[row.names(countData),colnames(countData)]
-  
-  DESeqDataSet_base <- DESeqDataSetFromTximport(txi = txi.rsem,
-                                           colData = colData,
-                                           design  = as.formula(opt$DESIGN))
-}else{ 
-  
-  DESeqDataSet_base <- DESeqDataSetFromMatrix(countData = countData,
-                                         colData = colData,
-                                         design = as.formula(opt$DESIGN))
-}
-if (opt$modelMatrixType=='standard'){ 
-  DESeqDataSet_base <- DESeq(DESeqDataSet_base,parallel=F)
-}else{
-  DESeqDataSet_base <- DESeq(DESeqDataSet_base,
-                        parallel=F,
-                        betaPrior = TRUE,
-                        modelMatrixType=opt$modelMatrixType)
-}
-
-test_count=list()
-
-if (!is.na(opt$CONTRAST)){
-    test_count = unlist(stringi::stri_split(str = opt$CONTRAST ,fixed = "|"))
-}
-
-if (!is.na(opt$LRT)){
-    test_count[length(test_count)+1]='LTR'
-}
-
-base_out_dir=opt$outDir
-
-Rmarkdown_flag=FALSE
-if (!is.na(opt$Rmarkdown)){
-    if((all(c('plotly','DT','clusterProfiler','rmarkdown') %in% installed.packages()))) {
-      Rmarkdown_flag=TRUE
-    } else {
-      cat("In order to use the Rmarkdown option all of the following R packages need to be installed: 'plotly','DT','clusterProfiler','rmarkdown'")  
-    }
-}
-
-
-for (test2do in test_count){
-    print(test2do)
-    if (Rmarkdown_flag){
-        if (test2do=='LTR'){
-            test_name=test2do
-        }else{
-            contrast_list = unlist(stringi::stri_split(str = test2do,regex = ','))
-            test_name = paste(contrast_list[2],contrast_list[3],sep = '_vs_')
-        }
-        rmarkdown::render(input = opt$Rmarkdown,
-                          output_file = file.path(base_out_dir,paste('Final_Report',test_name,'html', sep = '.')),
-                          intermediates_dir = base_out_dir,
-                          clean = TRUE,
-                          params = list(
-                                        opt = opt,
-                                        test2do = test2do,
-                                        DESeqDataSet_base = DESeqDataSet_base,
-                                        base_out_dir = base_out_dir,
-                                        colData = colData,
-                                        countData = countData,
-                                        Annotation = Annotation,
-                                        Annotation_flag = Annotation_flag,
-                                        KEGG_flag = KEGG_flag,
-                                        ORGANISM_KEGG_flag = ORGANISM_KEGG_flag,
-                                        KEGG_KAAS_flag = KEGG_KAAS_flag,
-                                        GO_flag = GO_flag
-                          ))
-        
-    } else {
         DESeqDataSet_Results = NA
         Normalized_counts = NA
         DESeqDataSet=DESeqDataSet_base
@@ -1223,7 +606,7 @@ for (test2do in test_count){
         }else{
             opt$CONTRAST=test2do
             contrast_list = unlist(stringi::stri_split(str =  opt$CONTRAST,regex = ','))
-            test_name = paste(contrast_list[2],contrast_list[3],sep = '_vs_')
+            test_name = paste(contrast_list[3],contrast_list[2],sep = '_vs_')
             opt$outDir=file.path(base_out_dir,test_name)
             dir.create(opt$outDir, showWarnings = FALSE)
             
@@ -1248,9 +631,13 @@ for (test2do in test_count){
 
 
         ##################DeSeq-END####################################
+```
 
 
 
+
+
+```{r echo = FALSE, error = TRUE, comment='', message = FALSE, warning = FALSE,results='asis'}
         ##################DeSeq-Print Results As Is (Vered 14.6.2018)##
         if (!is.na(DESeqDataSet_Results)){
             Results_for_print = as.data.frame(DESeqDataSet_Results)
@@ -1263,7 +650,7 @@ for (test2do in test_count){
                 if (!is.na(opt$CONTRAST)){
                     Results_for_print = Results_for_print[,c('log2FoldChange','pvalue','padj')]
                     contrast_list = unlist(stringi::stri_split(str =  opt$CONTRAST,regex = ','))
-                    test_name = paste(contrast_list[2],contrast_list[3],sep = '.vs.')
+                    test_name = paste(contrast_list[3],contrast_list[2],sep = '.vs.')
                 }
             }
 
@@ -1282,29 +669,68 @@ for (test2do in test_count){
                         file = file.path(opt$outDir,paste(test_name,opt$NORMALIZATION_TYPE,'Normalized_counts.txt', sep = '_')) ,
                         quote = F,
                         sep = "\t")
+           
+            
+            if (!is.na(Annotation)) {
+                  Normalized_counts_DATA = merge.data.frame(assay(Normalized_counts),Annotation,by="row.names",all.x = T,sort = F)
+                  rownames(Normalized_counts_DATA) = Normalized_counts_DATA$Row.names
+                  Normalized_counts_DATA$Row.names=NULL
+                  Annotation_TEXT = ' and Annotation'
+            }else{
+                Normalized_counts_DATA = assay(Normalized_counts)
+                Annotation_TEXT = ''
+            }
+            cat(sprintf("<h4>%s</h4>",paste("The Next Table is of ",test_name,opt$NORMALIZATION_TYPE,'Normalized Counts',Annotation_TEXT, sep = ' ')))
+            Normalized_counts_table  =  datatable(Normalized_counts_DATA,
+                                                  caption = htmltools::tags$caption(style = 'caption-side: bottom; text-align: center;',
+                                                                                            'Table: ', 
+                                                                                            htmltools::em(paste("This Table is of ",test_name,opt$NORMALIZATION_TYPE,'Normalized Counts',Annotation_TEXT, sep = ' '))
+                                                                                    ),
+                                                  options = list(keys = TRUE ,
+                                                                 scrollX = TRUE,
+                                                                 fixedHeader = FALSE,
+                                                                 fixedColumns = TRUE,
+                                                                 pageLength = 5,
+                                                                 scrollY = 300,
+                                                                 orderClasses=TRUE,
+                                                                 autoWidth = TRUE,
+                                                                 scroller = TRUE,
+                                                                 dom = 'Bfrtip',
+                                                                 buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                                                 deferRender = TRUE),
+                                                  class = 'cell-border stripe',
+                                                  filter = 'top',
+                                                  extensions = c('Buttons','FixedColumns','FixedHeader','KeyTable','Scroller'))
+     
+            
+            htmltools::tagList(list(Normalized_counts_table))
         }
         ##################Print Normalized counts END#######################
 
         ##################Volcano plot and MA plot Vered##################
-
+        MA_Volcano_plot = NA
+        MA_plot = NA
+        Volcano_plot = NA 
+        
+        
         if (!is.na(DESeqDataSet_Results)){
             FDR_PVAL_CUTOFF = opt$ALPHA
             FC_CUTOFF = opt$FoldChange #in linear scale
             FC_CUTOFF_log2 = log2(opt$FoldChange)  
-
+            topT <- as.data.frame(DESeqDataSet_Results)
 
             if (!is.na(opt$LRT)){
-              print('No Volcano plot for LTR')
+              cat('No Volcano plot for LTR')
             }else{
                 if (!is.na(opt$CONTRAST)){
+                    cat(sprintf("<h4>%s</h4>",paste("Volcano Plot of ",test_name, sep = ' ')))
                     contrast_list = unlist(stringi::stri_split(str =  opt$CONTRAST,regex = ','))
-                    test_name = paste(contrast_list[2],contrast_list[3],sep = ' vs ')
+                    test_name = paste(contrast_list[3],contrast_list[2],sep = ' vs ')
                     plotTitle = paste('Volcano Plot (', test_name, ')', sep="")
-                    pdf(file.path(opt$outDir,paste(c(plotTitle,".pdf"),collapse ="")))
+                   
                     par(mar=c(5,5,5,5), cex=1.0, cex.main=1.4, cex.axis=1.4, cex.lab=1.4)
 
-                    topT <- as.data.frame(DESeqDataSet_Results)
-
+                    topT <- na.omit(as.data.frame(DESeqDataSet_Results))
                     #Adjusted P values (FDR Q values)
                     with(topT, plot(log2FoldChange, -log10(padj), pch=20, main=plotTitle, cex=1.0, xlab=bquote(~Log[2]~fold~change), ylab=bquote(~-log[10]~'FDR p-'~value)))
 
@@ -1317,18 +743,85 @@ for (test2do in test_count){
                     if (length(topT$padj[topT$padj<FDR_PVAL_CUTOFF])>0){
                         abline(h=-log10(max(topT$padj[topT$padj<FDR_PVAL_CUTOFF], na.rm=TRUE)), col="black", lty=4, lwd=FC_CUTOFF_log2)
                     }
-                    dev.off() 
+                    Volcano_plot_ = recordPlot()
+
+                    pdf(file.path(opt$outDir,paste(c(plotTitle,".pdf"),collapse ="")))
+                    replayPlot(Volcano_plot_)
+                    trash = dev.off()
+                    
+                    Volcano_plot=plot_ly(topT, x = ~log2FoldChange, y = ~-log10(padj),type='scatter', mode='markers',
+                                         showlegend = FALSE,
+                                         text=~paste(row.names(topT),
+                                         paste("FDR p− value:",padj,sep=" ") ,
+                                         paste("log2FoldChange:",log2FoldChange,sep=" ") ,
+                                         sep = "<br />" ),
+                                         hoverinfo = "text",
+                                         color = (~padj<FDR_PVAL_CUTOFF & abs(log2FoldChange)>FC_CUTOFF_log2),
+                                         colors= c('black','red'),
+                                         name=row.names(topT) ) %>%
+                                 add_markers() %>%
+                                 layout(title = paste("Volcano Plot of ",test_name, sep = ' '),
+                                        xaxis = list(title = 'Log2 Fold Change'),
+                                        yaxis = list(title = 'log10 FDR p− value')) 
+                                        
+                                        
+                    MA_plot=plot_ly(topT, x = ~baseMean , y = ~log2FoldChange,type='scatter', mode='markers',
+                                    showlegend = FALSE,
+                                    text=~paste(row.names(topT),
+                                    paste("FDR p− value:",padj,sep=" ") ,
+                                    paste("log2FoldChange:",log2FoldChange,sep=" ") ,
+                                    paste("Mean of Normalized Counts:",baseMean,sep=" ") ,
+                                    sep = "<br />" ),
+                                    hoverinfo = "text",
+                                    color = (~padj<FDR_PVAL_CUTOFF & abs(log2FoldChange)>FC_CUTOFF_log2),
+                                    colors= c('black','red'),
+                                    name=row.names(topT) ) %>%
+                            add_markers() %>%
+                            layout(title = paste("MA Plot of ",test_name, sep = ' '),
+                                   xaxis = list(title = 'Mean of Normalized Counts',type = "log"),
+                                   yaxis = list(title = 'Log2 Fold Change')) 
+                    
+                    MA_Volcano_plot =   plot_ly(topT, x = ~log2FoldChange, z = ~-log10(padj), y = ~baseMean ,
+                                            showlegend = FALSE,
+                                            text=~paste(row.names(topT),
+                                                        paste("FDR p− value:",padj,sep=" ") ,
+                                                        paste("log2FoldChange:",log2FoldChange,sep=" ") ,
+                                                        paste("Mean of Normalized Counts:",baseMean,sep=" ") ,
+                                                        sep = "<br />" ),
+                                            hoverinfo = "text",
+                                            color = (~padj<FDR_PVAL_CUTOFF & abs(log2FoldChange)>FC_CUTOFF_log2),
+                                            colors= c('black','red'),
+                                            name=row.names(topT) ) %>%
+                                    add_markers() %>%
+                                    layout(title = paste("3D MA and Volcano Plots of ",test_name, sep = ' '),
+                                           scene = list(xaxis = list(title = 'Log2 Fold Change' ,showspikes = FALSE , autorange = T, showgrid = TRUE),
+                                                        zaxis = list(title = 'log10 FDR p− value', showspikes = FALSE ,autorange = T, showgrid = TRUE),
+                                                        yaxis = list(title = 'Mean of Normalized Counts', type = "log",showspikes = FALSE , autorange = T, showgrid = TRUE))) 
+                
                 }
             }
 
-            #plot MA
-
+            cat(sprintf("<h4>%s</h4>",paste("MA Plot of ",test_name, sep = ' ')))
             plotTitle = paste('MA Plot (', test_name, ')', sep="")
-            pdf(file.path(opt$outDir,paste(c(plotTitle,".pdf"),collapse ="")))
             plotMA(DESeqDataSet_Results, alpha=FDR_PVAL_CUTOFF, colNonSig = 'blue', ylim=c(-10,10), main=plotTitle)
             abline(h=c(-FC_CUTOFF_log2,FC_CUTOFF_log2), col="red")
-            dev.off() 
+            MA_plot_ = recordPlot()
+            trash = pdf(file.path(opt$outDir,paste(c(plotTitle,".pdf"),collapse ="")))
+            replayPlot(MA_plot_)
+            trash = dev.off()
         }
+        
+        
+        # cat(sprintf("<h4>%s</h4>",paste("Volcano Plot of ",test_name, sep = ' ')))
+        # grid::grid.newpage()
+        # Volcano_plot
+        # grid::grid.newpage()
+        
+        # cat(sprintf("<h4>%s</h4>",paste("MA Plot of ",test_name, sep = ' ')))
+        # grid::grid.newpage()
+        # MA_plot
+        # grid::grid.newpage()
+        
         ##################PCA-TOP500####################################
         if (!is.na(Normalized_counts)){
             intgroup=c(opt$PCA_COLOR,opt$PCA_SHAPE,opt$PCA_SIZE)
@@ -1359,7 +852,23 @@ for (test2do in test_count){
                     ylab(paste0("PC3: ",percentVar[3],"% variance")) +
                     coord_fixed()
                 ggsave(file.path(opt$outDir,paste(c('TOP500_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
-              
+                
+                PCA_plot=plot_ly(PCA_data, x = ~PC1, y = ~PC3, z = ~PC2,
+                                 text=~paste(row.names(PCA_data),
+                                             paste("color:",opt$PCA_COLOR,get(make.names(opt$PCA_COLOR)),sep=" ") ,
+                                             paste("size:",opt$PCA_SIZE,get(make.names(opt$PCA_SIZE)),sep=" ") ,
+                                             sep = "<br />" ),
+                                 hoverinfo = "text",
+                                 color = ~factor(get(make.names(opt$PCA_COLOR))),
+                                 size  = ~get(make.names(opt$PCA_SIZE)),
+                                 name=row.names(PCA_data) )%>% 
+                         add_markers(sizes = c(150,700)
+                                     )%>%
+                         layout(title = 'PCA of the TOP 500 Most Variable Genes',
+                                scene = list(xaxis = list(title = paste0("PC1: ",percentVar[1],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
+                                             yaxis = list(title = paste0("PC3: ",percentVar[3],"% variance"), showspikes = FALSE ,autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
+                                             zaxis = list(title = paste0("PC2: ",percentVar[2],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE))) 
+                PCA_plot
             }else{
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
                     geom_count()+
@@ -1381,6 +890,26 @@ for (test2do in test_count){
                     ylab(paste0("PC3: ",percentVar[3],"% variance")) +
                     coord_fixed()
                 ggsave(file.path(opt$outDir,paste(c('TOP500_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
+                
+                PCA_plot=plot_ly(PCA_data, x = ~PC1, y = ~PC3, z = ~PC2,
+                                 text=~paste(row.names(PCA_data),
+                                             paste("shape:",opt$PCA_SHAPE,get(make.names(opt$PCA_SHAPE)),sep=" ") ,
+                                             paste("color:",opt$PCA_COLOR,get(make.names(opt$PCA_COLOR)),sep=" ") ,
+                                             paste("size:",opt$PCA_SIZE,get(make.names(opt$PCA_SIZE)),sep=" ") ,
+                                             sep = "<br />" ),
+                                 hoverinfo = "text",
+                                 color = ~factor(get(make.names(opt$PCA_COLOR))),
+                                 size  = ~get(make.names(opt$PCA_SIZE)),
+                                 symbol= ~factor(get(make.names(opt$PCA_SHAPE))),
+                                 name=row.names(PCA_data) )%>% 
+                         add_markers(symbols=c(1:length(~unique(get(make.names(opt$PCA_SHAPE))))),
+                                     sizes = c(150,700)
+                                     )%>%
+                         layout(title = 'PCA of the TOP 500 Most Variable Genes',
+                                scene = list(xaxis = list(title = paste0("PC1: ",percentVar[1],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
+                                             yaxis = list(title = paste0("PC3: ",percentVar[3],"% variance"), showspikes = FALSE ,autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
+                                             zaxis = list(title = paste0("PC2: ",percentVar[2],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE))) 
+                PCA_plot
             }
         }
         ##################PCA-TOP500-END####################################
@@ -1413,7 +942,23 @@ for (test2do in test_count){
                     ylab(paste0("PC3: ",percentVar[3],"% variance")) +
                     coord_fixed()
                 ggsave(file.path(opt$outDir,paste(c('ALL_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
-              
+                
+                PCA_plot_ALL = plot_ly(PCA_data, x = ~PC1, y = ~PC3, z = ~PC2,
+                                       text=~paste(row.names(PCA_data),
+                                                   paste("color:",opt$PCA_COLOR,get(make.names(opt$PCA_COLOR)),sep=" ") ,
+                                                   paste("size:",opt$PCA_SIZE,get(make.names(opt$PCA_SIZE)),sep=" ") ,
+                                                   sep = "<br />" ),
+                                       hoverinfo = "text",
+                                       color = ~factor(get(make.names(opt$PCA_COLOR))),
+                                       size  = ~get(make.names(opt$PCA_SIZE)),
+                                       name=row.names(PCA_data) )%>% 
+                               add_markers(sizes = c(150,700)
+                                           )%>%
+                               layout(title = 'PCA Using All Genes',
+                                      scene = list(xaxis = list(title = paste0("PC1: ",percentVar[1],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
+                                                   yaxis = list(title = paste0("PC3: ",percentVar[3],"% variance"), showspikes = FALSE ,autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
+                                                   zaxis = list(title = paste0("PC2: ",percentVar[2],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE))) 
+                PCA_plot_ALL
             }else{
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
                     geom_count()+
@@ -1435,6 +980,26 @@ for (test2do in test_count){
                     ylab(paste0("PC3: ",percentVar[3],"% variance")) +
                     coord_fixed()
                 ggsave(file.path(opt$outDir,paste(c('ALL_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
+                
+                PCA_plot_ALL  =  plot_ly(PCA_data, x = ~PC1, y = ~PC3, z = ~PC2,
+                                         text=~paste(row.names(PCA_data),
+                                                     paste("shape:",opt$PCA_SHAPE,get(make.names(opt$PCA_SHAPE)),sep=" ") ,
+                                                     paste("color:",opt$PCA_COLOR,get(make.names(opt$PCA_COLOR)),sep=" ") ,
+                                                     paste("size:",opt$PCA_SIZE,get(make.names(opt$PCA_SIZE)),sep=" ") ,
+                                                     sep = "<br />" ),
+                                         hoverinfo = "text",
+                                         color = ~factor(get(make.names(opt$PCA_COLOR))),
+                                         size  = ~get(make.names(opt$PCA_SIZE)),
+                                         symbol= ~factor(get(make.names(opt$PCA_SHAPE))),
+                                         name=row.names(PCA_data) )%>% 
+                                 add_markers(symbols=c(1:length(~unique(get(make.names(opt$PCA_SHAPE))))),
+                                             sizes = c(150,700)
+                                             )%>%
+                                 layout(title = 'PCA Using All Genes',
+                                        scene = list(xaxis = list(title = paste0("PC1: ",percentVar[1],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
+                                                     yaxis = list(title = paste0("PC3: ",percentVar[3],"% variance"), showspikes = FALSE ,autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
+                                                     zaxis = list(title = paste0("PC2: ",percentVar[2],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE))) 
+                PCA_plot_ALL
             }
         }
         ##################PCA-END####################################
@@ -1442,6 +1007,8 @@ for (test2do in test_count){
 
         ##################Plot Counts################################    
         if (!is.na(Normalized_counts)){
+            plot_list = list()
+            figure_count = 1
             if (!is.na(opt$GENES_PLOT)&(!is.na(opt$X_AXIS)   )){
                 intgroup=c(opt$X_AXIS,opt$GROUP)
                 intgroup=intgroup[!is.na(intgroup)]
@@ -1452,32 +1019,59 @@ for (test2do in test_count){
                     GROUP=opt$GROUP
                 }
                 if (is.na(opt$SPLIT_BY)){
+                    
                     for (gene in unlist(stringi::stri_split(str =  opt$GENES_PLOT,regex = ","))){
                         data=plotCounts(DESeqDataSet, gene=gene,transform=F, intgroup=make.names(intgroup),returnData=TRUE)
                         p=ggplot(data, aes_string(make.names(X_AXIS), 'count',color=make.names(GROUP), group=make.names(GROUP))) +
+                        ggtitle(paste("Gene ID : ",  gene  ,sep="\n")) +
+                        theme(legend.position  ="none")+
                         geom_point(size=4)+
+                        geom_boxplot() +
                         scale_shape_discrete(solid=F)+
                         geom_smooth(method="gam", fullrange=F, size=0.5)
                         ggsave(file.path(opt$outDir,paste(c('Count_plot_',gene,".pdf"),collapse ="")),p,dpi = 600, width = 6.99, height =6.99, units = "in")
+                        plot_list[figure_count] <- list(p)
+                        figure_count = figure_count + 1
                     }
                 }else{
+                    
                     for (gene in unlist(stringi::stri_split(str =  opt$GENES_PLOT,regex = ","))){
                         data=plotCounts(DESeqDataSet, gene=gene,transform=F, intgroup=make.names(intgroup),returnData=TRUE)
                         p=ggplot(data, aes_string(make.names(X_AXIS), 'count',color=make.names(GROUP), group=make.names(GROUP))) +
+                        ggtitle(paste("Gene ID : ",  gene  ,sep="\n")) +
+                        theme(legend.position  ="none")+
                         facet_wrap(~opt$SPLIT_BY, ncol=1,scales = "free_y",strip.position = c("right"))+
                         geom_point(size=4)+
+                        geom_boxplot() +
                         scale_shape_discrete(solid=F)+
                         stat_smooth(method="auto", fullrange=F, size=0.5)
                         ggsave(file.path(opt$outDir,paste(c('Count_plot_',gene,".pdf"),collapse ="")),p,dpi = 600, width = 6.99, height =6.99, units = "in")
+                        plot_list[figure_count] <- list(p)
+                        figure_count = figure_count + 1
                     }
+                    
                 }
+            }
+            if (length(plot_list)>0){
+                cat(sprintf("<h2>%s</h2>", 'Count Plots:'))
+                grid::grid.newpage()
+                gp2 = plot_list[1]
+                legend <- get_legend(gp2[[1]] + theme(legend.position  ="right"))
+                grid::grid.draw(marrangeGrob(plot_list, nrow=1, ncol=2, top=legend))
+                grid::grid.newpage()
             }
         }
         ##################Plot Counts-END#############################    
 
         ##################Clustering##################################    
+        cat(sprintf("<h2>%s</h2>", 'Clustering Analysis:'))
+        main_plot_list  = list()
+        up_reg   = c()
+        down_reg = c()
         if (!is.na(DESeqDataSet_Results)){
-            sig.genes=rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"padj"]<opt$ALPHA)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
+            sig.genes = rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"padj"]<opt$ALPHA)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
+            up_reg    = rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"log2FoldChange"]>0)&(DESeqDataSet_Results_redOrdered[,"padj"]<opt$ALPHA)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
+            down_reg  = rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"log2FoldChange"]<0)&(DESeqDataSet_Results_redOrdered[,"padj"]<opt$ALPHA)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
         }else{
             sig.genes=rownames(countData)
         }
@@ -1675,10 +1269,16 @@ for (test2do in test_count){
 
                     intgroup=c(opt$GROUP,opt$X_AXIS)
                     intgroup=intgroup[!is.na(intgroup)]
-                    Clustering_Plot=plot_clusters(clusters,SPLIT_Normalized_counts_Annotated,c(GROUP,X_AXIS),c(GROUP,X_AXIS,"Normalized counts"),X_AXIS_ORDER=unique(colData[X_AXIS]))
+                    clusters_plots = plot_clusters(clusters,SPLIT_Normalized_counts_Annotated,c(GROUP,X_AXIS),c(GROUP,X_AXIS,"Normalized counts"),X_AXIS_ORDER=unique(colData[X_AXIS]))
+                    Clustering_Plot = clusters_plots[[1]]
                     ggsave(file.path(opt$outDir,paste('Clusters_',SPLIT,".pdf",sep="")),Clustering_Plot,dpi = 600, width = 6.99, height =6.99, units = "in")
-
-
+                    cat(sprintf("<h4>%s</h4>",paste('The Next Figure is of the',SPLIT,'Significant Genes Clusters',sep=" ")))
+                    grid::grid.newpage()
+                    grid::grid.draw(Clustering_Plot)
+                    grid::grid.newpage()
+                    # Clustering_Plot_plotly = clusters_plots[2]
+                    # main_plot_list[main_figure_count] <- list(Clustering_Plot_plotly)
+                    # main_figure_count = main_figure_count + 1
 
 
                     genes=sig.genes
@@ -1722,7 +1322,7 @@ for (test2do in test_count){
                                     quote = F,
                                     sep = "\t")
                         
-                        
+          
                         
                         if (X_AXIS!=GROUP){
                             split=sapply(X =colnames(mat),FUN = function(x) unlist(strsplit(x =x,split = " "))[1])
@@ -1791,6 +1391,18 @@ for (test2do in test_count){
                                 )
                             }
                         }
+                        
+                        if (Heatmap_Type=='Raw'){
+                            cat(sprintf("<h4>%s</h4>",paste('The Next Figure is of the', SPLIT ,'Significant Genes relative expression Clustered and plotted as a HeatMap',sep=" ")))
+                            grid::grid.newpage()
+                            grid::grid.draw(heat_map$gtable)
+                            grid::grid.newpage()
+                        }else{
+                            cat(sprintf("<h4>%s</h4>",paste('The Next Figure is of the', SPLIT ,'Significant Genes relative expression [Mean over biological replicates] Clustered and plotted as a HeatMap',sep=" ")))
+                            grid::grid.newpage()
+                            grid::grid.draw(heat_map$gtable)
+                            grid::grid.newpage()
+                        }
                         ggsave(file.path(opt$outDir,paste('Clustering_heatmap_',SPLIT,'_',Heatmap_Type,".pdf",sep="")),heat_map$gtable,dpi = 600, width = 15, height = 15, units = "cm",scale = 1.5)
 
                         mat2=t(scale(t(mat)))
@@ -1807,6 +1419,33 @@ for (test2do in test_count){
                                   file = file.path(opt$outDir, paste('Clustering_heatmap_',SPLIT,'_',Heatmap_Type,".csv",sep="") ),
                                   quote = TRUE,
                                   row.names = TRUE)
+                                  
+                        
+                        
+                        
+                        HeatMap_table  =  datatable(mat3,
+                                                    caption = htmltools::tags$caption(style = 'caption-side: bottom; text-align: center;',
+                                                                                            'Table: ', 
+                                                                                            htmltools::em(paste('This Table is of the ',SPLIT,'Significant Genes Clusterd [as in the HeatMap Figure] and Annotated',sep=""))
+                                                                                    ),
+                                                    options = list(keys = TRUE ,
+                                                                 scrollX = TRUE,
+                                                                 fixedHeader = FALSE,
+                                                                 fixedColumns = TRUE,
+                                                                 pageLength = 5,
+                                                                 scrollY = 300,
+                                                                 orderClasses=TRUE,
+                                                                 autoWidth = TRUE,
+                                                                 scroller = TRUE,
+                                                                 dom = 'Bfrtip',
+                                                                 buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                                                 deferRender = TRUE),
+                                                    class = 'cell-border stripe',
+                                                    filter = 'top',
+                                                    extensions = c('Buttons','FixedColumns','FixedHeader','KeyTable','Scroller'))
+                        main_plot_list <- c(main_plot_list ,list(HeatMap_table) )
+                        
+                        
                     }
 
 
@@ -1815,6 +1454,9 @@ for (test2do in test_count){
 
                     ##################GO/KEGG STAR####################################
                     # Go Enrichment:
+                    #cat(sprintf("<h2>%s</h2>", 'Enrichment Analysis:'))
+                    
+                    main_plot_list <- c(main_plot_list ,list(htmltools::h2('Enrichment Analysis:')) )
                     if (Annotation_flag == 'OrgDb'){
                         gene2entrez = bitr(names(clusters), fromType=opt$GENE_ID_TYPE, toType=c("ENTREZID"), OrgDb=opt$Annotation_db)
                         gene2entrez = gene2entrez[!duplicated(gene2entrez[opt$GENE_ID_TYPE]),]
@@ -1823,80 +1465,203 @@ for (test2do in test_count){
                         clusters_for_GO= gene2entrez$CLUSTERS
                         names(clusters_for_GO)=gene2entrez$ENTREZID
 
-                        allRes <- clusters_enricher(opt$outDir,clusters_for_GO,"GO",opt$Annotation_db,Annotation$ENTREZID,"ENTREZID",paste('Clusters_GO_Enrichment_',SPLIT,".csv",sep=""))
+                        allRes <- clusters_enricher(opt$outDir,clusters_for_GO,"GO",opt$Annotation_db,Annotation$ENTREZID,"ENTREZID",paste('GO_Biological_Process_Enrichment_of_Clusters',SPLIT,sep="_"))
+                        main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                         if (opt$Enriched_terms_overlap){
-                          plot_sheard_genes(allRes@compareClusterResult,opt$outDir,'Clusters_GO_Enrichment')
+                          heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'GO_Biological_Process_Enrichment_of_Clusters')
+                          main_plot_list <- c(main_plot_list ,list(heatmaps))
                         }
+ 
+                            if ((length(down_reg)>0) || (length(up_reg)>0)){
+                                up_down_clusters = clusters
+                                if (length(down_reg)>0){
+                                    up_down_clusters[down_reg]='Down'
+                                }
+                                if (length(up_reg)>0){
+                                    up_down_clusters[up_reg]='UP'
+                                }
+
+                                allRes <- clusters_enricher(opt$outDir,up_down_clusters,"GO",opt$Annotation_db,Annotation$ENTREZID,"ENTREZID",paste('GO_Biological_Process_Enrichment_of_Up_and_Down_Clusters',SPLIT,sep="_"))
+                                main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
+                                if (opt$Enriched_terms_overlap){
+                                  heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'GO_Biological_Process_Enrichment_of_Up_and_Down_Clusters')
+                                  main_plot_list <- c(main_plot_list ,list(heatmaps))
+                                }
+
+                            }
+ 
                         One_cluster=clusters_for_GO
                         One_cluster[]=1
-                        allRes <- clusters_enricher(opt$outDir,One_cluster,"GO",opt$Annotation_db,Annotation$ENTREZID,"ENTREZID",paste('One_Cluster_GO_Enrichment_',SPLIT,".csv",sep=""))
+                        allRes <- clusters_enricher(opt$outDir,One_cluster,"GO",opt$Annotation_db,Annotation$ENTREZID,"ENTREZID",paste('GO_Biological_Process_Enrichment_of_All_Significant_Genes',SPLIT,sep="_"))
+                        main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                         if (opt$Enriched_terms_overlap){
-                          plot_sheard_genes(allRes@compareClusterResult,opt$outDir,'One_Cluster_GO_Enrichment')
+                          heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'GO_Biological_Process_Enrichment_of_All_Significant_Genes')
+                          main_plot_list <- c(main_plot_list ,list(heatmaps))
                         }
+                        
+                        
                     }else{
                         if (GO_flag){
-                            allRes <- Clusters_Enrichment_Test(opt$outDir,clusters,GO2name_BP,GO2gene_BP,paste('Clusters_GO_Enrichment_',SPLIT,".csv",sep=""),"GO",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                            allRes <- Clusters_Enrichment_Test(opt$outDir,clusters,GO2name_BP,GO2gene_BP,paste('GO_Biological_Process_Enrichment_of_Clusters',SPLIT,sep="_"),"GO",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                            main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                             if (opt$Enriched_terms_overlap){
-                                plot_sheard_genes(allRes@compareClusterResult,opt$outDir,'Clusters_GO_Enrichment')
+                                heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'GO_Biological_Process_Enrichment_of_Clusters')
+                                main_plot_list <- c(main_plot_list ,list(heatmaps))
                             }
+ 
+                            if ((length(down_reg)>0) || (length(up_reg)>0)){
+                                up_down_clusters = clusters
+                                if (length(down_reg)>0){
+                                    up_down_clusters[down_reg]='Down'
+                                }
+                                if (length(up_reg)>0){
+                                    up_down_clusters[up_reg]='UP'
+                                }
+
+                                allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,GO2name_BP,GO2gene_BP,paste('GO_Biological_Process_Enrichment_of_Up_and_Down_Clusters',SPLIT,sep="_"),"GO",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                                main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
+                                if (opt$Enriched_terms_overlap){
+                                    heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'GO_Biological_Process_Enrichment_of_Up_and_Down_Clusters')
+                                    main_plot_list <- c(main_plot_list ,list(heatmaps))
+                                }
+
+                            }
+ 
                             One_cluster=clusters
                             One_cluster[]=1
-                            allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,GO2name_BP,GO2gene_BP,paste('One_Cluster_GO_Enrichment_',SPLIT,".csv",sep=""),"GO",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                            allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,GO2name_BP,GO2gene_BP,paste('GO_Biological_Process_Enrichment_of_All_Significant_Genes',SPLIT,sep="_"),"GO",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                            main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                             if (opt$Enriched_terms_overlap){
-                                plot_sheard_genes(allRes@compareClusterResult,opt$outDir,'One_Cluster_GO_Enrichment')
+                                heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'GO_Biological_Process_Enrichment_of_All_Significant_Genes')
+                                main_plot_list <- c(main_plot_list ,list(heatmaps))
                             }
+                            
+                            
                         }
                     }
                     if (KEGG_flag){
-                        allRes <- Clusters_Enrichment_Test(opt$outDir,clusters,Pathway2name,Pathway2gene,paste('KEGG_Clusters_Enrichment_Analysis_',SPLIT,".csv",sep=""),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                        allRes <- Clusters_Enrichment_Test(opt$outDir,clusters,Pathway2name,Pathway2gene,paste('KEGG_Enrichment_Analysis_of_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                        main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                         if (opt$Enriched_terms_overlap){
-                            plot_sheard_genes(allRes@compareClusterResult,opt$outDir,'KEGG_Clusters_Enrichment_Analysis_')
+                            heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_Clusters')
+                            main_plot_list <- c(main_plot_list ,list(heatmaps))
                         }
+ 
+                        if ((length(down_reg)>0) || (length(up_reg)>0)){
+                            up_down_clusters = clusters
+                            if (length(down_reg)>0){
+                                up_down_clusters[down_reg]='Down'
+                            }
+                            if (length(up_reg)>0){
+                                up_down_clusters[up_reg]='UP'
+                            }
+
+                            allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,Pathway2name,Pathway2gene,paste('KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                            main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
+                            if (opt$Enriched_terms_overlap){
+                                heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters')
+                                main_plot_list <- c(main_plot_list ,list(heatmaps))
+                            }
+
+                        }
+ 
                         One_cluster=clusters
                         One_cluster[]=1
-                        allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,Pathway2name,Pathway2gene,paste('KEGG_One_Clusters_Enrichment_Analysis_',SPLIT,".csv",sep=""),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                        allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,Pathway2name,Pathway2gene,paste('KEGG_Enrichment_Analysis_of_All_Significant_Genes',SPLIT,sep="_"),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                        main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                         if (opt$Enriched_terms_overlap){
-                            plot_sheard_genes(allRes@compareClusterResult,opt$outDir,'KEGG_One_Clusters_Enrichment_Analysis_')
+                            heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_All_Significant_Genes')
+                            main_plot_list <- c(main_plot_list ,list(heatmaps))
                         }
+                       
+                        
                     }
                     if (ORGANISM_KEGG_flag){
-                        allRes  <- Clusters_Enrichment_Test(opt$outDir,clusters,ORGANISM_Pathway2name,ORGANISM_Pathway2gene,paste(ORGANISM,'_KEGG_Clusters_Enrichment_Analysis_',SPLIT,".csv",sep=""),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                        allRes  <- Clusters_Enrichment_Test(opt$outDir,clusters,ORGANISM_Pathway2name,ORGANISM_Pathway2gene,paste(ORGANISM,'KEGG_Enrichment_Analysis_of_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                        main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                         if (opt$Enriched_terms_overlap){
-                            plot_sheard_genes(allRes@compareClusterResult,opt$outDir,'KEGG_Clusters_Enrichment_Analysis_')
+                            heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_Clusters')
+                            main_plot_list <- c(main_plot_list ,list(heatmaps))
                         }
+ 
+                        if ((length(down_reg)>0) || (length(up_reg)>0)){
+                            up_down_clusters = clusters
+                            if (length(down_reg)>0){
+                                up_down_clusters[down_reg]='Down'
+                            }
+                            if (length(up_reg)>0){
+                                up_down_clusters[up_reg]='UP'
+                            }
+
+                            allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,ORGANISM_Pathway2name,ORGANISM_Pathway2gene,paste(ORGANISM,'KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                            main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
+                            if (opt$Enriched_terms_overlap){
+                                heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters')
+                                main_plot_list <- c(main_plot_list ,list(heatmaps))
+                            }
+
+                        }
+
+ 
                         One_cluster=clusters
                         One_cluster[]=1
-                        allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,ORGANISM_Pathway2name,ORGANISM_Pathway2gene,paste(ORGANISM,'_KEGG_One_Clusters_Enrichment_Analysis_',SPLIT,".csv",sep=""),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                        allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,ORGANISM_Pathway2name,ORGANISM_Pathway2gene,paste(ORGANISM,'KEGG_Enrichment_Analysis_of_All_Significant_Genes',SPLIT,sep="_"),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                        main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                         if (opt$Enriched_terms_overlap){
-                            plot_sheard_genes(allRes@compareClusterResult,opt$outDir,'KEGG_One_Clusters_Enrichment_Analysis_')
+                            heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_All_Significant_Genes')
+                            main_plot_list <- c(main_plot_list ,list(heatmaps))
                         }
+                        
+                        
                     }
                     if (KEGG_KAAS_flag){
-                        allRes <- Clusters_Enrichment_Test(opt$outDir,clusters,KASS_Pathway2name,KASS_Pathway2gene,paste('KASS_KEGG_Clusters_Enrichment_Analysis_',SPLIT,".csv",sep=""),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                        allRes <- Clusters_Enrichment_Test(opt$outDir,clusters,KASS_Pathway2name,KASS_Pathway2gene,paste('KEGG_Enrichment_Analysis_of_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                        main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                         if (opt$Enriched_terms_overlap){
-                            plot_sheard_genes(allRes@compareClusterResult,opt$outDir,'KASS_KEGG_Clusters_Enrichment_Analysis_')
+                            heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_Clusters')
+                            main_plot_list <- c(main_plot_list ,list(heatmaps))
                         }
+                        
+                        
+                        if ((length(down_reg)>0) || (length(up_reg)>0)){
+                            up_down_clusters = clusters
+                            if (length(down_reg)>0){
+                                up_down_clusters[down_reg]='Down'
+                            }
+                            if (length(up_reg)>0){
+                                up_down_clusters[up_reg]='UP'
+                            }
+
+                            allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,KASS_Pathway2name,KASS_Pathway2gene,paste('KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                            main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
+                            if (opt$Enriched_terms_overlap){
+                                heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters')
+                                main_plot_list <- c(main_plot_list ,list(heatmaps))
+                            }
+
+                        }
+
                         One_cluster=clusters
                         One_cluster[]=1
-                        allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,KASS_Pathway2name,KASS_Pathway2gene,paste('KAAS_KEGG_One_Clusters_Enrichment_Analysis_',SPLIT,".csv",sep=""),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                        allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,KASS_Pathway2name,KASS_Pathway2gene,paste('KEGG_Enrichment_Analysis_of_All_Significant_Genes',SPLIT,sep="_"),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                        main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                         if (opt$Enriched_terms_overlap){
-                            plot_sheard_genes(allRes@compareClusterResult,opt$outDir,'KAAS_KEGG_One_Clusters_Enrichment_Analysis_')
+                            heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_All_Significant_Genes')
+                            main_plot_list <- c(main_plot_list ,list(heatmaps))
                         }
+                         
+                        
                     }        
                     ##################GO/KEGG-End####################################    
+                
                 }
+                
+            htmltools::tagList(list(c(main_plot_list)))
             }else{
-                print('No significant genes were detected')
+                cat('No significant genes were detected')
             }
         }else{
-            print('The "X_AXIS" parameter must be given for clustering analysis')
+            cat('The "X_AXIS" parameter must be given for clustering analysis')
         }
-    }
-    if (test2do=='LTR'){ 
-       opt$LRT=NA 
-    }
-}
 
-
-
-
+```

@@ -4,6 +4,7 @@ Global_params:
     Qsub_path:              /path/to/qsub/bin
     Qsub_q:                 myqueue.q
     module_path:            ../neatseq_flow_modules
+    job_limit:          /path/to/job_limit
 
 Documentation: |
     A pipeline for basic preparation of fastq reads
@@ -87,4 +88,4 @@ Step_params:
         script_path:    {Vars.paths.multiqc}        
         redirects:
             --interactive:
-        stop_and_show:
+        # stop_and_show:

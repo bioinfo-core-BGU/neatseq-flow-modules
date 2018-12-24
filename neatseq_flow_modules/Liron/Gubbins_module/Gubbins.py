@@ -1,5 +1,3 @@
-#!/fastspace/bioinfo_apps/python-2.7_SL6/bin/python
-
 # -*- coding: UTF-8 -*-
 """ 
 ``Gubbins``
@@ -119,7 +117,7 @@ class Step_Gubbins(Step):
         """
         
         # Name of specific script:
-        self.spec_script_name = self.set_spec_script_name()
+        self.spec_script_name = self.jid_name_sep.join([self.step,self.name])
         self.script = ""
         sample_dir=self.base_dir
         # This line should be left before every new script. It sees to local issues.

@@ -1,5 +1,4 @@
-#!/fastspace/bioinfo_apps/python-2.7_SL6/bin/python
-
+# -*- coding: UTF-8 -*-
 """ 
 ``cgMLST_and_MLST_typing``
 ---------------------------
