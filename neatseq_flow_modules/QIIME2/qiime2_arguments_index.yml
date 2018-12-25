@@ -134,7 +134,10 @@ demux:
     - --m-barcodes-column
   emp-single:
     inputs:
-      --i-seqs: EMPPairedEndSequences
+      --i-seqs:
+        - EMPPairedEndSequences
+        - EMPSingleEndSequences
+        - RawSequences
     outputs:
       --o-per-sample-sequences: SampleData[SequencesWithQuality]
     required:
