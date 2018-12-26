@@ -89,8 +89,8 @@ Programs required
   * ``multiqc`` *
   * ``scoary`` *
   * ``Gubbins`` *
-  * ``Gassst`` `Download page <https://www.irisa.fr/symbiose/projects/gassst/>`_
-  * ``Gecko3`` `Download page <https://bio.informatik.uni-jena.de/software/gecko3/>`_
+  * ``Gassst`` (`Download Gassst <https://www.irisa.fr/symbiose/projects/gassst/>`_)
+  * ``Gecko3`` (`Download Gecko3 <https://bio.informatik.uni-jena.de/software/gecko3/>`_)
 
 .. _Packages required:
 

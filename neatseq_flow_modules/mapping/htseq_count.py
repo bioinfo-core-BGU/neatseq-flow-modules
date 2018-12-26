@@ -8,7 +8,7 @@
 
 A module for running htseq-count:
 
-See htseq-count documentation `here <http://htseq.readthedocs.io/en/master/count.html>`_.
+See `htseq-count documentation <http://htseq.readthedocs.io/en/master/count.html>`_.
 
 
 
@@ -27,7 +27,7 @@ Output
 
 * Puts the output file in:
     ``self.sample_data[<sample>]["HTSeq.counts"]``
-`
+
 
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

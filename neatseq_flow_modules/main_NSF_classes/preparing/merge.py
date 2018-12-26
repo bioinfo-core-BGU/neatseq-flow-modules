@@ -12,7 +12,7 @@ A module for merging and staging files from the sample file into **NeatSeq-Flow*
 Can be used in two modes: 
 
 **The Basic mode**
-    **NeatSeq-Flow** will attempt to guess all the parameters it requires. Files will be concatenated and stored in the file type index according to the table below. File types not included in the table will be stored in the file type index by the type specified in the sample file, in lower case.
+    **NeatSeq-Flow** will attempt to guess all the parameters it requires. Files will be concatenated and stored in the file type index according to the table below. File types not included in the table will be stored in the file type index by the type specified in the sample file.
     
     You have to make sure that all files of each file type have the same extension for **NeatSeq-Flow** to guess the ``script_path`` and ``pipe`` parameters. 
     
@@ -254,6 +254,7 @@ class Step_merge(Step):
                 src = src + project_src
                 scope = scope + project_scope
 
+
         # Getting unique pairs of src and scope:
         uniq_src_scope = list(set(zip(src,scope)))
         src, scope = zip(*uniq_src_scope)
@@ -261,6 +262,10 @@ class Step_merge(Step):
         scope = list(scope)
         # src = sample_src + project_src
         # scope = sample_scope + project_scope
+
+        print src
+        print scope
+        # sys.exit()
         # If 'src' is NOT user-defined: (Basic mode)
         if "src" not in self.params or not self.params["src"]:
             self.params["src"] = src
@@ -316,14 +321,15 @@ class Step_merge(Step):
                 else:
                     self.params[param] = [None] * len(self.params["src"])
 
-        #
+
         # #---------------------------------------
+        # print self.get_step_name()
         # for param in ["script_path","src","trg","ext","pipe","scope"]:
         #     print param
         #     pp(self.params[param])
         # #---------------------------------------
         # sys.exit()
-        #
+
                     
         # For each src in the list of sources:
         for src_ind in range(len(self.params["src"])):  
@@ -338,8 +344,8 @@ class Step_merge(Step):
             if not trg:
                 if src not in self.default_src_trg_map.keys():
                     self.write_warning("The following 'src' is  not recognized: {src}. "
-                                       "Setting 'trg' to {trg}".format(src=src,trg=src.lower()))
-                    self.params["trg"][src_ind] = src.lower()
+                                       "Setting 'trg' to {trg}".format(src=src,trg=src))
+                    self.params["trg"][src_ind] = src
                 else:
                     self.params["trg"][src_ind] = self.default_src_trg_map[src][0] 
                 # Guessing 'ext'
@@ -432,12 +438,12 @@ class Step_merge(Step):
             else:
                 raise AssertionExcept("'scope' must be either 'sample' or 'project'")
 
-        # #---------------------------------------
+        # # ---------------------------------------
         # for param in ["script_path","src","trg","ext","pipe","scope"]:
-            # print param
-            # # self.params[param] = [i for j, i in enumerate(self.params[param]) if j not in bad_srcs]
-            # self.params[param] = [i for j, i in enumerate(self.params[param]) ]
-            # pp(self.params[param])
+        #     print param
+        #     # self.params[param] = [i for j, i in enumerate(self.params[param]) if j not in bad_srcs]
+        #     self.params[param] = [i for j, i in enumerate(self.params[param]) ]
+        #     pp(self.params[param])
         # print bad_srcs
         # # ---------------------------------------
         # sys.exit()
@@ -467,7 +473,7 @@ class Step_merge(Step):
             else:
                 raise AssertionExcept("'scope' must be either 'sample' or 'project'")
 
-            for sample in sample_list:  #.sample_data["samples"]:      # Getting list of samples out of samples_hash
+            for sample in sample_list:
                 # General comment: If there is a parallel routine for each direction (forward, reverse), add this loop
                 # if  in self.sample_data[sample].keys():
 
@@ -477,15 +483,23 @@ class Step_merge(Step):
                 script_path = self.params["script_path"][scope_ind]
                 pipe = self.params["pipe"][scope_ind]
 
+#                 print """src = {src}
+# scope = {scope}
+# trg = {trg}
+# ext = {ext}
+# script_path = {script_path}
+# pipe = {pipe}""".format(src=src,scope = scope,trg = trg,ext = ext,script_path = script_path,pipe = pipe)
+
+
                 # src_type not defined for this sample. Move on.
                 if src not in self.sample_data[sample]:
                     continue
 
                 if script_path == "..import..":
                     self.sample_data[sample][trg] = self.sample_data[sample][src]
-                    return
+                    continue
                 if script_path == "..skip..":
-                    return
+                    continue
 
                 self.spec_script_name = self.jid_name_sep.join([self.step,self.name,sample_title,src])
 
@@ -565,7 +579,9 @@ class Step_merge(Step):
 
                 # Store file in active file for sample:
                 self.sample_data[sample][trg] = self.base_dir + fq_fn
-
                 self.stamp_file(self.sample_data[sample][trg])
 
                 self.create_low_level_script()
+
+        # print self.sample_data["project_data"]
+        # sys.exit()

@@ -6,7 +6,7 @@
 **NeatSeq-Flow**'s Module and Workflow Repository 
 ===================================================
 
-.. figure:: figs/NeatSeq_Flow_logo.png
+.. .. figure:: figs/NeatSeq_Flow_logo.png
    :scale: 60 %
    :align: center
    :alt: NeatSeq-Flow logo
@@ -16,70 +16,11 @@
    :target: http://neatseq-flow-modules.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-                
-**NeatSeq-Flow** is a lightweight software for efficient execution of high throughput sequencing workflows. See the **NeatSeq-Flow** documentation at http://neatseq-flow.readthedocs.io/en/latest/.
+This repository contains modules and workflows for use with **NeatSeq-Flow**.  To install, follow the instructions in :ref:`installation section bellow <installation>`.
 
-**NeatSeq-Flow** is available for download on `github <https://github.com/bioinfo-core-BGU/neatseq-flow>`_.
-
-Following is a list of :ref:`modules <neatseq_flow_modules>` and :ref:`workflows <neatseq_flow_workflows>` included in this repository.
-
-.. attention:: 
-   In order to include these modules in your workflow, please:
-   
-   #. download the repository::
-   
-       wget https://github.com/bioinfo-core-BGU/neatseq-flow-modules/archive/master.zip
-
-   #. **Alternatively**, clone the repository::
-   
-       git clone https://github.com/bioinfo-core-BGU/neatseq-flow-modules.git
-      
-   #. add the following line in the `Global_params` section of your workflow parameter file::
-   
-       module_path: /path/to/location/of/modules/repository
-   
-   See more about definition of workflow parameter files in the documentation for the main **NeatSeq-Flow** package at http://neatseq-flow.readthedocs.io/en/latest/02.build_WF.html#parameter-file-definition.
-   
-.. Note::
-   Some of the modules in this package are included in the main **NeatSeq-Flow** repository. These are indicated below with a :sup:`*`.
-   
-.. important::
-   **NeatSeq-Flow** enables users to program their own modules workflows. You are encouraged to share your modules with the public by adding it to this repository. In order to do so, please fork the repository on github, upload your new module or workflow and open a pull request.
+See also the `main NeatSeq-Flow website <https://neatseq-flow.readthedocs.io/en/latest/>`_.
 
 
-.. Modules included in the repository 
-.. -----------------------------------
-
-.. _neatseq_flow_modules:
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Modules
-
-   Module_docs/PreparationAndQC
-   Module_docs/Mapping
-   Module_docs/BAMConversion
-   Module_docs/ChIPseq
-   Module_docs/GenomeAssembly
-   Module_docs/TranscriptomeAssembly
-   Module_docs/TranscriptomeAnnotation
-   Module_docs/SequenceAnnotation
-   Module_docs/SequenceSearching
-   Module_docs/Variants
-   Module_docs/Metagenomics
-   Module_docs/Microbiology
-   Module_docs/QIIME
-   Module_docs/SequenceClustering
-   Module_docs/VariousReportingPrograms
-   Module_docs/Miscellaneous
-   Module_docs/GenericModule
-
-..   all_modules
-   
-   
-   
-.. Workflows included in the repository
-.. -------------------------------------
 
 .. _neatseq_flow_workflows:
 
@@ -100,10 +41,68 @@ Following is a list of :ref:`modules <neatseq_flow_modules>` and :ref:`workflows
    Workflow_docs/Microbe-Flow
 
 
-Indices and tables
-==================
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. _neatseq_flow_modules:
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Modules
+
+   Module_docs/PreparationAndQC
+   Module_docs/Mapping
+   Module_docs/BAMConversion
+   Module_docs/ChIPseq
+   Module_docs/GenomeAssembly
+   Module_docs/TranscriptomeAssembly
+   Module_docs/TranscriptomeAnnotation
+   Module_docs/SequenceAnnotation
+   Module_docs/SequenceSearching
+   Module_docs/Variants
+   Module_docs/Metagenomics
+   Module_docs/Microbiology
+   Module_docs/QIIME
+   Module_docs/QIIME2
+   Module_docs/SequenceClustering
+   Module_docs/VariousReportingPrograms
+   Module_docs/Miscellaneous
+   Module_docs/GenericModule
+
+..   all_modules
+   
+   
+
+
+
+
+
+
+.. _installation:
+
+Installing and using the modules
+-----------------------------------
+
+**NeatSeq-Flow** is available for download on `github <https://github.com/bioinfo-core-BGU/neatseq-flow>`_.
+
+
+.. attention::
+   In order to include these modules in your workflow, please:
+
+   #. download the repository::
+
+       wget https://github.com/bioinfo-core-BGU/neatseq-flow-modules/archive/master.zip
+
+   #. **Alternatively**, clone the repository::
+
+       git clone https://github.com/bioinfo-core-BGU/neatseq-flow-modules.git
+
+   #. add the following line in the `Global_params` section of your workflow parameter file::
+
+       module_path: /path/to/location/of/modules/repository
+
+   See more about definition of workflow parameter files in the documentation for the main **NeatSeq-Flow** package at http://neatseq-flow.readthedocs.io/en/latest/02.build_WF.html#parameter-file-definition.
+
+.. Note::
+   Some of the modules in this package are included in the main **NeatSeq-Flow** repository. These are indicated below with a :sup:`*`.
+
+.. important::
+   **NeatSeq-Flow** enables users to program their own modules workflows. You are encouraged to share your modules with the public by adding it to this repository. In order to do so, please fork the repository on github, upload your new module or workflow and open a pull request.

@@ -274,8 +274,11 @@ class Step_qiime2_general(Step):
         use_dir = self.local_start(sample_dir)
 
 
-
-
+        # print self.get_step_name()
+        # for inp, typ in self.input_dict.iteritems():
+        #     print inp
+        #     print typ
+        #     print self.sample_data[sample][typ]
         # Build inputs part:
         inputs = " \\\n\t".join([" ".join([inp, self.sample_data[sample][typ]])
                                  for inp, typ
