@@ -205,7 +205,7 @@ class Step_merge(Step):
                 raise AssertionExcept("Error loading script_path index 'merge_script_path_types.yml'")
             except:
                 raise AssertionExcept("Error loading script_path index 'merge_script_path_types.yml'")
-            
+
     
     def step_sample_initiation(self):
         """ Two operations are performed in this function:
@@ -263,9 +263,21 @@ class Step_merge(Step):
         # src = sample_src + project_src
         # scope = sample_scope + project_scope
 
-        print src
-        print scope
-        # sys.exit()
+        # Removing types not in src/scope from sample_data
+        for sample in self.sample_data["samples"]:
+            for src_p in self.sample_data[sample].keys():
+                if src_p in ["type"]:  # Not removing 'type'!
+                    continue
+                if (src_p, "sample") not in uniq_src_scope:
+                    del(self.sample_data[sample][src_p])
+        if "project_data" in self.sample_data:
+            sample = "project_data"
+            for src_p in self.sample_data[sample].keys():
+                if src_p in ["type"]:   # Not removing 'type'!
+                    continue
+                if (src_p, "project") not in uniq_src_scope:
+                    del(self.sample_data[sample][src_p])
+
         # If 'src' is NOT user-defined: (Basic mode)
         if "src" not in self.params or not self.params["src"]:
             self.params["src"] = src
@@ -391,10 +403,12 @@ class Step_merge(Step):
 
                     # TODO: src_exts can be empty if assuming sample scope but no files exist!
 
+
                     # Flatten the list of lists, and uniqify:
                     src_exts = list(set([item for sublist in src_exts for item in sublist]))
 
                     if len(src_exts)>1:
+                        # Will be determined in the script building stage
                         pass
                     else:
                         # Convert set to string:
@@ -564,6 +578,20 @@ class Step_merge(Step):
                             pipe = self.script_path_map[src_exts][1]
                         else:
                             script_path = self.script_path_map[src_exts]
+
+                # Changing extension to value set in unzipped file in sample file, if the 'zip_ext' column is True
+                # in "merge_script_path_types"
+                first_file_ext = os.path.splitext(self.sample_data[sample][src][0])[1]
+                # Testing that: (a) ext exists in scritp_path_map; (b) it has at least 3 fields and
+                # (c) the last field is True
+                if first_file_ext in self.script_path_map and \
+                        len(self.script_path_map[first_file_ext])>=3 and \
+                        self.script_path_map[first_file_ext][2]:
+                    first_file = os.path.splitext(self.sample_data[sample][src][0])[0]
+                    if os.path.splitext(first_file)[1] and ext == src.lower():
+                        # Add other limits on ext, in case the filename has a "." in it., such as length < 5
+                        ext = os.path.splitext(first_file)[1].lstrip(".")
+
                 # Composing script:
                 self.script = ""
                 self.script += script_path + " \\\n\t"
@@ -583,5 +611,3 @@ class Step_merge(Step):
 
                 self.create_low_level_script()
 
-        # print self.sample_data["project_data"]
-        # sys.exit()

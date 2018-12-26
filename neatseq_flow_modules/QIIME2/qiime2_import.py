@@ -229,7 +229,7 @@ class Step_qiime2_import(Step):
         # If type is not defined, import all available types:
         else:
             for qtype in self.params["qiime_types"]:
-                print qtype
+
                 # Skipping qza's and qzv's:
                 if isinstance(self.sample_data["project_data"][qtype], str) and \
                         os.path.splitext(self.sample_data["project_data"][qtype])[1] in [".qza",".qzv"]:
@@ -278,5 +278,5 @@ class Step_qiime2_import(Step):
                 self.create_low_level_script()
 
 
-                print self.sample_data["project_data"]
+                # print self.sample_data["project_data"]
 
