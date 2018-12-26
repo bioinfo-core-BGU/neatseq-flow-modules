@@ -1,15 +1,15 @@
-# extension    script_path or [script_path,pipe]
+# extension    script_path or [script_path,pipe,zip_ext]
 .fasta:  cat
 .faa:    cat
 .fna:    cat
 .fa:     cat
 .fastq:  cat
 .fq:     cat
-.gz:     gzip -cd 
-.zip:    [echo, 'xargs -d " " -I % sh -c "unzip -p %"']
-.bz2:    bzip -cd
-.dsrc2:  [echo , 'xargs -d " " -I % sh -c "dsrc2 d -s %"']
-.dsrc:   [echo , 'xargs -d " " -I % sh -c "dsrc d -s %"']
+.gz:     [gzip -cd, null, True]
+.zip:    [echo, 'xargs -d " " -I % sh -c "unzip -p %"', True]
+.bz2:    [bzip -cd, null, True]
+.dsrc2:  [echo , 'xargs -d " " -I % sh -c "dsrc2 d -s %"', True]
+.dsrc:   [echo , 'xargs -d " " -I % sh -c "dsrc d -s %"', True]
 .gtf:     cat
 .gff:     cat
 .gff3:     cat
