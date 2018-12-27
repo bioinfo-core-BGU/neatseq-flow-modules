@@ -22,9 +22,11 @@ Requires
   The file can be defined in the sample file either just as a path, or as a path, format pair, as follows:
 
   Only path::
+
     EMPSingleEndSequences	/path/to/emp-single-end-sequences
 
   Path, format pair::
+
     EMPSingleEndSequences	/path/to/emp-single-end-sequences
     EMPSingleEndSequences	EMPPairedEndDirFmt
 
@@ -34,12 +36,12 @@ Output:
 
 * If importing reads, will create the imported artifact in one of:
 
-    * ``sample_data[<sample>]["SampleData[SequencesWithQuality]"]``
-    * ``sample_data[<sample>]["SampleData[PairedEndSequencesWithQuality]"]``
+    * ``sample_data["project_data"]["SampleData[SequencesWithQuality]"]``
+    * ``sample_data["project_data"]["SampleData[PairedEndSequencesWithQuality]"]``
 
 * If importing other types:
 
-    * ``sample_data[<sample>]["<type imported>"]``
+    * ``sample_data["project_data"]["<type imported>"]``
 
 
 
@@ -54,15 +56,34 @@ Lines for parameter file
 
 Importing paired end reads::
 
-    trino_Transdecode_highExpr:
-        module:             TransDecoder
-        base:               Split_Fasta
-        script_path:        {Vars.paths.TransDecoder}
-        scope:              sample
-        
+    import_reads:
+        module:                     qiime2_import
+        base:                       trim1
+        script_path:                qiime tools import
+        redirects:
+            --type:                 SampleData[PairedEndSequencesWithQuality]
+            --input-format:         PairedEndFastqManifestPhred33
+
+Importing internal types::
+
+    merge_data:
+        module:         merge
+        src:            EMPSingleEndSequences
+        trg:            EMPSingleEndSequences
+        script_path:    ..import..
+        scope:          project
+
+    import:
+        module:         qiime2_import
+        base:           merge_data
+        script_path:    qiime tools import
+
         
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Bolyen, E., Rideout, J.R., Dillon, M.R., Bokulich, N.A., Abnet, C., Al-Ghalith, G.A., Alexander, H., Alm, E.J., Arumugam, M. and Asnicar, F., 2018. **QIIME 2: Reproducible, interactive, scalable, and extensible microbiome data science**. *PeerJ Preprints* 6:e27295v1 https://doi.org/10.7287/peerj.preprints.27295v1
+
 
 """
 

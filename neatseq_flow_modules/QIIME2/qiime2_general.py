@@ -95,6 +95,9 @@ Store only particular outputs in type index::
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Bolyen, E., Rideout, J.R., Dillon, M.R., Bokulich, N.A., Abnet, C., Al-Ghalith, G.A., Alexander, H., Alm, E.J., Arumugam, M. and Asnicar, F., 2018. **QIIME 2: Reproducible, interactive, scalable, and extensible microbiome data science**. *PeerJ Preprints* 6:e27295v1 https://doi.org/10.7287/peerj.preprints.27295v1
+
+
 """
 
 
