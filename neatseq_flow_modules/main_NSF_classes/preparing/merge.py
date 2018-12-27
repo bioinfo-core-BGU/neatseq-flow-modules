@@ -521,7 +521,6 @@ class Step_merge(Step):
                 # Use the dir it returns as the base_dir for this step.
                 use_dir = self.local_start(self.base_dir)
 
-                fq_fn = ".".join([sample_title, src, self.file_tag,ext])
                 # The filename containing the end result. Used both in script and to set reads in $sample_params
 
 #                 if script_path == "..cp..":
@@ -582,6 +581,7 @@ class Step_merge(Step):
                 # Changing extension to value set in unzipped file in sample file, if the 'zip_ext' column is True
                 # in "merge_script_path_types"
                 first_file_ext = os.path.splitext(self.sample_data[sample][src][0])[1]
+
                 # Testing that: (a) ext exists in scritp_path_map; (b) it has at least 3 fields and
                 # (c) the last field is True
                 if first_file_ext in self.script_path_map and \
@@ -591,6 +591,10 @@ class Step_merge(Step):
                     if os.path.splitext(first_file)[1] and ext == src.lower():
                         # Add other limits on ext, in case the filename has a "." in it., such as length < 5
                         ext = os.path.splitext(first_file)[1].lstrip(".")
+                else:
+                    ext = first_file_ext.lstrip(".")
+
+                fq_fn = ".".join([sample_title, src, self.file_tag,ext])
 
                 # Composing script:
                 self.script = ""

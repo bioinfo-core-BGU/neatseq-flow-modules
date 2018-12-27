@@ -19,6 +19,15 @@ Requires
 
 * If importing other types, requires that type in the sample file
 
+  The file can be defined in the sample file either just as a path, or as a path, format pair, as follows:
+
+  Only path::
+    EMPSingleEndSequences	/path/to/emp-single-end-sequences
+
+  Path, format pair::
+    EMPSingleEndSequences	/path/to/emp-single-end-sequences
+    EMPSingleEndSequences	EMPPairedEndDirFmt
+
 
 Output:
 ~~~~~~~~~~~~~
@@ -99,6 +108,10 @@ class Step_qiime2_import(Step):
             Here you should do testing for dependency output. These will NOT exist at initiation of this instance. They are set only following sample_data updating
         """
 
+        # Types that do not require formats.
+        # Not used. At the moment, not checking at all for existance of --input-format
+        self.types_no_formats = ["EMPSingleEndSequences"]
+
         if "--type" in self.params["redir_params"]:
             self.type = self.params["redir_params"]["--type"]
 
@@ -120,22 +133,26 @@ class Step_qiime2_import(Step):
             elif self.type in self.sample_data["project_data"]:
                 if isinstance(self.sample_data["project_data"][self.type],list) and len(self.sample_data["project_data"][self.type])>1:
                     self.params["redir_params"]["--input-format"] = self.sample_data["project_data"][self.type][1]
+                # elif "--input-format" not in self.params["redir_params"]:
+                #     raise AssertionExcept("Please define a --input-format for type {type}".format(type=self.type))
 
             else:
                 raise AssertionExcept("For type '{type}', please supply an '--input-path'.".format(type=self.type))
 
+            # print self.params["redir_params"]["--input-format"]
+            # print self.type
+            # sys.exit()
+            # if "--input-format" not in self.params["redir_params"]:
+            #     raise AssertionExcept("Please supply an --input-format to use!")
 
-            if "--input-format" not in self.params["redir_params"]:
-                raise AssertionExcept("Please supply an --input-format to use!")
-
-            if self.params["redir_params"]["--input-format"] not in self.qiime_types_formats["importable-formats"]:
-                raise AssertionExcept("Unrecognised format {format} for type {type}".
-                                      format(format=self.params["redir_params"]["--input-format"],
-                                             type=self.type))
+            if "--input-format" in self.params["redir_params"]:
+                if self.params["redir_params"]["--input-format"] not in self.qiime_types_formats["importable-formats"]:
+                    raise AssertionExcept("Unrecognised format {format} for type {type}".
+                                          format(format=self.params["redir_params"]["--input-format"],
+                                                 type=self.type))
 
         else:
             self.type = None
-
 
         # Create list of types to import. In two steps:
         # 1. Get list of types in project_data, which are legitimate qiime2 types:
@@ -162,6 +179,8 @@ class Step_qiime2_import(Step):
 
         # print self.get_step_name()
         # print self.params["qiime_types"]
+        # print self.type
+        # print self.params["redir_params"]
         # sys.exit()
 
     def create_spec_wrapping_up_script(self):
@@ -177,6 +196,7 @@ class Step_qiime2_import(Step):
 
         if self.type:
 
+
             # Name of specific script:
             self.spec_script_name = self.set_spec_script_name()
             self.script = ""
@@ -188,38 +208,44 @@ class Step_qiime2_import(Step):
             # Use the dir it returns as the base_dir for this step.
             use_dir = self.local_start(sample_dir)
 
+            if self.type in ["SampleData[PairedEndSequencesWithQuality]","SampleData[SequencesWithQuality]"]:
 
-            # Create manifest file
-            manifest_fn = use_dir + self.sample_data["Title"] + ".manifest"
-            manifest_file = open(manifest_fn, "w")
-            manifest_file.write("# Created by NeatSeq-Flow\n")
-            manifest_file.write("sample-id,absolute-filepath,direction\n")
-            direction_dict = {"fastq.F": "forward", "fastq.R": "reverse", "fastq.S": "forward"}
+                # Create manifest file
+                manifest_fn = use_dir + self.sample_data["Title"] + ".manifest"
+                manifest_file = open(manifest_fn, "w")
+                manifest_file.write("# Created by NeatSeq-Flow\n")
+                manifest_file.write("sample-id,absolute-filepath,direction\n")
+                direction_dict = {"fastq.F": "forward", "fastq.R": "reverse", "fastq.S": "forward"}
 
-            if self.type == "SampleData[PairedEndSequencesWithQuality]":
-                directions_to_include = {"fastq.F", "fastq.R"}
+                if self.type == "SampleData[PairedEndSequencesWithQuality]":
+                    directions_to_include = {"fastq.F", "fastq.R"}
+                else:
+                    directions_to_include = {"fastq.F", "fastq.S"}
+                for sample in self.sample_data["samples"]:
+                    for direction in list(directions_to_include & set(self.sample_data[sample])):
+                        manifest_file.write("{sampleid},{absolutefilepath},{direction}\n".
+                                            format(sampleid=sample,
+                                                   absolutefilepath=self.sample_data[sample][direction],
+                                                   direction=direction_dict[direction]))
+
+                manifest_file.close()
+                input_path = manifest_fn
+                output_path = "{dir}{title}.import.qza".format(dir=use_dir,title=self.sample_data["Title"])
+
             else:
-                directions_to_include = {"fastq.F", "fastq.S"}
-            for sample in self.sample_data["samples"]:
-                for direction in list(directions_to_include & set(self.sample_data[sample])):
-                    manifest_file.write("{sampleid},{absolutefilepath},{direction}\n".
-                                        format(sampleid=sample,
-                                               absolutefilepath=self.sample_data[sample][direction],
-                                               direction=direction_dict[direction]))
-
-            manifest_file.close()
+                print self.params
+                sys.exit()
             # Create script
             self.script = self.get_script_const()
 
             self.script += """\
-\t--output-path {dir}{title}.import.qza \\
-\t--input-path {manifest} 
-""".format(dir=use_dir,
-           title=self.sample_data["Title"],
-           manifest=manifest_fn)
+--output-path {outp} \\
+\t--input-path {inp} 
+""".format(inp=input_path,
+           outp=output_path)
 
             self.sample_data["project_data"][self.type] = "{dir}{title}.import.qza". \
-                format(dir=use_dir,
+                format(dir=sample_dir,
                        title=self.sample_data["Title"])
             self.stamp_file(self.sample_data["project_data"][self.type])
             self.local_finish(use_dir, sample_dir)
@@ -239,8 +265,6 @@ class Step_qiime2_import(Step):
                     # print os.path.splitext(self.sample_data["project_data"][qtype])
                     continue
 
-
-                     # Name of specific script:
                 self.spec_script_name = self.jid_name_sep.join([self.step, self.name, edit_qiime_types(qtype)])
 
                 self.script = ""
@@ -251,9 +275,30 @@ class Step_qiime2_import(Step):
                 # This line should be left before every new script. It sees to local issues.
                 # Use the dir it returns as the base_dir for this step.
                 use_dir = self.local_start(sample_dir)
+                input_format = ""
+                if isinstance(self.sample_data["project_data"][qtype], list):
+                    input_path = self.sample_data["project_data"][qtype][0]
+                    if len(self.sample_data["project_data"][qtype]) == 1:
+                        try:
+                            input_format = self.params["redir_params"]["--input-format"]
+                        except KeyError:
+                            # Here you can try fitting an input-format to the type, or test it there is a default
+                            pass
+                            # raise AssertionExcept("--input-format not defined anywhere")
+                    else:
+                        input_format = self.sample_data["project_data"][qtype][1]
+                else:
+                    input_path = self.sample_data["project_data"][qtype]
+                    try:
+                        input_format = self.params["redir_params"]["--input-format"]
+                    except KeyError:
+                        pass
+                        # raise AssertionExcept("--input-format not defined anywhere")
+
+                if input_format:
+                    input_format = "\n\t--input-format {inform} \\".format(inform=input_format)
 
                 # Create script
-
                 self.script = """\
 {script_path} \\
 \t--type {qtype} \\
@@ -263,20 +308,16 @@ class Step_qiime2_import(Step):
            dir=use_dir,
            qtype=qtype,
            type=edit_qiime_types(qtype),
-           inp_path=self.sample_data["project_data"][qtype][0],
-           inp_format="" if len(self.sample_data["project_data"][qtype]) == 1
-           else "\n\t--input-format " + self.sample_data["project_data"][qtype][1] + " \\",
+           inp_path=input_path,
+           inp_format=input_format,
            title=self.sample_data["Title"])
 
                 self.sample_data["project_data"][qtype] = "{dir}{title}.{type}.import.qza". \
-                    format(dir=use_dir,
+                    format(dir=sample_dir,
                            type=edit_qiime_types(qtype),
                            title=self.sample_data["Title"])
                 self.stamp_file(self.sample_data["project_data"][qtype])
                 self.local_finish(use_dir, sample_dir)
 
                 self.create_low_level_script()
-
-
-                # print self.sample_data["project_data"]
 
