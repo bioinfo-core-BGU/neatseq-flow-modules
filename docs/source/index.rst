@@ -38,6 +38,7 @@ See also the `main NeatSeq-Flow website <https://neatseq-flow.readthedocs.io/en/
    Workflow_docs/GATK_workflow
    Workflow_docs/Clustering
    Workflow_docs/QIIME_workflow
+   Workflow_docs/QIIME2_workflow
    Workflow_docs/Microbe-Flow
 
 
