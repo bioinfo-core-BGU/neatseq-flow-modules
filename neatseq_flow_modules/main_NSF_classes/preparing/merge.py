@@ -510,7 +510,13 @@ class Step_merge(Step):
                     continue
 
                 if script_path == "..import..":
-                    self.sample_data[sample][trg] = self.sample_data[sample][src]
+                    # if src is a list of length one, import the element, converting into str (hopefully)
+                    if isinstance(self.sample_data[sample][src], list) and len(self.sample_data[sample][src]) == 1:
+                        self.sample_data[sample][trg] = self.sample_data[sample][src][0]
+                    elif isinstance(self.sample_data[sample][src], str):  # Not sure this can happen
+                        self.sample_data[sample][trg] = self.sample_data[sample][src]
+                    else:
+                        self.sample_data[sample][trg] = self.sample_data[sample][src]
                     continue
                 if script_path == "..skip..":
                     continue
