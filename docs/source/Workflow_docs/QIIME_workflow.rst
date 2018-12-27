@@ -31,8 +31,8 @@ Steps:
         
         
         
-DAG
-~~~
+Workflow Schema
+~~~~~~~~~~~~~~~~
 
 .. image:: QIIME_workflow.png   
    :alt: QIIME workflow DAG

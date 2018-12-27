@@ -35,7 +35,7 @@ See also the `main NeatSeq-Flow website <https://neatseq-flow.readthedocs.io/en/
    Workflow_docs/Metagenomics
    Workflow_docs/RNA_seq_Trinity
    Workflow_docs/RNA_seq_reference
-   Workflow_docs/variant_calling
+   Workflow_docs/GATK_workflow
    Workflow_docs/Clustering
    Workflow_docs/QIIME_workflow
    Workflow_docs/Microbe-Flow

@@ -17,8 +17,8 @@ Steps:
 5. Using the resulting predicted gene sequences to search a BLAST database (``blast`` and ``parse_blast`` modules).
 6. Using the alternative BLAST module (``blast_new``) to search the **assembly** for the **predicted genes**.
 
-DAG
-~~~
+Workflow Schema
+~~~~~~~~~~~~~~~~
 
 .. image:: BLAST_db.png
    :alt: BLAST database DAG

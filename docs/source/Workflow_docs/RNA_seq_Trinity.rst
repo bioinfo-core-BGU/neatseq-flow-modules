@@ -19,8 +19,8 @@ Steps:
 4. Mapping of the reads is performed with ``trinity_mapping`` module.
 5. Creating statistical tables is performed with ``trinmap_statistics`` module.
     
-DAG
-~~~
+Workflow Schema
+~~~~~~~~~~~~~~~~
 
 .. image:: RNA_seq_Trinity.png
    :alt: Denovo RNA seq DAG

@@ -14,8 +14,8 @@ Steps:
 4. An index for the assembly is created with ``bowtie2_builder``, ``bowtie_builder``, ``bwa_builder`` and ``STAR_builder`` modules.
 5. The reads are mapped to the assembly with ``bowtie2_mapper``, ``bowtie_mapper``, ``bwa_mapper`` and ``STAR_mapper`` modules.
 
-DAG
-~~~
+Workflow Schema
+~~~~~~~~~~~~~~~~
 
 .. image:: Assembly_Indexing_mapping.png
    :alt: Assembly and mapping DAG

@@ -11,8 +11,8 @@ Steps:
 3. project level `fasta` file is again dereplicated and 
 4. resulting sequences are clustered using ``vsearch`` and ``cd-hit`` (the user can choose between them)
 
-DAG
-~~~
+Workflow Schema
+~~~~~~~~~~~~~~~~
 
 .. image:: Clustering.png
    :alt: Read clustering DAG

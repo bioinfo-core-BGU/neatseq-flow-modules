@@ -23,8 +23,8 @@ Steps:
 4. Reporting
    a. Analysis of the BAM files is done with NGSplot, with -R set to `enhancer`, `exon`, `genebody` and `tss` (``NGSplot``)
 
-DAG
-~~~
+Workflow Schema
+~~~~~~~~~~~~~~~~
 
 .. image:: ChIP_seq_bowtie2.png
    :alt: ChIP seq DAG

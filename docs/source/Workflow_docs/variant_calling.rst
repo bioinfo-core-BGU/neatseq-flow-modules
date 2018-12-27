@@ -15,8 +15,8 @@ Steps:
 5. Analysis of the resulting VCF file with VCFtools (``vcftools`` module).
     
     
-DAG
-~~~
+Workflow Schema
+~~~~~~~~~~~~~~~~
 
 .. image:: variant_calling.png
    :alt: Variant calling DAG

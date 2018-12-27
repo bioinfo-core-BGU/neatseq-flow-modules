@@ -17,8 +17,8 @@ Steps:
 7. Using the alternative BLAST module (``blast_new``) to search the assembly for the predicted genes.
 
 
-DAG
-~~~
+Workflow Schema
+~~~~~~~~~~~~~~~~
 
 .. image:: BLAST_fasta.png
    :alt: Assembly and searching DAG

@@ -27,8 +27,8 @@ b. Assembly and analysis of the assembled reads:
     4. Antibiotic resistance is determined with ``CARD_RGI``.
     5. **Not included**. Resistance and virulence can also be determined by BLASTing AR and virulence databases against the assemblies. See module BLAST.
 
-DAG
-~~~
+Workflow Schema
+~~~~~~~~~~~~~~~~
 
 .. image:: Metagenomics.png   
    :alt: Metagenomics DAG

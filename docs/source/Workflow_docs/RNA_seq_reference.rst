@@ -13,8 +13,8 @@ Steps:
 2. Mapping of the reads to the reference genome is performed with STAR (``STAR`` module).
 3. Creating counts table with htseq-count (``htseq_count`` module)
     
-DAG
-~~~
+Workflow Schema
+~~~~~~~~~~~~~~~~
 
 .. image:: RNA_seq_reference.png
    :alt: Reference-based RNA seq DAG
