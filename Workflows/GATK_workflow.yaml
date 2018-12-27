@@ -1,6 +1,6 @@
 Global_params:
     Default_wait: 10
-    Qsub_nodes:         
+    # Qsub_nodes:         
     Qsub_opts: -V -cwd
     Qsub_q: bioinfo.q
     module_path:      ../neatseq_flow_modules
@@ -51,6 +51,7 @@ Step_params:
             -pe:        shared 20
         redirects:
             --threads:  20
+
     qc_report:
         module:         Multiqc
         base: 
@@ -67,14 +68,14 @@ Step_params:
         threads:        20
         qsub_params:
             -pe:        shared 20
+        
     GATK_gvcf:
         module:         GATK_gvcf
         base:           GATK_pre_processing
         script_path:    {Vars.paths.GATK}
         genome_reference:    {Vars.databases.GATK}
         chrom_list:     {Vars.chrom_list} 
-
-
+        
     gatk_merge_gvcf:
         module:         GATK_merge_gvcf
         base:           GATK_gvcf
@@ -82,7 +83,7 @@ Step_params:
         genome_reference:    {Vars.databases.GATK}
         cohort_size:    10
         chrom_list:     {Vars.chrom_list} 
-        
+
     GenotypeGVCFs1:
         module:         GenotypeGVCFs
         base:           gatk_merge_gvcf
@@ -131,7 +132,7 @@ Step_params:
     GATK_CatVariants1:
         module:         GATK_CatVariants
         base:           GATK_SelectVariants_VEPfiltered
-        script_path:    {Vars.paths.GATK} org.broadinstitute.gatk.tools.CatVariants
+        script_path:    '{Vars.paths.GATK} org.broadinstitute.gatk.tools.CatVariants'
         genome_reference:   {Vars.databases.GATK}
         chrom_list:     {Vars.chrom_list} 
 

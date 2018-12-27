@@ -1,3 +1,5 @@
+.. _gatk_var_analysis::
+
 GATK variant analysis
 ----------------------
 
