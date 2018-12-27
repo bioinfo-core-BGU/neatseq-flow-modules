@@ -1,10 +1,5 @@
 #!/fastspace/bioinfo_apps/python-2.7_SL6/bin/python
 
-""" A class defining a pipeline.
-
-This class takes input files: samples and parameters, and creates a qsub pipeline, including dependencies
-Actual work is done by calling other class types: PLCStep and PLCName
-"""
 import os
 import sys
 from neatseq_flow.PLC_step import Step,AssertionExcept

@@ -1,11 +1,7 @@
 
 #!/fastspace/bioinfo_apps/python-2.7_SL6/bin/python
 
-""" A class defining a pipeline.
 
-This class takes input files: samples and parameters, and creates a qsub pipeline, including dependencies
-Actual work is done by calling other class types: PLCStep and PLCName
-"""
 import os
 import sys
 from neatseq_flow.PLC_step import Step,AssertionExcept
@@ -116,10 +112,3 @@ echo '\\n---------- Create gvcf file -------------\\n'
         
 #        print "From merge_gvcf::\n"
 #        print self.sample_data["cohorts"][chr]
-
-             # java -jar GenomeAnalysisTK.jar \
-       # -T CombineGVCFs \
-       # -R reference.fasta \
-       # --variant sample1.g.vcf \
-       # --variant sample2.g.vcf \
-       # -o cohort.g.vcf
