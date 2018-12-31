@@ -1,5 +1,9 @@
-ChIP-seq analysis
+ChIP-seq workflow
 ---------------------
+
+:Author: Menachem Sklarz
+:Affiliation: Bioinformatics Core Facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
 This workflow automates a standard ChIP-seq analysis.
 

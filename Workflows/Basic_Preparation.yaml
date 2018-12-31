@@ -41,7 +41,7 @@ Step_params:
             -pe:        shared 15
         redirects:
             --threads:  15
-
+    
 
             
     trim1:

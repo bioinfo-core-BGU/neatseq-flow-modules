@@ -1,9 +1,9 @@
-Microbe-Flow
------------------------------------------
-**A specialized workflow for bacterial genomics, pathogenomics and epidemiology.**
+Microbe-Flow: a comprehensive workflow for bacterial genomics, pathogenomics and genomic epidemiology
+-----------------------------------------------------------------------------------------------------
+**A specialized workflow for bacterial genomics, pathogenomics and genomic epidemiology.**
 
-:Authors: Liron Levin
-:Affiliation: Bioinformatics core facility
+:Author: Liron Levin
+:Affiliation: Bioinformatics Core Facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
 .. contents:: Table of Contents

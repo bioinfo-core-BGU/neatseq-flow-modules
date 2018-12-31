@@ -1,6 +1,10 @@
 Variant calling
 ---------------------
 
+:Author: Menachem Sklarz
+:Affiliation: Bioinformatics Core Facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
+
 This workflow performs a basic variant-calling analysis.
 
 Steps:

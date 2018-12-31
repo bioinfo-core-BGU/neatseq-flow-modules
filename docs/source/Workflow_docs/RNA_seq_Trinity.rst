@@ -1,5 +1,9 @@
-Non-Model Transcriptomics 
-----------------------------
+RNA-Seq without a reference genome, using Trinity 
+-------------------------------------------------
+
+:Author: Menachem Sklarz
+:Affiliation: Bioinformatics Core Facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
 A pipeline for RNA-seq analysis using Trinity.
     

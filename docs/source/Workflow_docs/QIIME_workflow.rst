@@ -1,7 +1,11 @@
-QIIME analysis
----------------------
+Microbiome analysis using QIIME
+-------------------------------
 
-A workflow for executing a complete QIIME analysis (based on `QIIME 1.9. <http://qiime.org/>`_. A new workflow for `QIIME2 <https://qiime2.org/>`_ is in the making)
+:Author: Menachem Sklarz
+:Affiliation: Bioinformatics Core Facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
+
+A workflow for executing a complete QIIME analysis (based on `QIIME 1.9. <http://qiime.org/>`_. A new workflow for `QIIME2 <https://qiime2.org/>`_ is also available)
 
 **Developed as part of a study led by Prof. Jacob Moran-Gilad.**
  

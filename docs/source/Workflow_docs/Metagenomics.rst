@@ -1,5 +1,9 @@
-Metagenomics
----------------------
+Shotgun metagenomics using kraken, MetaPhlAn2, Kaiju and HUMAnN2
+----------------------------------------------------------------
+
+:Author: Menachem Sklarz
+:Affiliation: Bioinformatics Core Facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
 A workflow for executing various analyses on metagenomics data.
 

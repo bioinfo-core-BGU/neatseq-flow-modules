@@ -1,5 +1,9 @@
-QIIME2 analysis
----------------------
+Microbiome analysis using QIIME2
+--------------------------------
+
+:Author: Menachem Sklarz
+:Affiliation: Bioinformatics Core Facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
 A workflow for executing the `Moving Windows tutorial <https://docs.qiime2.org/2018.11/tutorials/moving-pictures/#moving-pictures-tutorial>`_ with QIIME2.
 

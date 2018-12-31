@@ -1,5 +1,9 @@
-Assembly and Mapping 
----------------------
+De novo Assembly followed by read mapping to the assembly using several mappers 
+-------------------------------------------------------------------------------
+
+:Author: Menachem Sklarz
+:Affiliation: Bioinformatics Core Facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
 This workflow demonstrates the use of the index building and mapping modules.
 

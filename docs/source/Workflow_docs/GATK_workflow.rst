@@ -1,10 +1,13 @@
 .. _gatk_var_analysis::
 
-GATK variant analysis
-----------------------
+Variant analysis using GATK
+---------------------------
 
 A workflow for somatic short variant discovery (SNVs + Indels) (based on `GATK Best Practices <https://software.broadinstitute.org/gatk/best-practices/workflow?id=11146>`_. )
 
+:Authors: Michal Gordon
+:Affiliation: Bioinformatics Core Facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
  
 Steps:
 ~~~~~~~

@@ -1,5 +1,9 @@
-Read clustering 
----------------------
+Read clustering using VSEARCH
+-----------------------------
+
+:Author: Menachem Sklarz
+:Affiliation: Bioinformatics Core Facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
 This workflow demonstrates methods to cluster reads with the ``vsearch`` module.
 

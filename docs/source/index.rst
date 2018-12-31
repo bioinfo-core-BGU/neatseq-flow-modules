@@ -29,16 +29,16 @@ See also the `main NeatSeq-Flow website <https://neatseq-flow.readthedocs.io/en/
    :caption: Workflows
 
    Workflow_docs/Assembly_Indexing_mapping
-   Workflow_docs/BLAST_db
-   Workflow_docs/BLAST_fasta
-   Workflow_docs/ChIP_seq_bowtie2
-   Workflow_docs/Metagenomics
-   Workflow_docs/RNA_seq_Trinity
    Workflow_docs/RNA_seq_reference
+   Workflow_docs/RNA_seq_Trinity
+   Workflow_docs/ChIP_seq_bowtie2
    Workflow_docs/GATK_workflow
    Workflow_docs/Clustering
+   Workflow_docs/BLAST_db
+   Workflow_docs/BLAST_fasta   
    Workflow_docs/QIIME_workflow
    Workflow_docs/QIIME2_workflow
+   Workflow_docs/Metagenomics
    Workflow_docs/Microbe-Flow
 
 
@@ -100,10 +100,10 @@ Installing and using the modules
 
        module_path: /path/to/location/of/modules/repository
 
-   See more about definition of workflow parameter files in the documentation for the main **NeatSeq-Flow** package at http://neatseq-flow.readthedocs.io/en/latest/02.build_WF.html#parameter-file-definition.
+   See more about definition of workflow parameter files in the NeatSeq-Flow User Manual at the `Parameter file definition <http://neatseq-flow.readthedocs.io/en/latest/02a.FileDefinition.html#parameter-file-definition>`_ section.
 
 .. Note::
    Some of the modules in this package are included in the main **NeatSeq-Flow** repository. These are indicated below with a :sup:`*`.
 
 .. important::
-   **NeatSeq-Flow** enables users to program their own modules workflows. You are encouraged to share your modules with the public by adding it to this repository. In order to do so, please fork the repository on github, upload your new module or workflow and open a pull request.
+   **NeatSeq-Flow** enables users to program their own modules and workflows. You are encouraged to share your modules with the public by adding it to this repository. In order to do so, please fork the repository on github, upload your new module or workflow and open a pull request.

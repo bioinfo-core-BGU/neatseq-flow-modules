@@ -1,5 +1,9 @@
-BLAST on `fasta` files
-----------------------
+BLAST operations to/from an assembled genome (in FASTA format)
+--------------------------------------------------------------
+
+:Author: Menachem Sklarz
+:Affiliation: Bioinformatics Core Facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
 This workflow shows various ways for using BLAST.
 

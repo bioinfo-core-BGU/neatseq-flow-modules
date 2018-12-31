@@ -1,5 +1,9 @@
-Assembly and Searching 
------------------------
+BLAST operations to/from an assembled genome (starting from raw reads)
+----------------------------------------------------------------------
+
+:Author: Menachem Sklarz
+:Affiliation: Bioinformatics Core Facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
 This workflow demonstrates various searching schemes with ``blast`` modules.
 

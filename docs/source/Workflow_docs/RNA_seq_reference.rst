@@ -1,7 +1,11 @@
-Reference-based Transcriptomics 
--------------------------------
+RNA-Seq using a reference genome 
+--------------------------------
 
-A pipeline for RNA-seq analysis using a reference genome.
+:Author: Menachem Sklarz
+:Affiliation: Bioinformatics Core Facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
+
+A pipeline for RNA-seq analysis with a reference genome.
     
 This workflow takes reads in `fastq` format, either paired-end or single.
 

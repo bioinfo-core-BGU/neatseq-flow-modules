@@ -13,3 +13,4 @@ my_backup_log.txt
 condaenv/
 venv/
 workflows_devel/
+*.mine/
