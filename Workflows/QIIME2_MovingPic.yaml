@@ -1,0 +1,192 @@
+Global_params:
+    Default_wait: 10
+    Qsub_opts: -V -cwd
+    Qsub_q: queue.q
+    Qsub_path: /path/to/qsub
+    module_path:  ../neatseq_flow_modules
+
+    conda:
+        path:  
+        env:    
+
+
+Step_params:
+
+    # Merging the three files and directories:
+    # 1. EMPSingleEndSequences is imported as-is 
+    # 2. metadata is imported using 'cat' 
+    # 3. TaxonomicClassifier is imported with curl -L, because it is a remote file
+    merge_data:
+        module:         merge
+        src:            [EMPSingleEndSequences, metadata, TaxonomicClassifier]
+        trg:            [EMPSingleEndSequences, metadata, TaxonomicClassifier]
+        script_path:    [..import..,cat, 'curl -L']
+        ext:            [..empty..,null, qza]
+        scope:          project
+        
+        
+    # EMPSingleEndSequences is imported. 
+    # TaxonomicClassifier is not imported because it is already and artifact
+    import:
+        module:         qiime2_import
+        base:           merge_data   
+        script_path:    qiime tools import
+
+    demux:
+        module:         qiime2_general
+        base:           import  
+        script_path:    qiime demux emp-single 
+        redirects:
+            --m-barcodes-file:     '{{metadata}}' 
+            --m-barcodes-column:    BarcodeSequence 
+        
+            
+    demux_summary:
+        module:         qiime2_general
+        base:           demux
+        script_path:    qiime demux summarize
+
+
+    dada2:
+        module:         qiime2_general
+        base:           demux
+        script_path:    qiime dada2 denoise-single 
+        setenv:         R_LIBS="$CONDA_PREFIX/lib/R/library"
+        redirects:
+            --p-trim-left:         0 
+            --p-trunc-len:         120
+            --p-n-threads:         60
+        qsub_params:
+            -pe:        shared 60
+
+    dada2_vis_summary:
+        module:                     qiime2_general
+        base:                       dada2
+        script_path:                qiime feature-table summarize
+        
+
+    dada2_vis_tabulate:
+        module:                     qiime2_general
+        base:                       dada2
+        script_path:                qiime metadata tabulate 
+        redirects:
+            --m-input-file:         "{{SampleData[DADA2Stats]}}"
+
+            
+    phylogeny:
+        module:                     qiime2_general
+        base:                       dada2
+        script_path:                qiime phylogeny align-to-tree-mafft-fasttree
+        redirects:
+            --p-n-threads:          60
+        qsub_params:
+            -pe:                    shared 60        
+            
+    diversity:
+        module:                     qiime2_general
+        base:                       phylogeny
+        script_path:                qiime diversity core-metrics-phylogenetic
+        store_output:
+            - --o-rarefied-table
+            - --o-faith-pd-vector
+            - --o-weighted-unifrac-distance-matrix
+            - --o-weighted-unifrac-pcoa-results
+            - --o-weighted-unifrac-emperor
+        redirects:
+            --p-sampling-depth:     1109
+        
+    alpha_group_signif_faith:
+        module:                     qiime2_general
+        base:                       diversity
+        script_path:                qiime diversity alpha-group-significance
+
+    # Recalculating pielou's evenness, for performing group significance on it
+    diversity_evenness:
+        module:                     qiime2_general
+        base:                       phylogeny
+        script_path:                qiime diversity alpha
+        redirects:
+            --p-metric:             pielou_e
+       
+    # Performing group significance on pielou's evenness
+    alpha_group_signif_pielou:
+        module:                     qiime2_general
+        base:                       diversity_evenness
+        script_path:                qiime diversity alpha-group-significance
+
+    # Beta group significance using Unifrac, testing BodySite
+    beta_group_signif_BodySite:
+        module:                     qiime2_general
+        base:                       diversity
+        script_path:                qiime diversity beta-group-significance
+        redirects:
+            --m-metadata-column:    BodySite
+            --p-pairwise:
+            
+    # Beta group significance using Unifrac, testing Subject
+    beta_group_signif_Subject:
+        module:                     qiime2_general
+        base:                       diversity
+        script_path:                qiime diversity beta-group-significance
+        redirects:
+            --m-metadata-column:    Subject
+            --p-pairwise:
+
+    # Generating Emperor plots for unweighted UniFrac and Bray-Curtis so that the resulting plot will contain axes for principal coordinate 1, principal coordinate 2, and days since the experiment start. 
+    emperor_unifrac:
+        module:                     qiime2_general
+        base:                       diversity
+        script_path:                qiime emperor plot
+        redirects:
+            --p-custom-axes:        DaysSinceExperimentStart 
+    
+    ### Creating emperor for bray_curtis
+    # Bray-Curtis does not exist in the data set.
+    # 1. Creating it with 'diversity beta'
+    beta_braycurtis:
+        module:                     qiime2_general
+        base:                       dada2
+        script_path:                qiime diversity beta 
+        redirects:
+            --p-metric:             braycurtis
+    # 2. Calculating PCoA results for bray_curtis
+    pcoa_braycurtis:
+        module:                     qiime2_general
+        base:                       beta_braycurtis
+        script_path:                qiime diversity pcoa 
+    # 3. Creating emperor plots:
+    emperor_braycurtis:
+        module:                     qiime2_general
+        base:                       pcoa_braycurtis
+        script_path:                qiime emperor plot
+        redirects:
+            --p-custom-axes:        DaysSinceExperimentStart 
+
+    ################
+    
+    alpha_rarefaction:
+        module:                     qiime2_general
+        base:                       phylogeny
+        script_path:                qiime diversity alpha-rarefaction
+        redirects:      
+            --p-max-depth:          4000
+
+    ### Taxonomic classification:
+
+    classify:
+        module:                     qiime2_general
+        base:                       dada2
+        script_path:                qiime feature-classifier classify-sklearn
+  
+    classify_barplot:
+        module:                     qiime2_general
+        base:                       classify
+        script_path:                qiime taxa barplot
+        
+    classify_tabulate:
+        module:                     qiime2_general
+        base:                       classify
+        script_path:                qiime metadata tabulate 
+        redirects:
+            --m-input-file:         '{{FeatureData[Taxonomy]}}'
+
