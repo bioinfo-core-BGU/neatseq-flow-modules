@@ -148,7 +148,8 @@ class Step_Cutadapt(Step):
                         # Add 'env' and 'script_path':
                         self.script += "("+self.get_script_env_path()
                         for key in original_self_params_redir_params.keys():
-                            if original_self_params_redir_params[key].startswith("@"):
+                            if isinstance(original_self_params_redir_params[key], str) and \
+                                    original_self_params_redir_params[key].startswith("@"):
                                 self.params["redir_params"][key]=os.path.join(use_dir,original_self_params_redir_params[key].replace("@",""))
                         self.script += self.get_redir_parameters_script()
                         self.script += "-o %s \\\n\t" % fq_fn_F 
