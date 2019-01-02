@@ -66,49 +66,49 @@ Lines for parameter file
 
 ::
 
-    Step_Name:                            # Name of this step
-        module: DeSeq2                    # Name of the used module
-        base:                             # Name of the step [or list of names] to run after with count results.
-        script_path:                      # Command for running the a DeSeq2 script
-                                          # If this line is empty or missing it will try using the module's associated script
-        use_click:                        # Will use the CLICK clustering program (Shamir et al. 2000). 
+    Step_Name:                              # Name of this step
+        module: DeSeq2                      # Name of the used module
+        base:                               # Name of the step [or list of names] to run after with count results.
+        script_path:                        # Command for running the a DeSeq2 script
+                                            # If this line is empty or missing it will try using the module's associated script
+        use_click:                          # Will use the CLICK clustering program (Shamir et al. 2000). 
         redirects:
-            --SAMPLE_DATA_FILE:           # Path to Samples Information File
-            --GENE_ID_TYPE:               # The Gene ID Type i.e 'ENSEMBL'[for Bioconductor] OR 'ensembl_gene_id'/'ensembl_transcript_id' [for ENSEMBL]
-            --Annotation_db:              # Bioconductor Annotation Data Base Name from https://bioconductor.org/packages/release/BiocViews.html#___OrgDb  
-            --Species:                    # Species Name to Retrieve Annotation Data from ENSEMBL
-            --KEGG_Species:               # Species Name to Retrieve Annotation Data from KEGG
-            --KEGG_KAAS:                  # Gene to KO file from KEGG KAAS [first column gene id, second column KO number]
-            --Trinotate:                  # Path to a Trinotate annotation file in which the first column is the genes names
-            --FILTER_SAMPLES:             # Filter Samples with Low Number of expressed genes OR with Small Library size using 'scater' package 
-            --FILTER_GENES:               # Filter Low-Abundance Genes using 'scater' package
-            --NORMALIZATION_TYPE:         # The DeSeq2 Normalization Type To Use [VSD , RLOG] The Default is VSD
-            --BLIND_NORM:                 # Perform Blind Normalization
-            --DESIGN:                     # The Main DeSeq2 Design [ ~ Group ]
-            --LRT:                        # The LRT DeSeq2 Design
-            --ALPHA:                      # Significant Level Cutoff, The Default is 0.05
-            --FoldChange:                 # Fold change Cutoff [testing for fold changes greater in absolute value], The Default is 1
-            --CONTRAST:                   # The DeSeq Contrast Design ["Group,Treatment,Control"] [Not For LTR] .
-                                          # It is possible to define more then one contrast Design ["Group,Treatment1,Control1|Group,Treatment2,Control2|..."]
-            --modelMatrixType:            # How the DeSeq model matrix of the GLM formula is formed [standard or expanded] ,The Default is standard
-            --GENES_PLOT:                 # Genes Id To Plot count Data [separated by ','] 
-            --X_AXIS:                     # The Filed In the Sample Data To Use as X Axis
-            --GROUP:                      # The Filed In the Sample Data To Group By [can be two fields separated by ',']
-            --SPLIT_BY:                   # The Filed In the Sample Data To Split the Analysis By.
-            --FUNcluster:                 # A clustering function including [kmeans,pam,clara,fanny,hclust,agnes,diana,click]. The default is hclust
-                                          # If the 'use_click' option is used the '--FUNcluster' option is set to 'click' 
-            --hc_metric:                  # Hierarchical clustering metric to be used for calculating dissimilarities between observations. The default is pearson
-            --hc_method:                  # Hierarchical clustering agglomeration method to be used. The default is ward.D2
-            --k.max:                      # The maximum number of clusters to consider, must be at least two. The default is 20
-            --nboot:                      # Number of Monte Carlo (bootstrap) samples for determining the number of clusters [Not For Mclust]. The default is 10 
-            --stand:                      # The Data will be Standardized Before Clustering.
-            --Mclust:                     # Use Mclust for determining the number of clusters.
-            --CLICK_HOMOGENEITY:          # The HOMOGENEITY [0-1] of clusters using CLICK program (Shamir et al. 2000). The default is 0.5 
-            --PCA_COLOR:                  # The Filed In the Sample Data To Determine Color In The PCA Plot
-            --PCA_SHAPE:                  # The Filed In the Sample Data To Determine Shape In The PCA Plot
-            --PCA_SIZE:                   # The Filed In the Sample Data To Determine Size In The PCA Plot. The default is Library Size
-            --Enriched_terms_overlap      # Test for genes overlap in enriched terms
-            
+            --SAMPLE_DATA_FILE:             # Path to Samples Information File
+            --GENE_ID_TYPE:                 # The Gene ID Type i.e 'ENSEMBL'[for Bioconductor] OR 'ensembl_gene_id'/'ensembl_transcript_id' [for ENSEMBL]
+            --Annotation_db:                # Bioconductor Annotation Data Base Name from https://bioconductor.org/packages/release/BiocViews.html#___OrgDb  
+            --Species:                      # Species Name to Retrieve Annotation Data from ENSEMBL
+            --KEGG_Species:                 # Species Name to Retrieve Annotation Data from KEGG
+            --KEGG_KAAS:                    # Gene to KO file from KEGG KAAS [first column gene id, second column KO number]
+            --Trinotate:                    # Path to a Trinotate annotation file in which the first column is the genes names
+            --FILTER_SAMPLES:               # Filter Samples with Low Number of expressed genes OR with Small Library size using 'scater' package 
+            --FILTER_GENES:                 # Filter Low-Abundance Genes using 'scater' package
+            --NORMALIZATION_TYPE:           # The DeSeq2 Normalization Type To Use [VSD , RLOG] The Default is VSD
+            --BLIND_NORM:                   # Perform Blind Normalization
+            --DESIGN:                       # The Main DeSeq2 Design [ ~ Group ]
+            --LRT:                          # The LRT DeSeq2 Design
+            --ALPHA:                        # Significant Level Cutoff, The Default is 0.05
+            --FoldChange:                   # Fold change Cutoff [testing for fold changes greater in absolute value], The Default is 1
+            --CONTRAST:                     # The DeSeq Contrast Design ["Group,Treatment,Control"] [Not For LTR] .
+                                            # It is possible to define more then one contrast Design ["Group,Treatment1,Control1|Group,Treatment2,Control2|..."]
+            --modelMatrixType:              # How the DeSeq model matrix of the GLM formula is formed [standard or expanded] ,The Default is standard
+            --GENES_PLOT:                   # Genes Id To Plot count Data [separated by ','] 
+            --X_AXIS:                       # The Filed In the Sample Data To Use as X Axis
+            --GROUP:                        # The Filed In the Sample Data To Group By [can be two fields separated by ',']
+            --SPLIT_BY:                     # The Filed In the Sample Data To Split the Analysis By.
+            --FUNcluster:                   # A clustering function including [kmeans,pam,clara,fanny,hclust,agnes,diana,click]. The default is hclust
+                                            # If the 'use_click' option is used the '--FUNcluster' option is set to 'click' 
+            --hc_metric:                    # Hierarchical clustering metric to be used for calculating dissimilarities between observations. The default is pearson
+            --hc_method:                    # Hierarchical clustering agglomeration method to be used. The default is ward.D2
+            --k.max:                        # The maximum number of clusters to consider, must be at least two. The default is 20
+            --nboot:                        # Number of Monte Carlo (bootstrap) samples for determining the number of clusters [Not For Mclust]. The default is 10 
+            --stand:                        # The Data will be Standardized Before Clustering.
+            --Mclust:                       # Use Mclust for determining the number of clusters.
+            --CLICK_HOMOGENEITY:            # The HOMOGENEITY [0-1] of clusters using CLICK program (Shamir et al. 2000). The default is 0.5 
+            --PCA_COLOR:                    # The Filed In the Sample Data To Determine Color In The PCA Plot
+            --PCA_SHAPE:                    # The Filed In the Sample Data To Determine Shape In The PCA Plot
+            --PCA_SIZE:                     # The Filed In the Sample Data To Determine Size In The PCA Plot. The default is Library Size
+            --Enriched_terms_overlap:       # Test for genes overlap in enriched terms
+            --USE_INPUT_GENES_AS_BACKGROUND # Use The input Genes as the Background for Enrichment Analysis
             
 """
 import os

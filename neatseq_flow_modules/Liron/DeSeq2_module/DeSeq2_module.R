@@ -88,7 +88,8 @@ option_list = list(
   
   make_option(c("--Enriched_terms_overlap"), action="store_true",default=FALSE, 
               help="Test for genes overlap in enriched terms", metavar="character"),
-  
+  make_option(c("--USE_INPUT_GENES_AS_BACKGROUND"), action="store_true",default=FALSE, 
+              help="Use The input Genes as the Background for Enrichment Analysis", metavar="character"),           
   make_option(c("--PCA_COLOR"), type="character", default=NA,
               help="The Filed In the Sample Data To Determine Color In The PCA Plot", metavar="character"),
   make_option(c("--PCA_SHAPE"), type="character", default=NA,
@@ -125,6 +126,28 @@ if(!(all(c('DESeq2') %in% installed.packages()))) {
 
 #####################Functions################################
 
+GetcountDataFromHTSeqCount <- function(sampleTable) # This function was modified from the original DESeq2 DESeqDataSetFromHTSeqCount function 
+{
+  l <- lapply( as.character( sampleTable[,2] ), function(fn) read.table( file.path( fn ), fill=TRUE ) )
+  if( ! all( sapply( l, function(a) all( a$V1 == l[[1]]$V1 ) ) ) )
+    stop( "Gene IDs (first column) differ between files." )
+  # select last column of 'a', works even if htseq was run with '--additional-attr'
+  tbl <- sapply( l, function(a) a[,ncol(a)] )
+  colnames(tbl) <- sampleTable[,1]
+  rownames(tbl) <- l[[1]]$V1
+  rownames(sampleTable) <- sampleTable[,1]
+  oldSpecialNames <- c("no_feature","ambiguous","too_low_aQual","not_aligned","alignment_not_unique")
+  # either starts with two underscores
+  # or is one of the old special names (htseq-count backward compatability)
+  specialRows <- (substr(rownames(tbl),1,1) == "_") | rownames(tbl) %in% oldSpecialNames
+  tbl <- tbl[ !specialRows, , drop=FALSE ]
+ 
+  return(tbl)
+}   
+
+
+
+
 keggLink_retry <- function (Type,Data,RETRY_NUM=10){
       error_flag=TRUE
       res=c()
@@ -139,7 +162,7 @@ keggLink_retry <- function (Type,Data,RETRY_NUM=10){
       return(res)
 }
 
-plotPCA<-function (object, intgroup = "condition", ntop = 500, returnData = FALSE) {
+plotPCA<-function (object, intgroup = "condition", ntop = 500, returnData = FALSE) { #This function was modified from the original DESeq2 plotPCA function
   if (ntop!='all'){
     rv <- genefilter::rowVars(assay(object))
     select <- order(rv, decreasing = TRUE)[seq_len(min(ntop, 
@@ -562,6 +585,7 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
 #####################Read count data and pars it##################
 
 if (opt$COUNT_SOURCE=='RSEM'){
+  print('Reading count data..')
   # Check if required packages are installed:
   if(!(all(c('tximport') %in% installed.packages()))) {
     if (Sys.getenv("CONDA_PREFIX")!=""){
@@ -582,8 +606,13 @@ if (opt$COUNT_SOURCE=='RSEM'){
     samples = unlist(stringi::stri_split(str = opt$SAMPLES,fixed = ','))
     if (length(files)==length(samples)){
       names(files) = samples
+    }else{
+        stop( "Number of Sample's Names is not Equal the Number of Sample's Files" )
     }
+  }else{
+    stop( "Sample's names mast be indicated! [--SAMPLES] and in the same order as in the sample's files location [--COUNT_DATA_FILE]" )
   }
+    
   txi.rsem <- tximport(files, type = "rsem")
   if (!is.na(opt$GENE_ID_TYPE)) {
       rownames(txi.rsem$abundance)=lapply(X =rownames(txi.rsem$abundance),FUN = function(x) unlist(stringi::stri_split(str = x,regex = "_"))[1] )
@@ -595,9 +624,35 @@ if (opt$COUNT_SOURCE=='RSEM'){
       rownames(txi.rsem$length)=lapply(X =rownames(txi.rsem$length),FUN = function(x) unlist(stringi::stri_split(str = x,regex = "_"))[1] )
       rownames(txi.rsem$length)=lapply(X =rownames(txi.rsem$length),FUN = function(x) rev(unlist(stringi::stri_split(str = x,regex = ":")))[1] )
   }
+  
+  colnames(txi.rsem$abundance) = make.names(colnames(txi.rsem$abundance))
+  colnames(txi.rsem$counts) = make.names(colnames(txi.rsem$counts))
+  colnames(txi.rsem$length) = make.names(colnames(txi.rsem$length))
+  
   countData = txi.rsem$counts
   
-  
+  print('Done reading count data')
+}else if (opt$COUNT_SOURCE=='HTSEQ'){
+    print('Reading count data..')
+    files   = unlist(stringi::stri_split(str = opt$COUNT_DATA_FILE,fixed = ','))
+
+    if (!is.na(opt$SAMPLES)){
+        samples = unlist(stringi::stri_split(str = opt$SAMPLES,fixed = ','))
+        if (length(files)!=length(samples)){
+            stop( "Number of Sample's Names is not Equal the Number of Sample's Files" )
+        }
+    }else{
+        stop( "Sample's names mast be indicated! [--SAMPLES] and in the same order as in the sample's files location [--COUNT_DATA_FILE]" )
+    }
+    sampleTable <- data.frame(sampleName = samples,
+                              fileName   = files )
+    countData = GetcountDataFromHTSeqCount(sampleTable)
+    
+    colnames(countData) = make.names(colnames(countData))
+    
+    print('Done reading count data')
+    
+    
 }else{
   print('Reading count data..')
   countData <- as.matrix(read.csv(opt$COUNT_DATA_FILE,sep="\t",row.names=1))
@@ -607,9 +662,10 @@ if (opt$COUNT_SOURCE=='RSEM'){
     rownames(countData)=lapply(X =rownames(countData),FUN = function(x) unlist(stringi::stri_split(str = x,regex = "_"))[1] )
     rownames(countData)=lapply(X =rownames(countData),FUN = function(x) rev(unlist(stringi::stri_split(str = x,regex = ":")))[1] )
   }
+  colnames(countData) = make.names(colnames(countData))
   print('Done reading count data')
   
-}    
+}
 
 
 #Get Annotation
@@ -707,22 +763,30 @@ if (is.na(Annotation)) {
         print(dataset)
         if ( opt$GENE_ID_TYPE %in% listAttributes(ensembl)$name){
           Total_Annotation = c()
-          genes <- getBM(attributes = opt$GENE_ID_TYPE, mart = ensembl)
+          if (opt$USE_INPUT_GENES_AS_BACKGROUND){
+            genes <- rownames(countData)
+          } else {
+            genes <- getBM(attributes = opt$GENE_ID_TYPE, mart = ensembl)
+          }
+          attributes=c( 'description',
+                        'external_gene_name',
+                        'kegg_enzyme',
+                        'go_id',
+                        'namespace_1003')
+          if (!opt$GENE_ID_TYPE %in% attributes){
+            attributes = c(opt$GENE_ID_TYPE,attributes)
+          }
           for (subset_genes in split(genes[,opt$GENE_ID_TYPE], ceiling(seq_along(genes[,opt$GENE_ID_TYPE] )/100))){
               Annotation=getBM(values = subset_genes,
                                filters = opt$GENE_ID_TYPE,
-                               attributes=c(opt$GENE_ID_TYPE,
-                                            'description',
-                                            'external_gene_name',
-                                            'kegg_enzyme',
-                                            'go_id',
-                                            'namespace_1003'),
+                               attributes = attributes,
                                uniqueRows = TRUE,
                                mart = ensembl)
             Total_Annotation = rbind(Total_Annotation,Annotation)
             }
           Annotation = Total_Annotation
-          Annotation$kegg= sapply(X = Annotation$kegg_enzyme,FUN = function(X) paste('path:map',unlist(stringi::stri_split(str = X,fixed  = '+'))[1],sep='' ) )
+          Annotation$kegg = sapply(X = Annotation$kegg_enzyme,FUN = function(X) unlist(stringi::stri_split(str = X,fixed  = '+'))[1] )
+          Annotation$kegg = sapply(X = Annotation$kegg,FUN = function(X) if (!is.na(X)) if (X!='')  paste('path:map',X,collapse = "",sep='' ) else NA else NA  )
           Annotation$ontology = Annotation$namespace_1003
           Annotation$namespace_1003 = NULL
           Kegg_Annotation = getBM(attributes=c(opt$GENE_ID_TYPE,
@@ -790,17 +854,20 @@ if ("package:clusterProfiler" %in% search()){
         if (!is.na(opt$KEGG_Species)){
             opt$Species = opt$KEGG_Species
         }
-        ORGANISM  = ORGANISMs$kegg_code[(sapply(X = ORGANISMs$scientific_name,FUN = function(X) stringi::stri_startswith(fixed =  stringi::stri_trans_tolower(opt$Species),str =  stringi::stri_trans_tolower(X)    )))]
+        ORGANISM  = ORGANISMs$kegg_code[(sapply(X = ORGANISMs$scientific_name,FUN = function(X) stringi::stri_startswith(fixed =  stringi::stri_replace_last(str = stringi::stri_trans_tolower(opt$Species), fixed = ' genes',replacement = ''),str =  stringi::stri_trans_tolower(X)    )))]
         if (length(ORGANISM)==0){
           ORGANISMs = na.omit(ORGANISMs)
           ORGANISM  = ORGANISMs$kegg_code[(sapply(X = ORGANISMs$common_name,FUN = function(X) stringi::stri_cmp_eq( stringi::stri_replace_last(str = stringi::stri_trans_tolower(opt$Species), fixed = ' genes',replacement = '') , stringi::stri_trans_tolower(X)    )))]
+          if (length(ORGANISM)==0){
+            ORGANISM  = ORGANISMs$kegg_code[(sapply(X = ORGANISMs$common_name,FUN = function(X) stringi::stri_startswith(fixed = stringi::stri_replace_last(str = stringi::stri_trans_tolower(opt$Species), fixed = ' genes',replacement = '') , str = stringi::stri_trans_tolower(X)    )))]
+          }
         }
       }
       
       
       
-      if (length(ORGANISM)>0){       
-        
+      if (length(ORGANISM)==1){       
+        print(ORGANISM)
         kegg=keggConv(ORGANISM,"uniprot") #'ncbi-geneid')
         uniprot =  unlist(lapply(X =names(kegg) ,FUN = function(x) rev(unlist(stringi::stri_split(str = x,regex = ":")))[1]))
         kegg=as.data.frame(kegg)
@@ -937,7 +1004,7 @@ if ("package:clusterProfiler" %in% search()){
     if (!is.na(opt$KEGG_KAAS)) { 
       KEGG_KAAS_Data <- read.csv(opt$KEGG_KAAS,sep="\t",header = FALSE)
       colnames(KEGG_KAAS_Data) = c("Genes","KO")
-      KEGG_KAAS_Data$KO = sapply(X =KEGG_KAAS_Data$KO, FUN = function(x) if (x!='')  paste( "ko:", x,collapse = "",sep = "") else NA)
+      KEGG_KAAS_Data$KO = sapply(X =KEGG_KAAS_Data$KO, FUN = function(x) if (!is.na(x)) if (x!='')   paste( "ko:", x,collapse = "",sep = "") else NA else NA)
       if (!is.na(opt$GENE_ID_TYPE)) {
         KEGG_KAAS_Data$Genes = lapply(X =KEGG_KAAS_Data$Genes,FUN = function(x) unlist(stringi::stri_split(str = x,regex = "_"))[1] )
         KEGG_KAAS_Data$Genes = lapply(X =KEGG_KAAS_Data$Genes,FUN = function(x) rev(unlist(stringi::stri_split(str = x,regex = ":")))[1] )
@@ -1015,7 +1082,11 @@ if (!is.na(Annotation)) {
   Annotation=as.data.frame(Annotation)
   
   
-  
+  write.table(Annotation,
+                file = file.path(opt$outDir,paste('Annotation','tab', sep = '.')) ,
+                quote = F,
+                row.names = F,
+                sep = "\t")
   
     # Get GO information:
     if ("package:clusterProfiler" %in% search()){      
@@ -1050,6 +1121,8 @@ if (!is.na(Annotation)) {
 print('Reading samples data...')    
 #Read Sample Data
 colData <- read.csv(opt$SAMPLE_DATA_FILE, sep="\t", row.names=1)
+rownames(colData) = make.names(rownames(colData))
+
 used_samples = intersect(rownames(colData),colnames(countData))
 colData_col <- colnames(colData)
 countData <- countData[, used_samples]
@@ -1143,7 +1216,6 @@ if (opt$COUNT_SOURCE=='RSEM'){
                                            colData = colData,
                                            design  = as.formula(opt$DESIGN))
 }else{ 
-  
   DESeqDataSet_base <- DESeqDataSetFromMatrix(countData = countData,
                                          colData = colData,
                                          design = as.formula(opt$DESIGN))
@@ -1164,7 +1236,7 @@ if (!is.na(opt$CONTRAST)){
 }
 
 if (!is.na(opt$LRT)){
-    test_count[length(test_count)+1]='LTR'
+    test_count=c('LTR',test_count)
 }
 
 base_out_dir=opt$outDir
@@ -1206,7 +1278,9 @@ for (test2do in test_count){
                                         KEGG_KAAS_flag = KEGG_KAAS_flag,
                                         GO_flag = GO_flag
                           ))
-        
+        if (test2do=='LTR'){ 
+           opt$LRT=NA 
+        }    
     } else {
         DESeqDataSet_Results = NA
         Normalized_counts = NA

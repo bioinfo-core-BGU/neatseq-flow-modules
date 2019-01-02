@@ -1271,7 +1271,7 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                     intgroup=intgroup[!is.na(intgroup)]
                     clusters_plots = plot_clusters(clusters,SPLIT_Normalized_counts_Annotated,c(GROUP,X_AXIS),c(GROUP,X_AXIS,"Normalized counts"),X_AXIS_ORDER=unique(colData[X_AXIS]))
                     Clustering_Plot = clusters_plots[[1]]
-                    ggsave(file.path(opt$outDir,paste('Clusters_',SPLIT,".pdf",sep="")),Clustering_Plot,dpi = 600, width = 6.99, height =6.99, units = "in")
+                    ggsave(file.path(opt$outDir,paste('Clusters_',SPLIT,".pdf",sep="")),Clustering_Plot,dpi = 600, width = 6.99, height =3.99, units = "in")
                     cat(sprintf("<h4>%s</h4>",paste('The Next Figure is of the',SPLIT,'Significant Genes Clusters',sep=" ")))
                     grid::grid.newpage()
                     grid::grid.draw(Clustering_Plot)
@@ -1472,7 +1472,7 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                           main_plot_list <- c(main_plot_list ,list(heatmaps))
                         }
  
-                            if ((length(down_reg)>0) || (length(up_reg)>0)){
+                            if (((length(down_reg)>0) || (length(up_reg)>0)) && (is.na(opt$LRT))){
                                 up_down_clusters = clusters
                                 if (length(down_reg)>0){
                                     up_down_clusters[down_reg]='Down'
@@ -1509,7 +1509,7 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                                 main_plot_list <- c(main_plot_list ,list(heatmaps))
                             }
  
-                            if ((length(down_reg)>0) || (length(up_reg)>0)){
+                            if (((length(down_reg)>0) || (length(up_reg)>0)) && (is.na(opt$LRT))){
                                 up_down_clusters = clusters
                                 if (length(down_reg)>0){
                                     up_down_clusters[down_reg]='Down'
@@ -1547,7 +1547,7 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                             main_plot_list <- c(main_plot_list ,list(heatmaps))
                         }
  
-                        if ((length(down_reg)>0) || (length(up_reg)>0)){
+                        if (((length(down_reg)>0) || (length(up_reg)>0)) && (is.na(opt$LRT))){
                             up_down_clusters = clusters
                             if (length(down_reg)>0){
                                 up_down_clusters[down_reg]='Down'
@@ -1584,7 +1584,7 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                             main_plot_list <- c(main_plot_list ,list(heatmaps))
                         }
  
-                        if ((length(down_reg)>0) || (length(up_reg)>0)){
+                        if (((length(down_reg)>0) || (length(up_reg)>0)) && (is.na(opt$LRT))){
                             up_down_clusters = clusters
                             if (length(down_reg)>0){
                                 up_down_clusters[down_reg]='Down'
@@ -1623,7 +1623,7 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                         }
                         
                         
-                        if ((length(down_reg)>0) || (length(up_reg)>0)){
+                        if (((length(down_reg)>0) || (length(up_reg)>0)) && (is.na(opt$LRT))){
                             up_down_clusters = clusters
                             if (length(down_reg)>0){
                                 up_down_clusters[down_reg]='Down'
