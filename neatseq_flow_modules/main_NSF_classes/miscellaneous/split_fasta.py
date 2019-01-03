@@ -128,14 +128,6 @@ class Step_split_fasta(Step):
             # Use the dir it returns as the base_dir for this step.
             use_dir = self.local_start(self.base_dir)
 
-#             self.script = """
-# FASTA={project_fasta}
-# SEQPERFRAG=$[$(grep -c "^>" $FASTA)/$[{subsample_num}-1]]
-# awk -v seqs="$SEQPERFRAG" 'BEGIN {{n_seq=0; file_cnt=1;}} /^>/ {{ if(n_seq%seqs==0){{file=sprintf("{use_dir}subsample%d.fa",file_cnt); file_cnt++; }} print > file; n_seq++; next;}} {{ print > file; }}' < $FASTA
-#
-# """.format(project_fasta = self.sample_data["project_data"][self.params["type"]],
-#             subsample_num = self.params["subsample_num"],
-#             use_dir = use_dir)
 
             self.script = """
 FASTA={project_fasta}
