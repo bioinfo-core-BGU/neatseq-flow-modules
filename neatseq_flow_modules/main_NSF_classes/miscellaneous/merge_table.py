@@ -214,12 +214,14 @@ awk -v header="$HEADER" -v skip="$SKIP" \\
 
                 # Define location and prefix for output files:
                 output_fn = ".".join([cat_lev, type])
+                if "ext" in self.params:
+                    output_fn = ".".join([output_fn, self.params["ext"]])
 
                 self.script += """\
 SKIP={skip}
 HEADER={header}
 awk -v header="$HEADER" -v skip="$SKIP" \\
-    '{fn_function} BEGIN{{ORS=""; headerline=0; skipline=0;}} 
+    '{fn_function}BEGIN{{ORS=""; headerline=0; skipline=0;}} 
     FNR==1 {{headerline=0; skipline=0}} {comment_str}
     skipline<skip {{print ""; skipline=skipline+1; next}};
     headerline<header {{
@@ -232,15 +234,9 @@ awk -v header="$HEADER" -v skip="$SKIP" \\
 
 """.format(skip=self.params["skip"] if "skip" in self.params else 0,
            header=self.params["header"] if "header" in self.params else 0,
-           line2print='printf("%s\\t%s\\n",basename(FILENAME),$0)'
-                            if "add_filename" in self.params
-                            else 'printf("%s\\n",$0)',
-           comment_str='\n    /^{comm}/ {{print ""; next}};'.format(comm=self.params["comment"])
-           if "comment" in self.params
-           else '',
-           fn_function='function basename(file) {{sub(".*/", "", file); return file}}\n   '
-           if "add_filename" in self.params
-           else '$0,"\\n"',
+           line2print='printf("%s\\t%s\\n",basename(FILENAME),$0)' if "add_filename" in self.params else 'printf("%s\\n",$0)',
+           comment_str='\n    /^{comm}/ {{print ""; next}};'.format(comm=self.params["comment"]) if "comment" in self.params else '',
+           fn_function='function basename(file) {{sub(".*/", "", file); return file}}\n   ' if "add_filename" in self.params else '',
            infiles=' \\\n    '.join(
                [self.sample_data[sample][type]
                 for sample
