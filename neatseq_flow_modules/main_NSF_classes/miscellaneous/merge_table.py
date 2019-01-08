@@ -256,7 +256,7 @@ awk -v header="$HEADER" -v skip="$SKIP" \\
                 self.create_low_level_script()
 
             # Setting new sample types:
-            self.sample_data[cat_lev]["type"] = self.determine_sample_types(self.sample_data[cat_lev])
+            self.sample_data[cat_lev]["type"] = self.determine_sample_types(cat_lev,self.sample_data[cat_lev])
         # Setting new sample names to category levels.
         # From now on, these are the new samples.
         self.sample_data["samples"] = cat_levels
