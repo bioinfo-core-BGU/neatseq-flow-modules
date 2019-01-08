@@ -77,6 +77,7 @@ The samtools programs included in the module are the following:
     "stats", "``samtools stats`` parameters", "Adds code for ``samtools stats``"
     "idxstats", "", "Adds code for ``samtools idxstats``"
     "fastq/a", "``samtools fastq/a`` parameters", "Adds code for ``samtools fastq/a``"
+    "region", "", "A region to limit the ``view`` script to."
     "filter_by_tag", "*e.g.*: NM:i:[01]", "Filter BAM by one of the tags. Use an awk-compliant regular expression. In this example, keep only lines where the edit distance is 0 or 1. This is an experimental feature and should be used with caution..."
     "del_sam", "", "Remove SAM file"
     "del_unsorted", "", "Remove unsorted bam file."
@@ -216,11 +217,12 @@ class Step_samtools(Step):
 
 {env_path} view \\{params}
 \t-o {outfile} \\
-\t{active_file} 
+\t{active_file} {region} 
 
 """.format(env_path=self.get_script_env_path(),
                    active_file=active_file,
                    params="" if not self.params["view"] else "\n\t" + self.params["view"] + " \\",
+                   region="" if not "region" in self.params else "\\\n\t" + self.params["region"],
                    outfile=use_dir + outfile)
 
                 active_file = use_dir + outfile
