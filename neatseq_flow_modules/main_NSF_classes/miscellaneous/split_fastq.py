@@ -260,9 +260,8 @@ awk -v nseqs="$numseqs" '
                         if subsample not in self.sample_data:
                             self.sample_data[subsample] = dict()
                         self.sample_data[subsample][fastq_type] = \
-                            "{use_dir}{sample}.{subsample}.{fastq_type}.fastq".format(use_dir=sample_dir,
+                            "{use_dir}{subsample}.{fastq_type}.fastq".format(use_dir=sample_dir,
                                                                                       fastq_type=direction_dict[fastq_type],
-                                                                                      sample=sample,
                                                                                       subsample=subsample)
                         # Storing origin of subsample in grouping dict:
                         self.sample_data[subsample]["grouping"] = dict()
