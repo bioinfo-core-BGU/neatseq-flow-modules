@@ -42,11 +42,16 @@ Step_params:
         redirects:
             --threads:  15
     
-
-            
+    subset_samples_cat1:
+        module:         subet_samples
+        base:           merge1
+        script_path:
+        category:       Category2
+        levels:         A
+        
     trim1:
         module:             trimmo
-        base:               merge1
+        base:               subset_samples_cat1
         script_path:        'java -jar {Vars.paths.trimmo}'
         # SKIP:
         spec_dir:           {Vars.paths.trimmo_dir}
@@ -58,6 +63,7 @@ Step_params:
         module:         Trim_Galore
         base:           merge1
         script_path:    {Vars.paths.trimgal}
+        tag:            trim_galore_tag    
         cutadapt_path:  {Vars.paths.cutadapt}
         redirects:
             --length:   50
@@ -86,6 +92,7 @@ Step_params:
         module:         Multiqc
         base:           fqc_trimgal
         script_path:    {Vars.paths.multiqc}        
+        tag:
         redirects:
             --interactive:
         # stop_and_show:

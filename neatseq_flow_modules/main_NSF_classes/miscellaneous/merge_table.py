@@ -77,7 +77,7 @@ class Step_merge_table(Step):
         
         if "header" not in self.params:
             self.params["header"] = 0
-        elif not self.params["header"]:
+        elif not self.params["header"] and self.params["header"]!=0:
             self.params["header"] = 1
         else:
             pass

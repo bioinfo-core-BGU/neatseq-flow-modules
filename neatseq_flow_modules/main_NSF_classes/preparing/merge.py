@@ -178,7 +178,9 @@ class Step_merge(Step):
     def step_specific_init(self):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = "merge"
-        
+
+        # TODO: Find a better way for doing this
+        self.conserved_sample_types = ["type","grouping"]
 
         # Load YAML of file type stored in merge_file_types.yml
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),"merge_file_types.yml"),"r") as fileh:
@@ -228,7 +230,7 @@ class Step_merge(Step):
             sample_src = [src1
                           for src1
                           in sample_src
-                          if src1 not in ["type","grouping"]]
+                          if src1 not in self.conserved_sample_types]
             sample_scope = ["sample"] * len(sample_src)
             # If sample data exists, store in 'src' and 'scope'
             # Do this only if one of the following:
@@ -266,14 +268,14 @@ class Step_merge(Step):
         # Removing types not in src/scope from sample_data
         for sample in self.sample_data["samples"]:
             for src_p in self.sample_data[sample].keys():
-                if src_p in ["type"]:  # Not removing 'type'!
+                if src_p in self.conserved_sample_types:  # Not removing 'type'!
                     continue
                 if (src_p, "sample") not in uniq_src_scope:
                     del(self.sample_data[sample][src_p])
         if "project_data" in self.sample_data:
             sample = "project_data"
             for src_p in self.sample_data[sample].keys():
-                if src_p in ["type"]:   # Not removing 'type'!
+                if src_p in self.conserved_sample_types:   # Not removing 'type'!
                     continue
                 if (src_p, "project") not in uniq_src_scope:
                     del(self.sample_data[sample][src_p])
