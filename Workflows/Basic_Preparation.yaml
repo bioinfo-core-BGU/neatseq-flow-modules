@@ -42,22 +42,26 @@ Step_params:
         redirects:
             --threads:  15
     
-    subset_samples_cat1:
-        module:         subet_samples
-        base:           merge1
-        script_path:
-        category:       Category2
-        levels:         A
+    # subset_samples_cat1:
+        # module:         subet_samples
+        # base:           merge1
+        # script_path:
+        # category:       Category2
+        # levels:         A
         
     trim1:
         module:             trimmo
-        base:               subset_samples_cat1
+        base:               merge1   #subset_samples_cat1
         script_path:        'java -jar {Vars.paths.trimmo}'
         # SKIP:
         spec_dir:           {Vars.paths.trimmo_dir}
         todo:               ILLUMINACLIP:TruSeq3-SE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
         redirects:
             -threads:       20
+        sample_list:
+            category:       Category1
+            levels:         A
+
             
     trim_gal: 
         module:         Trim_Galore

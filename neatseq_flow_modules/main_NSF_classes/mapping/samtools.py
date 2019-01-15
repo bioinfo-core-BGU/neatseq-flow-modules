@@ -247,9 +247,9 @@ class Step_samtools(Step):
                 # else, create local link to BAM and set active file accordingly
                 self.script += """\
 ##########
-# Making local link to original bam file:
+# Making local link to original bam file: (-f to force)
 #----------
-cp -s {active_file} {here}
+cp -fs {active_file} {here}
 
 """.format(active_file=active_file,
            here=use_dir)
