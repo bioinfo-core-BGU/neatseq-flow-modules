@@ -269,40 +269,17 @@ class Step_fasta_splitter(Step):
                     # Formatting i to length of max i
                     part_i = "{num:0={res}}".format(num=i, res=num_of_digits)
                     # Formatting sample name (same as in loop above
-                    sample = "{sample}.subsample{part}".format(part=part_i, sample=sample)
-                    self.sample_data[sample] = dict()
-                    self.sample_data[sample][self.params["type"]] = \
+                    subsample = "{sample}.subsample{part}".format(part=part_i, sample=sample)
+                    self.sample_data[subsample] = dict()
+                    self.sample_data[subsample][self.params["type"]] = \
                         "{use_dir}{main}{prefix}{part}{ext}".format(use_dir=sample_dir,
                                                                   part=part_i,
                                                                   prefix=self.params["redir_params"]["--part-num-prefix"],
                                                                   main=file_info[0],
                                                                   ext=file_info[1])
-                    self.sample_data[sample]["grouping"] = dict()
-                    self.sample_data[sample]["grouping"]["source"] = sample
-                    self.sample_data[sample]["type"] = self.determine_sample_types(sample,self.sample_data[sample])
-
-
-
-                #
-                #
-                #
-                # # A list of this sample's subsamples
-                # subsample_list = ["{sample}.subsample{num:0=4}".format(sample=sample, num=num)
-                #                   for num
-                #                   in range(1, self.params["subsample_num"] + 1)]
-                #
-                # new_sample_list.extend(subsample_list)
-                # # CONTINUE HERE
-                # for subsample in subsample_list:
-                #     self.sample_data[subsample] = dict()
-                #     self.sample_data[subsample][self.params["type"]] = \
-                #         "{use_dir}{sample}.fa".format(use_dir=self.base_dir,sample=sample)
-                #     # Storing origin of subsample in grouping dict:
-                #     self.sample_data[subsample]["grouping"] = dict()
-                #     self.sample_data[subsample]["grouping"]["source"] = sample
-                #     self.sample_data[subsample]["type"] = self.determine_sample_types(subsample,self.sample_data[subsample])
-                #     # Stamping file
-                #     self.stamp_file(self.sample_data[sample][self.params["type"]])
+                    self.sample_data[subsample]["grouping"] = dict()
+                    self.sample_data[subsample]["grouping"]["source"] = sample
+                    self.sample_data[subsample]["type"] = self.determine_sample_types(subsample,self.sample_data[subsample])
 
                 # Wrapping up function. Leave these lines at the end of every iteration:
                 self.local_finish(use_dir,sample_dir)
