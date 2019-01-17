@@ -15,6 +15,29 @@ Convenient for parallelizing processes on the cluster. You can take a project wi
 
 The parts can then be combined with ``merge_table`` module, which can concatenate any type of file.
 
+The module ships with ``fasta-splitter.pl``  version 0.2.6, 2017-08-01
+
+Usage::
+
+    Usage: fasta-splitter [options] <file>...
+        Options:
+            --n-parts <N>        - Divide into <N> parts
+            --part-size <N>      - Divide into parts of size <N>
+            --measure (all|seq|count) - Specify whether all data, sequence length, or
+                                   number of sequences is used for determining part
+                                   sizes ('all' by default).
+            --line-length        - Set output sequence line length, 0 for single line
+                                   (default: 60).
+            --eol (dos|mac|unix) - Choose end-of-line character ('unix' by default).
+            --part-num-prefix T  - Put T before part number in file names (def.: .part-)
+            --out-dir            - Specify output directory.
+            --nopad              - Don't pad part numbers with 0.
+            --version            - Show version.
+            --help               - Show help.
+
+You can't use the ``--part-size`` method, since it will end up in an unknown number of files, which is not defined in Neat-Seq Flow.
+
+Please do **not** use the ``--nopad`` parameter. There is no reason to...
 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -49,7 +72,7 @@ Parameters that can be set
     :header: "Parameter", "Values", "Comments"
 
     "type", "nucl|prot", "The type of fasta file to split"
-    "subsample_num", "", "Number of fragments"
+    "redirects --n-parts", "", "Number of fragments"
     
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -61,7 +84,9 @@ Lines for parameter file
         base:           Trinity1
         script_path:    
         type:           nucl
-        subsample_num:      4
+        redirects:
+            --n-parts:      4
+            --measure:      seq
 
 
 """
@@ -78,7 +103,7 @@ __version__ = "1.1.0"
 
 class Step_fasta_splitter(Step):
 
-    auto_redirs = "--part-num-prefix --out-dir --nopad --version --help".split(" ")
+    auto_redirs = "--out-dir --nopad --version --help".split(" ")
 
     
     def step_specific_init(self):
@@ -108,6 +133,13 @@ class Step_fasta_splitter(Step):
         if "--measure" in self.params["redir_params"] and \
                 self.params["redir_params"]["--measure"] not in ["all","seq","count"]:
             raise  AssertionExcept("--measure must be one of all, seq and count.")
+        if "--part-num-prefix" in self.params["redir_params"]:
+            if not isinstance(self.params["redir_params"]["--part-num-prefix"], str):
+                raise  AssertionExcept("--part-num-prefix must be a string.")
+        else:
+            self.params["redir_params"]["--part-num-prefix"] = ".part-"
+
+
 
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
@@ -177,10 +209,11 @@ class Step_fasta_splitter(Step):
                 sample = "subsample{part}".format(part=part_i)
                 self.sample_data[sample] = dict()
                 self.sample_data[sample][self.params["type"]] = \
-                    "{use_dir}{main}.part-{part}{ext}".format(use_dir=self.base_dir,
-                                                               part=part_i,
-                                                               main=file_info[0],
-                                                               ext=file_info[1])
+                    "{use_dir}{main}{prefix}{part}{ext}".format(use_dir=self.base_dir,
+                                                                part=part_i,
+                                                                main=file_info[0],
+                                                                prefix=self.params["redir_params"]["--part-num-prefix"],
+                                                                ext=file_info[1])
                 # Stamping the files takes a long time. Cancelling for the time being
                 # self.stamp_file(self.sample_data[sample][self.params["type"]])
 
@@ -239,8 +272,9 @@ class Step_fasta_splitter(Step):
                     sample = "{sample}.subsample{part}".format(part=part_i, sample=sample)
                     self.sample_data[sample] = dict()
                     self.sample_data[sample][self.params["type"]] = \
-                        "{use_dir}{main}.part-{part}{ext}".format(use_dir=sample_dir,
+                        "{use_dir}{main}{prefix}{part}{ext}".format(use_dir=sample_dir,
                                                                   part=part_i,
+                                                                  prefix=self.params["redir_params"]["--part-num-prefix"],
                                                                   main=file_info[0],
                                                                   ext=file_info[1])
                     self.sample_data[sample]["grouping"] = dict()
