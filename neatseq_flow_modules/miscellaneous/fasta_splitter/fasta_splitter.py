@@ -88,6 +88,12 @@ Lines for parameter file
             --n-parts:      4
             --measure:      seq
 
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+`http://kirill-kryukov.com/study/tools/fasta-splitter/`_
+
+
 
 """
 
@@ -127,8 +133,13 @@ class Step_fasta_splitter(Step):
         if "--n-parts" not in self.params["redir_params"]:
             raise  AssertionExcept("The module supports only the --n-parts version, since the number of chunks "
                                    "must be known at run-time! Please include the number of parts in the redirects")
-        if not isinstance(self.params["redir_params"]["--n-parts"], int):
-            raise AssertionExcept("--n-parts must be an integer.")
+
+        try:
+            self.params["redir_params"]["--n-parts"] = int(self.params["redir_params"]["--n-parts"])
+        except TypeError as type_err:
+            raise AssertionExcept("--n-parts must be an integer, not a list or dictionary")
+        except ValueError as val_err:
+            raise AssertionExcept("--n-parts must be an integer or a string interpretable as an integer!")
 
         if "--measure" in self.params["redir_params"] and \
                 self.params["redir_params"]["--measure"] not in ["all","seq","count"]:
@@ -138,8 +149,6 @@ class Step_fasta_splitter(Step):
                 raise  AssertionExcept("--part-num-prefix must be a string.")
         else:
             self.params["redir_params"]["--part-num-prefix"] = ".part-"
-
-
 
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
