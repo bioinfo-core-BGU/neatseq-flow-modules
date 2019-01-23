@@ -141,6 +141,8 @@ class Step_samtools(Step):
         # or ["project_data"] for project scope
         if self.params["scope"] == "project":
             sample_list = ["project_data"]
+            if "merge" in self.params.keys():
+                raise AssertionExcept("project scope not defined for samtools merge")
         elif self.params["scope"] == "sample":
             sample_list = self.sample_data["samples"]
         else:
@@ -172,7 +174,36 @@ class Step_samtools(Step):
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
-        pass
+        # -------------- samtools merge ------------------
+        if "merge" in self.params.keys():
+            sample_dir = self.make_folder_for_sample()
+
+            # Name of specific script:
+            self.spec_script_name = self.set_spec_script_name()
+            self.script = ""
+
+            # This line should be left before every new script. It sees to local issues.
+            # Use the dir it returns as the base_dir for this step.
+            use_dir = self.local_start(sample_dir)
+
+            outfile = self.sample_data["Title"] + ".merged.bam"
+
+            self.script += """\
+###########
+# Running samtools merge
+#----------------
+
+{env_path} merge \\{params}
+\t{outfile} \\
+\t{infiles} 
+
+""".format(env_path=self.get_script_env_path(),
+           infiles=" \\\n\t".join([self.sample_data[sample]["bam"] for sample in self.sample_data["samples"]]),
+           params="" if not self.params["merge"] else "\n\t" + self.params["merge"] + " \\",
+           outfile=use_dir + outfile)
+
+            self.sample_data["project_data"]["bam"] = sample_dir + outfile
+            self.stamp_file(self.sample_data["project_data"]["bam"])
 
     def build_scripts(self):
         """ This is the actual script building function
@@ -252,8 +283,10 @@ class Step_samtools(Step):
 cp -fs {active_file} {here}
 
 """.format(active_file=active_file,
-           here=use_dir)
-                active_file = sample_dir + os.path.basename(active_file)
+               here=use_dir)
+
+                active_file = use_dir + os.path.basename(active_file)
+                self.sample_data[sample]["bam"] = sample_dir + os.path.basename(active_file)
 
             # The following can be merged into the main 'view' section
             if "filter_by_tag" in self.params.keys():
@@ -404,4 +437,7 @@ rm -rf {sam}
 
             self.local_finish(use_dir,sample_dir)
             self.create_low_level_script()
+
+
+
 
