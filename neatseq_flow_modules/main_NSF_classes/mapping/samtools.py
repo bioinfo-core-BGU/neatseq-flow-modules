@@ -20,6 +20,7 @@ The samtools programs included in the module are the following:
 * ``stats`` Runs stats on the BAM file
 * ``idxstats`` Runs idxstats on the BAM file
 * ``fastq/a`` Converts a BAM or CRAM into either FASTQ or FASTA format depending on the command invoked.
+* ``merge`` Merges sample bam files into single project bam file.
 
 .. Note:: Order of samtools subprogram execution:
 
@@ -64,7 +65,9 @@ The samtools programs included in the module are the following:
 
 
 .. Note:: If ``sample`` is set to ``project``, the above mentioned output files will be created in the project
-    scope, e.g. ``sample_data["stats"]``..
+    scope, e.g. ``sample_data["project_data"]["stats"]``..
+
+.. Note:: If ``merge`` is included, ``scope`` must be ``sample`` and the merged *bam* is located in ``sample_data["project_data"]["stats"]``..
 
 .. csv-table:: Parameters that can be set:
     :header: "Parameter", "Values", "Comments"
@@ -77,6 +80,7 @@ The samtools programs included in the module are the following:
     "stats", "``samtools stats`` parameters", "Adds code for ``samtools stats``"
     "idxstats", "", "Adds code for ``samtools idxstats``"
     "fastq/a", "``samtools fastq/a`` parameters", "Adds code for ``samtools fastq/a``"
+    "merge", "``*e.g.*: -R region``", "Adds code for ``samtools merge``, using the parameters supplied"
     "region", "", "A region to limit the ``view`` script to."
     "filter_by_tag", "*e.g.*: NM:i:[01]", "Filter BAM by one of the tags. Use an awk-compliant regular expression. In this example, keep only lines where the edit distance is 0 or 1. This is an experimental feature and should be used with caution..."
     "del_sam", "", "Remove SAM file"
