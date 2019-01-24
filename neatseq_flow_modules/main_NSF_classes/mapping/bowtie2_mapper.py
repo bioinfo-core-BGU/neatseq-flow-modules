@@ -75,7 +75,7 @@ Lines for parameter file
         redirects:
             -p: 20
             -q: null
-            -x: /path/to/bowtie2_index/ref_genome
+            -x: /path/to/bowtie2.index/ref_genome
 
 **Using a bowtie2 index constructed from a project fasta:**
 
@@ -134,14 +134,16 @@ class Step_bowtie2_mapper(Step):
                 for sample in self.sample_data["samples"]:
                     if self.params["scope"] == "project":
                         # Set project wide reference:
-                        self.sample_data[sample]["reference"] = self.sample_data["project_data"]["bowtie2_fasta"]
+                        # print self.sample_data["project_data"]
+                        self.sample_data[sample]["reference"] = self.sample_data["project_data"]["bowtie2.fasta"]
                     elif self.params["scope"] == "sample":
                         # Set per-sample reference:
-                        self.sample_data[sample]["reference"] = self.sample_data[sample]["bowtie2_fasta"]
+                        self.sample_data[sample]["reference"] = self.sample_data[sample]["bowtie2.fasta"]
                     else:
                         raise AssertionExcept("Scope must be either 'sample' or 'project'")
                 
-            except KeyError:
+            except KeyError as exc:
+                # raise exc
                 raise AssertionExcept("There is a mismatch between 'scope' and the existing bowtie2 index\n", sample)
                 
             if "ref_genome" in self.params.keys():
@@ -208,9 +210,9 @@ class Step_bowtie2_mapper(Step):
             
             try:  # If scope was passed, include either project or sample bowtie2 index
                 if self.params["scope"] == "project":
-                    self.script += "-x %s \\\n\t" % self.sample_data["project_data"]["bowtie2_index"]
+                    self.script += "-x %s \\\n\t" % self.sample_data["project_data"]["bowtie2.index"]
                 else:
-                    self.script += "-x %s \\\n\t" % self.sample_data[sample]["bowtie2_index"]
+                    self.script += "-x %s \\\n\t" % self.sample_data[sample]["bowtie2.index"]
             except KeyError:  # Otherwise do nothing - '-x' is included through redirect params
                 pass
             

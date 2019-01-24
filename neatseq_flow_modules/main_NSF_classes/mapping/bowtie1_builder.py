@@ -23,8 +23,8 @@ output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    
 Puts output index files in one of the following slot:
-    * ``self.sample_data[<sample>]["bowtie1_index"]``
-    * ``self.sample_data["project_data"]["bowtie1_index"]``
+    * ``self.sample_data[<sample>]["bowtie1.index"]``
+    * ``self.sample_data["project_data"]["bowtie1.index"]``
             
 
 Parameters that can be set
@@ -146,8 +146,8 @@ class Step_bowtie1_builder(Step):
                 self.script += "%s \n\n" % output_prefix
 
 
-                self.sample_data[sample]["bowtie1_index"] = output_prefix
-                self.sample_data[sample]["bowtie1_fasta"] = self.sample_data[sample]["fasta.nucl"]
+                self.sample_data[sample]["bowtie1.index"] = output_prefix
+                self.sample_data[sample]["bowtie1.fasta"] = self.sample_data[sample]["fasta.nucl"]
                 # self.stamp_dir_files(sample_dir)
         
             
@@ -180,8 +180,8 @@ class Step_bowtie1_builder(Step):
             self.script += "%s \n\n" % output_prefix
 
 
-            self.sample_data["project_data"]["bowtie1_index"] = output_prefix
-            self.sample_data["project_data"]["bowtie1_fasta"] = self.sample_data["project_data"]["fasta.nucl"]
+            self.sample_data["project_data"]["bowtie1.index"] = output_prefix
+            self.sample_data["project_data"]["bowtie1.fasta"] = self.sample_data["project_data"]["fasta.nucl"]
             # self.stamp_dir_files(self.sample_data["project_data"]["bowtie1"]["index"])
         
             # Move all files from temporary local dir to permanent base_dir

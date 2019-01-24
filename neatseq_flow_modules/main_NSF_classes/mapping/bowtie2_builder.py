@@ -25,8 +25,8 @@ Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * Puts output index files in one of the following slots:
-    * ``self.sample_data[<sample>]["bowtie2_index"]``
-    * ``self.sample_data["project_data"]["bowtie2_index"]``
+    * ``self.sample_data[<sample>]["bowtie2.index"]``
+    * ``self.sample_data["project_data"]["bowtie2.index"]``
 
 * Puts the fasta file in the following slot:
     * ``self.sample_data[<sample>]["reference"]``
@@ -95,7 +95,7 @@ class Step_bowtie2_builder(Step):
         #     except KeyError:
         #         raise AssertionExcept("Project does not have a nucl fasta defined. Check your 'scope'\n", sample)
         #     # else:
-        #         # if "bowtie2_index" in self.sample_data.keys():
+        #         # if "bowtie2.index" in self.sample_data.keys():
         #             # raise AssertionExcept("bowtie2 index already seems to exist.\n")
             
                 
@@ -107,7 +107,7 @@ class Step_bowtie2_builder(Step):
             except KeyError:
                 raise AssertionExcept("No 'fasta.nucl' defined. Can't build index\n", sample)
             else:
-                if "bowtie2_index" in self.sample_data[sample].keys():
+                if "bowtie2.index" in self.sample_data[sample].keys():
                     raise AssertionExcept("bowtie2 index already exists for sample.\n", sample)
             
         # else:
@@ -151,7 +151,7 @@ class Step_bowtie2_builder(Step):
                 use_dir = self.local_start(sample_dir)
  
                 # Define location and prefix for output files:
-                output_prefix = use_dir + sample + "_bowtie2_index"
+                output_prefix = use_dir + sample + "_bowtie2.index"
                 
                 # Get constant part of script:
                 self.script += self.get_script_const()
@@ -160,8 +160,8 @@ class Step_bowtie2_builder(Step):
                 self.script += "%s \n\n" % output_prefix
 
 
-                self.sample_data[sample]["bowtie2_index"] = output_prefix
-                self.sample_data[sample]["bowtie2_fasta"] = self.sample_data[sample]["fasta.nucl"]
+                self.sample_data[sample]["bowtie2.index"] = output_prefix
+                self.sample_data[sample]["bowtie2.fasta"] = self.sample_data[sample]["fasta.nucl"]
                 # self.stamp_dir_files(sample_dir)
         
             
@@ -185,7 +185,7 @@ class Step_bowtie2_builder(Step):
             use_dir = self.local_start(self.base_dir)
  
             # Define location and prefix for output files:
-            output_prefix = use_dir + self.sample_data["Title"] + "_bowtie2_index"
+            output_prefix = use_dir + self.sample_data["Title"] + "_bowtie2.index"
             
             # Get constant part of script:
             self.script += self.get_script_const()
@@ -194,8 +194,8 @@ class Step_bowtie2_builder(Step):
             self.script += "%s \n\n" % output_prefix
 
 
-            self.sample_data["project_data"]["bowtie2_index"] = output_prefix
-            self.sample_data["project_data"]["bowtie2_fasta"] = self.sample_data["project_data"]["fasta.nucl"]
+            self.sample_data["project_data"]["bowtie2.index"] = output_prefix
+            self.sample_data["project_data"]["bowtie2.fasta"] = self.sample_data["project_data"]["fasta.nucl"]
 
         
             # Move all files from temporary local dir to permanent base_dir

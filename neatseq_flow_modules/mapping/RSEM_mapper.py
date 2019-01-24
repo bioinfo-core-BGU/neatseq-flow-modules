@@ -55,7 +55,7 @@ Mapping fastq files::
         base:               merge1
         script_path:        {Vars.paths.RSEM.rsem-calculate-expression}
         reference:              /path/to/fasta
-        redir_params:
+        redirects:
             --gtf:          /path/to/gtf
             --transcript-to-gene-map: /path/to/map_file
 

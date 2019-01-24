@@ -51,7 +51,7 @@ Lines for parameter file
         base:               merge1
         script_path:        /path/to/RSEM
         reference:              /path/to/fasta
-        redir_params:
+        redirects:
             --gtf:          /path/to/gtf
             --transcript-to-gene-map: /path/to/map_file
     
@@ -138,7 +138,7 @@ class Step_RSEM_prep(Step):
             else:
                 reference_fasta_file = self.sample_data[sample]["fasta.nucl"]
 
-            reference_name = "{dir}{ref_name}_rsem_ref".format(dir=use_dir,ref_name=sample)
+            reference_name = "{ref_name}_rsem_ref".format(ref_name=sample_title)
 
             # Get constant part of script:
             self.script += self.get_script_const()
@@ -148,7 +148,7 @@ class Step_RSEM_prep(Step):
                         self.script += "--{tag} {value} \\\n\t".format(tag=other_file,
                                                                        value=self.sample_data[sample][other_file])
             self.script += "%s \\\n\t"  % reference_fasta_file
-            self.script += "%s \n\n"  % reference_name
+            self.script += "%s \n\n"  % use_dir+reference_name
 
             self.sample_data[sample]["RSEM.index"] = "{dir}{ref_name}_rsem_ref".format(dir=sample_dir, ref_name=sample)
             self.sample_data[sample]["RSEM_fasta"] = reference_fasta_file
@@ -159,52 +159,12 @@ class Step_RSEM_prep(Step):
             # TODO: Check the exact part of the name to include in the reference!!
             if "--bowtie" in self.params["redir_params"]:
                 raise AssertionExcept("RSEM prep with bowtie is not yet defined. Please help with this!")
-                # self.sample_data[sample]["bowtie1_index"] = "{dir}".format(dir=sample_dir)
-                # self.sample_data[sample]["bowtie1_fasta"] = reference_fasta_file
+                # self.sample_data[sample]["bowtie1.index"] = "{dir}".format(dir=sample_dir)
+                # self.sample_data[sample]["bowtie1.fasta"] = reference_fasta_file
 
             if "--bowtie2" in self.params["redir_params"]:
-                raise AssertionExcept("RSEM prep with bowtie2 is not yet defined. Please help with this!")
-                # self.sample_data[sample]["bowtie2_index"] = "{dir}".format(dir=sample_dir)
-                # self.sample_data[sample]["bowtie2_fasta"] = reference_fasta_file
+                self.sample_data[sample]["bowtie2.index"] = "{dir}{ref}".format(dir=sample_dir,ref=reference_name)
+                self.sample_data[sample]["bowtie2.fasta"] = reference_fasta_file
 
             self.local_finish(use_dir,self.base_dir)
             self.create_low_level_script()
-     
-        # else:    #if self.params["scope"] == "project":
-        #
-        #
-        #     # Name of specific script:
-        #     self.spec_script_name = self.set_spec_script_name()
-        #     self.script = ""
-        #
-        #
-        #     # This line should be left before every new script. It sees to local issues.
-        #     # Use the dir it returns as the base_dir for this step.
-        #     use_dir = self.local_start(self.base_dir)
-        #
-        #     if "reference" in self.params:
-        #         reference_fasta_file = self.params["reference"]
-        #     else:
-        #         reference_fasta_file = self.sample_data["project_data"]["fasta.nucl"]
-        #
-        #     reference_name = "{dir}{ref_name}_rsem_ref".format(dir=use_dir,ref_name=self.sample_data["Title"])
-        #
-        #     # Get constant part of script:
-        #     self.script += self.get_script_const()
-        #     for other_file in ["gtf","gff3","transcript-to-gene-map","allele-to-gene-map","no-polyA-subset"]:
-        #         if "--%s"%other_file not in self.params["redir_params"]:  # If passed by user, do not include internal
-        #             if other_file in self.sample_data:          # If file exists internally
-        #                 self.script += "--{tag} {value} \\\n\t".format(tag=other_file, value=self.sample_data["project_data"][other_file])
-        #     self.script += "%s \\\n\t"  % reference_fasta_file
-        #     self.script += "%s \n\n"  % reference_name
-        #
-        #
-        #     self.sample_data["project_data"]["RSEM.index"] = "{dir}{ref_name}_rsem_ref".format(dir=self.base_dir,ref_name=self.sample_data["Title"])
-        #     self.sample_data["project_data"]["RSEM_fasta"] = reference_fasta_file
-        #
-        #     if "--star" in self.params["redir_params"]:
-        #         self.sample_data["project_data"]["STAR.index"] = "{dir}".format(dir=self.base_dir)
-        #         self.sample_data["project_data"]["STAR.fasta"] = reference_fasta_file
-        #
-        #     self.local_finish(use_dir,self.base_dir)
-        #     self.create_low_level_script()
