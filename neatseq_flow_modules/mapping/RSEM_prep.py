@@ -85,10 +85,10 @@ class Step_RSEM_prep(Step):
             elif self.params["scope"]=="sample":
                 for sample in self.sample_data["samples"]:
                     if "fasta.nucl" not in self.sample_data[sample]:
-                        raise AssertionExcept("No fasta/nucl defined for sample", sample)
+                        raise AssertionExcept("No fasta.nucl defined for sample", sample)
             elif self.params["scope"]=="project":
-                if "fasta.nucl" not in self.sample_data:
-                    raise AssertionExcept("No fasta/nucl defined for project")
+                if "fasta.nucl" not in self.sample_data["project_data"]:
+                    raise AssertionExcept("No fasta.nucl defined for project")
             else:
                 raise AssertionExcept("Please supply a scope parameter: either 'sample' or 'project'!")
         else:
