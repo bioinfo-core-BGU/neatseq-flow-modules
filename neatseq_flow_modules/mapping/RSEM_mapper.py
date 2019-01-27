@@ -145,12 +145,12 @@ class Step_RSEM_mapper(Step):
             if alignment:
                 self.script += "--alignments %s \\\n\t" % alignment
             elif "fastq.F" in self.sample_data[sample]:
-                self.script += """
-    --paired-end \\
-        {readsF} \\
-        {readsR} \\
-    """.format(readsF=self.sample_data[sample]["fastq.F"],
-               readsR=self.sample_data[sample]["fastq.R"])
+                self.script += """\
+--paired-end \\
+\t{readsF} \\
+\t{readsR} \\
+\t""".format(readsF=self.sample_data[sample]["fastq.F"],
+           readsR=self.sample_data[sample]["fastq.R"])
             elif "fastq.S" in self.sample_data[sample]:
                 self.script += "{readsS} \\\n\t".format(readsS=self.sample_data[sample]["fastq.S"])
             else:
