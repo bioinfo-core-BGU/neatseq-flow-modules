@@ -156,7 +156,7 @@ class Step_RSEM_prep(Step):
             self.script += "%s \\\n\t"  % reference_fasta_file
             self.script += "%s \n\n"  % (use_dir+reference_name)
 
-            self.sample_data[sample]["RSEM.index"] = "{dir}{ref_name}_rsem_ref".format(dir=sample_dir, ref_name=sample)
+            self.sample_data[sample]["RSEM.index"] = "{dir}{ref_name}".format(dir=sample_dir, ref_name=reference_name)
             self.sample_data[sample]["RSEM_fasta"] = reference_fasta_file
             if "--star" in self.params["redir_params"]:
                 self.sample_data[sample]["STAR.index"] = "{dir}".format(dir=sample_dir)
