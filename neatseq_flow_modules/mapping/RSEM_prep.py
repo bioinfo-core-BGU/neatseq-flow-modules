@@ -19,6 +19,7 @@ Requires
     
 * If neither exists, please supply ``reference`` parameter.
        
+.. Attention:: If type "gene_trans_map" exists, its value will be used for "--transcript-to-gene-map", **unless** "--transcript-to-gene-map" is explicitly passed in redirects!
 
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -147,8 +148,13 @@ class Step_RSEM_prep(Step):
                     if other_file in self.sample_data[sample]:          # If file exists internally
                         self.script += "--{tag} {value} \\\n\t".format(tag=other_file,
                                                                        value=self.sample_data[sample][other_file])
+            # If an internal "gene_trans_map" exists AND it was not passed in redirects, use it
+            if "gene_trans_map" in self.sample_data[sample] and \
+                    "transcript-to-gene-map" not in self.params["redir_params"]:
+                self.script += "--transcript-to-gene-map %s \\\n\t" % self.sample_data[sample]["gene_trans_map"]
+
             self.script += "%s \\\n\t"  % reference_fasta_file
-            self.script += "%s \n\n"  % use_dir+reference_name
+            self.script += "%s \n\n"  % (use_dir+reference_name)
 
             self.sample_data[sample]["RSEM.index"] = "{dir}{ref_name}_rsem_ref".format(dir=sample_dir, ref_name=sample)
             self.sample_data[sample]["RSEM_fasta"] = reference_fasta_file
