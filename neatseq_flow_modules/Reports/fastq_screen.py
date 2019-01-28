@@ -20,7 +20,7 @@ The parameters can be passed through a configuration file specified in the redir
 Alternatively, if you do not specify the configuration file, one will be produced for you. For this, you must include:
 
 1. A ``genomes`` section specifying genome indices to screen against (see examples below) and
-2. an ``--aligner`` parameter in the ``redirects`` section.
+2. an ``aligner`` section specifying the aligning program to use and it's path.
 
 Additionally, if a ``--threads`` parameter is included in the redirects, it will be incorporated into the configuration file.
 
@@ -55,8 +55,8 @@ Parameters that can be set
     :header: "Parameter", "Values", "Comments"
     :widths: 15, 10, 10
 
-    "genomes", "``name: index`` pairs (see examples) ", "If `--conf`` not provided, genomes to screen against."
-    "aligner", "``name: index`` single pair", "If `--conf`` not provided, path to aligner to use."
+    "genomes", "``name: index`` pairs (see examples) ", "If ``--conf`` not provided, genomes to screen against."
+    "aligner", "``name: index`` single pair", "If ``--conf`` not provided, path to aligner to use."
     
 
 Lines for parameter file

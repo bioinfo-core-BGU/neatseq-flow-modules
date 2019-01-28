@@ -26,12 +26,46 @@ Vars:
         trimgal:            /path/to/TrimGalore  
         multiqc:            /path/to/multiQC
         cutadapt:           /path/to/cutadapt  
+        fastq_screen:       /path/to/fastq_screen
+        fastq_screen_conf:  /path/to/fastq_screen.conf
 
 Step_params:
 # ---------------------------------- 1. Merge, QC  and trimming
     merge1:
         module:         merge
         script_path:    
+
+
+    fastq_screen_alt1:
+        module:         fastq_screen
+        base:           merge1
+        script_path:        {Vars.paths.fastq_screen}
+        qsub_params:
+            -pe:        shared 10
+        redirects:
+            --conf:     {Vars.paths.fastq_screen_conf}
+            --filter:   200
+            --tag:
+            --force: 
+            --threads:  10
+
+    fastq_screen_alt2:
+        module:         fastq_screen
+        base:           merge1
+        script_path:        {Vars.paths.fastq_screen}
+        qsub_params:
+            -pe:        shared 10
+        aligner:
+            bowtie2:    {Vars.paths.bowtie2}
+        genomes:
+            Human:      {Vars.databases.human} 
+            Mouse:      {Vars.databases.mouse} 
+            PhiX:       {Vars.databases.phix}  
+        redirects:
+            --filter:   200
+            --tag:
+            --force: 
+            --threads:  10
 
     fqc_merge1:
         module:         fastqc_html
