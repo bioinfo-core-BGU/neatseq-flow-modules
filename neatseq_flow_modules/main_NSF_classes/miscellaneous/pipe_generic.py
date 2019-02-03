@@ -344,7 +344,7 @@ class Step_pipe_generic(Step):
                         # Maybe one day will extend to other collections, so doing it this way...
                         rawstring = rawstring.replace(variable,
                                                       "{base_dir}{spec}{sep}".
-                                                      format(base_dir=self.get_base_base_dir(var_def[3]),
+                                                      format(base_dir=self.get_base_instance(var_def[3]).base_dir,
                                                              spec=os.path.basename(use_dir.rstrip(os.sep)),
                                                              sep=os.sep))
                     except AssertionExcept:
@@ -357,7 +357,7 @@ class Step_pipe_generic(Step):
                     rawstring = rawstring.replace(variable, self.base_dir)
                 else:  # Base defined. Use defined base
                     try:
-                        rawstring = rawstring.replace(variable, self.get_base_base_dir(var_def[3]))
+                        rawstring = rawstring.replace(variable, self.get_base_instance(var_def[3]).base_dir)
                     except AssertionExcept:
                         raise
                     # except:
