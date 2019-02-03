@@ -35,6 +35,8 @@ specific directory for the current sample (``{{dir}}``).
 
 .. Note:: For project-scope scripts, ``{{base_dir}}`` and ``{{dir}}`` refer to the same directory.
 
+.. Tip:: You can obtain the ``base_dir`` or ``dir`` values for a base step, by including the name of the base in the 4th colon separated position, just as you'd do for the file slots. *e.g.* ``{{base_dir:::merge1}}`` will return the ``base_dir`` for step ``merge1`` and ``{{dir:::merge1}}`` will return the ``dir`` for the current sample for step ``merge1``.
+
 Can take one of two values:
 
 .. csv-table::
@@ -329,12 +331,37 @@ class Step_pipe_generic(Step):
             # print "---------------------"
 
             # ------------------------------
+            if var_def[0] == "dir" and not sample:  # for project scope, use_dir is the same as base_dir!
+                var_def[0] = "base_dir"
             if var_def[0] == "dir":
-                rawstring = rawstring.replace(variable, use_dir)
-                continue
-            # ------------------------------
+                # rawstring = rawstring.replace(variable, use_dir)
+                if not var_def[3]:  # Base not defined. Use current
+                    rawstring = rawstring.replace(variable, use_dir)
+                else:  # Base defined. Use defined base
+                    try:
+                        # Get base_dir of base and add the basename of use_dir.
+                        # For samples, basename of use_dir is the sample name.
+                        # Maybe one day will extend to other collections, so doing it this way...
+                        rawstring = rawstring.replace(variable,
+                                                      "{base_dir}{spec}{sep}".
+                                                      format(base_dir=self.get_base_base_dir(var_def[3]),
+                                                             spec=os.path.basename(use_dir.rstrip(os.sep)),
+                                                             sep=os.sep))
+                    except AssertionExcept:
+                        raise
+                    # except:
+                    #     raise AssertionExcept("Unrecognized error!")
+                continue            # ------------------------------
             if var_def[0] == "base_dir":
-                rawstring = rawstring.replace(variable, self.base_dir)
+                if not var_def[3]:  # Base not defined. Use current
+                    rawstring = rawstring.replace(variable, self.base_dir)
+                else:  # Base defined. Use defined base
+                    try:
+                        rawstring = rawstring.replace(variable, self.get_base_base_dir(var_def[3]))
+                    except AssertionExcept:
+                        raise
+                    # except:
+                    #     raise AssertionExcept("Unrecognized error!")
                 continue
             # ------------------------------
             if var_def[0] == "project":
