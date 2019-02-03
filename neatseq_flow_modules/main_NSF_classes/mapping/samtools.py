@@ -44,12 +44,12 @@ The samtools programs included in the module are the following:
 * Depending on the parameters, will put files in the following locations:
 
     * ``sample_data[<sample>]["bam"]``
-    * ``sample_data[<sample>]["index"]``
+    * ``sample_data[<sample>]["bam.index"]``
     * ``sample_data[<sample>]["unfiltered_bam"]``
     * ``sample_data[<sample>]["unsorted_bam"]``
-    * ``sample_data[<sample>]["flagstat"]``
-    * ``sample_data[<sample>]["stats"]``
-    * ``sample_data[<sample>]["idxstats"]``
+    * ``sample_data[<sample>]["bam.flagstat"]``
+    * ``sample_data[<sample>]["bam.stats"]``
+    * ``sample_data[<sample>]["bam.idxstats"]``
 
 * If ``fastq`` was called, will also create the following files:
 
@@ -236,8 +236,8 @@ class Step_samtools(Step):
 
             active_file = self.sample_data[sample][self.file2use]
 
-            filter_suffix = ".filt.bam"
-            sort_suffix = ".srt.bam"
+            filter_suffix = ".filt"
+            sort_suffix = ".srt"
             index_suffix = ".bai"
 
             if "view" in self.params.keys():
@@ -294,7 +294,8 @@ cp -fs {active_file} {here}
 
             # The following can be merged into the main 'view' section
             if "filter_by_tag" in self.params.keys():
-                outfile = os.path.basename(active_file) + filter_suffix
+                # outfile = os.path.basename(active_file) + filter_suffix
+                outfile = filter_suffix.join(os.path.splitext(os.path.basename(active_file)))
 
                 self.script += """\
 ###########
@@ -314,7 +315,6 @@ cp -fs {active_file} {here}
 """.format(env_path=self.get_script_env_path(),
            active_file=active_file,
            query=self.params["filter_by_tag"],
-           filt_suff=filter_suffix,
            outfile=use_dir+outfile,
            rm_unfilt="# Removing unfiltered BAM\nrm -rf "+active_file if "del_unfiltered" in self.params.keys() else "")
 
@@ -327,7 +327,8 @@ cp -fs {active_file} {here}
             if "sort" in self.params.keys():
                 if "bam" not in self.sample_data[sample]:
                     raise AssertionExcept("Can't run 'sort', as no BAM is defined", sample)
-                outfile = os.path.basename(active_file) + sort_suffix
+                # outfile = os.path.basename(active_file) + sort_suffix
+                outfile = sort_suffix.join(os.path.splitext(os.path.basename(active_file)))
 
                 self.script += """\
 ###########
@@ -364,8 +365,8 @@ cp -fs {active_file} {here}
            params="" if not self.params["index"] else "\n\t" + self.params["index"] + " \\",
            active_file=active_file)
 
-                self.sample_data[sample]["index"] = sample_dir + os.path.basename(active_file) + index_suffix
-                self.stamp_file(self.sample_data[sample]["index"])
+                self.sample_data[sample]["bam.index"] = sample_dir + os.path.basename(active_file) + index_suffix
+                self.stamp_file(self.sample_data[sample]["bam.index"])
 
 
             for comm in ["flagstat","stats","idxstats"]:
@@ -386,8 +387,8 @@ cp -fs {active_file} {here}
            comm=comm,
            outfile=use_dir+outfile)
 
-                    self.sample_data[sample][comm] = sample_dir + outfile
-                    self.stamp_file(self.sample_data[sample][comm])
+                    self.sample_data[sample]["bam."+comm] = sample_dir + outfile
+                    self.stamp_file(self.sample_data[sample]["bam."+comm])
 
             # Adding code for fastq or fasta extraction from bam:
             for type in (set(self.params.keys()) & set(["fasta","fastq"])):

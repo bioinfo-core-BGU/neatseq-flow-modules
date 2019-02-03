@@ -28,12 +28,18 @@ Vars:
         cutadapt:           /path/to/cutadapt  
         fastq_screen:       /path/to/fastq_screen
         fastq_screen_conf:  /path/to/fastq_screen.conf
-
+        bowtie2:            /path/to/bowtie2
+    databases:
+        human:              /path/to/human/bowtie2_ind
+        mouse:              /path/to/mouse/bowtie2_ind
+        phix:               /path/to/phiX/bowtie2_ind    
+            
 Step_params:
 # ---------------------------------- 1. Merge, QC  and trimming
     merge1:
         module:         merge
         script_path:    
+        intermediate:
 
 
     fastq_screen_alt1:
@@ -95,7 +101,7 @@ Step_params:
         sample_list:
             category:       Category1
             levels:         A
-
+        intermediate:
             
     trim_gal: 
         module:         Trim_Galore
