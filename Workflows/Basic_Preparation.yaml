@@ -40,7 +40,7 @@ Step_params:
         module:         merge
         script_path:    
         intermediate:
-
+        tag:            basic
 
     fastq_screen_alt1:
         module:         fastq_screen
@@ -98,9 +98,9 @@ Step_params:
         todo:               ILLUMINACLIP:TruSeq3-SE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
         redirects:
             -threads:       20
-        sample_list:
-            category:       Category1
-            levels:         A
+        # sample_list:
+            # category:       Category1
+            # levels:         A
         intermediate:
             
     trim_gal: 
