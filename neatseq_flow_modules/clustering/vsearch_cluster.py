@@ -123,15 +123,15 @@ class Step_vsearch_cluster(Step):
             raise AssertionExcept("You must specify 'type': Either cluster_fast or cluster_size or cluster_smallmem")
 
         # Splitting outputs list
-        if "outputs" in self.params.keys():
+        if "outputs" in list(self.params.keys()):
             self.params["outputs"] = self.params["outputs"].split(",")
         # Splitting fasta_outputs list
-        if "fasta_outputs" in self.params.keys():
+        if "fasta_outputs" in list(self.params.keys()):
             self.params["fasta_outputs"] = self.params["fasta_outputs"].split(",")
         else: # If the list isn't passed, use centroids by default
             self.params["fasta_outputs"] = ["centroids"]
             self.write_warning("Outputting centroids fasta")
-        if "store_fasta" in self.params.keys():
+        if "store_fasta" in list(self.params.keys()):
             if self.params["store_fasta"] not in self.params["fasta_outputs"]:
                 raise AssertionExcept("'store_fasta' must also appear in the 'fasta_outputs' list.")
         else:

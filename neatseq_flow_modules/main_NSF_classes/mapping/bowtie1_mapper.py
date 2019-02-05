@@ -110,7 +110,7 @@ class Step_bowtie1_mapper(Step):
         # Require either 'scope' or 'ebwt':
         if "scope" in self.params:
             # If scope defined, comment if also ebwt exists.
-            if "ebwt" in self.params.keys():
+            if "ebwt" in list(self.params.keys()):
                 raise AssertionExcept("Both 'scope' and 'ebwt' specified!\n")
 
             try:
@@ -129,16 +129,16 @@ class Step_bowtie1_mapper(Step):
                 raise AssertionExcept("There is a mismatch between 'scope' and the existing bowtie1 index for sample\n", sample)
                 
                   
-            if "ref_genome" in self.params.keys():
+            if "ref_genome" in list(self.params.keys()):
                 self.write_warning("ref_genome was passed, and 'scope' was defined. Ignoring ref_genome\n")
         else:
             # If scope is not defined, require 'ebwt'
-            if not "ebwt" in self.params.keys():
+            if not "ebwt" in list(self.params.keys()):
                 raise AssertionExcept("Neither 'scope' nor 'ebwt' specified.\n")
 
         
             # Storing reference genome for use by downstream steps:
-            if "ref_genome" in self.params.keys():
+            if "ref_genome" in list(self.params.keys()):
                 for sample in self.sample_data["samples"]:
                     # If reference already exists, ignore ref_genome
                     if "reference" in self.sample_data[sample]:
@@ -216,9 +216,9 @@ class Step_bowtie1_mapper(Step):
             #   If passed, they should create relevant fastq files in sample directory.
             
             # assert set("fastq.F","fastq.R","fastq.S") & self.sample_data["sample"].keys(), "There are no reads for sample %s" % sample
-            if "fastq.F" in self.sample_data[sample].keys():
+            if "fastq.F" in list(self.sample_data[sample].keys()):
                 self.script += "-1 %s \\\n\t-2 %s\\\n\t" % (self.sample_data[sample]["fastq.F"],self.sample_data[sample]["fastq.R"])
-            if "fastq.S" in self.sample_data[sample].keys():
+            if "fastq.S" in list(self.sample_data[sample].keys()):
                 self.script += "%s \\\n\t" % self.sample_data[sample]["fastq.S"]
 
             self.script += "%s.sam \n\n" % output_prefix
@@ -231,7 +231,7 @@ class Step_bowtie1_mapper(Step):
             self.sample_data[sample]["mapper"] = self.get_step_step()  
             
             # Storing reference genome for use by downstream steps:
-            if "ref_genome" in self.params.keys():
+            if "ref_genome" in list(self.params.keys()):
                 # If reference already exists, ignore ref_genome
                 if "reference" in self.sample_data[sample]:
                     self.write_warning("ref_genome was passed, but no bowtie1 index was given with 'ebwt'.\n\tIgnoring ref_genome and using the following fasta file instead:\n\t%s" % self.sample_data[sample]["reference"])

@@ -94,7 +94,7 @@ import os.path
 import sys
 import re
 from neatseq_flow.PLC_step import Step,AssertionExcept
-from qiime2_functions import *
+from .qiime2_functions import *
 import yaml
 try:
     # from yaml import CLoader as Loader
@@ -141,14 +141,14 @@ class Step_qiime2_import(Step):
                 # Check single reads exist
                 for sample in self.sample_data["samples"]:
                     # if "fastq.S" not in self.sample_data[sample]:
-                    if not any(map(lambda x: x in self.sample_data[sample], ["fastq.F", "fastq.S"])):
+                    if not any([x in self.sample_data[sample] for x in ["fastq.F", "fastq.S"]]):
                         raise AssertionExcept(
                             "For type {type}, you must have single or paired end files in samples".format(
                                 type=self.type))
             elif self.type == "SampleData[PairedEndSequencesWithQuality]":
                 # Check single reads exist
                 for sample in self.sample_data["samples"]:
-                    if not all(map(lambda x: x in self.sample_data[sample], ["fastq.F", "fastq.R"])):
+                    if not all([x in self.sample_data[sample] for x in ["fastq.F", "fastq.R"]]):
                         raise AssertionExcept(
                             "For type {type}, you must have paired end files in samples".format(type=self.type))
             elif self.type in self.sample_data["project_data"]:
@@ -254,7 +254,7 @@ class Step_qiime2_import(Step):
                 output_path = "{dir}{title}.import.qza".format(dir=use_dir,title=self.sample_data["Title"])
 
             else:
-                print self.params
+                print(self.params)
                 sys.exit()
             # Create script
             self.script = self.get_script_const()

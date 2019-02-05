@@ -123,7 +123,7 @@ class Step_vcftools(Step):
         # If >1 - error. two passed.
         # If 1 - OK.
         # Getting possible output types from get_types_index() (see definition below)
-        vcftools_output_types = ["--%s"%otype for otype in self.get_types_index().keys()]
+        vcftools_output_types = ["--%s"%otype for otype in list(self.get_types_index().keys())]
         # Adding '--extract-FORMAT-info' which get's treated individually
         vcftools_output_types.append("--extract-FORMAT-info")
         self.output_types = list(set(self.params["redir_params"]) & set(vcftools_output_types))
@@ -135,7 +135,7 @@ class Step_vcftools(Step):
         # Converting output types to external list:
         self.output_types = {key:self.params["redir_params"][key] for key in self.output_types}  # = None
         # Remove output_types from redir_params:
-        self.params["redir_params"] = {key:self.params["redir_params"][key] for key in self.params["redir_params"] if key not in self.output_types.keys()}
+        self.params["redir_params"] = {key:self.params["redir_params"][key] for key in self.params["redir_params"] if key not in list(self.output_types.keys())}
 
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data

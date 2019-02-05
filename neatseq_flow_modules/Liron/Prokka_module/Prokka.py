@@ -95,7 +95,7 @@ class Step_Prokka(Step):
             
         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
              # Testing for existance of assembly data
-            assert "fasta.nucl" in self.sample_data[sample].keys(), \
+            assert "fasta.nucl" in list(self.sample_data[sample].keys()), \
                 "In %s:\tThere are no assembly results (fasta.nucl) for sample %s.\n" % (self.get_step_name(), sample)
         pass
         
@@ -111,7 +111,7 @@ class Step_Prokka(Step):
         # Each iteration must define the following class variables:
             # spec_script_name
             # script
-        if "generate_GFF_dir" in self.params.keys():
+        if "generate_GFF_dir" in list(self.params.keys()):
             #Make a dir for the GFF files:
             GFF_dir = self.make_folder_for_sample("GFF")
             self.sample_data["project_data"]["GFF_dir"]=GFF_dir
@@ -146,7 +146,7 @@ class Step_Prokka(Step):
             self.script += "--strain %s \\\n\t"   % sample
             self.script += "--prefix %s \\\n\t"   % sample
             self.script += "%s \n\n" % self.sample_data[sample]["fasta.nucl"]
-            if "generate_GFF_dir" in self.params.keys():
+            if "generate_GFF_dir" in list(self.params.keys()):
                 self.script += "cp %s  %%s \n\n" % os.path.join(sample_dir,sample+".gff") % GFF_dir
             
             

@@ -121,10 +121,10 @@ class Step_qiime_chimera(Step):
 
 
         # Guessing method to use:
-        if "method" not in self.params.keys():
+        if "method" not in list(self.params.keys()):
             self.write_warning("You did not define a method for %s\n\tTrying to guess what to use:\n")
             
-            if "fasta.aligned" in self.sample_data.keys():
+            if "fasta.aligned" in list(self.sample_data.keys()):
                 # This step is being called after alignment. Will use ChimeraSlayer
                 self.write_warning("Calling ChimeraSlayer on unfiltered alignment.\n\tYOU MUST MAKE SURE YOU FILTER THE ALIGNEMNT AFTER THIS STEP\n")
                 
@@ -194,7 +194,7 @@ class Step_qiime_chimera(Step):
             # For usearch61, output is a folder
             self.script += "-o %s \\\n\t" % use_dir
     
-        for key in self.params["redir_params"].keys():
+        for key in list(self.params["redir_params"].keys()):
             self.script += "%s %s \\\n\t" % (key,self.params["redir_params"][key] if self.params["redir_params"][key] else "")
         self.script += "-m %s \n\n" % self.method
 

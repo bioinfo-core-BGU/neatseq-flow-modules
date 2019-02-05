@@ -1,6 +1,7 @@
 import os, re
 import argparse
 import pandas as pd
+from functools import reduce
 
 
 parser = argparse.ArgumentParser(description='Traits Parser')
@@ -31,10 +32,10 @@ op['&']="and"
 op['|']="or"
 
 MetaData = pd.read_csv(args.M , sep='\t',index_col=False)
-MetaData.loc[:,args.S_MetaData]=map(lambda x:str(x),MetaData.loc[:,args.S_MetaData])
+MetaData.loc[:,args.S_MetaData]=[str(x) for x in MetaData.loc[:,args.S_MetaData]]
 temp_MetaData=MetaData[[args.S_MetaData]].copy()
 temp_MetaData=temp_MetaData.set_index(args.S_MetaData).copy()
-print args.Fields_val
+print(args.Fields_val)
 MetaData=MetaData.set_index(args.S_MetaData).copy()
 Final_Fields=[]
 for Field_val in args.Fields_val:
@@ -70,7 +71,7 @@ if args.P is not None:
         genes_file.drop(["Inference"],axis=1,inplace=True)
     #genes_file.rename(columns=lambda x: filter(lambda y: y in x ,new_MetaData.index)[0] if len(filter(lambda y: y in x ,new_MetaData.index))>0 else x, inplace=True)    
     #col=map(lambda x: filter(lambda y: x.startswith(y+'_') ,new_MetaData.index) if  len(filter(lambda y: x.startswith(y+'_') ,new_MetaData.index))==1 else x  ,genes_file.columns)
-    genes_file.rename(columns=lambda x: filter(lambda y: x.startswith(str(y)+'_') ,new_MetaData.index)[0] if  len(filter(lambda y: x.startswith(str(y)+'_') ,new_MetaData.index))==1 else x  , inplace=True)
+    genes_file.rename(columns=lambda x: filter(lambda y: x.startswith(str(y)+'_') ,new_MetaData.index)[0] if  len([y for y in new_MetaData.index if x.startswith(str(y)+'_')])==1 else x  , inplace=True)
     samples_names=genes_file.columns[14:]
     shared_samples= set(samples_names) & set(new_MetaData.index)
     new_MetaData=new_MetaData.ix[shared_samples].copy()

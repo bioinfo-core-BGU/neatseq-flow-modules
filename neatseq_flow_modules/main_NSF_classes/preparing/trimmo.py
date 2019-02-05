@@ -115,7 +115,7 @@ class Step_trimmo(Step):
                 # Use the dir it returns as the base_dir for this step.
                 use_dir = self.local_start(self.base_dir)
                 # Trimmomatic required CDing into specific dir:
-                if "spec_dir" in self.params.keys():
+                if "spec_dir" in list(self.params.keys()):
                     self.script += "cd " + self.params["spec_dir"] + "\n\n";
                 else:
                     self.write_warning("You did not supply a spec_dir param to %s. This may produce an error!\n")
@@ -171,7 +171,7 @@ class Step_trimmo(Step):
                 self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
 
 
-                if "spec_dir" in self.params.keys():
+                if "spec_dir" in list(self.params.keys()):
                     self.script += "cd " + self.pipe_data["home_dir"] + "\n\n";
                 
                             
@@ -188,7 +188,7 @@ class Step_trimmo(Step):
                 # Use the dir it returns as the base_dir for this step.
                 use_dir = self.local_start(self.base_dir)
                 # Trimmomatic required CDing into specific dir:
-                if "spec_dir" in self.params.keys():
+                if "spec_dir" in list(self.params.keys()):
                     self.script += "cd " + self.params["spec_dir"] + "\n\n";
                 else:
                     self.write_warning("You did not supply a spec_dir param to %s. This may produce an error!\n")
@@ -223,7 +223,7 @@ class Step_trimmo(Step):
                 self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
 
 
-                if "spec_dir" in self.params.keys():
+                if "spec_dir" in list(self.params.keys()):
                     self.script += "cd " + self.pipe_data["home_dir"] + "\n\n";
                 
                             

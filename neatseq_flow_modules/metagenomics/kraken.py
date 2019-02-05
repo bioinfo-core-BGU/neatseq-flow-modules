@@ -105,7 +105,7 @@ class Step_kraken(Step):
 
             
         # Checking this once and then applying to each sample:
-        if "--db" not in self.params["redir_params"].keys():
+        if "--db" not in list(self.params["redir_params"].keys()):
             raise AssertionExcept("--db not set.\n")
 
             
@@ -126,7 +126,7 @@ class Step_kraken(Step):
         merge_kraken_reports = resource_filename(__name__, 'merge_kraken_reports.R')
 
         ### Add code to create a unified krona plot
-        if "ktImportTaxonomy_path" in self.params.keys():
+        if "ktImportTaxonomy_path" in list(self.params.keys()):
             self.script += "# Running ktImportTaxonomy to create a krona chart for samples\n"
             self.script += "%s \\\n\t" % self.params["ktImportTaxonomy_path"]
             self.script += "-o %s \\\n\t" % (self.base_dir + self.sample_data["Title"] + "_krona_report.html")
@@ -154,7 +154,7 @@ class Step_kraken(Step):
         
     
         
-        if "--preload" not in self.params["redir_params"].keys():
+        if "--preload" not in list(self.params["redir_params"].keys()):
             self.write_warning("Not setting --preload, but it IS recommended...\n")
 
         # Each iteration must define the following class variables:
@@ -225,7 +225,7 @@ class Step_kraken(Step):
             self.script += "fi \n\n";
     
             ######### Step 4, create krona report:
-            if "ktImportTaxonomy_path" in self.params.keys():
+            if "ktImportTaxonomy_path" in list(self.params.keys()):
                 self.script += """
 # Create file for ktImportTaxonomy
 if [ -e %(krak_out)s ]

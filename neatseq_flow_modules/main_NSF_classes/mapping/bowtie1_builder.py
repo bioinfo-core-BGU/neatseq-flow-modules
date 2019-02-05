@@ -74,7 +74,7 @@ class Step_bowtie1_builder(Step):
         """
 
         
-        if "scope" not in self.params.keys():
+        if "scope" not in list(self.params.keys()):
             # Try guessing scope:
             try:  # Does a nucl fasta exist for project?
                 self.sample_data["project_data"]["fasta.nucl"]

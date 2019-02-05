@@ -186,11 +186,11 @@ class Step_merge(Step):
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),"merge_file_types.yml"),"r") as fileh:
             try:
                 self.default_src_trg_map = yaml.load("".join(fileh.readlines()),  Loader=yaml.SafeLoader)
-            except yaml.YAMLError, exc:
+            except yaml.YAMLError as exc:
                 if hasattr(exc, 'problem_mark'):
                     mark = exc.problem_mark
-                    print "Error position: (%s:%s)" % (mark.line+1, mark.column+1)
-                    print mark.get_snippet()
+                    print("Error position: (%s:%s)" % (mark.line+1, mark.column+1))
+                    print(mark.get_snippet())
                 raise AssertionExcept("Error loading file types index 'merge_file_types.yml'")
             except:
                 raise AssertionExcept("Error loading file types index 'merge_file_types.yml'")
@@ -199,11 +199,11 @@ class Step_merge(Step):
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),"merge_script_path_types.yml"),"r") as fileh:
             try:
                 self.script_path_map = yaml.load("".join(fileh.readlines()),  Loader=yaml.SafeLoader)
-            except yaml.YAMLError, exc:
+            except yaml.YAMLError as exc:
                 if hasattr(exc, 'problem_mark'):
                     mark = exc.problem_mark
-                    print "Error position: (%s:%s)" % (mark.line+1, mark.column+1)
-                    print mark.get_snippet()
+                    print("Error position: (%s:%s)" % (mark.line+1, mark.column+1))
+                    print(mark.get_snippet())
                 raise AssertionExcept("Error loading script_path index 'merge_script_path_types.yml'")
             except:
                 raise AssertionExcept("Error loading script_path index 'merge_script_path_types.yml'")
@@ -259,7 +259,7 @@ class Step_merge(Step):
 
         # Getting unique pairs of src and scope:
         uniq_src_scope = list(set(zip(src,scope)))
-        src, scope = zip(*uniq_src_scope)
+        src, scope = list(zip(*uniq_src_scope))
         src = list(src)
         scope = list(scope)
         # src = sample_src + project_src
@@ -267,14 +267,14 @@ class Step_merge(Step):
 
         # Removing types not in src/scope from sample_data
         for sample in self.sample_data["samples"]:
-            for src_p in self.sample_data[sample].keys():
+            for src_p in list(self.sample_data[sample].keys()):
                 if src_p in self.conserved_sample_types:  # Not removing 'type'!
                     continue
                 if (src_p, "sample") not in uniq_src_scope:
                     del(self.sample_data[sample][src_p])
         if "project_data" in self.sample_data:
             sample = "project_data"
-            for src_p in self.sample_data[sample].keys():
+            for src_p in list(self.sample_data[sample].keys()):
                 if src_p in self.conserved_sample_types:   # Not removing 'type'!
                     continue
                 if (src_p, "project") not in uniq_src_scope:
@@ -356,7 +356,7 @@ class Step_merge(Step):
             bad_srcs = []
             # Guessing 'trg'
             if not trg:
-                if src not in self.default_src_trg_map.keys():
+                if src not in list(self.default_src_trg_map.keys()):
                     self.write_warning("The following 'src' is  not recognized: {src}. "
                                        "Setting 'trg' to {trg}".format(src=src,trg=src))
                     self.params["trg"][src_ind] = src
@@ -364,7 +364,7 @@ class Step_merge(Step):
                     self.params["trg"][src_ind] = self.default_src_trg_map[src][0] 
                 # Guessing 'ext'
             if ext == None:
-                if src not in self.default_src_trg_map.keys():
+                if src not in list(self.default_src_trg_map.keys()):
                     self.write_warning("The following 'src' is  not recognized: {src}. "
                                        "Setting 'ext' to {ext}".format(src=src,ext=src.lower()))
                     self.params["ext"][src_ind] = src.lower()
@@ -373,7 +373,7 @@ class Step_merge(Step):
 
             # Guessing scope if None
             if not scope:
-                if all([src in self.sample_data[x].keys() for x in self.sample_data["samples"]]):
+                if all([src in list(self.sample_data[x].keys()) for x in self.sample_data["samples"]]):
                     self.params["scope"][src_ind] = "sample"
                 elif src in self.sample_data["project_data"]:
                     self.params["scope"][src_ind] = "project"
@@ -415,7 +415,7 @@ class Step_merge(Step):
                     else:
                         # Convert set to string:
                         src_exts = src_exts[0]
-                        if src_exts not in self.script_path_map.keys():
+                        if src_exts not in list(self.script_path_map.keys()):
                             raise AssertionExcept("Unidentified extension in source '{src}' ({ext}). Can't guess "
                                                   "'script_path'".format(src=src, ext=src_exts))
                         else:
@@ -441,7 +441,7 @@ class Step_merge(Step):
                                               "Can't guess 'script_path'".format(src=src, ext=", ".join(src_exts)))
                     # Convert set to string:
                     src_exts = src_exts[0]
-                    if src_exts not in self.script_path_map.keys():
+                    if src_exts not in list(self.script_path_map.keys()):
                         raise AssertionExcept("Unidentified extension in source '{src}' for project ({ext}). "
                                               "Can't guess 'script_path'".format(src=src, ext=src_exts))
                     else:
@@ -575,7 +575,7 @@ class Step_merge(Step):
                                               sample=sample)
                     # Convert set to string:
                     src_exts = src_exts[0]
-                    if src_exts not in self.script_path_map.keys():
+                    if src_exts not in list(self.script_path_map.keys()):
                         raise AssertionExcept("Unidentified extension in source '{src}' ({ext}). "
                                               "Can't guess 'script_path'".format(src=src, ext=src_exts),
                                               sample=sample)

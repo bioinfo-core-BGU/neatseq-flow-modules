@@ -102,15 +102,15 @@ class Step_qiime_sort_otu_table(Step):
         
         # Testing the existance of a legitimate mapping file in the pipeline parameter file or in self.sample_data:
         # Check if mapping file exists in parameters (overrides mapping from sample_data)
-        if "--mapping_fp" in self.params["redir_params"].keys() or "-m" in self.params["redir_params"].keys():
+        if "--mapping_fp" in list(self.params["redir_params"].keys()) or "-m" in list(self.params["redir_params"].keys()):
             # Check if mapping file exists in sample_data
-            if "qiime.mapping" in self.sample_data.keys():
+            if "qiime.mapping" in list(self.sample_data.keys()):
                 self.write_warning("Overriding existing mapping file. Make sure this is OK")
                 # mapping_fp = self.sample_data["project_data"]["qiime.mapping"]
 
-            self.sample_data["project_data"]["qiime.mapping"] = self.params["redir_params"]["--mapping_fp"] if "--mapping_fp" in self.params["redir_params"].keys() else self.params["redir_params"]["-m"]
+            self.sample_data["project_data"]["qiime.mapping"] = self.params["redir_params"]["--mapping_fp"] if "--mapping_fp" in list(self.params["redir_params"].keys()) else self.params["redir_params"]["-m"]
         else:
-            if "qiime.mapping" not in self.sample_data.keys():
+            if "qiime.mapping" not in list(self.sample_data.keys()):
                 raise AssertionExcept("No mapping file exists nor was it passed with -m")
         
         
@@ -148,7 +148,7 @@ class Step_qiime_sort_otu_table(Step):
         self.script += self.get_script_const()        # Gets the "env", "script_path" and "redir_params" part of the script which is always the same...
 
         # Add mapping file if not passed as redir parameter
-        if not "--mapping_fp" in self.params["redir_params"].keys() and not "-m" in self.params["redir_params"].keys():
+        if not "--mapping_fp" in list(self.params["redir_params"].keys()) and not "-m" in list(self.params["redir_params"].keys()):
             self.script += "--mapping_fp %s \\\n\t" % self.sample_data["project_data"]["qiime.mapping"]
 
         self.script += "-i %s \\\n\t" % self.sample_data["project_data"]["biom_table"]

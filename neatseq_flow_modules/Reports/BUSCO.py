@@ -123,7 +123,7 @@ You must specify a 'mode':
                     raise AssertionExcept("It seems there is no sample-wide %s fasta file." % self.type, sample)
         elif self.params["scope"] == "project":
             if ("fasta.%s" % self.type) not in self.sample_data["project_data"]:
-                print "in here"
+                print("in here")
                 raise AssertionExcept("It seems there is no project-wide %s fasta file." % self.type)
         else:
             raise AssertionExcept("'scope' must be either 'sample' or 'project'.")

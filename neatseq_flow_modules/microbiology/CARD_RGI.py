@@ -130,14 +130,14 @@ class Step_CARD_RGI(Step):
         
         # Initialize a dict fot CARD_RGI results
         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash            
-            if "CARD_RGI.json" in self.sample_data[sample].keys():
+            if "CARD_RGI.json" in list(self.sample_data[sample].keys()):
                 self.write_warning("That's strange, you already have a CARD_RGI slot defined for sample %s. Make sure you are not overwriting!\n" ,sample)
         
         
         sample_has_nucl = project_has_nucl = False
         if "scope" not in self.params:
             # If all samples have fasta.nucl:
-            if all(map(lambda x: "fasta.nucl" in self.sample_data[x], self.sample_data["samples"])):
+            if all(["fasta.nucl" in self.sample_data[x] for x in self.sample_data["samples"]]):
                 sample_has_nucl = True
             if "fasta.nucl" in self.sample_data:
                 project_has_nucl = True

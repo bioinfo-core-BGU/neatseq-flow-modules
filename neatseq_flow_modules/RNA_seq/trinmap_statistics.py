@@ -145,7 +145,7 @@ class Step_trinmap_statistics(Step):
 
         self.script += "--out_prefix %s \\\n\t" % os.sep.join([use_dir, prefix])
         # type2use is 'genes.results' or 'isoforms.results'. This is used to then select the correct slot from "mapping"
-        type2use = "genes.results" if "use_genes" in self.params.keys() else "isoforms.results"
+        type2use = "genes.results" if "use_genes" in list(self.params.keys()) else "isoforms.results"
         
         for sample in self.sample_data["samples"]:
             try:

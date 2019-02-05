@@ -118,7 +118,7 @@ class Step_macs2_bdgcmp(Step):
         # Each iteration must define the following class variables:
             # self.spec_script_name
             # self.script
-        for sample in self.sample_data["Controls"].keys():      # Getting list of samples out of Controls dict.
+        for sample in list(self.sample_data["Controls"].keys()):      # Getting list of samples out of Controls dict.
 
             # Make a dir for the current sample:
             sample_dir = self.make_folder_for_sample(sample)
@@ -150,10 +150,10 @@ class Step_macs2_bdgcmp(Step):
                 
             # Add lines for sample mapping files:
             self.script += "-t %s \\\n\t" % self.sample_data[sample]["treat_pileup"]
-            if not "nocontrol" in self.params.keys():
+            if not "nocontrol" in list(self.params.keys()):
                 self.script += "-c %s \\\n\t" % self.sample_data[sample]["control_lambda"]
             else:
-                print "Running bdgcmp with no control defined. I don;t know how this will work...\n"
+                print("Running bdgcmp with no control defined. I don;t know how this will work...\n")
 
                 
             # Add output directory
@@ -195,7 +195,7 @@ rm \\
 "OUT_CLIP"       : "%s%s.%s_%s.clip" % (use_dir,sample, self.file_tag, method2use)
 }
 
-                if "toTDF_path" in self.params.keys():
+                if "toTDF_path" in list(self.params.keys()):
                     self.script += """\n\n
 # Converting to TDF:
 %(toTDF_path)s  \\

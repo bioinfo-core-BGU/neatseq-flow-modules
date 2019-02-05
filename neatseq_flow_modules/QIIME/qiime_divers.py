@@ -100,10 +100,10 @@ class Step_qiime_divers(Step):
         self.file_tag = "qiime_divers"
         
         # Testing the existance of a legitimate parameter file in the pipeline parameter file:
-        if not "--parameter_fp" in self.params["redir_params"].keys() and not "-p" in self.params["redir_params"].keys():
+        if not "--parameter_fp" in list(self.params["redir_params"].keys()) and not "-p" in list(self.params["redir_params"].keys()):
             raise AssertionExcept("You must supply a parameter file\n")
         else:
-            temp_pf = self.params["redir_params"]["--parameter_fp"] if "--parameter_fp" in self.params["redir_params"].keys() else self.params["redir_params"]["-p"]
+            temp_pf = self.params["redir_params"]["--parameter_fp"] if "--parameter_fp" in list(self.params["redir_params"].keys()) else self.params["redir_params"]["-p"]
             # if not os.path.exists(temp_pf):
                 # self.write_warning("Note! The parameter file does not exist\n")
                 
@@ -121,25 +121,25 @@ class Step_qiime_divers(Step):
         # except KeyError:
             # raise AssertionExcept("It seems like qiime_demult is the first qiime step. At the moment, it must come after qiime_prep...\n" )
         
-        if not "sampling_depth" in self.params.keys() and \
+        if not "sampling_depth" in list(self.params.keys()) and \
            not "--sampling_depth" in self.params["redir_params"] and \
            not "-e" in self.params["redir_params"]:
             raise AssertionExcept("You must supply sampling depth for diversity analysis with redirected parameter "
                                   "--sampling_depth!! The location of the biom table is:\n{biom}\n".
                                   format(biom=self.sample_data["project_data"]["biom_table"]))
         # This is for backwards compatibility:
-        if "sampling_depth" in self.params.keys():
+        if "sampling_depth" in list(self.params.keys()):
             self.params["redir_params"]["--sampling_depth"] = self.params["sampling_depth"]
 
         # Testing the existance of a legitimate mapping file in the pipeline parameter file or in self.sample_data:
         # Check if mapping file exists in parameters (overrides mapping from sample_data)
-        if "--mapping_fp" in self.params["redir_params"].keys() or "-m" in self.params["redir_params"].keys():
+        if "--mapping_fp" in list(self.params["redir_params"].keys()) or "-m" in list(self.params["redir_params"].keys()):
             # Check if mapping file exists in sample_data
             if "qiime.mapping" in self.sample_data["project_data"]:
                 self.write_warning("Overriding existing mapping file. Make sure this is OK")
                 # mapping_fp = self.sample_data["project_data"]["qiime.mapping"]
 
-            self.sample_data["project_data"]["qiime.mapping"] = self.params["redir_params"]["--mapping_fp"] if "--mapping_fp" in self.params["redir_params"].keys() else self.params["redir_params"]["-m"]
+            self.sample_data["project_data"]["qiime.mapping"] = self.params["redir_params"]["--mapping_fp"] if "--mapping_fp" in list(self.params["redir_params"].keys()) else self.params["redir_params"]["-m"]
         else:
             if "qiime.mapping" not in self.sample_data["project_data"]:
                 raise AssertionExcept("No mapping file exists nor was it passed with -m")
@@ -193,7 +193,7 @@ class Step_qiime_divers(Step):
         if "phylotree" in self.sample_data["project_data"]:
             self.script += "--tree_fp %s \\\n\t" % self.sample_data["project_data"]["phylotree"]
         # Add mapping file if not passed as redir parameter
-        if not "--mapping_fp" in self.params["redir_params"].keys() and not "-m" in self.params["redir_params"].keys():
+        if not "--mapping_fp" in list(self.params["redir_params"].keys()) and not "-m" in list(self.params["redir_params"].keys()):
             self.script += "--mapping_fp %s \\\n\t" % self.sample_data["project_data"]["qiime.mapping"]
         self.script += "-i %(input)s \\\n\t-o %(output)s  \n\n" % {"input" : self.sample_data["project_data"]["biom_table"],\
                                                                                      "output" : use_dir + "core_div/"}

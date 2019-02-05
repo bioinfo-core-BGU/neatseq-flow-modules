@@ -78,7 +78,7 @@ class Step_CEAS(Step):
         """
         
         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-            if sample in self.sample_data["Controls"].values():      
+            if sample in list(self.sample_data["Controls"].values()):      
                 continue        # This is a control sample. Will not contain a "chip_seq" slot.
         
             if not "wig" in self.sample_data[sample]:
@@ -103,7 +103,7 @@ class Step_CEAS(Step):
         # Each iteration must define the following class variables:
             # self.spec_script_name
             # self.script
-        for sample in self.sample_data["Controls"].keys():      # Getting list of samples out of Controls dict.
+        for sample in list(self.sample_data["Controls"].keys()):      # Getting list of samples out of Controls dict.
 
             # Make a dir for the current sample:
             sample_dir = self.make_folder_for_sample(sample)

@@ -69,7 +69,7 @@ if args.FASTA:
     from Bio import AlignIO
     msa=AlignIO.read(args.F,"fasta")
     data=pd.DataFrame.from_records(msa)
-    data.index=list(map(lambda x:msa[int(x)].id,list(data.index)))
+    data.index=list([msa[int(x)].id for x in list(data.index)])
     data=data.drop(data.columns[data.apply(lambda x: len(re.findall("[- N]",x.sum().upper()))>0 ,axis=0)],axis=1)
     if args.Polymorphic_sites_only:
         data=data.drop(data.columns[data.apply(lambda x: len(list(set(x.sum().upper())))==1   ,axis=0)],axis=1)
@@ -88,14 +88,14 @@ for j in temp_data.index:
             temp_data.loc[temp_data.loc[:,i]==temp_data.loc[j,i],i]=i+"_"+str(j)
 
 
-temp_data.index=list(map(lambda x:str(x),temp_data.index))
+temp_data.index=list([str(x) for x in temp_data.index])
 
 if (args.M != None)&(args.Cut):
     MetaData = pd.read_csv(args.M , sep='\t',index_col=False, encoding="ISO-8859-1")
     MetaData=MetaData.set_index(args.S_MetaData,drop=False).copy()
-    MetaData.index=list(map(lambda x:str(x),MetaData.index))
+    MetaData.index=list([str(x) for x in MetaData.index])
     flag=1
-    temp_data=temp_data.loc[list(map(lambda x:x in MetaData.index,temp_data.index)),].copy()
+    temp_data=temp_data.loc[list([x in MetaData.index for x in temp_data.index]),].copy()
 
 args.Non_allelic.extend([args.S_Merged])
 args.Non_allelic.extend(args.Fields)
@@ -112,8 +112,8 @@ def cut_rows(temp_data,cutoff,Non_allelic_rows):
         if (float(sum(temp_data.ix[row]!='N'))/ float(temp_data.shape[1]))>=cutoff:
             stay.append(row)
         else:
-            print("The Sample %s has lower percentage of identified allele than the cutoff" % row )
-            print("%s"   % (float(sum(temp_data.ix[row]!='N'))/ float(temp_data.shape[1])))
+            print(("The Sample %s has lower percentage of identified allele than the cutoff" % row ))
+            print(("%s"   % (float(sum(temp_data.ix[row]!='N'))/ float(temp_data.shape[1]))))
     return  temp_data.ix[stay].copy()
 
 def cut_col(temp_data,Non_allelic):
@@ -161,7 +161,7 @@ if args.Tree:
             
     Tree_data=drop(new_temp_data,args.Non_allelic,0).copy()
     Tree_data=Tree_data.applymap(lambda x: str(x).upper()).copy()
-    x=pdist(Tree_data, lambda u, v:  sum([1 for i in xrange(len(u)) if u[i] != v[i]]) )
+    x=pdist(Tree_data, lambda u, v:  sum([1 for i in range(len(u)) if u[i] != v[i]]) )
     Z = linkage(x,method=args.Tree_method,optimal_ordering=True)
     tree = to_tree(Z,False)
     h=open(os.path.join(args.O,'Tree.%s' % "newick"),'w')
@@ -187,7 +187,7 @@ if args.M != None:
     if flag!=1:
         MetaData = pd.read_csv(args.M , sep='\t',index_col=False, encoding="ISO-8859-1")
         MetaData=MetaData.set_index(args.S_MetaData,drop=False).copy()
-        MetaData.index=list(map(lambda x:str(x),MetaData.index))
+        MetaData.index=list([str(x) for x in MetaData.index])
     MetaData=MetaData.join(new_temp_data["Index"])
     MetaData=MetaData.loc[~MetaData["Index"].isnull(),:]
     if args.Fields != None:

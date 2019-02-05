@@ -1,4 +1,4 @@
-from __future__ import division
+
 import os, re
 import pandas as pd
 import argparse
@@ -30,47 +30,47 @@ def run_on_GFF(gff_file,args,clusters):
         cog_file.append(gff_file.strip(".gff")+ " Contig_" + contig)        
         contig_Data=Data.loc[Data[0]==contig,].copy()
         contig_Data=contig_Data.loc[contig_Data[2]=="CDS",].copy()
-        contig_Data["locus_tag"]=map(lambda x: re.findall("ID=[A-z 0-9 _ . ,]+",x)[0].strip('ID='),contig_Data[8])
-        contig_Data["product"]=map(lambda x: re.findall("product=\S+",x)[0].strip('product='),contig_Data[8]) 
-        contig_Data["NAME"]=map(lambda x: re.findall("Name=[A-z 0-9 _ . ,]+",x)[0].strip('Name=') if "Name=" in x else re.findall("ID=[A-z 0-9 _ . ,]+",x)[0].strip('ID='),contig_Data[8])
+        contig_Data["locus_tag"]=[re.findall("ID=[A-z 0-9 _ . ,]+",x)[0].strip('ID=') for x in contig_Data[8]]
+        contig_Data["product"]=[re.findall("product=\S+",x)[0].strip('product=') for x in contig_Data[8]] 
+        contig_Data["NAME"]=[re.findall("Name=[A-z 0-9 _ . ,]+",x)[0].strip('Name=') if "Name=" in x else re.findall("ID=[A-z 0-9 _ . ,]+",x)[0].strip('ID=') for x in contig_Data[8]]
         
         cog_file.append(str(len(contig_Data))+ " proteins" )
-        cog_file=cog_file+map(lambda x: clusters.setdefault(contig_Data.loc[x,"locus_tag"],'0').replace("group_","")+"\t"+contig_Data.loc[x,6]+"\t?\t"+contig_Data.loc[x,"NAME"]+"\t" +
-                              contig_Data.loc[x,"product"] +"\t" +contig_Data.loc[x,"locus_tag"]+"\t" +contig_Data.loc[x,"product"]  ,contig_Data.index)
+        cog_file=cog_file+[clusters.setdefault(contig_Data.loc[x,"locus_tag"],'0').replace("group_","")+"\t"+contig_Data.loc[x,6]+"\t?\t"+contig_Data.loc[x,"NAME"]+"\t" +
+                              contig_Data.loc[x,"product"] +"\t" +contig_Data.loc[x,"locus_tag"]+"\t" +contig_Data.loc[x,"product"] for x in contig_Data.index]
         cog_file.append("")
     return cog_file
 
-print "Reading Clusters file..."
+print("Reading Clusters file...")
 
 with open(args.clusters,"rb") as h_file:
     clustered_proteins=h_file.readlines()
     h_file.close()
 clusters={}
-map(lambda x: map(lambda y: clusters.setdefault(y,clusters[y]+","+x.split(": ")[0]) if clusters.has_key(y) else  clusters.setdefault(y,x.split(": ")[0])   ,x.split(": ")[1].split("\t"))       ,clustered_proteins)
-print "Done Reading Clusters file!"
+list(map(lambda x: [clusters.setdefault(y,clusters[y]+","+x.split(": ")[0]) if y in clusters else  clusters.setdefault(y,x.split(": ")[0]) for y in x.split(": ")[1].split("\t")]       ,clustered_proteins))
+print("Done Reading Clusters file!")
 
 cog_file=[]
 if args.Bicluster!=None:
     Bicluster_h=open(args.Bicluster,"rb")
     Bicluster=Bicluster_h.readlines()
     Bicluster_h.close()
-    Bicluster=map(lambda x: x.strip().split("\t"),Bicluster)
+    Bicluster=[x.strip().split("\t") for x in Bicluster]
     for cluster in Bicluster:
         cog_file.append("Reference_clusters"+ " Contig_" + str(cluster[0] ))
         Data=cluster[1:]
         cog_file.append(str(len(Data))+ " proteins" )
-        cog_file=cog_file+map(lambda x: str(x).replace("group_","")+"\t+\t?\t"+"Reference_clusters_"+str(x)+"\t?\tReference_clusters_"+str(x)+"\t?" ,Data)
+        cog_file=cog_file+[str(x).replace("group_","")+"\t+\t?\t"+"Reference_clusters_"+str(x)+"\t?\tReference_clusters_"+str(x)+"\t?" for x in Data]
         cog_file.append("")
 
 
-files=filter(lambda x:len(re.findall(".gff$",x)) ,os.listdir(args.DIR))
+files=[x for x in os.listdir(args.DIR) if len(re.findall(".gff$",x))]
 Bar_wide=20
 pool = Pool(processes=args.processes)
 num_tasks=len(files)
 if args.processes>num_tasks:
     args.processes=num_tasks
 g=pool.imap_unordered(partial(run_on_GFF,args=args,clusters=clusters ), files,int(num_tasks/args.processes))
-print "START:"
+print("START:")
 sys.stdout.write("\r[{}] {:.0f}%".format("#" * 0 + "-" * (Bar_wide - 0),0))
 sys.stdout.flush() 
 for i, m in enumerate(g, 1):
@@ -80,8 +80,8 @@ for i, m in enumerate(g, 1):
     sys.stdout.write("\r[{}] {:.0f}%".format("#" * Done + "-" * (Bar_wide - Done),round(progress*100,0))) 
     sys.stdout.flush()
 pool.close()
-print ""
-cog_file=map(lambda x: x+"\n",cog_file )
+print("")
+cog_file=[x+"\n" for x in cog_file]
 with open(args.out,"wb") as h_file:
     h_file.writelines(cog_file)
     h_file.close()

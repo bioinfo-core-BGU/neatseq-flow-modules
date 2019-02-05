@@ -109,11 +109,11 @@ class Step_kaiju(Step):
         except KeyError:
             raise AssertionExcept("You must specify -t and -f as redirected params.\n")
             
-        if "-t" not in self.params["redir_params"].keys() or "-f" not in self.params["redir_params"].keys():
+        if "-t" not in list(self.params["redir_params"].keys()) or "-f" not in list(self.params["redir_params"].keys()):
             raise AssertionExcept("You must specify -t and -f as redirected params.\n")
 
 
-        if "kaiju2krona" in self.params.keys():
+        if "kaiju2krona" in list(self.params.keys()):
             if self.params["kaiju2krona"] == None:
                 self.params["kaiju2krona"] = "%s%s%s" % (os.path.basename(self.params["script_path"]), \
                                                             os.sep, \
@@ -200,7 +200,7 @@ class Step_kaiju(Step):
             self.sample_data[sample]["raw_classification"]        = "%s" % (sample_dir + os.path.basename(output_filename))
             self.stamp_file(self.sample_data[sample]["raw_classification"])
 
-            if "kaiju2krona" in self.params.keys():
+            if "kaiju2krona" in list(self.params.keys()):
                 
                 self.script += "# Creating text report for krona\n"
                 self.script += "%s \\\n\t" % self.params["kaiju2krona"]

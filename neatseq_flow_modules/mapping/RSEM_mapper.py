@@ -163,7 +163,7 @@ class Step_RSEM_mapper(Step):
 
             self.script += "{dir}{sample}\n\n".format(dir=sample_dir,sample=sample)
             # Saving bam files:
-            if "--output-genome-bam" in self.params["redir_params"].keys():
+            if "--output-genome-bam" in list(self.params["redir_params"].keys()):
                 if "--sort-bam-by-read-name" in self.params["redir_params"] or "--sort-bam-by-coordinate" in self.params["redir_params"]:
                     self.sample_data[sample]["genome.unsorted.bam"] = sample_dir + sample + ".genome.bam"
                     self.sample_data[sample]["genome.bam"] = sample_dir + sample + ".genome.sorted.bam"

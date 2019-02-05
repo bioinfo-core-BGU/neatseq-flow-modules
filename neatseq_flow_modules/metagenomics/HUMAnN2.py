@@ -125,12 +125,12 @@ class Step_HUMAnN2(Step):
         # if "--mpa_pkl" not in self.params["redir_params"].keys() or "--bowtie2db" not in self.params["redir_params"].keys():
             # raise AssertionExcept("You must specify --mpa_pkl and --bowtie2db as redirected params.\n")
 
-        if "--input-format" in self.params["redir_params"].keys():
+        if "--input-format" in list(self.params["redir_params"].keys()):
             self.write_warning("At the moment metaphlan supports only --input-format fastq. Ignoring the value you passed\n")
         
         self.params["redir_params"]["--input-format"] = "fastq"
         
-        if "--o-log" in self.params["redir_params"].keys():
+        if "--o-log" in list(self.params["redir_params"].keys()):
             self.write_warning("Ignoring the value you passed for --o-log.\nWill store data in sample specific location\n")
 
            
@@ -153,7 +153,7 @@ class Step_HUMAnN2(Step):
         """ Add stuff to check and agglomerate the output data
         """
         
-        if "join_tables" in self.params.keys():
+        if "join_tables" in list(self.params.keys()):
             
             # Get location of humann2 scripts:
             humann2_dir,main_script = os.path.split(self.params["script_path"])
@@ -162,7 +162,7 @@ class Step_HUMAnN2(Step):
             self.script += "%s \\\n\t" % (humann2_dir + os.sep + "humann2_join_tables")
             self.script += "-i %s \\\n\t" % self.base_dir
             self.script += "--search-subdirectories \\\n\t" 
-            if "renorm_table" in self.params.keys():
+            if "renorm_table" in list(self.params.keys()):
                 output_filename = "genefamilies.norm"
             else:
                 output_filename = "genefamilies"
@@ -178,7 +178,7 @@ class Step_HUMAnN2(Step):
             self.script += "%s \\\n\t" % (humann2_dir + os.sep + "humann2_join_tables")
             self.script += "-i %s \\\n\t" % self.base_dir
             self.script += "--search-subdirectories \\\n\t" 
-            if "renorm_table" in self.params.keys():
+            if "renorm_table" in list(self.params.keys()):
                 output_filename = "pathabundance.norm"
             else:
                 output_filename = "pathabundance"
@@ -236,7 +236,7 @@ class Step_HUMAnN2(Step):
 
             # If user passed bowtie2out or biom, change the value to sample specific values:
             # These are then added with redirected params
-            if "--o-log" in self.params["redir_params"].keys():
+            if "--o-log" in list(self.params["redir_params"].keys()):
                 self.params["redir_params"]["--o-log"] = "%s.log" % output_filename
 
 
@@ -267,7 +267,7 @@ class Step_HUMAnN2(Step):
             
             # Adding code for normalization if required
             
-            if "renorm_table" in self.params.keys():
+            if "renorm_table" in list(self.params.keys()):
                 self.script += "# Adding code for normalizing genefamilies and pathabundance tables\n\n"
                 # Get location of humann2 scripts:
                 humann2_dir,main_script = os.path.split(self.params["script_path"])

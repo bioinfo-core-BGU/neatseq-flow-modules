@@ -116,7 +116,7 @@ class Step_cgMLST_and_MLST_typing(Step):
             
         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
              # Testing for existance of parsed blast data
-            assert "blast.parsed" in self.sample_data[sample].keys(), \
+            assert "blast.parsed" in list(self.sample_data[sample].keys()), \
                 "In %s:\tThere are no parsed blast results for sample %s.\n" % (self.get_step_name(), sample)
 
         pass
@@ -148,15 +148,15 @@ class Step_cgMLST_and_MLST_typing(Step):
                 pars_dir = self.make_folder_for_sample("Data_for_Phyloviz")
                 self.script += "python %s \\\n\t" % os.path.join(self.module_location,"MLST_parser.py")
                 #Percentage of identified allele cutoff to consider sample [0.0 - 1.0]
-                if "sample_cutoff" in self.params.keys():
+                if "sample_cutoff" in list(self.params.keys()):
                     self.script += " -C %s \\\n\t" % self.params["sample_cutoff"]
-                if "metadata" in self.params.keys():
+                if "metadata" in list(self.params.keys()):
                     self.script += " -M %s \\\n\t" % self.params["metadata"]
                     #samples ID field in the metadata file
-                    if "metadata_samples_ID_field" in self.params.keys():
+                    if "metadata_samples_ID_field" in list(self.params.keys()):
                         self.script += " --S_MetaData %s \\\n\t" % self.params["metadata_samples_ID_field"]
                         #Use only samples with metadata information
-                        if "cut_samples_not_in_metadata" in self.params.keys():
+                        if "cut_samples_not_in_metadata" in list(self.params.keys()):
                             self.script += " --Cut  \\\n\t" 
                 self.script += " -F %s \\\n\t" % merge_file
                 if "--Type_col_name" in self.params["redir_params"]:
@@ -164,9 +164,9 @@ class Step_cgMLST_and_MLST_typing(Step):
                     self.script += " --Non_allelic '%s,%%s' \\\n\t" % 'Samples,Status,Percentage_of_missing_genes' % self.params["redir_params"]["--Type_col_name"]
                     #Fields in the merge file to move to the metadata file
                     self.script += " --Fields '%s,%%s' \\\n\t" % 'Status,Percentage_of_missing_genes' % self.params["redir_params"]["--Type_col_name"]
-                if "Tree" in self.params.keys():
+                if "Tree" in list(self.params.keys()):
                     self.script += " --Tree  \\\n\t" 
-                    if "Tree_method" in self.params.keys():
+                    if "Tree_method" in list(self.params.keys()):
                         self.script += " --Tree_method %s \\\n\t" % self.params["Tree_method"]
                     self.sample_data["project_data"]["newick"]=os.path.join(pars_dir,"Tree.newick")
  
@@ -222,10 +222,10 @@ class Step_cgMLST_and_MLST_typing(Step):
                     
 
 def set_global_Sample_data_dir(self,category,info,data):
-    if category not in self.sample_data.keys():
+    if category not in list(self.sample_data.keys()):
         self.sample_data["project_data"][category] = {}
-    if self.name not in self.sample_data["project_data"][category].keys():
+    if self.name not in list(self.sample_data["project_data"][category].keys()):
         self.sample_data["project_data"][category][self.name] = {}
-    if info not in self.sample_data["project_data"][category][self.name].keys():
+    if info not in list(self.sample_data["project_data"][category][self.name].keys()):
         self.sample_data["project_data"][category][self.name][info] = {}
     self.sample_data["project_data"][category][self.name][info] = data

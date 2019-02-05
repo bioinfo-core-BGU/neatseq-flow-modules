@@ -147,7 +147,7 @@ class Step_qiime_align_seqs(Step):
             # Adding --poll_directly: This will keep the original job "alive" while subprocesses are running. Important for keeping the downstream steps waiting for completion
             self.script += "--job_prefix %s \\\n\t--poll_directly \\\n\t"  % self.spec_script_name
 
-        for key in self.params["redir_params"].keys():
+        for key in list(self.params["redir_params"].keys()):
             self.script += "%s %s \\\n\t" % (key,self.params["redir_params"][key] if self.params["redir_params"][key] else "")
 
         if not set(["-t","--template_fp"]) & set(self.params["redir_params"].keys()):      # no template_fp was passed in redir_params:

@@ -166,7 +166,7 @@ class Step_spades_assembl(Step):
                     
                 # For prokka compliance, you can request a truncation of the contig names
                 # e.g. ">NODE_82_length_18610_cov_38.4999_ID_165" will be changed to ">NODE_82_length_18610"
-                if "truncate_names" in self.params.keys():
+                if "truncate_names" in list(self.params.keys()):
                     self.script += """
 # Truncating contig names for prokka compliance
 cat %(contigs)s  | cut -f 1-2 -d '_' > %(shortnames)s

@@ -207,14 +207,14 @@ class Step_bwa_mapper(Step):
                 
                 raise AssertionExcept("There is a mismatch between 'scope' and the existing bwa index\n", sample)
                 
-            if "ref_genome" in self.params.keys():
+            if "ref_genome" in list(self.params.keys()):
                 raise AssertionExcept("ref_genome was passed, and 'scope' was defined. Ignoring ref_genome\n")
         else:
             # If scope is not defined, require '-x'
             if not "ref_index" in self.params:
                 raise AssertionExcept("Neither 'scope' nor 'ref_index' specified.\n")
             # Storing reference genome for use by downstream steps:
-            if "ref_genome" in self.params.keys():
+            if "ref_genome" in list(self.params.keys()):
                 for sample in self.sample_data["samples"]:
                     # If reference already exists, ignore ref_genome
                     if "reference" in self.sample_data[sample]:
@@ -255,7 +255,7 @@ class Step_bwa_mapper(Step):
             
             if self.params["mod"] in ["aln"]:
                 
-                for direction in filter(lambda x: x in ["fastq.F","fastq.R","fastq.S"], self.sample_data[sample].keys()):
+                for direction in [x for x in list(self.sample_data[sample].keys()) if x in ["fastq.F","fastq.R","fastq.S"]]:
 
                     self.script = ""
                     direction_tag = direction[-1] # Get last letter in direction
@@ -339,11 +339,11 @@ class Step_bwa_mapper(Step):
 
                 # Add reads
                 if self.params["mod"] in ["mem"]:
-                    if "fastq.F" in self.sample_data[sample].keys():
+                    if "fastq.F" in list(self.sample_data[sample].keys()):
                         self.script += "%s \\\n\t%s\\\n\t" % \
                             (self.sample_data[sample]["fastq.F"],
                             self.sample_data[sample]["fastq.R"])
-                    elif "fastq.S" in self.sample_data[sample].keys():
+                    elif "fastq.S" in list(self.sample_data[sample].keys()):
                         self.script += "%s \\\n\t" % self.sample_data[sample]["fastq.S"]
                     else:
                         pass

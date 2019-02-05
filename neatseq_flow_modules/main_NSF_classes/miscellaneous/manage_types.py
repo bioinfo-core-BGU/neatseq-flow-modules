@@ -103,14 +103,14 @@ class Step_manage_types(Step):
         if not isinstance(self.params["scope"], list):
             self.params["scope"] = re.split(pattern="\s*,\s*", string=self.params["scope"])
 
-        if any(map(lambda x: x not in ["sample", "project"], self.params["scope"])):
+        if any([x not in ["sample", "project"] for x in self.params["scope"]]):
             raise AssertionExcept("'scope' param must be 'sample' or 'project'")
 
         if "operation" not in self.params:
             raise AssertionExcept("You must pass an 'operation' parameter!")
         if not isinstance(self.params["operation"], list):
             self.params["operation"] = re.split(pattern="\s*,\s*", string=self.params["operation"])
-        if any(map(lambda x: x not in ["del","mv","cp","add"], self.params["operation"])):
+        if any([x not in ["del","mv","cp","add"] for x in self.params["operation"]]):
             raise AssertionExcept("'operation' must be one of 'del','mv','cp' and 'add'!")
 
         if "type" not in self.params:
@@ -126,9 +126,9 @@ class Step_manage_types(Step):
         # Check all lists have len 1 or same length
         active_params = set(["scope","operation","type","scope_trg", "type_trg", "path"]) & set(self.params.keys())
         # Get those params with len>1 (i.e., lists)
-        list_params = filter(lambda x: len(self.params[x])>1, active_params)
-        str_params =  filter(lambda x: len(self.params[x])==1, active_params)
-        if len(set(map(lambda x: len(self.params[x]), list_params))) > 1:
+        list_params = [x for x in active_params if len(self.params[x])>1]
+        str_params =  [x for x in active_params if len(self.params[x])==1]
+        if len(set([len(self.params[x]) for x in list_params])) > 1:
             raise AssertionExcept("More than one list with len>1 specified! (%s)" % ", ".join(list_params))
         # Extend all len-1 lists to required_len:
         if list_params:

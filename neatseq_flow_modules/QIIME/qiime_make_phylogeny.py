@@ -107,7 +107,7 @@ class Step_qiime_make_phylogeny(Step):
         # Use the dir it returns as the base_dir for this step.
         use_dir = self.local_start(self.base_dir)
 
-        if "fasta.aligned" not in self.sample_data.keys():
+        if "fasta.aligned" not in list(self.sample_data.keys()):
             raise AssertionExcept("You are trying to run 'make_phylogeny' on an unaligned fasta file!\n")
         outfile = os.path.basename(self.sample_data["project_data"]["fasta.nucl"])
         outfile = re.sub("\.(fas|fasta|fna|fa)$","",outfile) + ".tre"

@@ -145,7 +145,7 @@ class Step_samtools(Step):
         # or ["project_data"] for project scope
         if self.params["scope"] == "project":
             sample_list = ["project_data"]
-            if "merge" in self.params.keys():
+            if "merge" in list(self.params.keys()):
                 raise AssertionExcept("project scope not defined for samtools merge")
         elif self.params["scope"] == "sample":
             sample_list = self.sample_data["samples"]
@@ -179,7 +179,7 @@ class Step_samtools(Step):
         """ Add stuff to check and agglomerate the output data
         """
         # -------------- samtools merge ------------------
-        if "merge" in self.params.keys():
+        if "merge" in list(self.params.keys()):
             sample_dir = self.make_folder_for_sample()
 
             # Name of specific script:
@@ -240,7 +240,7 @@ class Step_samtools(Step):
             sort_suffix = ".srt"
             index_suffix = ".bai"
 
-            if "view" in self.params.keys():
+            if "view" in list(self.params.keys()):
 
                 output_type = "bam" if re.search("\-\w*b", self.params["view"]) else "sam"
                 outfile = ".".join([os.path.basename(active_file), output_type])
@@ -293,7 +293,7 @@ cp -fs {active_file} {here}
                 self.sample_data[sample]["bam"] = sample_dir + os.path.basename(active_file)
 
             # The following can be merged into the main 'view' section
-            if "filter_by_tag" in self.params.keys():
+            if "filter_by_tag" in list(self.params.keys()):
                 # outfile = os.path.basename(active_file) + filter_suffix
                 outfile = filter_suffix.join(os.path.splitext(os.path.basename(active_file)))
 
@@ -316,7 +316,7 @@ cp -fs {active_file} {here}
            active_file=active_file,
            query=self.params["filter_by_tag"],
            outfile=use_dir+outfile,
-           rm_unfilt="# Removing unfiltered BAM\nrm -rf "+active_file if "del_unfiltered" in self.params.keys() else "")
+           rm_unfilt="# Removing unfiltered BAM\nrm -rf "+active_file if "del_unfiltered" in list(self.params.keys()) else "")
 
                 # Storing filtered and unfiltered bams:
                 self.sample_data[sample]["unfiltered_bam"] = active_file
@@ -324,7 +324,7 @@ cp -fs {active_file} {here}
                 self.stamp_file(self.sample_data[sample]["bam"])
                 active_file = use_dir + outfile
 
-            if "sort" in self.params.keys():
+            if "sort" in list(self.params.keys()):
                 if "bam" not in self.sample_data[sample]:
                     raise AssertionExcept("Can't run 'sort', as no BAM is defined", sample)
                 # outfile = os.path.basename(active_file) + sort_suffix
@@ -344,7 +344,7 @@ cp -fs {active_file} {here}
            params="" if not self.params["sort"] else "\n\t"+self.params["sort"]+" \\",
            outf=(use_dir + outfile),
            active_file=active_file,
-           rm_unsort="# Removing unsorted BAM\nrm -rf "+active_file if "del_unsorted" in self.params.keys() else "")
+           rm_unsort="# Removing unsorted BAM\nrm -rf "+active_file if "del_unsorted" in list(self.params.keys()) else "")
 
                 # Storing sorted bam in 'bam' slot and unsorted bam in unsorted_bam slot
                 self.sample_data[sample]["unsorted_bam"] = active_file
@@ -352,7 +352,7 @@ cp -fs {active_file} {here}
                 self.stamp_file(self.sample_data[sample]["bam"])
                 active_file = use_dir + outfile
 
-            if "index" in self.params.keys():
+            if "index" in list(self.params.keys()):
 
                 self.script += """\
 ###########
@@ -370,7 +370,7 @@ cp -fs {active_file} {here}
 
 
             for comm in ["flagstat","stats","idxstats"]:
-                if comm in self.params.keys():
+                if comm in list(self.params.keys()):
                     outfile = ".".join([os.path.basename(active_file), comm])
 
                     self.script += """\
@@ -430,7 +430,7 @@ cp -fs {active_file} {here}
                     self.sample_data[sample][type+".S"] = "%s%s.S.%s" % (sample_dir, os.path.basename(active_file), type)
                     self.stamp_file(self.sample_data[sample][type+".S"])
 
-            if "del_sam" in self.params.keys() and "sam" in self.sample_data[sample]:
+            if "del_sam" in list(self.params.keys()) and "sam" in self.sample_data[sample]:
                 self.script += """\
 ###########
 # Removing SAM

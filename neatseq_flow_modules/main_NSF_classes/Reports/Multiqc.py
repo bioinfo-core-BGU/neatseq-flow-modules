@@ -109,12 +109,12 @@ class Step_Multiqc(Step):
             dir_base_list = get_base_dirs_str(self)
         
         self.script += "%s \\\n\t" % " ".join(dir_base_list)
-        if "modules" in self.params.keys():
+        if "modules" in list(self.params.keys()):
             if self.params["modules"]!="All":
                 modules=self.params["modules"].split(",")
                 for module in modules:
                     self.script += "-m %s \\\n\t" % module
-        elif "modules_exclude" in self.params.keys():
+        elif "modules_exclude" in list(self.params.keys()):
             modules=self.params["modules_exclude"].split(",")
             for module in modules:
                 self.script += "-e %s \\\n\t" % module

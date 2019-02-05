@@ -145,7 +145,7 @@ class Step_clc_assembl(Step):
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
 
                 if "PE" in self.sample_data[sample]["type"] and "SE" in self.sample_data[sample]["type"]:
-                    print >> sys.stdout, "CLC assembler not defined for PE-SE mixes. Using PE file only..."
+                    print("CLC assembler not defined for PE-SE mixes. Using PE file only...", file=sys.stdout)
                 if "PE" in self.sample_data[sample]["type"]:
                     try:
                         self.script += "-p %s \\\n\t-q \\\n\t" % self.params["p"]
@@ -196,7 +196,7 @@ class Step_clc_assembl(Step):
                 self.script += "-o %s \\\n\t" % output_file
 
                 if "mixed" in self.sample_data[sample]["type"]:
-                    print >> sys.stdout, "CLC assembler not defined for PE-SE mixes. Using PE file only..."
+                    print("CLC assembler not defined for PE-SE mixes. Using PE file only...", file=sys.stdout)
                 if "PE" in self.sample_data[sample]["type"] or "mixed" in self.sample_data[sample]["type"]:
                     self.script += "-p %s \\\n\t-q \\\n\t" % self.params["p"]
                     self.script += "-i %s %s\n\n" % (self.sample_data[sample]["fastq.F"],self.sample_data[sample]["fastq.R"])

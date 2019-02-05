@@ -148,16 +148,16 @@ class Step_DeSeq2(Step):
         self.HTSeq_SAMPLES=[]
         
         for sample in self.sample_data["samples"]:
-            if 'RSEM' in self.sample_data[sample].keys():
+            if 'RSEM' in list(self.sample_data[sample].keys()):
                 self.RSEM_FILES.append(self.sample_data[sample]['RSEM']+'.genes.results' )
                 self.RSEM_SAMPLES.append(sample)
-            elif 'genes.counts' in self.sample_data[sample].keys():
+            elif 'genes.counts' in list(self.sample_data[sample].keys()):
                 self.RSEM_FILES.append(self.sample_data[sample]['genes.counts'])
                 self.RSEM_SAMPLES.append(sample)
-            elif 'genes.results' in self.sample_data[sample].keys():
+            elif 'genes.results' in list(self.sample_data[sample].keys()):
                 self.RSEM_FILES.append(self.sample_data[sample]['genes.results'])
                 self.RSEM_SAMPLES.append(sample)
-            if 'HTSeq.counts' in self.sample_data[sample].keys():
+            if 'HTSeq.counts' in list(self.sample_data[sample].keys()):
                 self.HTSeq_FILES.append(self.sample_data[sample]['HTSeq.counts'])
                 self.HTSeq_SAMPLES.append(sample)
         
@@ -190,7 +190,7 @@ class Step_DeSeq2(Step):
             else:
                 raise AssertionExcept("The file %s is not found in the DeSeq2 module directory" % "DeSeq2_module.R" )
 
-        if ("use_click" in self.params.keys()) and ("--CLICK_PATH" not in self.params["redir_params"]):
+        if ("use_click" in list(self.params.keys())) and ("--CLICK_PATH" not in self.params["redir_params"]):
             if "click.exe" in os.listdir(self.module_location):
                 self.params["redir_params"]["--CLICK_PATH"] = os.path.join(self.module_location,"click.exe")
                 self.params["redir_params"]["--FUNcluster"] = 'click'
@@ -213,7 +213,7 @@ class Step_DeSeq2(Step):
                     self.script += "--COUNT_DATA_FILE %s \\\n\t" %  str(self.HTSeq_FILES).replace('[','').replace(']','').replace('"','').replace(', ',',').replace("'",'') 
                     self.script += "--SAMPLES %s \\\n\t" %  str(self.HTSeq_SAMPLES).replace('[','').replace(']','').replace('"','').replace(', ',',').replace("'",'') 
                     self.script += "--COUNT_SOURCE %s \\\n\t" %  'HTSEQ' 
-                elif "results" in self.sample_data["project_data"].keys():
+                elif "results" in list(self.sample_data["project_data"].keys()):
                     self.script += "--COUNT_DATA_FILE %s \\\n\t" %  self.sample_data["project_data"]["results"]
                     self.script += "--COUNT_SOURCE %s \\\n\t" %  'Matrix' 
                 else:
@@ -227,14 +227,14 @@ class Step_DeSeq2(Step):
                     self.script += "--COUNT_DATA_FILE %s \\\n\t" %  str(self.HTSeq_FILES).replace('[','').replace(']','').replace('"','').replace(', ',',').replace("'",'') 
                     self.script += "--SAMPLES %s \\\n\t" %  str(self.HTSeq_SAMPLES).replace('[','').replace(']','').replace('"','').replace(', ',',').replace("'",'') 
                     self.script += "--COUNT_SOURCE %s \\\n\t" %  'HTSEQ' 
-                elif ("results" in self.sample_data["project_data"].keys()) and (self.params["redir_params"]["--COUNT_SOURCE"] == 'Matrix'):
+                elif ("results" in list(self.sample_data["project_data"].keys())) and (self.params["redir_params"]["--COUNT_SOURCE"] == 'Matrix'):
                     self.script += "--COUNT_DATA_FILE %s \\\n\t" %  self.sample_data["project_data"]["results"]
                     self.script += "--COUNT_SOURCE %s \\\n\t" %  'Matrix' 
                 else:
                     raise AssertionExcept("Could not fined %s count data " % self.params["redir_params"]["--COUNT_SOURCE"])
             
             
-            if ('trino.rep' in self.sample_data["project_data"].keys()) and ("--Trinotate" not in self.params["redir_params"].keys()) :
+            if ('trino.rep' in list(self.sample_data["project_data"].keys())) and ("--Trinotate" not in list(self.params["redir_params"].keys())) :
                 self.script += "--Trinotate %s \\\n\t" % self.sample_data["project_data"]['trino.rep']
             
             

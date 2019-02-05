@@ -73,7 +73,7 @@ class Step_bowtie2_builder(Step):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         # self.file_tag = "Bowtie_mapper"
         
-        if not "scope" in self.params.keys():
+        if not "scope" in list(self.params.keys()):
             raise AssertionExcept("You must specify scope as 'project' or 'sample'\n")
         
 
@@ -107,7 +107,7 @@ class Step_bowtie2_builder(Step):
             except KeyError:
                 raise AssertionExcept("No 'fasta.nucl' defined. Can't build index\n", sample)
             else:
-                if "bowtie2.index" in self.sample_data[sample].keys():
+                if "bowtie2.index" in list(self.sample_data[sample].keys()):
                     raise AssertionExcept("bowtie2 index already exists for sample.\n", sample)
             
         # else:

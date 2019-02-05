@@ -34,7 +34,7 @@ for file_name in files:
 		Data_FPKM=pd.concat([Data_FPKM,temp_FPKM],axis=1)
 if flag!=0:
 	with pd.option_context('display.max_rows', None, 'display.max_columns', None):
-		print Data_counts.to_csv(sep="\t",index=True)
+		print(Data_counts.to_csv(sep="\t",index=True))
 	if len(path)>0:
 		Data_TPM.to_csv(os.sep.join([path,prefix+"TPM"]) ,sep='\t',index=True)
 		Data_FPKM.to_csv(os.sep.join([path,prefix+"FPKM"]) ,sep='\t',index=True)

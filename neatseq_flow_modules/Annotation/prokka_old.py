@@ -129,7 +129,7 @@ class Step_prokka_old(Step):
         sample_has_nucl = project_has_nucl = False
         if "scope" not in self.params:
             # If all samples have fasta.nucl:
-            if all(map(lambda x: "fasta.nucl" in self.sample_data[x], self.sample_data["samples"])):
+            if all(["fasta.nucl" in self.sample_data[x] for x in self.sample_data["samples"]]):
                 sample_has_nucl = True
             if "fasta.nucl" in self.sample_data:
                 project_has_nucl = True
@@ -164,7 +164,7 @@ class Step_prokka_old(Step):
         """
         
         if self.params["scope"] == "sample":
-            if "generate_GFF_dir" in self.params.keys():
+            if "generate_GFF_dir" in list(self.params.keys()):
                 
                 gff_dir = "%sgff_file_links%s" % (self.base_dir, os.sep)
                 
@@ -204,7 +204,7 @@ class Step_prokka_old(Step):
 
                 # Setting "--locustag","--genus","--species","--strain" to sample if they are passed but not set.
                 for element in ["--locustag","--genus","--species","--strain"]:
-                    if element in self.params["redir_params"].keys() and not self.params["redir_params"][element]:
+                    if element in list(self.params["redir_params"].keys()) and not self.params["redir_params"][element]:
                         self.params["redir_params"][element] = sample
                 
                 self.script += self.get_script_const()   
@@ -242,7 +242,7 @@ class Step_prokka_old(Step):
 
             # Setting "--locustag","--genus","--species","--strain" to sample if they are passed but not set.
             for element in ["--locustag","--genus","--species","--strain"]:
-                if element in self.params["redir_params"].keys() and not self.params["redir_params"][element]:
+                if element in list(self.params["redir_params"].keys()) and not self.params["redir_params"][element]:
                     self.params["redir_params"][element] = self.sample_data["Title"]
             
             self.script += self.get_script_const()   

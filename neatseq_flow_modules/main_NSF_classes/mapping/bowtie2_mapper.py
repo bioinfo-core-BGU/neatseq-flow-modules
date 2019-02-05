@@ -146,14 +146,14 @@ class Step_bowtie2_mapper(Step):
                 # raise exc
                 raise AssertionExcept("There is a mismatch between 'scope' and the existing bowtie2 index\n", sample)
                 
-            if "ref_genome" in self.params.keys():
+            if "ref_genome" in list(self.params.keys()):
                 raise AssertionExcept("ref_genome was passed, and 'scope' was defined. Ignoring ref_genome\n")
         else:
             # If scope is not defined, require '-x'
             if not "-x" in self.params["redir_params"]:
                 raise AssertionExcept("Neither 'scope' nor '-x' specified.\n")
             # Storing reference genome for use by downstream steps:
-            if "ref_genome" in self.params.keys():
+            if "ref_genome" in list(self.params.keys()):
                 for sample in self.sample_data["samples"]:
                     # If reference already exists, ignore ref_genome
                     if "reference" in self.sample_data[sample]:
@@ -218,9 +218,9 @@ class Step_bowtie2_mapper(Step):
             
                 
             # assert set("fastq.F","fastq.R","fastq.S") & self.sample_data["sample"].keys(), "There are no reads for sample %s" % sample
-            if "fastq.F" in self.sample_data[sample].keys():
+            if "fastq.F" in list(self.sample_data[sample].keys()):
                 self.script += "-1 %s \\\n\t-2 %s \\\n\t" % (self.sample_data[sample]["fastq.F"],self.sample_data[sample]["fastq.R"])
-            if "fastq.S" in self.sample_data[sample].keys():
+            if "fastq.S" in list(self.sample_data[sample].keys()):
                 self.script += "-U %s \\\n\t" % self.sample_data[sample]["fastq.S"]
 
             
@@ -228,7 +228,7 @@ class Step_bowtie2_mapper(Step):
             
             self.script += "--met-file %s.stats \\\n\t" % output_prefix
             self.script += "-S %s.sam " % output_prefix
-            if "get_map_log" in self.params.keys():
+            if "get_map_log" in list(self.params.keys()):
                 self.script += "\\\n\t2> %s.log\n\n" % output_prefix
             else:
                 self.script += " \n\n";

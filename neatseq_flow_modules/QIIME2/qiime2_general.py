@@ -106,7 +106,7 @@ import os
 import sys
 import re
 from neatseq_flow.PLC_step import Step,AssertionExcept
-from qiime2_functions import *
+from .qiime2_functions import *
 import yaml
 try:
     # from yaml import CLoader as Loader
@@ -139,11 +139,11 @@ class Step_qiime2_general(Step):
         if self.plugin not in self.qiime_args:
             raise AssertionExcept("Plugin '{plugin}' is not one of: {plugins}!".
                                   format(plugin=self.plugin,
-                                         plugins=", ".join(self.qiime_args.keys())))
+                                         plugins=", ".join(list(self.qiime_args.keys()))))
         if self.method not in self.qiime_args[self.plugin]:
             raise AssertionExcept("Plugin '{method}' is not one of: {methods}!".
                                   format(method=self.method,
-                                         methods=", ".join(self.qiime_args[self.plugin].keys())))
+                                         methods=", ".join(list(self.qiime_args[self.plugin].keys()))))
         # Get argument index for method
         self.method_index = self.qiime_args[self.plugin][self.method]
 
@@ -169,7 +169,7 @@ class Step_qiime2_general(Step):
 
         # for inpflag,inptype in self.method_index["inputs"].iteritems():
 
-        for inpflag,inptype in all_inputs.iteritems():
+        for inpflag,inptype in all_inputs.items():
             # Convert single value strings into lists:
             if isinstance(inptype,str):
                 inptype = [inptype]
@@ -242,7 +242,7 @@ class Step_qiime2_general(Step):
             if isinstance(self.method_index["required"], str):
                 self.method_index["required"] = [self.method_index["required"]]
 
-            if not all(map(lambda x: x in self.params["redir_params"], self.method_index["required"])):
+            if not all([x in self.params["redir_params"] for x in self.method_index["required"]]):
                 raise AssertionExcept("The following parameters are required for method {method} of plugin {plugin}: "
                                       "{required}".format(plugin=self.plugin,
                                                           method=self.method,
@@ -285,13 +285,13 @@ class Step_qiime2_general(Step):
         # Build inputs part:
         inputs = " \\\n\t".join([" ".join([inp, self.sample_data[sample][typ]])
                                  for inp, typ
-                                 in self.input_dict.iteritems()])
+                                 in self.input_dict.items()])
 
         # Build inputs part:
         if "store_output" in self.params:
             output_index = {outp:typ
                             for outp, typ
-                            in self.method_index["outputs"].iteritems()
+                            in self.method_index["outputs"].items()
                             if outp in self.params["store_output"]}
             # output_index["--output-dir"] = "results_dir"
         else:
@@ -307,7 +307,7 @@ class Step_qiime2_general(Step):
                                                                  outp=edit_qiime_params(outp))])
              for outp, typ
              # in self.method_index["outputs"].iteritems()])
-             in output_index.iteritems()])
+             in output_index.items()])
 
         # Create script
         self.script = """\
@@ -330,7 +330,7 @@ if [ -e {dir}{outdir} ]; then rm -rf {dir}{outdir}; fi
 
         self.script += "\n\n"
 
-        for outp, typ in output_index.iteritems():
+        for outp, typ in output_index.items():
             self.sample_data[sample][typ] = "{dir}{title}.{method}.{outp}.{ext}". \
                                                                             format(dir=sample_dir,
                                                                                    title=self.sample_data["Title"],

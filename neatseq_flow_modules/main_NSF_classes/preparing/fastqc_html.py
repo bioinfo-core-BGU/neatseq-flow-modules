@@ -93,14 +93,14 @@ class Step_fastqc_html(Step):
 
         # Assert that all samples have reads files:
         # for sample in self.sample_data["samples"]:
-            if not filter(lambda x: x in ["fastq.F", "fastq.R", "fastq.S"], self.sample_data[sample].keys()):
+            if not [x for x in list(self.sample_data[sample].keys()) if x in ["fastq.F", "fastq.R", "fastq.S"]]:
                 raise AssertionExcept("No read files defined\n", sample)
 
         
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
-        if "sum_script" in self.params.keys():
+        if "sum_script" in list(self.params.keys()):
             raise AssertionExcept("Option 'sum_script' no longer supported. Use MultiQC instead!")
             # self.script = "%(script)s \\\n\t-d %(indir)s \\\n\t-o %(outdir)s\n\n" % \
             #         {"script" : self.params["sum_script"],
@@ -147,7 +147,7 @@ class Step_fastqc_html(Step):
             self.script += "--outdir " + use_dir
             
             for direction in ("fastq.F","fastq.R","fastq.S"):
-                if direction in self.sample_data[sample].keys():
+                if direction in list(self.sample_data[sample].keys()):
                     self.script += " \\\n\t" + self.sample_data[sample][direction] 
             self.script += "\n\n";
             
@@ -155,7 +155,7 @@ class Step_fastqc_html(Step):
             # Create temporary dict to store the output file names:
             temp_dict = {}
             for direction in ("fastq.F","fastq.R","fastq.S"):
-                if direction in self.sample_data[sample].keys():
+                if direction in list(self.sample_data[sample].keys()):
                     # temp_dict[direction] = {}
                     file_basename = os.path.basename(self.sample_data[sample][direction])
                     for type in ["zip","html"]:

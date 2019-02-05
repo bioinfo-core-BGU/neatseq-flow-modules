@@ -114,7 +114,7 @@ class Step_qiime_pick_otus(Step):
             # self.script += "env %s \\\n\t" % self.params["env"]
         # self.script += self.params["script_path"] + " \\\n\t"
         self.script += self.get_script_env_path()
-        for key in self.params["redir_params"].keys():
+        for key in list(self.params["redir_params"].keys()):
             self.script += "%s %s \\\n\t" % (key,self.params["redir_params"][key])
         self.script += "-i %s \\\n\t" % self.sample_data["project_data"]["fasta.nucl"]
         # self.script += "-o %s \n\n" % self.base_dir

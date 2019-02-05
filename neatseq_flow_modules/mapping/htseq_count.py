@@ -82,7 +82,7 @@ class Step_htseq_count(Step):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = "HTSeqCount"
 
-        if not "gff" in self.params.keys():
+        if not "gff" in list(self.params.keys()):
             raise AssertionExcept("You must pass a 'gff' parameter.")
 
         if "-f" in self.params["redir_params"] and "--format" in self.params["redir_params"]:

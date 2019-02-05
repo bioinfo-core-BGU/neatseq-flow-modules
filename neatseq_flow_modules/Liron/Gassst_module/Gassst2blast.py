@@ -13,22 +13,22 @@ f=open(args.input,"r")
 lines=f.readlines()
 f.close()
 data=pd.DataFrame()
-BANKs=filter(lambda x:x.startswith("BANK"),lines)
-QUERYs=filter(lambda x:x.startswith("QUERY"),lines)
-BANKs_fields=map(lambda y: filter(lambda x:x!='' ,re.split("\s",y) ) ,BANKs)
-QUERYs_fields=map(lambda y:filter(lambda x:x!='' ,re.split("\s",y) ),QUERYs)
-gaps=map(lambda z: float(z[0].replace('gap(s):','')),filter(lambda y: len(y)>0 ,map(lambda x: re.findall('gap\(s\):[0-9 ]+',x),lines )))
-mismatches=map(lambda z: float(z[0].replace('# mismatche(s):','')),filter(lambda y: len(y)>0 ,map(lambda x: re.findall('# mismatche\(s\):[0-9 ]+',x),lines )))
-data["qseqid"]=map(lambda x: x[-1], QUERYs_fields)
-data["sseqid"]=map(lambda x: x[-1], BANKs_fields)
-data["qlen"]=map(lambda x: abs(int(x[3]) -int(x[1]) )+1, QUERYs_fields)
-data["slen"]=map(lambda x: abs(int(x[3]) -int(x[1]) )+1, BANKs_fields)
-data["qstart"]=map(lambda x: int(x[1]), QUERYs_fields)
-data["qend"]=map(lambda x: int(x[3]), QUERYs_fields)
-data["sstart"]=map(lambda x: int(x[1]), BANKs_fields)
-data["send"]=map(lambda x: int(x[3]), BANKs_fields)
-data["length"]=map(lambda x: len(x[2]), BANKs_fields)                  
-data["evalue"]=map(lambda z: float(z[0].replace('e-value:','')),filter(lambda y: len(y)>0 ,map(lambda x: re.findall('e-value:[0-9 e \- \+ \.]+',x),lines )))
-data["pident"]=map(lambda gap,mis,alen: 100*(1-((gap+mis)/alen)),gaps,mismatches,data["length"])
-data["sseq"]=map(lambda x: x[2].upper(), BANKs_fields)   
+BANKs=[x for x in lines if x.startswith("BANK")]
+QUERYs=[x for x in lines if x.startswith("QUERY")]
+BANKs_fields=[[x for x in re.split("\s",y) if x!=''] for y in BANKs]
+QUERYs_fields=[[x for x in re.split("\s",y) if x!=''] for y in QUERYs]
+gaps=[float(z[0].replace('gap(s):','')) for z in [y for y in [re.findall('gap\(s\):[0-9 ]+',x) for x in lines] if len(y)>0]]
+mismatches=[float(z[0].replace('# mismatche(s):','')) for z in [y for y in [re.findall('# mismatche\(s\):[0-9 ]+',x) for x in lines] if len(y)>0]]
+data["qseqid"]=[x[-1] for x in QUERYs_fields]
+data["sseqid"]=[x[-1] for x in BANKs_fields]
+data["qlen"]=[abs(int(x[3]) -int(x[1]) )+1 for x in QUERYs_fields]
+data["slen"]=[abs(int(x[3]) -int(x[1]) )+1 for x in BANKs_fields]
+data["qstart"]=[int(x[1]) for x in QUERYs_fields]
+data["qend"]=[int(x[3]) for x in QUERYs_fields]
+data["sstart"]=[int(x[1]) for x in BANKs_fields]
+data["send"]=[int(x[3]) for x in BANKs_fields]
+data["length"]=[len(x[2]) for x in BANKs_fields]                  
+data["evalue"]=[float(z[0].replace('e-value:','')) for z in [y for y in [re.findall('e-value:[0-9 e \- \+ \.]+',x) for x in lines] if len(y)>0]]
+data["pident"]=list(map(lambda gap,mis,alen: 100*(1-((gap+mis)/alen)),gaps,mismatches,data["length"]))
+data["sseq"]=[x[2].upper() for x in BANKs_fields]   
 data.to_csv(args.Output, sep='\t',header=False,index=False,float_format="%g")

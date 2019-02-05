@@ -91,7 +91,7 @@ class Step_merge_fasta(Step):
                 self.params["type"] = [self.params["type"]]
 
         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-            self.params["type"] = filter(lambda x: x in self.sample_data[sample].keys(), self.params["type"])
+            self.params["type"] = [x for x in self.params["type"] if x in list(self.sample_data[sample].keys())]
             if not self.params["type"]:
                 raise AssertionExcept("None of the input types exist in sample", sample)
 

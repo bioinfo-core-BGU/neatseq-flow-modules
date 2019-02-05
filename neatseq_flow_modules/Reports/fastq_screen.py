@@ -127,7 +127,7 @@ class Step_fastq_screen(Step):
             if "aligner" not in self.params:
                 raise AssertionExcept("Please specify either a configuration file via `--conf` (in redirects) or a "
                                       "mapper to use with 'aligner")
-            if not isinstance(self.params["aligner"], dict) or len(self.params["aligner"].keys()) != 1:
+            if not isinstance(self.params["aligner"], dict) or len(list(self.params["aligner"].keys())) != 1:
                 raise AssertionExcept("'aligner' must be a dictionary containing the path to 'bowtie2', 'bowtie' or 'bwa'")
             if len(list(set(self.params["aligner"].keys()) & set(["bowtie2", "bowtie", "bwa"]))) != 1:
                 raise AssertionExcept("'--aligner' must contain one and only one of 'bowtie2', 'bowtie' and 'bwa'")
@@ -242,8 +242,8 @@ class Step_fastq_screen(Step):
 
         with open(conf_fn,"w") as conf:
             conf.write("## Conf file created by NeatSeq-Flow\n\n")
-            conf.write("{mapper} {mapper_path}\n\n".format(mapper=self.params["aligner"].keys()[0].upper(),
-                                                           mapper_path=self.params["aligner"].values()[0]))
+            conf.write("{mapper} {mapper_path}\n\n".format(mapper=list(self.params["aligner"].keys())[0].upper(),
+                                                           mapper_path=list(self.params["aligner"].values())[0]))
             if "--bisulfite" in self.params["redir_params"]:
                 conf.write("BISMARK {mapper_path}\n\n".format(mapper_path=self.params["redir_params"]["--bisulfite"]))
                 self.params["redir_params"]["--bisulfite"] = ""

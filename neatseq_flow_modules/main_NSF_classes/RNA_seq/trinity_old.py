@@ -162,10 +162,10 @@ class Step_trinity_old(Step):
         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
             # If both F and R reads exist, adding them to forward and reverse
             # Assuming upstream input testing to check that if there are F reads then there are also R reads.
-            if "fastq.F" in self.sample_data[sample].keys():
+            if "fastq.F" in list(self.sample_data[sample].keys()):
                 forward.append(self.sample_data[sample]["fastq.F"])
                 reverse.append(self.sample_data[sample]["fastq.R"])
-            if "fastq.S" in self.sample_data[sample].keys():
+            if "fastq.S" in list(self.sample_data[sample].keys()):
                 single.append(self.sample_data[sample]["fastq.S"])
 
         # Concatenate all filenames separated by commas:
@@ -256,10 +256,10 @@ fi
 
             self.script += "--output %s \\\n\t" % use_dir
             
-            if "fastq.F" in self.sample_data[sample].keys():
+            if "fastq.F" in list(self.sample_data[sample].keys()):
                 self.script += "--left %s \\\n\t" % self.sample_data[sample]["fastq.F"]
                 self.script += "--right %s \\\n\t" % self.sample_data[sample]["fastq.R"]
-            if "fastq.S" in self.sample_data[sample].keys():
+            if "fastq.S" in list(self.sample_data[sample].keys()):
                 self.script += "--single %s \n\n" % self.sample_data[sample]["fastq.S"]
 
             # If there is an extra "\\\n\t" at the end of the script, remove it.

@@ -100,7 +100,7 @@ class Step_megahit_assembl(Step):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = ".megahit.out"
 
-        if "scope" not in self.params.keys():
+        if "scope" not in list(self.params.keys()):
             self.params["scope"] = "sample"
             self.write_warning("You did not specify 'scope'. Setting to 'sample'\n")
             

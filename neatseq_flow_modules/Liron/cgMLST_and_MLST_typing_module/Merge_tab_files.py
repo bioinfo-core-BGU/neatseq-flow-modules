@@ -1,7 +1,7 @@
 import os, re 
 import argparse
 import pandas as pd
-STRING_TYPES = (basestring, unicode, bytes)
+STRING_TYPES = (str, str, bytes)
 parser = argparse.ArgumentParser(description='Merge tabular files')
 parser.add_argument('-D', type=str,dest='directory', nargs='+',
                     help='Location to search')
@@ -42,7 +42,7 @@ def isint(string):
 
 
 if args.header:
-    args.pivot=map(lambda x:int(x)  if str.isdigit(x) else x ,args.pivot)
+    args.pivot=[int(x)  if str.isdigit(x) else x for x in args.pivot]
     header=None
 else:
     header='infer'
@@ -68,7 +68,7 @@ for Dir in directory:
 
 if args.Excel:
     if len(files)>0:
-        print str(len(files))+" files were found"
+        print(str(len(files))+" files were found")
         if os.path.exists(Output):
             from openpyxl import load_workbook
             book = load_workbook(Output)
@@ -79,30 +79,30 @@ if args.Excel:
             writer = pd.ExcelWriter(Output)
         flag=0
         for file_name in files:
-            print file_name
+            print(file_name)
             if os.stat(file_name).st_size > 0:
                 temp_data = pd.read_table(file_name, sep=args.sep,header=header,low_memory=False)
                 if temp_data.shape[0]==0:
-                    print file_name +" is empty!!!!"
+                    print(file_name +" is empty!!!!")
                 else:
-                    temp_data=temp_data.applymap(lambda x:unicode(re.sub('[\000-\010]|[\013-\014]|[\016-\037]', "",x), errors='ignore') if isinstance(x, STRING_TYPES) else x)
+                    temp_data=temp_data.applymap(lambda x:str(re.sub('[\000-\010]|[\013-\014]|[\016-\037]', "",x), errors='ignore') if isinstance(x, STRING_TYPES) else x)
                     temp_data.to_excel(writer, sheet_name=re.sub(Query,"",os.path.split(file_name)[-1]), engine='openpyxl',index=False)
             else:
-                print file_name +" is empty!!!!"
+                print(file_name +" is empty!!!!")
         writer.save()
 
 else:
     if args.MetaData!=None:
         files=files+[args.MetaData]
     if len(files)>0:
-        print str(len(files))+" files were found"
+        print(str(len(files))+" files were found")
         flag=0
         for file_name in files:
             if os.stat(file_name).st_size > 0:
-                print file_name
+                print(file_name)
                 temp_data = pd.read_table(file_name, sep=args.sep,header=header)
                 if temp_data.shape[0]==0:
-                    print file_name +" is empty!!!!"
+                    print(file_name +" is empty!!!!")
                 if args.samples_names:
                     temp_data["Samples"]=os.path.basename(os.path.dirname(file_name))
                 if args.merge_by!=None:
@@ -123,17 +123,17 @@ else:
                             if args.ignore:
                                 Data=Data.merge(temp_data, on=args.merge_by[0] ,how='outer',suffixes=('_REMOVE_X', '_REMOVE_Y'))
                                 
-                                Data=Data[filter(lambda x: ((str(x).endswith('_REMOVE_X'))|(str(x).endswith('_REMOVE_Y')))==False, Data.columns )].copy()
+                                Data=Data[[x for x in Data.columns if ((str(x).endswith('_REMOVE_X'))|(str(x).endswith('_REMOVE_Y')))==False]].copy()
                             else:
                                 Data=Data.merge(temp_data, on=args.merge_by[0] ,how='outer',suffixes=('', "["+re.sub(Query,"",os.path.split(file_name)[-1]) +"]"))
                         else:
                             Data=Data.merge(temp_data, on=None ,how='outer',suffixes=('', "["+re.sub(Query,"",os.path.split(file_name)[-1]) +"]"))
                     except:
-                         print "File %s could not be merged" %file_name
+                         print("File %s could not be merged" %file_name)
                     # if args.merge_by!=None:
                         # index=True
             else:
-                print file_name +" is empty!!!!"
+                print(file_name +" is empty!!!!")
         Data=Data.applymap(lambda x: isint(x) ).copy()
         if len(args.pivot)==3:
             if args.split_by!=None:
@@ -151,16 +151,16 @@ else:
             index=True
             if len(Data)>0:
                 Data=Data.groupby([args.pivot[0],args.pivot[1]])[args.pivot[2]].apply(list).reset_index()
-                Data[args.pivot[2]]=map(lambda x: str(x).replace("'",'').replace('"','').replace("[ ","").replace("]","").replace("[","").replace(" "," "),Data[args.pivot[2]])
+                Data[args.pivot[2]]=[str(x).replace("'",'').replace('"','').replace("[ ","").replace("]","").replace("[","").replace(" "," ") for x in Data[args.pivot[2]]]
                 Data=Data.pivot(index=args.pivot[0], columns=args.pivot[1], values=args.pivot[2]).copy()
-                Data.columns=map(lambda x:x.strip(" "),Data.columns)
+                Data.columns=[x.strip(" ") for x in Data.columns]
                 if args.Trans:
                     Data.T.to_csv(Output ,sep='\t',index=index, float_format="%s")
                 else:
                     Data.to_csv(Output ,sep='\t',index=index, float_format="%s")
         else:
             try:
-                Data.columns=map(lambda x:x.strip(" "),Data.columns)
+                Data.columns=[x.strip(" ") for x in Data.columns]
             except:
                 pass
             if args.Trans:

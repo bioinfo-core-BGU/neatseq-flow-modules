@@ -78,7 +78,7 @@ class Step_genomeCoverageBed(Step):
             
         if "-bg" not in self.params["redir_params"]:
             self.params["redir_params"]["-bg"] = None
-            print "In step %s: Adding -bg to genomeCoverageBed parameters!!!" % self.name
+            print("In step %s: Adding -bg to genomeCoverageBed parameters!!!" % self.name)
  
         if "-ibam" in self.params["redir_params"]:
             raise AssertionExcept("Please DO NOT pass -ibam. That is done automatically")
@@ -91,7 +91,7 @@ class Step_genomeCoverageBed(Step):
         # Assert there is mapping data and a sorted bam in particular:
         for sample in self.sample_data["samples"]:      #Getting list of samples out of samples_hash
             
-            if not "bam" in self.sample_data[sample].keys():
+            if not "bam" in list(self.sample_data[sample].keys()):
                 raise AssertionExcept("No BAM file defined.\nDid you run samtools first?\n", sample)
 
             

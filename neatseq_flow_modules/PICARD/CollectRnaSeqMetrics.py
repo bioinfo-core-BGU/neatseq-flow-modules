@@ -162,11 +162,11 @@ class Step_CollectRnaSeqMetrics(Step):
             # Is extracted because is scope dependent
             if self.params["scope"] == "sample":
                 indices = {key:val
-                           for key,val in self.sample_data[sample].iteritems()
+                           for key,val in self.sample_data[sample].items()
                            if key in ["REF_FLAT","RIBOSOMAL_INTERVALS"]}
             else:    #if self.params["scope"]=="project"
                 indices = {key: val
-                           for key, val in self.sample_data.iteritems()
+                           for key, val in self.sample_data.items()
                            if key in ["REF_FLAT", "RIBOSOMAL_INTERVALS"]}
 
             # sys.exit(indices)

@@ -160,7 +160,7 @@ class Step_parse_blast(Step):
             # If db is defined by user, set the query to the correct 'fasta2use'
             # If both nucl and prot appear in blast results
             if "blast.nucl" in self.sample_data and "blast.prot" in self.sample_data:
-                if "fasta2use" in self.params.keys() and self.params["fasta2use"] in ("nucl","prot"):
+                if "fasta2use" in list(self.params.keys()) and self.params["fasta2use"] in ("nucl","prot"):
                     fasta2use = self.params["fasta2use"]
                     # self.script += "--blast %s \\\n\t" % self.sample_data[sample]["blast"][fasta2use]
                 else:
@@ -220,7 +220,7 @@ class Step_parse_blast(Step):
                 # If db is defined by user, set the query to the correct 'fasta2use'
                 # If both nucl and prot appear in blast results
                 if "blast.nucl" in self.sample_data[sample] and "blast.prot" in self.sample_data[sample]:
-                    if "fasta2use" in self.params.keys() and self.params["fasta2use"] in ("nucl","prot"):
+                    if "fasta2use" in list(self.params.keys()) and self.params["fasta2use"] in ("nucl","prot"):
                         fasta2use = self.params["fasta2use"]
                         # self.script += "--blast %s \\\n\t" % self.sample_data[sample]["blast"][fasta2use]
                     else:

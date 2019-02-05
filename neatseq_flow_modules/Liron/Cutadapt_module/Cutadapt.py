@@ -89,7 +89,7 @@ class Step_Cutadapt(Step):
         
         # Assert that all samples have reads files:
         for sample in self.sample_data["samples"]:   
-            if  not any(reads in ["fastq.F", "fastq.R", "fastq.S"] for reads in self.sample_data[sample].keys()):
+            if  not any(reads in ["fastq.F", "fastq.R", "fastq.S"] for reads in list(self.sample_data[sample].keys())):
                 raise AssertionExcept("No read files\n",sample)
  
             
@@ -136,7 +136,7 @@ class Step_Cutadapt(Step):
                 basename_R = os.path.basename(self.sample_data[sample]["fastq.R"])
 
                 # Setting filenames before adding output arguments to script
-                if "Demultiplexing" in self.params.keys():
+                if "Demultiplexing" in list(self.params.keys()):
                     fq_fn_F = use_dir + "".join([re.sub("\.\w+$","",basename_F ), "{name}_cutadapt_1.fq"])  #The filename containing the end result. Used both in script and to set reads in $sample_params
                     fq_fn_R = use_dir + "".join([re.sub("\.\w+$","",basename_R ), "{name}_cutadapt_2.fq"])  #The filename containing the end result. Used both in script and to set reads in $sample_params
                 else:
@@ -145,10 +145,10 @@ class Step_Cutadapt(Step):
                 fq_fn_F_bn = os.path.basename(fq_fn_F)
                 fq_fn_R_bn = os.path.basename(fq_fn_R)
 
-                if ("paired" in self.params.keys())&("Demultiplexing" not in self.params.keys()):
+                if ("paired" in list(self.params.keys()))&("Demultiplexing" not in list(self.params.keys())):
                     # Add 'env' and 'script_path':
                     self.script += "("+self.get_script_env_path()
-                    for key in original_self_params_redir_params.keys():
+                    for key in list(original_self_params_redir_params.keys()):
                         if isinstance(original_self_params_redir_params[key], str) and \
                                 original_self_params_redir_params[key].startswith("@"):
                             self.params["redir_params"][key]=os.path.join(use_dir,original_self_params_redir_params[key].replace("@",""))
@@ -163,7 +163,7 @@ class Step_Cutadapt(Step):
                     for files_types in ["fastq.F","fastq.R"]:
                         # Add 'env' and 'script_path':
                         self.script +="("+ self.get_script_env_path()
-                        for key in original_self_params_redir_params.keys():
+                        for key in list(original_self_params_redir_params.keys()):
                             if isinstance(original_self_params_redir_params[key], str) and \
                                     original_self_params_redir_params[key].startswith("@"):
                                 self.params["redir_params"][key]=os.path.join(use_dir,original_self_params_redir_params[key].replace("@",files_types+"_"))
@@ -184,14 +184,14 @@ class Step_Cutadapt(Step):
                 # Here we do the script constructing for single end
                 # Define target filenames:
                 basename_S = os.path.basename(self.sample_data[sample]["fastq.S"])
-                if "Demultiplexing" in self.params.keys():
+                if "Demultiplexing" in list(self.params.keys()):
                     fq_fn_S = use_dir + "".join([re.sub("\.\w+$","",basename_S ), "{name}_cutadapt_trimmed.fq"])  #The filename containing the end result. Used both in script and to set reads in $sample_params
                 else:
                     fq_fn_S = use_dir + "".join([re.sub("\.\w+$","",basename_S ), "_cutadapt_trimmed.fq"])          #The filename containing the end result. Used both in script and to set reads in $sample_params
                 fq_fn_S_bn = os.path.basename(fq_fn_S);
                 # Add 'env' and 'script_path':
                 self.script += "("+self.get_script_env_path()
-                for key in original_self_params_redir_params.keys():
+                for key in list(original_self_params_redir_params.keys()):
                     if isinstance(original_self_params_redir_params[key], str) and \
                             original_self_params_redir_params[key].startswith("@"):
                         self.params["redir_params"][key]=os.path.join(use_dir,original_self_params_redir_params[key].replace("@",""))
@@ -206,13 +206,13 @@ class Step_Cutadapt(Step):
 
             if "fastq.F" in self.sample_data[sample] and "fastq.R" in self.sample_data[sample]:
 
-                if "Demultiplexing" not in self.params.keys():
+                if "Demultiplexing" not in list(self.params.keys()):
                     #Set current active sequence files to tagged files
                     self.sample_data[sample]["fastq.F"] = self.base_dir + fq_fn_F_bn
                     self.sample_data[sample]["fastq.R"] = self.base_dir + fq_fn_R_bn
 
             elif "fastq.S" in self.sample_data[sample]:
-                if "Demultiplexing" not in self.params.keys():
+                if "Demultiplexing" not in list(self.params.keys()):
                     self.sample_data[sample]["fastq.S"] = self.base_dir + fq_fn_S_bn
                         
                     
@@ -220,7 +220,7 @@ class Step_Cutadapt(Step):
             self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
 
 
-            if "spec_dir" in self.params.keys():
+            if "spec_dir" in list(self.params.keys()):
                 self.script += "cd " + self.pipe_data["home_dir"] + "\n\n";
             
                         

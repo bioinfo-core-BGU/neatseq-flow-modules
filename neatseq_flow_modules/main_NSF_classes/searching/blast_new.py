@@ -213,7 +213,7 @@ class Step_blast_new(Step):
         else:
             self.outfmt = 0
 
-        if self.outfmt not in outfmt_txt.keys():
+        if self.outfmt not in list(outfmt_txt.keys()):
             raise AssertionExcept("'outfmt' value ({outfmt}) is not defined.".format(outfmt=self.outfmt))
 
         self.outfmt_txt = outfmt_txt[self.outfmt]

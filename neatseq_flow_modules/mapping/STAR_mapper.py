@@ -149,7 +149,7 @@ class Step_STAR_mapper(Step):
 
         self.auto_redirs = ["--readFilesCommand", "--readFilesIn", "--outFileNamePrefix", "--outTmpDir", "--outStd"]
 
-        if "ref_genome" not in self.params.keys():
+        if "ref_genome" not in list(self.params.keys()):
             self.write_warning("No reference given with 'ref_genome' (path to fasta file). It is highly recommended to give one!\n")
         
         if "--runDirPerm" not in self.params["redir_params"]:
@@ -215,14 +215,14 @@ class Step_STAR_mapper(Step):
                 else:
                     raise AssertionExcept("Scope must be either 'sample' or 'project'")
 
-            if "ref_genome" in self.params.keys():
+            if "ref_genome" in list(self.params.keys()):
                 raise AssertionExcept("ref_genome was passed, and 'scope' was defined. Resolve!\n")
         else:
             # If scope is not defined, require '--genomeDir'
             if not "--genomeDir" in self.params["redir_params"]:
                 raise AssertionExcept("Neither 'scope' nor '--genomeDir' specified.\n")
             # Storing reference genome for use by downstream steps:
-            if "ref_genome" in self.params.keys():
+            if "ref_genome" in list(self.params.keys()):
                 for sample in self.sample_data["samples"]:
                     # If reference already exists, ignore ref_genome
                     if "reference" in self.sample_data[sample]:
@@ -346,7 +346,7 @@ class Step_STAR_mapper(Step):
             self.sample_data[sample]["mapper"] = self.get_step_step()  
             
             # Storing reference genome for use by downstream steps:
-            if "ref_genome" in self.params.keys():
+            if "ref_genome" in list(self.params.keys()):
                 self.sample_data[sample]["reference"] = self.params["ref_genome"]
 
             # Move all files from temporary local dir to permanent base_dir

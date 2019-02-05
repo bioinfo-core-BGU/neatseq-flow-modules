@@ -142,7 +142,7 @@ class Step_macs2_callpeak(Step):
         # Each iteration must define the following class variables:
             # self.spec_script_name
             # self.script
-        for sample in self.sample_data["Controls"].keys():      # Getting list of samples out of Controls dict.
+        for sample in list(self.sample_data["Controls"].keys()):      # Getting list of samples out of Controls dict.
 
             # Make a dir for the current sample:
             sample_dir = self.make_folder_for_sample(sample)
@@ -167,7 +167,7 @@ class Step_macs2_callpeak(Step):
                 
             # Add lines for sample mapping files:
             self.script += "-t %s \\\n\t" % self.sample_data[sample]["bam"]
-            if not "nocontrol" in self.params.keys():
+            if not "nocontrol" in list(self.params.keys()):
                 self.script += "-c %s \\\n\t" % self.sample_data[control]["bam"]
         
             # Add output directory
@@ -203,8 +203,8 @@ class Step_macs2_callpeak(Step):
             
             ##############################
             # # Add conversion of peak bed to bigbed
-            if "bedToBigBed_path" in self.params.keys():
-                if not "chrom.sizes" in self.params.keys():
+            if "bedToBigBed_path" in list(self.params.keys()):
+                if not "chrom.sizes" in list(self.params.keys()):
                     raise AssertionExcept("If bedToBigBed_path is passed, you also must sepcify a 'chrom.sizes' path")
                 out_bed_filename = "%s.cut.bed" % self.sample_data[sample]["bed"]
                 out_bb_filename = "%s.cut.bb" % self.sample_data[sample]["bed"]
@@ -247,7 +247,7 @@ fi
                 
             ##############################
             # # Add extration of peak fasta sequences
-            if "getfasta" in self.params.keys():
+            if "getfasta" in list(self.params.keys()):
                 try:
                     self.sample_data[sample]["reference"]
                 except KeyError:
@@ -293,7 +293,7 @@ fi
         with open(self.base_dir + "DiffBind_files_index.txt", "w") as index_fh:
             index_fh.write("SampleID,bamReads,ControlID,bamControl,Peaks,PeakCaller\n")
 
-            for sample in self.sample_data["Controls"].keys():      # Getting list of samples out of Controls dict.
+            for sample in list(self.sample_data["Controls"].keys()):      # Getting list of samples out of Controls dict.
                 control = self.sample_data["Controls"][sample]
                 index_fh.write("%s,%s,%s,%s,%s,%s\n" % (sample,\
                                     self.sample_data[sample]["bam"],\

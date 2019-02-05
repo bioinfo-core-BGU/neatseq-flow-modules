@@ -146,11 +146,10 @@ class Step_bamtools(Step):
                     if cmd in self.bam_output:
                         if not first_cmd:
                             self.script += " \\\n| "
-                        self.script += " \\\n\t".join(filter(lambda x: x is not None,
-                                                            [self.params["script_path"],
+                        self.script += " \\\n\t".join([x for x in [self.params["script_path"],
                                                              cmd,
                                                              "-in " + active_file if first_cmd else None,
-                                                             self.params[cmd]]))
+                                                             self.params[cmd]] if x is not None])
 
                         first_cmd = False
                 self.script += " \\\n\t-out {bam}\n\n".format(bam=use_dir+outfile)
@@ -183,12 +182,11 @@ cp -fs {active_file} {here}
                         raise AssertionExcept("-format must be one of: 'bed fasta fastq json pileup sam yaml'")
                     outfile = ".".join([os.path.basename(active_file),totype])
 
-                    self.script += "\n\n"+" \\\n\t".join(filter(lambda x: x is not None,
-                                                                [self.params["script_path"],
+                    self.script += "\n\n"+" \\\n\t".join([x for x in [self.params["script_path"],
                                                                  cmd,
                                                                  "-in " + active_file,
                                                                  self.params[cmd],
-                                                                 "-out " + use_dir + outfile]))
+                                                                 "-out " + use_dir + outfile] if x is not None])
                     if totype=="fasta":
                         totype = "fasta.nucl"
                     if totype=="fastq":
@@ -198,20 +196,18 @@ cp -fs {active_file} {here}
 
                 # if cmd in self.non_bam_output:
                 if cmd in ["count", "header", "stats", "coverage"]:
-                    self.script += "\n\n" + " \\\n\t".join(filter(lambda x: x is not None,
-                                                                  [self.params["script_path"],
+                    self.script += "\n\n" + " \\\n\t".join([x for x in [self.params["script_path"],
                                                                    cmd,
                                                                    "-in " + active_file,
                                                                    self.params[cmd],
-                                                                   " > " + ".".join([active_file,cmd,"txt"])]))
+                                                                   " > " + ".".join([active_file,cmd,"txt"])] if x is not None])
                     self.sample_data[sample]["bam."+cmd] = sample_dir + ".".join([active_file,cmd,"txt"])
                     self.stamp_file(self.sample_data[sample]["bam."+cmd])
                 elif cmd in ["index"]:
-                    self.script += "\n\n" + " \\\n\t".join(filter(lambda x: x is not None,
-                                                                  [self.params["script_path"],
+                    self.script += "\n\n" + " \\\n\t".join([x for x in [self.params["script_path"],
                                                                    cmd,
                                                                    "-in " + active_file,
-                                                                   self.params[cmd]]))
+                                                                   self.params[cmd]] if x is not None])
                     self.sample_data[sample]["bam.index"] = sample_dir + ".".join([active_file,cmd,"txt"])
                     self.stamp_file(self.sample_data[sample]["bam."+cmd])
                 else:

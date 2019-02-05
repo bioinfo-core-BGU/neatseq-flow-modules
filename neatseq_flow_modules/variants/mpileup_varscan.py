@@ -97,7 +97,7 @@ class Step_mpileup_varscan(Step):
         # self.file_tag = "Bowtie_mapper"
         
         
-        if "scope" not in self.params.keys():
+        if "scope" not in list(self.params.keys()):
             raise AssertionExcept("You must supply a 'scope' param. Either 'sample' or 'project'")
             
     def step_sample_initiation(self):

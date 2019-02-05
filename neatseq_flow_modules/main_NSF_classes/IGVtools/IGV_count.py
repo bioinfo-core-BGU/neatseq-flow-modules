@@ -72,7 +72,7 @@ class Step_IGV_count(Step):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         # self.file_tag = "Bowtie_mapper"
 
-        if "format" not in self.params.keys():
+        if "format" not in list(self.params.keys()):
             self.params["format"] = "tdf"
             self.write_warning("Setting format to tdf\n")
         else:

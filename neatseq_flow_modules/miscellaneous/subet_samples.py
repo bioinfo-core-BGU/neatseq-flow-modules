@@ -87,7 +87,7 @@ class Step_subet_samples(Step):
                                                                        cat=self.params["category"]))
 
         # Check all levels exist in category
-        if not all(map(lambda level:  level in self.get_category_levels(self.params["category"]), self.params["levels"])):
+        if not all([level in self.get_category_levels(self.params["category"]) for level in self.params["levels"]]):
             bad_levels = ", ".join([level for level in self.params["levels"] if level not in self.get_category_levels(self.params["category"])])
             raise AssertionExcept("Level '{lev}' is not defined for category '{cat}'".format(lev=bad_levels,
                                                                                          cat=self.params["category"]))

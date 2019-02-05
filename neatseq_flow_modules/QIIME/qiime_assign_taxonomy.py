@@ -154,7 +154,7 @@ class Step_qiime_assign_taxonomy(Step):
             # Adding --poll_directly: This will keep the original job "alive" while subprocesses are running. Important for keeping the downstream steps waiting for completion
             self.script += "--job_prefix %s \\\n\t--poll_directly \\\n\t"  % self.spec_script_name
 
-        for key in self.params["redir_params"].keys():
+        for key in list(self.params["redir_params"].keys()):
             self.script += "%s %s \\\n\t" % (key,self.params["redir_params"][key] if self.params["redir_params"][key] else "")
         self.script += "-i %s \\\n\t" % self.sample_data["project_data"]["fasta.nucl"]
         self.script += "-o %s  \n\n" % use_dir

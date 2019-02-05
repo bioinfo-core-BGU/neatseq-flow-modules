@@ -158,7 +158,7 @@ class Step_pipe_generic(Step):
                                         string=self.params["script_path"])))
         # Find all variables in outputs:
         try:
-            for outp in self.params["output"].keys():
+            for outp in list(self.params["output"].keys()):
                 # Check each 'output' has a 'string' and a 'scope' defined
                 try:
                     # Extract the string from the {} and append to results:

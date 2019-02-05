@@ -107,20 +107,20 @@ class Step_RSEM(Step):
         """
         self.shell = "bash"
         self.file_tag = ""
-        assert "mode"  in self.params.keys() , \
+        assert "mode"  in list(self.params.keys()) , \
             "you should  provide mode type [transcriptome or genome] in step %s\n" % self.get_step_name()
-        assert "reference"  in self.params.keys() , \
+        assert "reference"  in list(self.params.keys()) , \
             "you should  provide reference file in step %s\n" % self.get_step_name()
-        assert "mapper"  in self.params.keys() , \
+        assert "mapper"  in list(self.params.keys()) , \
             "you should  provide mapper type [bowtie, bowtie2 or star] in step %s\n" % self.get_step_name()
-        assert "mapper_path"  in self.params.keys() , \
+        assert "mapper_path"  in list(self.params.keys()) , \
             "you should  provide mapper script location in step %s\n" % self.get_step_name()
-        assert not ("--output-genome-bam" in self.params["redir_params"].keys()) &("transcriptome" in self.params["mode"]) , \
+        assert not ("--output-genome-bam" in list(self.params["redir_params"].keys())) &("transcriptome" in self.params["mode"]) , \
             "you can't use '--output-genome-bam' option when the mode is 'transcriptome' in step  %s\n" % self.get_step_name()
-        assert "rsem_prepare_reference_script_path"  in self.params.keys() , \
+        assert "rsem_prepare_reference_script_path"  in list(self.params.keys()) , \
             "you should  provide rsem_prepare_reference script location in step %s\n" % self.get_step_name()
-        if "plot_stat" in self.params.keys():
-            assert "plot_stat_script_path"  in self.params.keys() , \
+        if "plot_stat" in list(self.params.keys()):
+            assert "plot_stat_script_path"  in list(self.params.keys()) , \
                 "you should  provide plot_stat script location in step %s\n" % self.get_step_name()
                 
         import inspect
@@ -129,14 +129,14 @@ class Step_RSEM(Step):
         """ A place to do initiation stages following setting of sample_data
         """
         
-        if "--bam" not in self.params["redir_params"].keys():                
+        if "--bam" not in list(self.params["redir_params"].keys()):                
             # Assert that all samples have reads files:
             for sample in self.sample_data["samples"]:    
                 assert {"fastq.F", "fastq.R", "fastq.S"} & set(self.sample_data[sample].keys()), "Sample %s does not have read files in step %s\n if you have bam files use --bam\n" % (sample, self.name)
             
         else:
             for sample in self.sample_data["samples"]:
-                if "bam" not in self.sample_data[sample].keys():
+                if "bam" not in list(self.sample_data[sample].keys()):
                     sys.exit("No Mapping or bam file information!!! \n")
         pass
         
@@ -149,7 +149,7 @@ class Step_RSEM(Step):
         #initiating new script 
         self.script = ""
         if ("transcriptome" in self.params["mode"])&("Trinity" in self.params["annotation"]):
-            if "from_Trinity_to_gene_map_script_path" not in self.params.keys():
+            if "from_Trinity_to_gene_map_script_path" not in list(self.params.keys()):
                 if "Create_map_from_Trinity.py" not in os.listdir(self.module_location):
                     sys.exit("you should provide from_Trinity_to_gene_map_script_path !!! \n")
                 else:
@@ -169,7 +169,7 @@ class Step_RSEM(Step):
             #If the reference is a transcriptome use the transcript_to_gene_map annotation file
             self.script +="-transcript-to-gene-map %s \\\n\t" % self.params["annotation"]
         elif ("genome" in self.params["mode"]):
-            if "gff3" not in self.params.keys(): 
+            if "gff3" not in list(self.params.keys()): 
                 #If the reference is a genome use the gtf annotation file
                 self.script +="--gtf %s \\\n\t" % self.params["annotation"]
             else:
@@ -196,14 +196,14 @@ class Step_RSEM(Step):
         """ Add stuff to check and agglomerate the output data
         """
         # Make a merge file of all results:
-        if "rsem_generate_data_matrix_script_path" not in self.params.keys():
+        if "rsem_generate_data_matrix_script_path" not in list(self.params.keys()):
             if "Merge_RSEM.py" in os.listdir(self.module_location):
                  self.params["rsem_generate_data_matrix_script_path"]="python  %s "  % os.path.join(self.module_location,"Merge_RSEM.py")
         elif self.params["rsem_generate_data_matrix_script_path"]==None:
             if "Merge_RSEM.py" in os.listdir(self.module_location):
                  self.params["rsem_generate_data_matrix_script_path"]="python  %s "  % os.path.join(self.module_location,"Merge_RSEM.py")
         
-        if "rsem_generate_data_matrix_script_path" in self.params.keys():
+        if "rsem_generate_data_matrix_script_path" in list(self.params.keys()):
             if self.params["rsem_generate_data_matrix_script_path"]!=None:
                 # Make a dir for the results file:
                 results_dir = self.make_folder_for_sample("Results")         
@@ -228,13 +228,13 @@ class Step_RSEM(Step):
                 self.script +="%s  \\\n\t" % '*.isoforms.results'
                 self.script +="> %s \n\n" % os.sep.join([results_dir.rstrip(os.sep),"IsoMat.results"])
         
-        if "plot_stat" in self.params.keys():
+        if "plot_stat" in list(self.params.keys()):
             for sample in self.sample_data["samples"]:
                 self.script +="%s '%%s'  '%%%%s' \n\n"  % (self.params["plot_stat_script_path"]) \
                                                         % (self.sample_data[sample]["RSEM"]) \
                                                         % (results_dir+sample+"_diagnostic.pdf")
         
-        if "del_unsorted_bam" in self.params.keys():
+        if "del_unsorted_bam" in list(self.params.keys()):
             for sample in self.sample_data["samples"]:
                 try:  # Does a unsorted_bam slot exist? 
                     self.sample_data[sample]["unsorted_bam"]
@@ -281,17 +281,17 @@ class Step_RSEM(Step):
                                                               % self.params["mapper"] \
                                                               % self.params["mapper_path"]
             #Check if to use bam or fastq files
-            if "--bam" not in self.params["redir_params"].keys(): 
+            if "--bam" not in list(self.params["redir_params"].keys()): 
                 #if fastq check if it is a paired-end
                 if len({"fastq.F", "fastq.R"} & set(self.sample_data[sample].keys()))==2:
                     self.script +="--paired-end \\\n\t"
                 #Add the fastq files
-                for i in self.sample_data[sample].keys():
+                for i in list(self.sample_data[sample].keys()):
                     if i in ["fastq.F", "fastq.R", "fastq.S"]:
                         self.script +="%s \\\n\t" % self.sample_data[sample][i]
                 #self.script +=" \\\n\t"
                 #Append the new bam file location to the bam slot 
-                if "--output-genome-bam" in self.params["redir_params"].keys():
+                if "--output-genome-bam" in list(self.params["redir_params"].keys()):
                     #if the --output-genome-bam option is present use the genome sorted bam
                     self.sample_data[sample]["bam"]=os.sep.join([sample_dir.rstrip(os.sep),sample+".genome.sorted.bam"])
                     #remember the unsorted bam as well
@@ -318,8 +318,8 @@ class Step_RSEM(Step):
             self.create_low_level_script()
 
 def set_Sample_data_dir(self,category,info,data):
-    if category not in self.keys():
+    if category not in list(self.keys()):
         self[category] = {}
-    if info not in self[category].keys():
+    if info not in list(self[category].keys()):
         self[category][info] = {}
     self[category][info] = data 

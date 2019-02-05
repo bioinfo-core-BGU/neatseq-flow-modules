@@ -129,7 +129,7 @@ class Step_Collect_results(Step):
             #Collect_results main command
             if "--Excel" in self.params["redir_params"]:
                 for base in self.get_base_step_list():
-                    if "env" in self.params.keys():
+                    if "env" in list(self.params.keys()):
                         self.script +="env %s  \\\n" % self.params["env"]
                     self.script += "%s \\\n\t"  % self.params["script_path"]
                     for par in self.params["redir_params"]:
@@ -143,7 +143,7 @@ class Step_Collect_results(Step):
                     self.script += "-O %s \n\n" % os.sep.join([use_dir.rstrip(os.sep),"Collected_results.xlsx"])
                     self.sample_data["project_data"]["results"]=os.sep.join([sample_dir.rstrip(os.sep),"Collected_results.xlsx"])
             else:
-                if "env" in self.params.keys():
+                if "env" in list(self.params.keys()):
                     self.script +="env %s  \\\n" % self.params["env"]
                 self.script += "%s \\\n\t"  % self.params["script_path"]
                 for par in self.params["redir_params"]:

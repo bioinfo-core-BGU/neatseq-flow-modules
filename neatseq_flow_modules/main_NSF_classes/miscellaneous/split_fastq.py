@@ -98,12 +98,12 @@ class Step_split_fastq(Step):
 
         # self.params["type"] = "fasta.{type}".format(type=self.params["type"])
         if self.params["scope"]=="project":
-            if not any(map(lambda x: x in self.sample_data["project_data"], ["fastq.F","fastq.R","fastq.S"])):
+            if not any([x in self.sample_data["project_data"] for x in ["fastq.F","fastq.R","fastq.S"]]):
                 raise AssertionExcept("Project does not contains fastq files")
         else:
             for sample in self.sample_data["samples"]:
                 # if self.params["type"] not in self.sample_data[sample]:
-                if not any(map(lambda x: x in self.sample_data[sample], ["fastq.F", "fastq.R", "fastq.S"])):
+                if not any([x in self.sample_data[sample] for x in ["fastq.F", "fastq.R", "fastq.S"]]):
                     raise AssertionExcept("Sample does not contains fastq files", sample)
 
         

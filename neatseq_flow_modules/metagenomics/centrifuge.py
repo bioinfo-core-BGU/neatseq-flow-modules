@@ -103,7 +103,7 @@ class Step_centrifuge(Step):
 
             
         # Checking this once and then applying to each sample:
-        if "-x" not in self.params["redir_params"].keys():
+        if "-x" not in list(self.params["redir_params"].keys()):
             raise AssertionExcept("You didn't pass a database with -x in redirects.\n")
 
             
@@ -124,7 +124,7 @@ class Step_centrifuge(Step):
         merge_centrifuge_reports = resource_filename(__name__, 'merge_centrifuge_reports.R')
 
         ### Add code to create a unified krona plot
-        if "ktImportTaxonomy_path" in self.params.keys():
+        if "ktImportTaxonomy_path" in list(self.params.keys()):
             
             sample_files = ""
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
@@ -220,7 +220,7 @@ fi
             db            = self.params["redir_params"]["-x"])
 
             ######### Step 3, create krona report:
-            if "ktImportTaxonomy_path" in self.params.keys():
+            if "ktImportTaxonomy_path" in list(self.params.keys()):
                 self.script += """
 # Create file for ktImportTaxonomy
 if [ -e {centrifuge_out} ]

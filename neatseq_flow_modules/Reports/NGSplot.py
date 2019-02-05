@@ -157,7 +157,7 @@ class Step_NGSplot(Step):
              
             # Sorted bam should exist by assert above. 
             # Add option to pass a configuration file. Check the NGSplot help pages
-            if "Controls" in self.sample_data.keys() and sample in self.sample_data["Controls"].keys():   # This is a 'sample' (i.e. not a control)
+            if "Controls" in list(self.sample_data.keys()) and sample in list(self.sample_data["Controls"].keys()):   # This is a 'sample' (i.e. not a control)
                 # Name of specific script:
                 self.spec_script_name = self.jid_name_sep.join([self.step,self.name,sample,"vs_control"])
                 self.script = ""

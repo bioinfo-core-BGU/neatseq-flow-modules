@@ -100,7 +100,7 @@ class Step_vsearch_derepel(Step):
             raise AssertionExcept("You must specify 'type': Either 'derep_fulllength' or 'derep_prefix'")
         
         for type in ["derep_fulllength" , "derep_prefix"]:
-            if type in self.params["redir_params"].keys():
+            if type in list(self.params["redir_params"].keys()):
                 self.write_warning()
         
         

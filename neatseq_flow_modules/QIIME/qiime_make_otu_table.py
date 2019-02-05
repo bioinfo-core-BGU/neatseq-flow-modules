@@ -130,8 +130,8 @@ class Step_qiime_make_otu_table(Step):
         
         # If a mapping file was passed, check that the file exists and add it to sample_data
         # This is being done here (and not in step_specific_init(), so that sample_data can be updated as well.
-        if "--mapping_fp" in self.params["redir_params"].keys() or "-m" in self.params["redir_params"].keys():
-            temp_pf = self.params["redir_params"]["--mapping_fp"] if "--mapping_fp" in self.params["redir_params"].keys() else self.params["redir_params"]["-m"]
+        if "--mapping_fp" in list(self.params["redir_params"].keys()) or "-m" in list(self.params["redir_params"].keys()):
+            temp_pf = self.params["redir_params"]["--mapping_fp"] if "--mapping_fp" in list(self.params["redir_params"].keys()) else self.params["redir_params"]["-m"]
             # if not os.path.exists(temp_pf):
                 # raise AssertionExcept("The mapping file specified does not exist!!\n")
             if "qiime.mapping" in self.sample_data:
@@ -172,7 +172,7 @@ class Step_qiime_make_otu_table(Step):
         self.script += self.get_script_const()        # Gets the "env", "script_path" and "redir_params" part of the script which is always the same...
 
         self.script += "-i %s \\\n\t" % self.sample_data["project_data"]["otu_table"]
-        if "taxonomy" in self.sample_data.keys():
+        if "taxonomy" in list(self.sample_data.keys()):
             self.script += "-t %s \\\n\t" % self.sample_data["project_data"]["taxonomy"]
         self.script += "-o %s \n\n" % "".join([use_dir,biom_table])
         
@@ -186,7 +186,7 @@ class Step_qiime_make_otu_table(Step):
         ## Step 2: filter out unaligned OTUs AND chimeral sequences (they were removed from the alignment fasta file)
     
         # Do this only if a chimera removal step weas used:
-        if "fasta.chimera_removed" in self.sample_data.keys():
+        if "fasta.chimera_removed" in list(self.sample_data.keys()):
             # self.script += self.get_setenv_part()
             # Assuming filter_otus_from_otu_table.py is in the same location as make_otu_table.py used above...
             self.script += "\n\n# Adding code for removal of chimeric sequences from the BIOM table:\n"

@@ -150,7 +150,7 @@ class Step_Trim_Galore(Step):
 
                 self.script += self.get_redir_parameters_script()
 
-                if "cutadapt_path" in self.params.keys():
+                if "cutadapt_path" in list(self.params.keys()):
                     self.script += "--path_to_cutadapt %s \\\n\t" % self.params["cutadapt_path"]
                 self.script += "%s \\\n\t" % (" \\\n\t".join([self.sample_data[sample]["fastq.F"], \
                                                               self.sample_data[sample]["fastq.R"]]))
@@ -186,7 +186,7 @@ class Step_Trim_Galore(Step):
                 # for key in self.params["redir_params"].keys():
                 # if key not in ["--paired","--retain_unpaired"]:
                 # self.script += "%s %s \\\n\t" % (key,self.params["redir_params"][key])
-                if "cutadapt_path" in self.params.keys():
+                if "cutadapt_path" in list(self.params.keys()):
                     self.script += "--path_to_cutadapt %s \\\n\t" % self.params["cutadapt_path"]
                 self.script += "%s \\\n\t" % self.sample_data[sample]["fastq.S"]
                 self.script += "-o %s \\\n\t" % use_dir
@@ -202,7 +202,7 @@ class Step_Trim_Galore(Step):
             self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
 
 
-            if "spec_dir" in self.params.keys():
+            if "spec_dir" in list(self.params.keys()):
                 self.script += "cd " + self.pipe_data["home_dir"] + "\n\n";
             
                         

@@ -167,13 +167,13 @@ class Step_blast(Step):
                 # self.sample_data[sample]["blast"] = dict()
 
             # Decide on locations of -db and -query
-            if "-query" in self.params["redir_params"].keys():
+            if "-query" in list(self.params["redir_params"].keys()):
                 if not "blastdb" in self.sample_data[sample]:
                     raise AssertionExcept("For sample-as-DB BLAST, you need to first run makeblastdb.\n\tIf the query is a project fasta, set parameter 'scope' to 'project'\n", sample)
                 
             # Decide which fasta to use in blast:
             # This has holes. If some of the samples have only nucl and some only prot, it will not fail...
-            if "fasta2use" not in self.params.keys():
+            if "fasta2use" not in list(self.params.keys()):
                 # # "fasta" is not defined for the sample:
                 # if not "fasta" in self.sample_data[sample].keys():
                     # raise AssertionExcept("No 'fasta' defined.\nIf the query is a project fasta, set parameter 'scope' to 'project'\n",sample)       
@@ -185,9 +185,9 @@ class Step_blast(Step):
                     raise AssertionExcept("There are neither nucl nor prot fasta files.\nIf the query is a project fasta, set parameter 'scope' to 'project'\n",sample)
                 
                 
-                if "fasta.nucl" in self.sample_data[sample].keys():
+                if "fasta.nucl" in list(self.sample_data[sample].keys()):
                     self.params["fasta2use"] = "nucl"
-                elif "fasta.prot" in self.sample_data[sample].keys():
+                elif "fasta.prot" in list(self.sample_data[sample].keys()):
                     self.params["fasta2use"] = "prot"
                 else:
                     ""
@@ -213,13 +213,13 @@ class Step_blast(Step):
             
             
         # Decide on locations of -db and -query
-        if "-query" in self.params["redir_params"].keys():
+        if "-query" in list(self.params["redir_params"].keys()):
             if not "blastdb" in self.sample_data:
                 raise AssertionExcept("For project-as-DB BLAST, you need to first run makeblastdb.\n")
             
         # Decide which fasta to use in blast:
         # This has holes. If some of the samples have only nucl and some only prot, it will not fail...
-        if "fasta2use" not in self.params.keys():
+        if "fasta2use" not in list(self.params.keys()):
             # If both nucl and prot exist:
             if "fasta.nucl" in self.sample_data and "fasta.prot" in self.sample_data:
                 raise AssertionExcept("There are both 'nucl' and 'prot' fasta files. You must supply a fasta2use param\n")       
@@ -227,9 +227,9 @@ class Step_blast(Step):
             if "fasta.nucl" not in self.sample_data and "fasta.prot" not in self.sample_data:
                 raise AssertionExcept("There are neither 'nucl' and 'prot' fasta files defined\n")      
 
-            if "fasta.nucl" in self.sample_data.keys():
+            if "fasta.nucl" in list(self.sample_data.keys()):
                 self.params["fasta2use"] = "nucl"
-            elif "fasta.prot" in self.sample_data.keys():
+            elif "fasta.prot" in list(self.sample_data.keys()):
                 self.params["fasta2use"] = "prot"
             else:
                 pass # Should'nt get here because of assertions above. Included elif "prot" for clarity
@@ -301,7 +301,7 @@ class Step_blast(Step):
             self.script += self.get_script_const()
             # Define query and db files:
             # If db is defined by user, set the query to the correct 'fasta2use'
-            if "-db" in self.params["redir_params"].keys():
+            if "-db" in list(self.params["redir_params"].keys()):
                 self.script += "-query %s \\\n\t" % self.sample_data[sample]["fasta." + self.fasta2use]
             # If -db is not defined by user, set the -db to the correct blastdb, with 'fasta2use'
             # -query must be set by user. assertion is made in step_specific_init()
@@ -350,7 +350,7 @@ class Step_blast(Step):
         self.script += self.get_script_const()
         # Define query and db files:
         # If db is defined by user, set the query to the correct 'fasta2use'
-        if "-db" in self.params["redir_params"].keys():
+        if "-db" in list(self.params["redir_params"].keys()):
             self.script += "-query %s \\\n\t" % self.sample_data["project_data"]["fasta." + self.fasta2use]
         # If -db is not defined by user, set the -db to the correct blastdb, with 'fasta2use'
         # -query must be set by user. assertion is made in step_specific_init()

@@ -26,18 +26,18 @@ if __name__ == "__main__":
     import numpy as np
     sns.set_style('white')
 
-    print ' Load roary'
+    print(' Load roary')
     roary = pd.read_table(options.presence_absence,
                          sep=',',
                          low_memory=False)
-    print ' Set index (group name)'
+    print(' Set index (group name)')
     roary.set_index('Gene', inplace=True)
-    print '   Find tagged genes'
+    print('   Find tagged genes')
     if options.tag is not None:
         if "Inference" in roary.columns:
             roary_info=roary[["Inference"]].copy()
             roary.drop(["Inference"], axis=1, inplace=True)
-            print roary_info
+            print(roary_info)
             VF=roary_info[roary_info.applymap(lambda x: options.tag.upper() in str(x).upper()).values].index
         else:
             roary_info=roary[["Annotation"]].copy()
@@ -48,9 +48,9 @@ if __name__ == "__main__":
     
     roary.loc[:,roary.columns[13:]]=roary.loc[:,roary.columns[13:]].applymap(lambda x: 0 if pd.isnull(x) else 1)
     roary.to_csv(os.path.join(options.O,'gene_presence_absence.%s' % 'tab'), sep='\t',float_format="%g",index=True)
-    print ' Drop the other info columns'
+    print(' Drop the other info columns')
     roary.drop(list(roary.columns[:13]), axis=1, inplace=True)
-    print ' Sort the matrix by the sum of strains presence'
+    print(' Sort the matrix by the sum of strains presence')
     idx = roary.sum(axis=1).sort_values(ascending=False).index
     roary_sorted = roary.ix[idx]
     
@@ -103,7 +103,7 @@ if __name__ == "__main__":
             Z,
             leaf_rotation=0.,  # rotates the x axis labels
             leaf_font_size=fontsize,  # font size for the x axis labels
-            labels=map(lambda x:x[0:15],roary_sorted.columns) ,
+            labels=[x[0:15] for x in roary_sorted.columns] ,
             orientation="left",
             ax=ax2,
          )
@@ -135,23 +135,23 @@ if __name__ == "__main__":
                interpolation='none',
                 )
         
-        ax1.set_yticks(range(len(roary_sorted_new.index)),minor=False)
+        ax1.set_yticks(list(range(len(roary_sorted_new.index))),minor=False)
         ax2.set_xticks([])
         #ax3.set_yticks([])
         
-        ax1.set_yticklabels(map(lambda x:x[0:15],roary_sorted_new.index),fontsize=fontsize)
+        ax1.set_yticklabels([x[0:15] for x in roary_sorted_new.index],fontsize=fontsize)
         ax1.grid('off')
         ax2.grid('off')
         #ax3.grid('off')
         plt.savefig(os.path.join(options.O,'pangenome_matrix.%s' % options.format), dpi=600)
         plt.clf()
         
-        print ' Write Accessory genes tree file'
+        print(' Write Accessory genes tree file')
 
 
         tree = to_tree(Z,False)
         h=open(os.path.join(options.O,'Accessory.%s' % "newick"),'w')
-        h.write( getNewick(tree, "", tree.dist, map(lambda x:x,roary_sorted.columns) ))
+        h.write( getNewick(tree, "", tree.dist, [x for x in roary_sorted.columns] ))
         h.close()
     
 
@@ -185,7 +185,7 @@ if __name__ == "__main__":
                 Z,
                 leaf_rotation=0.,  # rotates the x axis labels
                 leaf_font_size=fontsize,  # font size for the x axis labels
-                labels=map(lambda x:x[0:15],roary_sorted.columns) ,
+                labels=[x[0:15] for x in roary_sorted.columns] ,
                 orientation="left",
                 ax=ax2,
              )
@@ -217,11 +217,11 @@ if __name__ == "__main__":
                    interpolation='none',
                     )
             
-            ax1.set_yticks(range(len(roary_sorted_new.index)),minor=False)
+            ax1.set_yticks(list(range(len(roary_sorted_new.index))),minor=False)
             ax2.set_xticks([])
             #ax3.set_yticks([])
             
-            ax1.set_yticklabels(map(lambda x:x[0:15],roary_sorted_new.index),fontsize=fontsize)
+            ax1.set_yticklabels([x[0:15] for x in roary_sorted_new.index],fontsize=fontsize)
             ax1.grid('off')
             ax2.grid('off')
             #ax3.grid('off')
@@ -230,10 +230,10 @@ if __name__ == "__main__":
             
             tree = to_tree(Z,False)
             h=open(os.path.join(options.O,'virulence_resistance.%s' % "newick"),'w')
-            h.write( getNewick(tree, "", tree.dist, map(lambda x:x,roary_sorted.columns) ))
+            h.write( getNewick(tree, "", tree.dist, [x for x in roary_sorted.columns] ))
             h.close()
 
             roary_sorted=roary_sorted.T.copy()
             roary_sorted.index.names=['Samples']
             roary_sorted.to_csv(os.path.join(options.O,'virulence_resistance.%s' % 'tab'), sep='\t',float_format="%g",index=True)
-            print ' Write virulence/resistance tree file'
+            print(' Write virulence/resistance tree file')

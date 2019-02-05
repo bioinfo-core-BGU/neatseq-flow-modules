@@ -133,7 +133,7 @@ class Step_UCSC_BW_wig(Step):
             # Creating bedGraphToBigWig script:
             self.script += "# Converting bdg to bigWig:\n\n"
             # Adding env, if it exists:
-            if "env" in self.params.keys():         # Add optional environmental variables.
+            if "env" in list(self.params.keys()):         # Add optional environmental variables.
                 script_const += "env %s \\\n\t" % self.params["env"]
             # Adding bedGraphToBigWig executable
             self.script += "%s%sbedGraphToBigWig \\\n\t" % (self.params["script_path"],os.sep)

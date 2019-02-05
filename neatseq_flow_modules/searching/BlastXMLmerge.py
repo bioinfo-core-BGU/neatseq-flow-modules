@@ -116,7 +116,7 @@ class Step_BlastXMLmerge(Step):
         # If db is defined by user, set the query to the correct 'fasta2use'
         # If both nucl and prot appear in blast results
         if "blast.nucl" in self.sample_data and "blast.prot" in self.sample_data:
-            if "blast2use" in self.params.keys() and self.params["blast2use"] in ("nucl","prot"):
+            if "blast2use" in list(self.params.keys()) and self.params["blast2use"] in ("nucl","prot"):
                 blast2use = "blast.%s" % self.params["blast2use"]
                 # self.script += "--blast %s \\\n\t" % self.sample_data[sample]["blast"][fasta2use]
             else:

@@ -132,7 +132,7 @@ class Step_ProjectToSample(Step):
             sys.stderr.write("You did not pass an 'operation' parameter. Assuming it is 'mv'!")
         if not isinstance(self.params["operation"], list):
             self.params["operation"] = re.split(pattern="\s*,\s*", string=self.params["operation"])
-        if any(map(lambda x: x not in ["mv","cp"], self.params["operation"])):
+        if any([x not in ["mv","cp"] for x in self.params["operation"]]):
             raise AssertionExcept("'operation' must be 'mv' or 'cp'!")
 
         if "type" not in self.params:
@@ -148,9 +148,9 @@ class Step_ProjectToSample(Step):
         # Check all lists have len 1 or same length
         active_params = set(["operation","type"]) & set(self.params.keys())
         # Get those params with len>1 (i.e., lists)
-        list_params = filter(lambda x: len(self.params[x])>1, active_params)
-        str_params =  filter(lambda x: len(self.params[x])==1, active_params)
-        if len(set(map(lambda x: len(self.params[x]), list_params))) > 1:
+        list_params = [x for x in active_params if len(self.params[x])>1]
+        str_params =  [x for x in active_params if len(self.params[x])==1]
+        if len(set([len(self.params[x]) for x in list_params])) > 1:
             raise AssertionExcept("More than one list with len>1 specified! (%s)" % ", ".join(list_params))
         if list_params:
             required_len = len(self.params[list_params[0]])
@@ -193,7 +193,7 @@ class Step_ProjectToSample(Step):
                 if operation == "mv":
                     del self.sample_data["project_data"][type_src]
 
-                print sample_name
+                print(sample_name)
             else:   # if direction == "smp2proj":
                 # Moving project data types to sample.
                 # Check that sample exists:

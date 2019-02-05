@@ -85,6 +85,7 @@ import os
 import sys
 import re
 from neatseq_flow.PLC_step import Step,AssertionExcept
+from functools import reduce
 
 
 __author__ = "Levin Liron"
@@ -137,18 +138,18 @@ class Step_Gubbins(Step):
             
 
 
-            if "phyloviz" in self.params.keys(): 
+            if "phyloviz" in list(self.params.keys()): 
                 if "MLST_parser.py" in os.listdir(self.module_location):
                     # Make a dir for the parsed files:
                     pars_dir = self.make_folder_for_sample("Data_for_Phyloviz")
-                    if "env" in self.params.keys():
+                    if "env" in list(self.params.keys()):
                         if self.shell=="bash":
                             self.script +="export env %s  \\\n\t" % self.params["env"]
                         else:
                             self.script +="env %s  \\\n\t" % self.params["env"]
                     self.script +="python %s  \\\n\t" % os.path.join(self.module_location,"MLST_parser.py")
                     if is_it_dict(self.params["phyloviz"]):
-                        for par in self.params["phyloviz"].keys():
+                        for par in list(self.params["phyloviz"].keys()):
                             if len(par)>0:
                                 if self.params["phyloviz"][par]!=None:
                                     self.script +="%s  %%s \\\n\t" % par \
@@ -170,7 +171,7 @@ class Step_Gubbins(Step):
         self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
 
 
-        if "spec_dir" in self.params.keys():
+        if "spec_dir" in list(self.params.keys()):
             self.script += "cd " + self.pipe_data["home_dir"] + "\n\n";
         
         self.create_low_level_script()
@@ -188,7 +189,7 @@ def get_dic_data(dic,category,default=None):
 
 def is_it_dict(dic):
     try:
-        dic.keys()
+        list(dic.keys())
         return True
     except:
         return False

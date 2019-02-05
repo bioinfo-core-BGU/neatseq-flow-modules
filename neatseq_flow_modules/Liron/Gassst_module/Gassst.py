@@ -105,14 +105,14 @@ class Step_Gassst(Step):
         # Check that either db or query (not both) are set in redir_params:
         assert len(set(["-d","-i"]) & set(self.params["redir_params"].keys())) == 1, "In %s:\tYou must supply either 'db' or 'query'\n" % self.get_step_name()       
         # Check that the -p argument is supplied
-        assert "-p" in self.params["redir_params"].keys(), "In %s:\tYou must supply -p argument for Gassst \n" % self.get_step_name()       
+        assert "-p" in list(self.params["redir_params"].keys()), "In %s:\tYou must supply -p argument for Gassst \n" % self.get_step_name()       
 
         
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
         
-        if "scope" in self.params.keys():
+        if "scope" in list(self.params.keys()):
             if self.params["scope"]=="project":
                 self.step_sample_initiation_byproject()
             else:
@@ -129,20 +129,20 @@ class Step_Gassst(Step):
         
             
         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-            if not "blast" in self.sample_data[sample].keys():
+            if not "blast" in list(self.sample_data[sample].keys()):
                 self.sample_data[sample]["blast"] = dict()
         
         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-            if not "blast.nucl" in self.sample_data[sample].keys():
+            if not "blast.nucl" in list(self.sample_data[sample].keys()):
                 self.sample_data[sample]["blast.nucl"] = dict()
 
             # Decide on locations of db and query
-            if "-i" in self.params["redir_params"].keys():
-                assert "fasta.nucl" in self.sample_data[sample].keys(), "In %s:\tFor sample-as-DB , you need to have a fasta in the sample (sample %s).\nIf the query is a project fasta, set parameter 'scope' to 'project' \n" % (self.get_step_name(), sample)
+            if "-i" in list(self.params["redir_params"].keys()):
+                assert "fasta.nucl" in list(self.sample_data[sample].keys()), "In %s:\tFor sample-as-DB , you need to have a fasta in the sample (sample %s).\nIf the query is a project fasta, set parameter 'scope' to 'project' \n" % (self.get_step_name(), sample)
                 
             # Decide which fasta to use in Gassst:
             # "fasta" is not defined for the sample:
-            assert "fasta.nucl" in self.sample_data[sample].keys(), "In %s:\tNo 'fasta.nucl' defined for sample %s.\nIf the query is a project fasta, use parameter 'scop: project'\n" % (self.get_step_name(),sample)       
+            assert "fasta.nucl" in list(self.sample_data[sample].keys()), "In %s:\tNo 'fasta.nucl' defined for sample %s.\nIf the query is a project fasta, use parameter 'scop: project'\n" % (self.get_step_name(),sample)       
         
         pass
 
@@ -152,18 +152,18 @@ class Step_Gassst(Step):
         """
         
             
-        if not "blast" in self.sample_data.keys():
+        if not "blast" in list(self.sample_data.keys()):
             self.sample_data["project_data"]["blast"] = dict()
         
-        if not "blast.nucl" in self.sample_data.keys():
+        if not "blast.nucl" in list(self.sample_data.keys()):
             self.sample_data["project_data"]["blast.nucl"] = dict()
 
-        assert "fasta.nucl" in self.sample_data.keys(), "In %s:\tYou need a 'fasta.nucl' file defined to run Gassst.\nIf the 'fasta.nucl' files are per sample, use 'scope: sample' parameter.\n" % (self.get_step_name())
+        assert "fasta.nucl" in list(self.sample_data.keys()), "In %s:\tYou need a 'fasta.nucl' file defined to run Gassst.\nIf the 'fasta.nucl' files are per sample, use 'scope: sample' parameter.\n" % (self.get_step_name())
             
             
         # Decide on locations of db and query
-        if "-i" in self.params["redir_params"].keys():
-            assert "fasta.nucl" in self.sample_data.keys(), "In %s:\tFor sample-as-DB , you need to have a fasta.nucl in the sample  .\n" % (self.get_step_name())
+        if "-i" in list(self.params["redir_params"].keys()):
+            assert "fasta.nucl" in list(self.sample_data.keys()), "In %s:\tFor sample-as-DB , you need to have a fasta.nucl in the sample  .\n" % (self.get_step_name())
             
         pass
         
@@ -171,7 +171,7 @@ class Step_Gassst(Step):
         """ Add stuff to check and agglomerate the output data
         """
 
-        if "scope" in self.params.keys():
+        if "scope" in list(self.params.keys()):
             if self.params["scope"]=="project":
                 pass
             else:
@@ -187,7 +187,7 @@ class Step_Gassst(Step):
         """ This is the actual script building function
             
         """
-        if "scope" in self.params.keys():
+        if "scope" in list(self.params.keys()):
             if self.params["scope"]=="project":
                 self.build_scripts_byproject()
             else:
@@ -225,7 +225,7 @@ class Step_Gassst(Step):
             self.script += self.get_script_const()
             # Define query and db files:
             # If db is defined by user, set the query to the correct 'fasta'
-            if "-d" in self.params["redir_params"].keys():
+            if "-d" in list(self.params["redir_params"].keys()):
                 self.script += "-i %s \\\n\t" % self.sample_data[sample]["fasta.nucl"]
             # If db is not defined by user, set the db to the correct blastdb, with 'fasta'
             # query must be set by user. assertion is made in step_specific_init()
@@ -278,7 +278,7 @@ class Step_Gassst(Step):
         self.script += self.get_script_const()
         # Define query and db files:
         # If db is defined by user, set the query to the correct 'fasta'
-        if "-d" in self.params["redir_params"].keys():
+        if "-d" in list(self.params["redir_params"].keys()):
             self.script += "-i %s \\\n\t" % self.sample_data["project_data"]["fasta.nucl"]
         # If -d is not defined by user, set the -d to the correct fasta, with 'fasta2use'
         # -i must be set by user. assertion is made in step_specific_init()

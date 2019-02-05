@@ -125,22 +125,22 @@ class Step_metaphlan2(Step):
         except KeyError:
             raise AssertionExcept("You must specify --mpa_pkl and --bowtie2db as redirected params.\n")
             
-        if "--mpa_pkl" not in self.params["redir_params"].keys() or "--bowtie2db" not in self.params["redir_params"].keys():
+        if "--mpa_pkl" not in list(self.params["redir_params"].keys()) or "--bowtie2db" not in list(self.params["redir_params"].keys()):
             raise AssertionExcept("You must specify --mpa_pkl and --bowtie2db as redirected params.\n")
 
-        if "--input_type" in self.params["redir_params"].keys():
+        if "--input_type" in list(self.params["redir_params"].keys()):
             self.write_warning("At the moment metaphlan supports only --input_type fastq. Ignoring the value you passed\n")
         
         self.params["redir_params"]["--input_type"] = "fastq"
         
-        if "--bowtie2out" in self.params["redir_params"].keys():
+        if "--bowtie2out" in list(self.params["redir_params"].keys()):
             self.write_warning("Ignoring the value you passed for --bowtie2out.\nWill store data in sample specific location\n")
 
-        if "--biom" in self.params["redir_params"].keys():
+        if "--biom" in list(self.params["redir_params"].keys()):
             self.write_warning("Ignoring the value you passed for --biom.\nWill store data in sample specific location\n")
            
 
-        if "merge_metaphlan_tables" in self.params.keys():
+        if "merge_metaphlan_tables" in list(self.params.keys()):
             if self.params["merge_metaphlan_tables"] == None:
                 self.params["merge_metaphlan_tables"] = "%s%s%s" % (os.path.basename(self.params["script_path"]), \
                                                             os.sep, \
@@ -224,10 +224,10 @@ class Step_metaphlan2(Step):
 
             # If user passed bowtie2out or biom, change the value to sample specific values:
             # These are then added with redirected params
-            if "--bowtie2out" in self.params["redir_params"].keys():
+            if "--bowtie2out" in list(self.params["redir_params"].keys()):
                 self.params["redir_params"]["--bowtie2out"] = "%s.sam" % output_filename
 
-            if "--biom" in self.params["redir_params"].keys():
+            if "--biom" in list(self.params["redir_params"].keys()):
                 self.params["redir_params"]["--biom"] = "%s.biom" % output_filename
 
             self.script += self.get_script_const()
@@ -249,18 +249,18 @@ class Step_metaphlan2(Step):
             self.stamp_file(self.sample_data[sample]["raw_classification"])
 
             # Storing and stamping biom and sam files if requested
-            if "--biom" in self.params["redir_params"].keys():
+            if "--biom" in list(self.params["redir_params"].keys()):
                 # if "qiime" not in self.sample_data[sample].keys():
                     # self.sample_data[sample]["qiime"] = dict()
                 self.sample_data[sample]["biom_table"] = "%s.biom" % (sample_dir + os.path.basename(output_filename))
                 self.stamp_file(self.sample_data[sample]["biom_table"])
-            if "--bowtie2out" in self.params["redir_params"].keys():
+            if "--bowtie2out" in list(self.params["redir_params"].keys()):
                 # if "mapping" not in self.sample_data[sample].keys():
                     # self.sample_data[sample]["mapping"] = dict()
                 self.sample_data[sample]["sam"] = "%s.sam" % (sample_dir + os.path.basename(output_filename))
                 self.stamp_file(self.sample_data[sample]["sam"])
 
-            if "metaphlan2krona_path" in self.params.keys():
+            if "metaphlan2krona_path" in list(self.params.keys()):
                 
                 self.script += "# Creating text report for krona\n"
                 self.script += "%s \\\n\t" % self.params["metaphlan2krona_path"]

@@ -94,14 +94,14 @@ class Step_freebayes(Step):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         # self.file_tag = "Bowtie_mapper"
 
-        if "scope" not in self.params.keys():
+        if "scope" not in list(self.params.keys()):
             raise AssertionExcept("You must supply a 'scope' param. Either 'sample' or 'project'")
             
         if "output_type" in self.params:
             if self.params["output_type"] not in ["vcf","gvcf"]:
                 raise AssertionExcept("'output_type' must be either 'vcf' or 'gvcf'")
             # Remove output options from redir_params
-            if filter(lambda x: x in ["--vcf","-v","--gvcf"], self.params["redir_params"]):
+            if [x for x in self.params["redir_params"] if x in ["--vcf","-v","--gvcf"]]:
                 self.write_warning("Removing output type from redirects")
             try:
                 del self.params["redir_params"]["--vcf"]

@@ -72,7 +72,7 @@ class Step_bwa_builder(Step):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         # self.file_tag = "Bowtie_mapper"
         
-        if not "scope" in self.params.keys():
+        if not "scope" in list(self.params.keys()):
             raise AssertionExcept("You must specify scope as 'project' or 'sample'\n")
         
 
@@ -87,7 +87,7 @@ class Step_bwa_builder(Step):
             except KeyError:
                 raise AssertionExcept("Project does not have a nucl fasta defined. Check your 'scope'\n", sample)
             else:
-                if "bwa_index" in self.sample_data.keys():
+                if "bwa_index" in list(self.sample_data.keys()):
                     raise AssertionExcept("bwa index already seems to exist.\n")
             
                 
@@ -99,7 +99,7 @@ class Step_bwa_builder(Step):
                 except KeyError:
                     raise AssertionExcept("Sample does not have a nucl fasta defined. Can't build index\n", sample)
                 else:
-                    if "bwa_index" in self.sample_data[sample].keys():
+                    if "bwa_index" in list(self.sample_data[sample].keys()):
                         raise AssertionExcept("bwa index already exists for sample.\n", sample)
             
         else:

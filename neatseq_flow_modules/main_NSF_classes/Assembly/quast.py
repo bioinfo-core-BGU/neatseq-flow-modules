@@ -124,7 +124,7 @@ class Step_quast(Step):
         """ A place to do initiation stages following setting of sample_data
         """
         
-        if "scope" in self.params.keys():
+        if "scope" in list(self.params.keys()):
             if self.params["scope"] == "project":
                 try:  # Is there a mega-assembly?
                     self.sample_data["project_data"]["fasta.nucl"]
@@ -133,7 +133,7 @@ class Step_quast(Step):
                 else:
                     pass
 
-                if "compare_mode" in self.params.keys():
+                if "compare_mode" in list(self.params.keys()):
                     self.write_warning("Ignoring 'compare_mode' in project scope")
             
             elif self.params["scope"] == "sample":
@@ -195,7 +195,7 @@ class Step_quast(Step):
         
         if self.params["scope"] == "sample": # Requested for mega-assembly
 
-            if "compare_mode" in self.params.keys() and not multiple_bases:    # Compare sample assemblies
+            if "compare_mode" in list(self.params.keys()) and not multiple_bases:    # Compare sample assemblies
                 # print "in here: multiple_bases"
                 # print multiple_bases
                 # Name of specific script:
@@ -263,7 +263,7 @@ class Step_quast(Step):
                     
                     # Input file:
                     # self.script += "%s \n\n" % self.sample_data[sample]["fasta.nucl"]
-                    if multiple_bases and "compare_mode" in self.params.keys():   # More than one base
+                    if multiple_bases and "compare_mode" in list(self.params.keys()):   # More than one base
                         self.script += "--labels %s \\\n\t" % ",".join(self.params["base"])
                         for base in self.params["base"]:
                             # print base
@@ -307,7 +307,7 @@ class Step_quast(Step):
             
             
             # Input file:
-            if multiple_bases and "compare_mode" in self.params.keys():   # More than one base
+            if multiple_bases and "compare_mode" in list(self.params.keys()):   # More than one base
                 self.script += "--labels %s \\\n\t" % ",".join(self.params["base"])
                 pp( self.params["base"])
                 for base in self.params["base"]:

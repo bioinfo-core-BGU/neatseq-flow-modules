@@ -112,6 +112,7 @@ import os
 import sys
 import re
 from neatseq_flow.PLC_step import Step,AssertionExcept
+from functools import reduce
 
 
 __author__ = "Levin Liron"
@@ -145,7 +146,7 @@ class Step_Snippy(Step):
         """
         prefix="core"
         # Make a core snp fasta file of all results:
-        if "snippy_core" in self.params.keys():
+        if "snippy_core" in list(self.params.keys()):
             if get_dic_data(self.params,["snippy_core","script_path"])!=None:
                 if self.params["snippy_core"]["script_path"]!=None:
                     # Make a dir for the results file:
@@ -153,13 +154,13 @@ class Step_Snippy(Step):
                     #Running the file merge script
                     self.script = ""
                     self.script +="cd '%s' \n\n" % results_dir
-                    if "env" in self.params.keys():
+                    if "env" in list(self.params.keys()):
                         if self.shell=="bash":
                             self.script +="export env %s  \\\n\t" % self.params["env"]
                         else:
                             self.script +="env %s  \\\n\t" % self.params["env"]
                     self.script +="%s  \\\n\t" % self.params["snippy_core"]["script_path"]
-                    for par in self.params["snippy_core"].keys():
+                    for par in list(self.params["snippy_core"].keys()):
                         if par !="script_path":
                             if len(par)>0:
                                 if self.params["snippy_core"][par]!=None:
@@ -177,20 +178,20 @@ class Step_Snippy(Step):
                     
 
                     #Run gubbins if gubbins_script_path is given
-                    if "gubbins" in self.params.keys():
+                    if "gubbins" in list(self.params.keys()):
                         if get_dic_data(self.params,["gubbins","script_path"])!=None:
                             if self.params["gubbins"]["script_path"]!=None:
                                 # Make a dir for the results file:
                                 Gubbins_results_dir = self.make_folder_for_sample("Gubbins")         
                                 #Running the file merge script
                                 self.script +="cd '%s' \n\n" % Gubbins_results_dir
-                                if "env" in self.params.keys():
+                                if "env" in list(self.params.keys()):
                                     if self.shell=="bash":
                                         self.script +="export env %s  \\\n\t" % self.params["env"]
                                     else:
                                         self.script +="env %s  \\\n\t" % self.params["env"]
                                 self.script +="%s  \\\n\t" % self.params["gubbins"]["script_path"]
-                                for par in self.params["gubbins"].keys():
+                                for par in list(self.params["gubbins"].keys()):
                                     if par !="script_path":
                                         if len(par)>0:
                                             if self.params["gubbins"][par]!=None:
@@ -205,18 +206,18 @@ class Step_Snippy(Step):
                                 
 
 
-                    if "phyloviz" in self.params.keys(): 
+                    if "phyloviz" in list(self.params.keys()): 
                         if "MLST_parser.py" in os.listdir(self.module_location):
                             # Make a dir for the parsed files:
                             pars_dir = self.make_folder_for_sample("Data_for_Phyloviz")
-                            if "env" in self.params.keys():
+                            if "env" in list(self.params.keys()):
                                 if self.shell=="bash":
                                     self.script +="export env %s  \\\n\t" % self.params["env"]
                                 else:
                                     self.script +="env %s  \\\n\t" % self.params["env"]
                             self.script +="python %s  \\\n\t" % os.path.join(self.module_location,"MLST_parser.py")
                             if is_it_dict(self.params["phyloviz"]):
-                                for par in self.params["phyloviz"].keys():
+                                for par in list(self.params["phyloviz"].keys()):
                                     if len(par)>0:
                                         if self.params["phyloviz"][par]!=None:
                                             self.script +="%s  %%s \\\n\t" % par \
@@ -266,7 +267,7 @@ class Step_Snippy(Step):
                 self.script +="--se  %s  \\\n\t" % self.sample_data[sample]["fastq.S"]
             self.script +="--prefix  %s  \\\n\t" % sample
             if "--reference" not in self.params["redir_params"]:
-                if "fasta.nucl" in self.sample_data.keys():
+                if "fasta.nucl" in list(self.sample_data.keys()):
                     self.script +="--reference %s  \\\n\t" % self.sample_data["project_data"]["fasta.nucl"]
                 else:
                     raise AssertionExcept("No reference file found in project level [fasta.nucl] and not in the redirects [--reference] \n Supports FASTA, GenBank, EMBL (not GFF)")
@@ -278,7 +279,7 @@ class Step_Snippy(Step):
             self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
 
 
-            if "spec_dir" in self.params.keys():
+            if "spec_dir" in list(self.params.keys()):
                 self.script += "cd " + self.pipe_data["home_dir"] + "\n\n";
             
             self.create_low_level_script()
@@ -296,7 +297,7 @@ def get_dic_data(dic,category,default=None):
 
 def is_it_dict(dic):
     try:
-        dic.keys()
+        list(dic.keys())
         return True
     except:
         return False

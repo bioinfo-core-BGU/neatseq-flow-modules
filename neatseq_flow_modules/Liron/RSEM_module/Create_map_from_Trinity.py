@@ -17,7 +17,7 @@ args.input=sys.argv[1]
 args.Output=sys.argv[2]
 record_dict = SeqIO.index(args.input, "fasta")
 TEMP_list=list(record_dict)
-lines=map(lambda x: re.split("_i.+$",x)[0]+"\t"+x+"\n" ,TEMP_list)
+lines=[re.split("_i.+$",x)[0]+"\t"+x+"\n" for x in TEMP_list]
 h_file=open(args.Output,"w")
 h_file.writelines(lines)
 h_file.close

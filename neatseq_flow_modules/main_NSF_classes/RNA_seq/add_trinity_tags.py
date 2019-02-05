@@ -102,7 +102,7 @@ class Step_add_trinity_tags(Step):
             # Adding tags to Forward and Reverse files only
             for direction in ["Forward","Reverse","Single"]:
                 file_slot = "fastq." + direction[0]  # file_slot is "fastq.F", "fastq.R" and "readS" for "Forward", "Reverse" and "Single" resepctively
-                if (file_slot in self.sample_data[sample].keys()):
+                if (file_slot in list(self.sample_data[sample].keys())):
                     self.script = ""
                     direction_tag = direction[0] # Get first letter in direction
                     # Name of specific script:
