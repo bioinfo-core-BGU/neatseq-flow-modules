@@ -227,41 +227,37 @@ Step_params:
             --single_best_only:
         # Predict:
 
-    trino_merge_blast_highExpr:
-        module:             merge_table
-        base:               [trino_blastp_sprot_highExpr,trino_blastx_sprot_highExpr,trino_rnammer_highExpr]
-        script_path:        
-        type:               [blast.prot,blast.nucl,transcripts.fasta.nucl,fasta.prot,rnammer]
-        # header:             5
-        # stop_and_show:
-        
-    trino_merge_hmm_highExpr:
-        module:             merge_table
-        base:               trino_hmmscan1_highExpr
-        script_path:        
-        type:               hmmscan.prot
-        header:             3
-        # stop_and_show:
-
-
-    # temp1:
-        # module:             manage_types
-        # base:                           
-            # - trino_merge_blast_highExpr
-            # - trino_merge_hmm_highExpr
-
+    # trino_merge_blast_highExpr:
+        # module:             merge_table
+        # base:               [trino_blastp_sprot_highExpr,trino_blastx_sprot_highExpr,trino_rnammer_highExpr]
         # script_path:        
-        # scope:      project
-        # operation: add
+        # type:               [blast.prot,blast.nucl,transcripts.fasta.nucl,fasta.prot,rnammer]
+        # # header:             5
+        # # stop_and_show:
+        
+    # trino_merge_hmm_highExpr:
+        # module:             merge_table
+        # base:               trino_hmmscan1_highExpr
+        # script_path:        
         # type:               hmmscan.prot
-        # path:             yoohooo
+        # header:             3
+        # # stop_and_show:
+
+    trino_merge_tables_highExpr:
+        module:             merge_table
+        base:               [trino_blastp_sprot_highExpr,trino_blastx_sprot_highExpr,trino_rnammer_highExpr,trino_hmmscan1_highExpr]
+        script_path:        
+        type:               [blast.prot,blast.nucl,transcripts.fasta.nucl,fasta.prot,rnammer,hmmscan.prot]
+        header:             [0,0,0,0,0,5]
+        ext:                [out, out, fna, faa, out, hmm.out]
         # stop_and_show:
 
     trino_Trinotate1_highExpr:
         module:             Trinotate
         base:               
-            - trino_merge_blast_highExpr
-            - trino_merge_hmm_highExpr
+            # - trino_merge_blast_highExpr
+            # - trino_merge_hmm_highExpr
+            - trino_merge_tables_highExpr
             - Get_Trans_Map
         # stop_and_show:
         script_path:        {Vars.paths.Trinotate}

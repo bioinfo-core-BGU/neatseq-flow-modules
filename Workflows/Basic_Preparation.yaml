@@ -42,6 +42,37 @@ Step_params:
         intermediate:
         tag:            basic
 
+    merge_advanced:
+        module:         merge
+        src:
+            - Forward
+            - Reverse
+            - Single
+            - Nucleotide
+        trg:
+            - ..guess..
+            - fastq.R
+            - fastq.S
+            - ..guess..
+        script_path:    
+            - gzip -cd
+            - ..guess..
+            - ..guess..
+            - ..import..
+        scope:
+            - sample
+            - sample
+            - sample
+            - project
+        ext:
+            - fastq
+            - ..guess..
+            - fq
+            - ..guess..
+        intermediate:
+        tag:            basic
+        # stop_and_show:
+
     fastq_screen_alt1:
         module:         fastq_screen
         base:           merge1

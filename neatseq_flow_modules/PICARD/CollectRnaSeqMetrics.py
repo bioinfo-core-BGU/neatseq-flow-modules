@@ -166,7 +166,7 @@ class Step_CollectRnaSeqMetrics(Step):
                            if key in ["REF_FLAT","RIBOSOMAL_INTERVALS"]}
             else:    #if self.params["scope"]=="project"
                 indices = {key: val
-                           for key, val in self.sample_data.items()
+                           for key, val in self.sample_data["project_data"].items()
                            if key in ["REF_FLAT", "RIBOSOMAL_INTERVALS"]}
 
             # sys.exit(indices)

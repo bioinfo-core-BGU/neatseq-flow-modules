@@ -335,41 +335,57 @@ class Step_merge(Step):
                 else:
                     self.params[param] = [None] * len(self.params["src"])
 
-
         # #---------------------------------------
-        # print self.get_step_name()
+        # print(self.get_step_name())
         # for param in ["script_path","src","trg","ext","pipe","scope"]:
-        #     print param
+        #     print(param)
         #     pp(self.params[param])
         # #---------------------------------------
         # sys.exit()
 
-                    
         # For each src in the list of sources:
         for src_ind in range(len(self.params["src"])):  
             src = self.params["src"][src_ind]
             scope = self.params["scope"][src_ind]
             script_path = self.params["script_path"][src_ind]
-            trg = self.params["trg"][src_ind]
             ext = self.params["ext"][src_ind]
             # A list of srcs to remove. These are sources that do not exist in samples or projects
             bad_srcs = []
-            # Guessing 'trg'
-            if not trg:
+            # If 'trg' is not user-defined, guess it from default_src_trg_map.
+            # Sets list in params. Will be done only for first 'src'
+            if not self.params["trg"][src_ind]:
                 if src not in list(self.default_src_trg_map.keys()):
                     self.write_warning("The following 'src' is  not recognized: {src}. "
                                        "Setting 'trg' to {trg}".format(src=src,trg=src))
                     self.params["trg"][src_ind] = src
                 else:
-                    self.params["trg"][src_ind] = self.default_src_trg_map[src][0] 
-                # Guessing 'ext'
-            if ext == None:
+                    self.params["trg"][src_ind] = self.default_src_trg_map[src][0]
+            # Get the relevant 'trg' from the 'trg' list
+            trg = self.params["trg"][src_ind]
+            # If it is set by user to ..guess.., try guessing it.
+            if trg == "..guess..":
+                try:
+                    self.params["trg"][src_ind] = self.default_src_trg_map[src][0]
+                except KeyError:
+                    raise AssertionExcept("src '{src}' is not recognized. Can't guess 'trg'.".format(src=src))
+
+            # Guessing 'ext'
+            if self.params["ext"][src_ind] is None:
                 if src not in list(self.default_src_trg_map.keys()):
                     self.write_warning("The following 'src' is  not recognized: {src}. "
                                        "Setting 'ext' to {ext}".format(src=src,ext=src.lower()))
-                    self.params["ext"][src_ind] = src.lower()
+                    self.params["ext"][src_ind] = None  #src.lower()
                 else:
-                    self.params["ext"][src_ind] = self.default_src_trg_map[src][1] 
+                    self.params["ext"][src_ind] = self.default_src_trg_map[src][1]
+            # Get the relevant 'ext' from the 'ext' list
+            ext = self.params["ext"][src_ind]
+            # # If it is set by user to ..guess.., try guessing it.
+            # if ext == "..guess..":
+            #     try:
+            #         self.params["ext"][src_ind] = self.default_src_trg_map[src][1]
+            #     except KeyError:
+            #         raise AssertionExcept("src '{src}' is not recognized. Can't guess 'ext'.".format(src=src))
+
 
             # Guessing scope if None
             if not scope:
@@ -456,11 +472,11 @@ class Step_merge(Step):
 
         # # ---------------------------------------
         # for param in ["script_path","src","trg","ext","pipe","scope"]:
-        #     print param
+        #     print(param)
         #     # self.params[param] = [i for j, i in enumerate(self.params[param]) if j not in bad_srcs]
         #     self.params[param] = [i for j, i in enumerate(self.params[param]) ]
         #     pp(self.params[param])
-        # print bad_srcs
+        # print(bad_srcs)
         # # ---------------------------------------
         # sys.exit()
 
@@ -480,7 +496,11 @@ class Step_merge(Step):
             script_path = self.params["script_path"][scope_ind]
             pipe = self.params["pipe"][scope_ind]
 
-            # Set list of samples to go over. Either self.sample_data["samples"] for sample scope
+            for temparam in "src scope".split(" "):
+                if self.params[temparam][scope_ind] == "..guess..":
+                    raise AssertionExcept("..guess.. in '{param}' not yet supported".format(param=temparam))
+
+                # Set list of samples to go over. Either self.sample_data["samples"] for sample scope
             # or ["project_data"] for project scope
             if scope == "project":
                 sample_list = ["project_data"]
@@ -498,14 +518,6 @@ class Step_merge(Step):
                 # The following two may be modified per sample. Therefore, reading them again for each sample
                 script_path = self.params["script_path"][scope_ind]
                 pipe = self.params["pipe"][scope_ind]
-
-#                 print """src = {src}
-# scope = {scope}
-# trg = {trg}
-# ext = {ext}
-# script_path = {script_path}
-# pipe = {pipe}""".format(src=src,scope = scope,trg = trg,ext = ext,script_path = script_path,pipe = pipe)
-
 
                 # src_type not defined for this sample. Move on.
                 if src not in self.sample_data[sample]:
@@ -528,40 +540,6 @@ class Step_merge(Step):
                 # This line should be left before every new script. It sees to local issues.
                 # Use the dir it returns as the base_dir for this step.
                 use_dir = self.local_start(self.base_dir)
-
-                # The filename containing the end result. Used both in script and to set reads in $sample_params
-
-#                 if script_path == "..cp..":
-#                     if len(self.sample_data[sample][src])>1:
-#                         raise AssertionExcept("When copying source file with '..cp..', there must be only one file in "
-#                                               "the file type being copied")
-#
-#                     # Composing script:
-#                     self.script = ""
-#                     self.script += """
-# cp \\
-#     {file_src} \\
-#     {file_trg}
-# """.format(file_src=self.sample_data[sample][src][0],
-#            file_trg=use_dir + fq_fn)
-#                     # The following line concatenates all the files in the direction separated by a " "
-#                     # self.script += " ".join(self.sample_data[sample][src])
-#                     # self.script += " \\\n\t"
-#                     # if pipe:  # pipe is not 'None'
-#                     #     self.script += "| {pipe} \\\n\t".format(pipe=pipe)
-#                     # self.script += "> %s%s \n\n" % (use_dir, fq_fn)
-#
-#                     # Move all files from temporary local dir to permanent base_dir
-#                     self.local_finish(use_dir, self.base_dir)
-#
-#                     # Store file in active file for sample:
-#                     self.sample_data[sample][trg] = self.base_dir + fq_fn
-#
-#                     self.stamp_file(self.sample_data[sample][trg])
-#
-#                     self.create_low_level_script()
-#                     return
-
 
                 if not script_path or script_path == "..guess..":
                     # Not all samples have the same file types. Sample-specific guessing...
@@ -592,15 +570,22 @@ class Step_merge(Step):
 
                 # Testing that: (a) ext exists in scritp_path_map; (b) it has at least 3 fields and
                 # (c) the last field is True
-                if first_file_ext in self.script_path_map and \
-                        len(self.script_path_map[first_file_ext])>=3 and \
-                        self.script_path_map[first_file_ext][2]:
-                    first_file = os.path.splitext(self.sample_data[sample][src][0])[0]
-                    if os.path.splitext(first_file)[1] and ext == src.lower():
-                        # Add other limits on ext, in case the filename has a "." in it., such as length < 5
-                        ext = os.path.splitext(first_file)[1].lstrip(".")
-                else:
-                    ext = first_file_ext.lstrip(".")
+                if not ext or ext == "..guess..":
+                    if first_file_ext in self.script_path_map and \
+                            len(self.script_path_map[first_file_ext])>=3 and \
+                            self.script_path_map[first_file_ext][2]:
+                        first_file = os.path.splitext(self.sample_data[sample][src][0])[0]
+                        if os.path.splitext(first_file)[1]:# and ext == src.lower():
+                            # Add other limits on ext, in case the filename has a "." in it., such as length < 5
+                            ext = os.path.splitext(first_file)[1].lstrip(".")
+                    else:
+                        try:
+                            ext = self.default_src_trg_map[src][1]
+                        except KeyError:
+                            ext = first_file_ext.lstrip(".")
+                            self.write_warning("src '{src}' is not recognized. Setting 'ext' to type of first file "
+                                               "({ext}).".format(src=src,ext=ext))
+                        print(ext)
 
                 fq_fn = ".".join([sample_title, src, self.file_tag,ext])
 

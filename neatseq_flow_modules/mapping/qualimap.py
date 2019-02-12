@@ -76,7 +76,7 @@ class Step_qualimap(Step):
             raise AssertionExcept("Please supply a qualimap mode")
 
         if self.params["mode"] not in ["bamqc", "multi-bamqc"]:
-            raise AssertionExcept("mode must be bamq or multi-bamqc")
+            raise AssertionExcept("mode must be 'bamqc' or 'multi-bamqc'")
 
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data

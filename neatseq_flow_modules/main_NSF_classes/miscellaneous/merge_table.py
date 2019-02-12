@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-""" 
+"""
 ``merge_table``
 ------------------------
 
@@ -8,9 +8,17 @@
 :Affiliation: Bioinformatics core facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
-A module for merging sample tables into a single project wide table. The table can be with or without a header line. 
+A module for merging sample tables into a single project-wide table, or into group tables by category.
+
+The table can be with or without a header line.
 
 Can be used for merging fasta and fastq files as well.
+
+.. important:: When merging by category, the sample names will be set to the category level names for all subsequent steps.
+
+.. Tip:: You can merge several types at once by passing them as a list to ``type``. If the type files have different numbers of header lines, pass a list of header line numbers with ``header``. The header list must be of length 1 or identical to the length of ``type``.
+
+The resulting merged file will have the file type as extension, *e.g.* when merging ``fasta.nucl`` files, the file extension of the result will be ``fasta.nucl``. To change this default behaviour, set an ``ext`` parameter with the extension to use, *e.g.* ``fna``. If several types are being merged, if ``ext`` is a string, the string will be used for all types. For a different ``ext`` for each file type, use a list of strings, in the same order as the ``type`` parameter.
 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -19,16 +27,16 @@ Requires
 
     * ``sample_data[<sample>][<file.type>]``
 
-    
-
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * Puts output files in the following slot:
-        
-    * ``sample_data[<file.type>]``
 
+    * ``sample_data["project_data"][<file.type>]``
 
+* Or, for merging by category, in the following slot:
+
+    * ``sample_data[category_level][<file.type>]``
 
 
 Parameters that can be set
@@ -37,10 +45,13 @@ Parameters that can be set
 .. csv-table:: Parameters that can be set:
     :header: "Parameter", "Values", "Comments"
 
-    "type", "", "A file type that exists in all samples."
+    "type", "", "A file type that exists in all samples. Can also be a list of types, each one of which will be merged independently"
     "script_path", "", "Leave blank"
-    "header","0","The number of header lines each table has. The header will be used for the complete table and all other headers will be removed. If there is no header line, set to 0 or leave out completely. **If not specified but not set, will default to 1!**"
-
+    "scope", "project|group", "Merge all samples into one project table, or merge sample tables by category."
+    "category", "", "If ``scope`` is set to ``group``, you must specify the category by which to divide the samples for merging. The category must be a string containing one of the categories in the mapping file"
+    "header","0","The number of header lines each table has. The header will be used for the complete table and all other headers will be removed. If there is no header line, set to 0 or leave out completely. **If set but not specified, will default to 1!**."
+    "ext","","The extension to use for the merged file. If ``type`` is a list, ``ext`` will be used for all types unless ``ext`` itself is a list of the same length as ``type``."
+    "add_filename", "", "If set, the source filename will be appended to each line in the resulting table."
 
 
 Lines for parameter file
@@ -51,7 +62,7 @@ Lines for parameter file
     merge_blast_tables:
         module:         merge_table
         base:           merge1
-        script_path:    
+        script_path:
         type:           [blast,blast.prot]
         header:         1
 
@@ -63,7 +74,7 @@ Lines for parameter file
 import os
 import sys
 from neatseq_flow.PLC_step import Step,AssertionExcept
-
+from pprint import pprint as pp
 
 __author__ = "Menachem Sklarz"
 __version__ = "1.1.0"
@@ -74,25 +85,58 @@ class Step_merge_table(Step):
     def step_specific_init(self):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         # self.file_tag = "Bowtie_mapper"
-        
-        if "header" not in self.params:
-            self.params["header"] = 0
-        elif not self.params["header"] and self.params["header"]!=0:
-            self.params["header"] = 1
-        else:
-            pass
-        
-    def step_sample_initiation(self):
-        """ A place to do initiation stages following setting of sample_data
-        """
 
-        type = set()
-        
+        # Checking type exists, and converting to list
         if "type" not in self.params:
             raise AssertionExcept("You must supply a file type or list thereof to merge")
         else: # If passed by user, converting even single values to a list.
+            if type(self.params["type"]) not in [str,list]:
+                raise AssertionExcept("Type must be a string or list of strings.")
             if not isinstance(self.params["type"], list):
                 self.params["type"] = [self.params["type"]]
+        # Getting header parameter
+        if "header" not in self.params:
+            self.params["header"] = [0]
+        elif not self.params["header"] and self.params["header"]!=0:
+            self.params["header"] = [1]
+        elif isinstance(self.params["header"], int):
+            self.params["header"] = [self.params["header"]]
+        elif isinstance(self.params["header"], list):
+            for header in self.params["header"]:
+                if not isinstance(header, int):
+                    raise AssertionExcept("'header' must be an integer or a list of integers")
+        else:
+            raise AssertionExcept("'header' must be an integer or a list of integers")
+
+        head_len = len(self.params["header"])
+        type_len = len(self.params["type"])
+
+        if type_len > 1 and head_len == 1:       # Many types, one header
+            self.params["header"] = self.params["header"] * type_len
+        elif type_len==head_len:
+            pass
+        else:
+            raise AssertionExcept("'type' and 'header' parameters not the same length!")
+
+        # Getting ext parameter
+        if "ext" not in self.params:
+            self.params["ext"] = [None] * type_len
+        elif isinstance(self.params["ext"], str):
+            self.params["ext"] = [self.params["ext"]] * type_len
+        elif isinstance(self.params["ext"], list):
+            for ext in self.params["ext"]:
+                if not isinstance(ext, str):
+                    raise AssertionExcept("'ext' must be a string or a list of strings")
+        else:
+            raise AssertionExcept("'ext' must be a string or a list of strings")
+
+        ext_len = len(self.params["ext"])
+        if type_len != ext_len:
+            raise AssertionExcept("'type' and 'ext' parameters not the same length!")
+
+    def step_sample_initiation(self):
+        """ A place to do initiation stages following setting of sample_data
+        """
 
         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
             for type in self.params["type"]:
@@ -113,7 +157,7 @@ class Step_merge_table(Step):
                 try:
                     self.sample_data[sample]["grouping"][self.params["category"]]
                 except KeyError:
-                    raise AssertionExcept("'category' {cat} not defined for sample".format(cat=self.params["category"]),
+                    raise AssertionExcept("category '{cat}' not defined for sample".format(cat=self.params["category"]),
                                           sample)
         else:
             raise AssertionExcept("'scope' must be either 'group' or 'project'")
@@ -140,9 +184,14 @@ class Step_merge_table(Step):
             # self.spec_script_name
             # self.script
 
-        for type in self.params["type"]:
+        # for type in self.params["type"]:
+        for i in range(len(self.params["type"])):
+            type_i = self.params["type"][i]
+            header_i = self.params["header"][i]
+            ext_i = self.params["ext"][i]
+
             # Name of specific script:
-            self.spec_script_name = self.jid_name_sep.join([self.step,self.name,self.sample_data["Title"],type])
+            self.spec_script_name = self.jid_name_sep.join([self.step,self.name,self.sample_data["Title"],type_i])
             self.script = ""
             
             # This line should be left before every new script. It sees to local issues.
@@ -150,8 +199,9 @@ class Step_merge_table(Step):
             use_dir = self.local_start(self.base_dir)
 
             # Define location and prefix for output files:
-            output_fn = "{filename}".format(filename = ".".join([self.sample_data["Title"],type]))
-
+            output_fn = "{filename}".format(filename = ".".join(item for item
+                                                                in [self.sample_data["Title"],type_i,ext_i]
+                                                                if item))
 
             self.script += """\
 SKIP={skip}
@@ -169,7 +219,7 @@ awk -v header="$HEADER" -v skip="$SKIP" \\
     > {outfile}
 
 """.format(skip=self.params["skip"] if "skip" in self.params else 0,
-           header=self.params["header"] if "header" in self.params else 0,
+           header=header_i, #.params["header"] if "header" in self.params else 0,
            line2print='printf("%s\\t%s\\n",basename(FILENAME),$0)'
                             if "add_filename" in self.params
                             else 'printf("%s\\n",$0)',
@@ -179,11 +229,11 @@ awk -v header="$HEADER" -v skip="$SKIP" \\
            fn_function='function basename(file) {{sub(".*/", "", file); return file}}\n    '
                                     if "add_filename" in self.params
                                     else '',
-           infiles= ' \\\n    '.join([self.sample_data[sample][type] for sample in self.sample_data["samples"]]),
+           infiles= ' \\\n    '.join([self.sample_data[sample][type_i] for sample in self.sample_data["samples"]]),
            outfile=use_dir+output_fn)
 
-            self.sample_data["project_data"][type] = "%s%s" % (self.base_dir, output_fn)
-            self.stamp_file(self.sample_data["project_data"][type])
+            self.sample_data["project_data"][type_i] = "%s%s" % (self.base_dir, output_fn)
+            self.stamp_file(self.sample_data["project_data"][type_i])
 
             # Move all files from temporary local dir to permanent base_dir
             self.local_finish(use_dir,self.base_dir)
@@ -202,9 +252,13 @@ awk -v header="$HEADER" -v skip="$SKIP" \\
         cat_levels = self.get_category_levels(self.params["category"])
         for cat_lev in cat_levels:
 
-            for type in self.params["type"]:
+            # for type_i in self.params["type"]:
+            for i in range(len(self.params["type"])):
+                type_i = self.params["type"][i]
+                header_i = self.params["header"][i]
+                ext_i = self.params["ext"][i]
 
-                self.spec_script_name = self.jid_name_sep.join([self.step, self.name, cat_lev, type])
+                self.spec_script_name = self.jid_name_sep.join([self.step, self.name, cat_lev, type_i])
                 self.script = ""
 
                 # This line should be left before every new script. It sees to local issues.
@@ -213,9 +267,7 @@ awk -v header="$HEADER" -v skip="$SKIP" \\
                 use_dir = self.local_start(group_dir)
 
                 # Define location and prefix for output files:
-                output_fn = ".".join([cat_lev, type])
-                if "ext" in self.params:
-                    output_fn = ".".join([output_fn, self.params["ext"]])
+                output_fn = ".".join(item for item in [cat_lev, type_i, ext_i] if item)
 
                 self.script += """\
 SKIP={skip}
@@ -233,18 +285,18 @@ awk -v header="$HEADER" -v skip="$SKIP" \\
     > {outfile}
 
 """.format(skip=self.params["skip"] if "skip" in self.params else 0,
-           header=self.params["header"] if "header" in self.params else 0,
+           header=header_i, #.params["header"] if "header" in self.params else 0,
            line2print='printf("%s\\t%s\\n",basename(FILENAME),$0)' if "add_filename" in self.params else 'printf("%s\\n",$0)',
            comment_str='\n    /^{comm}/ {{print ""; next}};'.format(comm=self.params["comment"]) if "comment" in self.params else '',
            fn_function='function basename(file) {{sub(".*/", "", file); return file}}\n   ' if "add_filename" in self.params else '',
            infiles=' \\\n    '.join(
-               [self.sample_data[sample][type]
+               [self.sample_data[sample][type_i]
                 for sample
                 in self.get_samples_in_category_level(self.params["category"], cat_lev)]),
            outfile=use_dir + output_fn)
 
-                self.sample_data[cat_lev][type] = "%s%s" % (group_dir, output_fn)
-                self.stamp_file(self.sample_data[cat_lev][type])
+                self.sample_data[cat_lev][type_i] = "%s%s" % (group_dir, output_fn)
+                self.stamp_file(self.sample_data[cat_lev][type_i])
 
                 # print self.script
                 # Move all files from temporary local dir to permanent base_dir
@@ -252,7 +304,7 @@ awk -v header="$HEADER" -v skip="$SKIP" \\
                 self.create_low_level_script()
 
             # Setting new sample types:
-            self.sample_data[cat_lev]["type"] = self.determine_sample_types(cat_lev,self.sample_data[cat_lev])
+            self.sample_data[cat_lev]["type_i"] = self.determine_sample_types(cat_lev,self.sample_data[cat_lev])
         # Setting new sample names to category levels.
         # From now on, these are the new samples.
         self.sample_data["samples"] = cat_levels
