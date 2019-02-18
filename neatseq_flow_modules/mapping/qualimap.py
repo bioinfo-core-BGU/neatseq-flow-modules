@@ -41,14 +41,21 @@ Lines for parameter file
 
 ::
 
-    Qualimap_Rep:
+    Qualimap_bamqc:
         module:         qualimap
         base:           Samtools
         script_path:    {Vars.paths.qualimap}
-        scope:          project
+        scope:          sample
         mode:           bamqc
 
- 
+    Qualimap_multibamqc:
+        module:         qualimap
+        base:           Qualimap_bamqc
+        script_path:    {Vars.paths.qualimap}
+        scope:          project
+        mode:           multi-bamqc
+
+
 
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -76,8 +83,8 @@ class Step_qualimap(Step):
         if "mode" not in self.params:
             raise AssertionExcept("Please supply a qualimap mode")
 
-        if self.params["mode"] not in ["bamqc", "multi-bamqc"]:
-            raise AssertionExcept("mode must be 'bamqc' or 'multi-bamqc'")
+        if self.params["mode"] not in ["bamqc", "multi-bamqc", "rnaseq"]:
+            raise AssertionExcept("mode must be 'bamqc', 'rnaseq' or 'multi-bamqc'")
 
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
@@ -140,19 +147,23 @@ class Step_qualimap(Step):
 
         """
 
+
         if self.params["scope"] == "project":
-            self.build_scripts_byproject()
+            sample_list = ["project_data"]
         elif self.params["scope"] == "sample":
-            self.build_scripts_bysample()
+            sample_list = self.sample_data["samples"]
         else:
             raise AssertionExcept("'scope' must be either 'sample' or 'project'")
 
-    def build_scripts_bysample(self):
-        
-        # Each iteration must define the following class variables:
-            # spec_script_name
-            # script
-        for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
+        for sample in sample_list:      # Getting list of samples out of samples_hash
+
+
+            # def build_scripts_bysample(self):
+            #
+            #     # Each iteration must define the following class variables:
+            #         # spec_script_name
+            #         # script
+            #     for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
 
             # Name of specific script:
             self.spec_script_name = self.set_spec_script_name(sample)
@@ -165,61 +176,38 @@ class Step_qualimap(Step):
             # Use the dir it returns as the base_dir for this step.
             use_dir = self.local_start(sample_dir)
 
-            self.script = """
+            annot2use = None
+            for feat in ["gff","gtf","bed"]:
+                if feat in self.params:
+                    if self.params[feat] is None:
+                        if feat in self.sample_data[sample]:
+                            annot2use = self.sample_data[sample][feat]
+                        elif feat in self.sample_data["project_data"]:
+                            annot2use = self.sample_data["project_data"][feat]
+                        else:
+                            raise AssertionExcept("You passed an empty '{feat}' but none exists in project!".format(feat=feat))
+                    else:
+                        annot2use = self.params[feat]
+
+
+            if self.params["mode"] == "bamqc":
+                self.script = """
 {setenv}
 {const} bamqc \\
 	{redir}
-	-bam {bam} \\
+	-bam {bam} \\{feat}
 	-outdir {outd} \\
 	-outfile {outf}
             """.format(const=self.params["script_path"],
                        setenv=self.get_setenv_part(),
                        redir=self.get_redir_parameters_script().rstrip(),
                        bam=self.sample_data[sample]["bam"],
+                       feat="" if not annot2use else "\n\t-gff " + annot2use + " \\",
                        outd=use_dir,
                        outf="{smp}_qualimap.report".format(smp=sample))
 
-
-            self.sample_data[sample]["qualimap"] = sample_dir
-            self.local_finish(use_dir,sample_dir)
-            self.create_low_level_script()
-
-
-    def build_scripts_byproject(self):
-        # Each iteration must define the following class variables:
-        # spec_script_name
-        # script
-
-        # Name of specific script:
-        self.spec_script_name = self.set_spec_script_name()
-        self.script = ""
-
-        # This line should be left before every new script. It sees to local issues.
-        # Use the dir it returns as the base_dir for this step.
-        use_dir = self.local_start(self.base_dir)
-
-        if self.params["mode"] == "bamqc":
-            self.script = """
-        
-{setenv}
-{const} {mode} \\
-	{redir}
-	-bam {bam} \\
-	-outdir {outd} \\
-	-outfile {outf}
-            """.format(const=self.params["script_path"],
-                       mode=self.params["mode"],
-                       setenv=self.get_setenv_part(),
-                       redir=self.get_redir_parameters_script().rstrip(),
-                       bam=self.sample_data["project_data"]["bam"],
-                       outd=use_dir,
-                       outf="{proj}_qualimap.report".format(proj=self.sample_data["Title"]))
-
-            self.sample_data["project_data"]["qualimap"] = self.base_dir
-
-
-        elif self.params["mode"] == "multi-bamqc":
-            self.script = """
+            elif self.params["mode"] == "multi-bamqc":
+                self.script = """
 
 {setenv}
 {const} multi-bamqc \\
@@ -227,15 +215,86 @@ class Step_qualimap(Step):
 	--data {report} \\
 	-outdir {outd} \\
 	-outfile {outf}
-            """.format(const=self.params["script_path"],
-                       setenv=self.get_setenv_part(),
-                       redir=self.get_redir_parameters_script().rstrip(),
-                       report=self.sample_data["project_data"]["qualimap_files_index"],
-                       outd=use_dir,
-                       outf="{proj}_qualimap.report".format(proj=self.sample_data["Title"]))
+                """.format(const=self.params["script_path"],
+                           setenv=self.get_setenv_part(),
+                           redir=self.get_redir_parameters_script().rstrip(),
+                           report=self.sample_data[sample]["qualimap_files_index"],
+                           outd=use_dir,
+                           outf="{proj}_qualimap.report".format(proj=self.sample_data["Title"]))
 
-            self.sample_data["project_data"]["qualimap"] = self.base_dir
+            elif self.params["mode"] == "rnaseq":
+                self.script = """
 
-        self.local_finish(use_dir, self.base_dir)
-        self.create_low_level_script()
+{setenv}
+{const} rnaseq \\
+	{redir}
+	-bam {bam} \\{feat}
+	-outdir {outd} \\
+	-outfile {outf}
+""".format(const=self.params["script_path"],
+           setenv=self.get_setenv_part(),
+           redir=self.get_redir_parameters_script().rstrip(),
+           bam=self.sample_data[sample]["bam"],
+           feat="" if not annot2use else "\n\t-gtf " + annot2use + " \\",
+           outd=use_dir,
+           outf="{proj}_qualimap.report".format(proj=self.sample_data["Title"]))
+
+            self.sample_data[sample]["qualimap"] = sample_dir
+            self.local_finish(use_dir,sample_dir)
+            self.create_low_level_script()
+
+
+#     def build_scripts_byproject(self):
+#         # Each iteration must define the following class variables:
+#         # spec_script_name
+#         # script
+#
+#         # Name of specific script:
+#         self.spec_script_name = self.set_spec_script_name()
+#         self.script = ""
+#
+#         # This line should be left before every new script. It sees to local issues.
+#         # Use the dir it returns as the base_dir for this step.
+#         use_dir = self.local_start(self.base_dir)
+#
+#         if self.params["mode"] == "bamqc":
+#             self.script = """
+#
+# {setenv}
+# {const} {mode} \\
+# 	{redir}
+# 	-bam {bam} \\
+# 	-outdir {outd} \\
+# 	-outfile {outf}
+#             """.format(const=self.params["script_path"],
+#                        mode=self.params["mode"],
+#                        setenv=self.get_setenv_part(),
+#                        redir=self.get_redir_parameters_script().rstrip(),
+#                        bam=self.sample_data["project_data"]["bam"],
+#                        outd=use_dir,
+#                        outf="{proj}_qualimap.report".format(proj=self.sample_data["Title"]))
+#
+#             self.sample_data["project_data"]["qualimap"] = self.base_dir
+#
+#
+#         elif self.params["mode"] == "multi-bamqc":
+#             self.script = """
+#
+# {setenv}
+# {const} multi-bamqc \\
+# 	{redir}
+# 	--data {report} \\
+# 	-outdir {outd} \\
+# 	-outfile {outf}
+#             """.format(const=self.params["script_path"],
+#                        setenv=self.get_setenv_part(),
+#                        redir=self.get_redir_parameters_script().rstrip(),
+#                        report=self.sample_data["project_data"]["qualimap_files_index"],
+#                        outd=use_dir,
+#                        outf="{proj}_qualimap.report".format(proj=self.sample_data["Title"]))
+#
+#             self.sample_data["project_data"]["qualimap"] = self.base_dir
+#
+#         self.local_finish(use_dir, self.base_dir)
+#         self.create_low_level_script()
 
