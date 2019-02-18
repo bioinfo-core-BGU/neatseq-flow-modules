@@ -18,7 +18,7 @@ Can be used for merging fasta and fastq files as well.
 
 .. Tip:: You can merge several types at once by passing them as a list to ``type``. If the type files have different numbers of header lines, pass a list of header line numbers with ``header``. The header list must be of length 1 or identical to the length of ``type``.
 
-The resulting merged file will have the file type as extension, *e.g.* when merging ``fasta.nucl`` files, the file extension of the result will be ``fasta.nucl``. To change this default behaviour, set an ``ext`` parameter with the extension to use, *e.g.* ``fna``. If several types are being merged, if ``ext`` is a string, the string will be used for all types. For a different ``ext`` for each file type, use a list of strings, in the same order as the ``type`` parameter.
+The extension of the resulting file will be the same as that of the files being merged, if they are all the same. If not, will not add an extension. To change the default behaviour, set an ``ext`` parameter with the extension to use, *e.g.* ``fna``. If several types are being merged, if ``ext`` is a string, the string will be used for all types. For a different ``ext`` for each file type, use a list of strings, in the same order as the ``type`` parameter.
 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -48,7 +48,7 @@ Parameters that can be set
     "type", "", "A file type that exists in all samples. Can also be a list of types, each one of which will be merged independently"
     "script_path", "", "Leave blank"
     "scope", "project|group", "Merge all samples into one project table, or merge sample tables by category."
-    "category", "", "If ``scope`` is set to ``group``, you must specify the category by which to divide the samples for merging. The category must be a string containing one of the categories in the mapping file"
+    "category", "", "If ``scope`` is set to ``group``, you must specify the category by which to divide the samples for merging. The category must be a string containing one of the categories (columns) in the mapping file"
     "header","0","The number of header lines each table has. The header will be used for the complete table and all other headers will be removed. If there is no header line, set to 0 or leave out completely. **If set but not specified, will default to 1!**."
     "ext","","The extension to use for the merged file. If ``type`` is a list, ``ext`` will be used for all types unless ``ext`` itself is a list of the same length as ``type``."
     "add_filename", "", "If set, the source filename will be appended to each line in the resulting table."
@@ -190,6 +190,12 @@ class Step_merge_table(Step):
             header_i = self.params["header"][i]
             ext_i = self.params["ext"][i]
 
+            # If ext is not user defined, get exts of to-be-merged files. If all the same, use for merged file.
+            if ext_i is None:
+                base_exts = list(set([os.path.splitext(self.sample_data[sample][type_i])[1] for sample in self.sample_data["samples"]]))
+                if len(base_exts)==1:
+                    ext_i = base_exts[0].lstrip(".")
+
             # Name of specific script:
             self.spec_script_name = self.jid_name_sep.join([self.step,self.name,self.sample_data["Title"],type_i])
             self.script = ""
@@ -257,6 +263,17 @@ awk -v header="$HEADER" -v skip="$SKIP" \\
                 type_i = self.params["type"][i]
                 header_i = self.params["header"][i]
                 ext_i = self.params["ext"][i]
+
+                # If ext is not user defined, get exts of to-be-merged files. If all the same, use for merged file.
+                if ext_i is None:
+                    base_exts = list(set([os.path.splitext(self.sample_data[sample][type_i])[1]
+                                          for sample
+                                          in self.get_samples_in_category_level(self.params["category"],
+                                                                                cat_lev)]))
+
+
+                    if len(base_exts) == 1:
+                        ext_i = base_exts[0].lstrip(".")
 
                 self.spec_script_name = self.jid_name_sep.join([self.step, self.name, cat_lev, type_i])
                 self.script = ""

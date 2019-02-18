@@ -46,6 +46,7 @@ Lines for parameter file
         base:           Samtools
         script_path:    {Vars.paths.qualimap}
         scope:          project
+        mode:           bamqc
 
  
 
@@ -109,11 +110,11 @@ class Step_qualimap(Step):
     def step_sample_initiation_byproject(self):
 
         if self.params["mode"] == "bamqc":
-            if "bam" not in self.sample_data:
+            if "bam" not in self.sample_data["project_data"]:
                 raise AssertionExcept("No bam file defined for project\n")
 
         if self.params["mode"] == "multi-bamqc":
-            if "qualimap_files_index" not in self.sample_data:
+            if "qualimap_files_index" not in self.sample_data["project_data"]:
                 raise AssertionExcept("if mode is multi-bamqc, you have to have a bamqc instance first!")
 
     def create_spec_wrapping_up_script(self):

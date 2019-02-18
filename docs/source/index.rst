@@ -82,7 +82,7 @@ See also the `main NeatSeq-Flow website <https://neatseq-flow.readthedocs.io/en/
 Installing and using the modules
 -----------------------------------
 
-**NeatSeq-Flow** is available for download on `github <https://github.com/bioinfo-core-BGU/neatseq-flow>`_.
+**NeatSeq-Flow** is available for download on `github <https://github.com/bioinfo-core-BGU/neatseq-flow3>`_.
 
 
 .. attention::
@@ -90,11 +90,11 @@ Installing and using the modules
 
    #. download the repository::
 
-       wget https://github.com/bioinfo-core-BGU/neatseq-flow-modules/archive/master.zip
+       wget https://github.com/bioinfo-core-BGU/neatseq-flow3-modules/archive/master.zip
 
    #. **Alternatively**, clone the repository::
 
-       git clone https://github.com/bioinfo-core-BGU/neatseq-flow-modules.git
+       git clone https://github.com/bioinfo-core-BGU/neatseq-flow3-modules.git
 
    #. add the following line in the `Global_params` section of your workflow parameter file::
 

@@ -635,8 +635,8 @@ Using a local copy of NeatSeq-Flow
 
     mkdir NeatSeq-Flow
     cd NeatSeq-Flow 
-    git clone https://github.com/bioinfo-core-BGU/neatseq-flow.git
-    git clone https://github.com/bioinfo-core-BGU/neatseq-flow-modules.git
+    git clone https://github.com/bioinfo-core-BGU/neatseq-flow3.git
+    git clone https://github.com/bioinfo-core-BGU/neatseq-flow3-modules.git
     git clone https://github.com/bioinfo-core-BGU/parse_blast.git
     cd ..
 

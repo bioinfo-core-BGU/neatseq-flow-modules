@@ -33,7 +33,7 @@ class Step_pipe_generic(Step):
             Good place for parameter testing.
             Wrong place for sample data testing
         """
-        raise AssertionExcept("'pipe_generic has been renamed to 'Fillout_Generic'. Sorry for the inconvenience.")
+        raise AssertionExcept("'pipe_generic' has been renamed 'Fillout_Generic'. Sorry for the inconvenience.")
 
 
     def step_sample_initiation(self):
