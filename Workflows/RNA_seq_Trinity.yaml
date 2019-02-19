@@ -183,7 +183,7 @@ Step_params:
     # Quality test the assembly with BUSCO
     BUSCO1:
         module:             BUSCO
-        base:               Trinity_assembl
+        base:               Rep_transcript
         script_path:        {Vars.paths.BUSCO} 
         scope:              project
         redirects:
@@ -208,7 +208,7 @@ Step_params:
         type:               nucl
         subsample_num:      4
 
-    Trino_blastx_sprot_highExpr:
+    Trino_blastx_sprot:
         module:             blast_new
         base:               Split_Fasta
         script_path:        '{Vars.paths.blast}/blastx'
@@ -219,14 +219,14 @@ Step_params:
             -max_target_seqs: 1
             -num_threads:   1
             -outfmt:        6
-    Trino_Transdecode_highExpr:
+    Trino_Transdecode:
         module:             TransDecoder
         base:               Split_Fasta
         script_path:        "{Vars.paths.TransDecoder}.LongOrfs"
         scope:              sample
-    Trino_blastp_sprot_highExpr:
+    Trino_blastp_sprot:
         module:             blast_new
-        base:               Trino_Transdecode_highExpr
+        base:               Trino_Transdecode
         script_path:        {Vars.paths.blastp}
         query:              sample
         db:                 {Vars.databases.trinotate.sprot}
@@ -235,9 +235,9 @@ Step_params:
             -max_target_seqs: 1
             -num_threads:   1
             -outfmt:        6
-    Trino_hmmscan1_highExpr:
+    Trino_hmmscan1:
         module:             hmmscan
-        base:               Trino_Transdecode_highExpr
+        base:               Trino_Transdecode
         script_path:        {Vars.paths.hmmscan}
         scope:              sample
         type:               prot
@@ -248,7 +248,7 @@ Step_params:
         redirects:
             --cpu:          1
 
-    Trino_rnammer_highExpr:
+    Trino_rnammer:
         module:             RnammerTranscriptome
         base:               Split_Fasta
         script_path:        /gpfs0/bioinfo/apps/Trinity/Trinotate-v3.1.1/util/rnammer_support/RnammerTranscriptome.pl #{Vars.paths.hmmscan}
@@ -259,48 +259,29 @@ Step_params:
     Trino_Transdecode_Predict:
         module:             TransDecoder
         base:               
-            - Trino_Transdecode_highExpr
-            - Trino_blastp_sprot_highExpr
-            - Trino_hmmscan1_highExpr
+            - Trino_Transdecode
+            - Trino_blastp_sprot
+            - Trino_hmmscan1
         script_path:        "{Vars.paths.TransDecoder}.Predict"
         scope:              sample
         redirects:
             --single_best_only:
         # Predict:
 
-    # Trino_merge_blast_highExpr:
-        # module:             merge_table
-        # base:               [Trino_blastp_sprot_highExpr,Trino_blastx_sprot_highExpr,Trino_rnammer_highExpr]
-        # script_path:        
-        # type:               [blast.prot,blast.nucl,transcripts.fasta.nucl,fasta.prot,rnammer]
-        # # header:             5
-        # # stop_and_show:
-        
-    # Trino_merge_hmm_highExpr:
-        # module:             merge_table
-        # base:               Trino_hmmscan1_highExpr
-        # script_path:        
-        # type:               hmmscan.prot
-        # header:             3
-        # # stop_and_show:
-
-    Trino_merge_tables_highExpr:
+    Trino_merge_tables:
         module:             merge_table
-        base:               [Trino_blastp_sprot_highExpr,Trino_blastx_sprot_highExpr,Trino_rnammer_highExpr,Trino_hmmscan1_highExpr]
+        base:               [Trino_blastp_sprot,Trino_blastx_sprot,Trino_rnammer,Trino_hmmscan1]
         script_path:        
         type:               [blast.prot,blast.nucl,transcripts.fasta.nucl,fasta.prot,rnammer,hmmscan.prot]
         header:             [0,0,0,0,0,5]
         ext:                [out, out, fna, faa, out, hmm.out]
         # stop_and_show:
 
-    Trino_Trinotate1_highExpr:
+    Trino_Trinotate1:
         module:             Trinotate
         base:               
-            # - Trino_merge_blast_highExpr
-            # - Trino_merge_hmm_highExpr
-            - Trino_merge_tables_highExpr
+            - Trino_merge_tables
             - Get_Trans_Map
-        # stop_and_show:
         script_path:        {Vars.paths.Trinotate}
         scope:              project
         sqlitedb:           {Vars.databases.trinotate.sqlitedb}
