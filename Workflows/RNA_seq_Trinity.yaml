@@ -10,26 +10,25 @@ Description: |
     A pipeline for basic RNA-seq analysis using Trinity
     ---------------------------------------------------
     
-    This workflow takes reads in fastq format, either paired-end or single, and assembles a trascriptome with Trinity.
+    This workflow takes reads in fastq format, either paired-end or single, performs quality testing with FastQC and trimming with trimmomatic, and assembles the trascriptome with Trinity.
     
     It then runs `align_and_estimate_abundance.pl` and `abundance_estimates_to_matrix.pl` to map the reads to the trascriptome and create normalized counts tables. These tables can then be used in DEseq2 or other tools for statistical analysis of RNA-seq data.
+    
+    Finally, the workflow includes the Trinotate pipeline for annotating the assembly.
     
     Steps:
     ------
     
     1. Concatenating the read files into single files per direction
-    
-        Note: No QC steps are included here, but you should consider adding trimmomatic and fastqc steps to the workflow.
-    
     2. Adding tags required by trinity to the read titles (/1 and /2 for F and R. See https://github.com/trinityrnaseq/trinityrnaseq/wiki/Running-Trinity)
-    3. Running Trinity. Trinity must be configured to run on a cluster. The configuration file is passed with --grid_conf.
+    3. Running Trinity. Trinity must be configured to run on a cluster. The configuration file is passed with --grid_conf. THIS STEP CAN TAKE A LONG TIME TO RUN!
     4. Mapping of the reads is performed with trinity_mapping module
     5. Creating statistical tables is performed with trinmap_statistics module.
-    
+    6. Annotation with trinotate
     
 Vars:
     paths:
-        merge:              gzip -cd    
+        multiqc:            /path/to/multiqc
         bowtie2:            /path/to/bowtie2_v2.2.5         # Path to the dir which includes bowtie2 and bowtie2-build executables
         Trinity:            /path/to/trinity/               # Path to the dir which contains Trinity executable and a dir util/ with the toolkit scripts
         SGE_Trinity_conf:   /path/to/cluster_Trinity_conf.txt  # Path to file with cluster configuration for trinity. See --grid_conf parameter in trinity manual.
@@ -55,29 +54,74 @@ Vars:
             sprot:          /gpfs0/bioinfo/databases/Trinity/Trinotate_v3.1.1/uniprot_sprot_blastdb/sprot
             pfam:           /gpfs0/bioinfo/databases/Trinity/Trinotate_v3.1.1/PFAM/Pfam-A.hmm
             sqlitedb:       /gpfs0/bioinfo/databases/Trinity/Trinotate_v3.1.1/Trinotate.sqlite        
+    cluster_params:
+        pe:                 shared
 
 Step_params:
+    # -------------------- Part 1: Merging and QC
+    # Copy and concatenate files into data directory:
     Merge:
         module:             merge
-        script_path:        {Vars.paths.merge}
+        script_path:
+        tag:                qc
+    # FastQC on the files
+    fqc_merge1:
+        module:         fastqc_html
+        base:           merge1
+        script_path:    {Vars.paths.fastqc}
+        qsub_params:
+            -pe:        '{Vars.cluster_params.pe} 15'
+        redirects:
+            --threads:  15
+    # Trim with trimmomatic if required
+    trim1:
+        module:         trimmo
+        base:           merge1
+        script_path:    '{Vars.paths.java} -jar {Vars.paths.trimmo}'
+        qsub_params:
+            -pe:        '{Vars.cluster_params.pe} 20'
+#        spec_dir: 
+        todo:           LEADING:20 TRAILING:20
+        redirects:
+            -threads:   20
+    # FastQC on the trimmed files
+    fqc_trim1:
+        module:         fastqc_html
+        base:           trim1
+        script_path:    {Vars.paths.fastqc}
+        qsub_params:
+            -pe:        '{Vars.cluster_params.pe}  15'
+        redirects:
+            --threads:  15
+    # Summary of file quality before and after trimming
+    multiqc_sum:
+        module:         Multiqc
+        base:
+            - fqc_trim1
+            - fqc_merge1
+        script_path:    {Vars.paths.multiqc}
+            
+    # -------------------- Part 2: Assembly and statisctical analysis
+    # Add trinity tags to reads
     Trinity_tags:
         module:             add_trinity_tags
         base:               Merge
         script_path: 
+        tag:                Trinity
+    # Assemble the reads with Trinity. THIS STEP CAN TAKE A LONG TIME!
     Trinity_assembl:
         module:             trinity_new
         base:               Trinity_tags
         script_path:        '{Vars.paths.Trinity}/Trinity'
         qsub_params:
-            -pe:            shared 20
+            -pe:            '{Vars.cluster_params.pe} 20'
         scope:              project
         redirects:
             --grid_exec:        '"{Vars.paths.hpc_cmds_GridRunner} --grid_conf {Vars.paths.SGE_Trinity_conf} -c"'
             --seqType:          fq
             --min_kmer_cov:     2
             # --full_cleanup:
-        # stop_and_show:
-        
+    # Create transcript-gene map
     Get_Trans_Map:
         module:             Trinity_gene_to_trans_map
         base:               Trinity_assembl
@@ -85,8 +129,7 @@ Step_params:
         scope:              project
         # stop_and_show:
 
-######################
-
+    # Map the reads to the assembly
     Trinity_Map:
         module:             trinity_mapping
         base:               Get_Trans_Map
@@ -98,11 +141,10 @@ Step_params:
             --est_method:   rsem
             --aln_method:   bowtie
             # --output_prefix:        # Pass to add output_prefix. This is for older versions of trinity...
-            # --gene_trans_map:
             --trinity_mode:
             --coordsort_bam:
             --seqType:      fq
-        # stop_and_show:
+    # Count reads per transcript with RSEM
     Trinity_Map_Stats:
         module:             trinmap_statistics
         base:               Trinity_Map
@@ -114,31 +156,31 @@ Step_params:
             # --gene_trans_map:   
         # stop_and_show:
 
-    filter_fasta:                   # Name of this step
+    # Keep the most highly expressed transcript per gene - Representative transcript
+    Rep_transcript:                   # Name of this step
         module:             Generic             # Name of module
         base:               Trinity_Map_Stats
-        script_path:        {Vars.paths.filter_trinity_by_counts}
+        script_path:        '{Vars.paths.Trinity}util/filter_low_expr_transcripts.pl'
         scope:              project
-        shell:              bash                   
+        shell:              bash
         inputs:                     # The inputs for this module
-            --counts:                    # Input argument, could be also 'empty#'
+            --matrix:                    # Input argument, could be also 'empty#'
                 scope:      project
                 File_Type:  isoform.norm_counts
-            --FASTA:
+            --transcripts:
                 scope:      project
                 File_Type:  fasta.nucl
-        outputs:                    
-            --output:                    
+            --gene_to_trans_map:
+                scope:      project
+                File_Type:  gene_trans_map
+        outputs:
+            '>':
                 File_Type:   fasta.nucl
-                suffix:      .filtered.fasta       # A suffix for this output argument file name    
+                suffix:      .filter_low_expr.fasta       # A suffix for this output argument file name
         redirects:
-            --grouping:     /gpfs0/bioinfo/users/sklarz/trinity_trial/07.Sample_grouping.txt
-            --min_count:    1
-            --min_sample:   2 
-            --min_groups:   1
-        # stop_and_show:
+            --highest_iso_only:
 
-
+    # Quality test the assembly with BUSCO
     BUSCO1:
         module:             BUSCO
         base:               Trinity_assembl
@@ -147,55 +189,55 @@ Step_params:
         redirects:
             --mode:         transcriptome
             --lineage:      {Vars.databases.BUSCO}
-            --cpu:          65
+            --cpu:          20
             --force:
             --restart:
         qsub_params:
-            -pe:            shared 65
-            
+            -pe:            '{Vars.cluster_params.pe} 20'
             
 
-# ----------------------------------------------------------------
-# Trinotate pipeline:
-    # To save time, split into small subsamples
+# -------------------- Part 2: Annotate with Trinotate:
+
+    # Splitting into 4 parts, for parallelization. Increase number for faster analysis. 
     Split_Fasta:
         module:             split_fasta
         base:               Trinity_assembl
         script_path:
+        tag:                trinotate
         scope:              project
         type:               nucl
         subsample_num:      4
 
-    trino_blastx_sprot_highExpr:
+    Trino_blastx_sprot_highExpr:
         module:             blast_new
         base:               Split_Fasta
         script_path:        '{Vars.paths.blast}/blastx'
-        query:         sample
-        db:            {Vars.databases.trinotate.sprot}
+        query:              sample
+        db:                 {Vars.databases.trinotate.sprot}
         querytype:          nucl
         redirects:
             -max_target_seqs: 1
             -num_threads:   1
             -outfmt:        6
-    trino_Transdecode_highExpr:
+    Trino_Transdecode_highExpr:
         module:             TransDecoder
         base:               Split_Fasta
         script_path:        "{Vars.paths.TransDecoder}.LongOrfs"
         scope:              sample
-    trino_blastp_sprot_highExpr:
+    Trino_blastp_sprot_highExpr:
         module:             blast_new
-        base:               trino_Transdecode_highExpr
+        base:               Trino_Transdecode_highExpr
         script_path:        {Vars.paths.blastp}
-        query:         sample
-        db:            {Vars.databases.trinotate.sprot}
+        query:              sample
+        db:                 {Vars.databases.trinotate.sprot}
         querytype:          prot
         redirects:
             -max_target_seqs: 1
             -num_threads:   1
             -outfmt:        6
-    trino_hmmscan1_highExpr:
+    Trino_hmmscan1_highExpr:
         module:             hmmscan
-        base:               trino_Transdecode_highExpr
+        base:               Trino_Transdecode_highExpr
         script_path:        {Vars.paths.hmmscan}
         scope:              sample
         type:               prot
@@ -203,11 +245,10 @@ Step_params:
         hmmdb:              {Vars.databases.trinotate.pfam}
         qsub_params:
             -q:             bioinfo.q
-            # -pe:            shared 10
         redirects:
             --cpu:          1
 
-    trino_rnammer_highExpr:
+    Trino_rnammer_highExpr:
         module:             RnammerTranscriptome
         base:               Split_Fasta
         script_path:        /gpfs0/bioinfo/apps/Trinity/Trinotate-v3.1.1/util/rnammer_support/RnammerTranscriptome.pl #{Vars.paths.hmmscan}
@@ -215,49 +256,49 @@ Step_params:
         redirects:
             --path_to_rnammer:  /gpfs0/bioinfo/apps/RNAMMER/RNAMMER_v1.2/rnammer
     
-    trino_Transdecode_Predict:
+    Trino_Transdecode_Predict:
         module:             TransDecoder
         base:               
-            - trino_Transdecode_highExpr
-            - trino_blastp_sprot_highExpr
-            - trino_hmmscan1_highExpr
+            - Trino_Transdecode_highExpr
+            - Trino_blastp_sprot_highExpr
+            - Trino_hmmscan1_highExpr
         script_path:        "{Vars.paths.TransDecoder}.Predict"
         scope:              sample
         redirects:
             --single_best_only:
         # Predict:
 
-    # trino_merge_blast_highExpr:
+    # Trino_merge_blast_highExpr:
         # module:             merge_table
-        # base:               [trino_blastp_sprot_highExpr,trino_blastx_sprot_highExpr,trino_rnammer_highExpr]
+        # base:               [Trino_blastp_sprot_highExpr,Trino_blastx_sprot_highExpr,Trino_rnammer_highExpr]
         # script_path:        
         # type:               [blast.prot,blast.nucl,transcripts.fasta.nucl,fasta.prot,rnammer]
         # # header:             5
         # # stop_and_show:
         
-    # trino_merge_hmm_highExpr:
+    # Trino_merge_hmm_highExpr:
         # module:             merge_table
-        # base:               trino_hmmscan1_highExpr
+        # base:               Trino_hmmscan1_highExpr
         # script_path:        
         # type:               hmmscan.prot
         # header:             3
         # # stop_and_show:
 
-    trino_merge_tables_highExpr:
+    Trino_merge_tables_highExpr:
         module:             merge_table
-        base:               [trino_blastp_sprot_highExpr,trino_blastx_sprot_highExpr,trino_rnammer_highExpr,trino_hmmscan1_highExpr]
+        base:               [Trino_blastp_sprot_highExpr,Trino_blastx_sprot_highExpr,Trino_rnammer_highExpr,Trino_hmmscan1_highExpr]
         script_path:        
         type:               [blast.prot,blast.nucl,transcripts.fasta.nucl,fasta.prot,rnammer,hmmscan.prot]
         header:             [0,0,0,0,0,5]
         ext:                [out, out, fna, faa, out, hmm.out]
         # stop_and_show:
 
-    trino_Trinotate1_highExpr:
+    Trino_Trinotate1_highExpr:
         module:             Trinotate
         base:               
-            # - trino_merge_blast_highExpr
-            # - trino_merge_hmm_highExpr
-            - trino_merge_tables_highExpr
+            # - Trino_merge_blast_highExpr
+            # - Trino_merge_hmm_highExpr
+            - Trino_merge_tables_highExpr
             - Get_Trans_Map
         # stop_and_show:
         script_path:        {Vars.paths.Trinotate}
@@ -269,14 +310,14 @@ Step_params:
 
 #####################################################
 # Project-wide decoder with Predict
-    trino_Transdecode_proj:
+    Trino_Transdecode_proj:
         module:             TransDecoder
         base:               Trinity_assembl
         script_path:        "{Vars.paths.TransDecoder}.LongOrfs"
         scope:              project
-    trino_blastp_sprot_proj:
+    Trino_blastp_sprot_proj:
         module:             blast_new
-        base:               trino_Transdecode_proj
+        base:               Trino_Transdecode_proj
         script_path:        {Vars.paths.blastp}
         query:              project
         db:            {Vars.databases.trinotate.sprot}
@@ -285,9 +326,9 @@ Step_params:
             -max_target_seqs: 1
             -num_threads:   1
             -outfmt:        6
-    trino_hmmscan1_proj:
+    Trino_hmmscan1_proj:
         module:             hmmscan
-        base:               trino_Transdecode_proj
+        base:               Trino_Transdecode_proj
         script_path:        {Vars.paths.hmmscan}
         scope:              project
         type:               prot
@@ -295,17 +336,16 @@ Step_params:
         hmmdb:              {Vars.databases.trinotate.pfam}
         qsub_params:
             -q:             bioinfo.q
-            # -pe:            shared 10
         redirects:
             --cpu:          1
 
     
-    trino_Transdecode_Predict_proj:
+    Trino_Transdecode_Predict_proj:
         module:             TransDecoder
         base:               
-            - trino_Transdecode_proj
-            - trino_blastp_sprot_proj
-            - trino_hmmscan1_proj
+            - Trino_Transdecode_proj
+            - Trino_blastp_sprot_proj
+            - Trino_hmmscan1_proj
         script_path:        "{Vars.paths.TransDecoder}.Predict"
         scope:              project
         # keep_previous:

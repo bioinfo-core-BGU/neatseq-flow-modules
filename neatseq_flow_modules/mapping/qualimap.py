@@ -86,43 +86,33 @@ class Step_qualimap(Step):
         if self.params["mode"] not in ["bamqc", "multi-bamqc", "rnaseq"]:
             raise AssertionExcept("mode must be 'bamqc', 'rnaseq' or 'multi-bamqc'")
 
-    def step_sample_initiation(self):
-        """ A place to do initiation stages following setting of sample_data
-        """
-
         if "scope" not in self.params:
-            self.write_warning("No scope specified. Setting appropriate")
             if self.params["mode"] == "multi-bamqc":
                 self.params["scope"] = "project"
             else:
                 self.params["scope"] = "sample"
+            self.write_warning("No scope specified. Setting to '{scope}'".format(scope=self.params["scope"]))
+
+    def step_sample_initiation(self):
+        """ A place to do initiation stages following setting of sample_data
+        """
 
         if self.params["scope"] == "project":
-            self.step_sample_initiation_byproject()
+            sample_list = ["project_data"]
         elif self.params["scope"] == "sample":
-            self.step_sample_initiation_bysample()
+            sample_list = self.sample_data["samples"]
         else:
-            raise AssertionExcept("'scope' must be either 'sample' or 'project'")
+            pass
 
-    def step_sample_initiation_bysample(self):
-        
-        # Assert that all samples have reads files:
-        if self.params["mode"] == "bamqc":
-            for sample in self.sample_data["samples"]:
+        if self.params["mode"] in ["bamqc","rnaseq"]:
+            for sample in sample_list:
                 if "bam" not in self.sample_data[sample]:
                     raise AssertionExcept("No bam file defined for sample\n", sample)
-        if self.params["mode"] == "multi-bamqc":
-            raise AssertionExcept("mode multi-bamqc is not defined for sample scope")
-
-    def step_sample_initiation_byproject(self):
-
-        if self.params["mode"] == "bamqc":
-            if "bam" not in self.sample_data["project_data"]:
-                raise AssertionExcept("No bam file defined for project\n")
-
-        if self.params["mode"] == "multi-bamqc":
+        elif self.params["mode"] == "multi-bamqc":
             if "qualimap_files_index" not in self.sample_data["project_data"]:
-                raise AssertionExcept("if mode is multi-bamqc, you have to have a bamqc instance first!")
+                raise AssertionExcept("if mode is multi-bamqc, you have to have a 'qualimap bamqc' instance first!")
+        else:
+            pass
 
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
@@ -144,9 +134,7 @@ class Step_qualimap(Step):
 
     def build_scripts(self):
         """ This is the actual script building function
-
         """
-
 
         if self.params["scope"] == "project":
             sample_list = ["project_data"]
@@ -156,14 +144,6 @@ class Step_qualimap(Step):
             raise AssertionExcept("'scope' must be either 'sample' or 'project'")
 
         for sample in sample_list:      # Getting list of samples out of samples_hash
-
-
-            # def build_scripts_bysample(self):
-            #
-            #     # Each iteration must define the following class variables:
-            #         # spec_script_name
-            #         # script
-            #     for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
 
             # Name of specific script:
             self.spec_script_name = self.set_spec_script_name(sample)
