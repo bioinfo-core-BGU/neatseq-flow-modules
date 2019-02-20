@@ -1,11 +1,4 @@
-Global_params:
-    Default_wait: 10
-    Qsub_opts: -V -cwd
-    Qsub_path: /path/to/qsub/bin
-    Qsub_q: queue.q
-    module_path:      ../neatseq_flow_modules
-    
-    
+
 Description: |
     A pipeline for basic RNA-seq analysis using Trinity
     ---------------------------------------------------
@@ -25,6 +18,14 @@ Description: |
     4. Mapping of the reads is performed with trinity_mapping module
     5. Creating statistical tables is performed with trinmap_statistics module.
     6. Annotation with trinotate
+    
+Global_params:
+    Default_wait: 10
+    Qsub_opts: -V -cwd
+    Qsub_path: /path/to/qsub/bin
+    Qsub_q: queue.q
+    module_path:      ../neatseq_flow_modules
+    
     
 Vars:
     paths:
