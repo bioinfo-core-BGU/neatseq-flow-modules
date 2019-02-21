@@ -118,15 +118,7 @@ class Step_metaphlan2(Step):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = ".metaphlan.out"
 
-            
-        # Checking this once and then applying to each sample:
-        try:
-            self.params["redir_params"]
-        except KeyError:
-            raise AssertionExcept("You must specify --mpa_pkl and --bowtie2db as redirected params.\n")
-            
-        if "--mpa_pkl" not in list(self.params["redir_params"].keys()) or "--bowtie2db" not in list(self.params["redir_params"].keys()):
-            raise AssertionExcept("You must specify --mpa_pkl and --bowtie2db as redirected params.\n")
+        # self.auto_redirs = "--input_type".split(" ")
 
         if "--input_type" in list(self.params["redir_params"].keys()):
             self.write_warning("At the moment metaphlan supports only --input_type fastq. Ignoring the value you passed\n")
