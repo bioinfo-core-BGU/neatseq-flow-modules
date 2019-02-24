@@ -289,6 +289,7 @@ Step_params:
             - Get_Trans_Map
         script_path:        {Vars.paths.Trinotate}
         scope:              project
+        setenv:             "dsdsdsd=dsdsdsds"
         sqlitedb:           {Vars.databases.trinotate.sqlitedb}
         cp_sqlitedb:        
 
