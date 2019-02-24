@@ -205,13 +205,15 @@ class Step_trinity_mapping(Step):
 
             self.script += """\
 # Creating a local sost link to the reference
-# The purpose is that the reference will not be built in the original location 
+# The purpose is that the reference will not be built in the original location
+{setenv} 
 mkdir {dir}
 cp -rs \\
     {ref} \\
     {dir}
 
-""".format(ref=self.sample_data["project_data"]["fasta.nucl"],
+""".format(setenv=self.get_setenv_part(),
+           ref=self.sample_data["project_data"]["fasta.nucl"],
                              dir=self.base_dir+"Reference")
             self.sample_data["project_data"]["fasta.nucl"] = self.base_dir+"Reference/"+os.path.basename(self.sample_data["project_data"]["fasta.nucl"])
             # Create script and write to SCRPT
