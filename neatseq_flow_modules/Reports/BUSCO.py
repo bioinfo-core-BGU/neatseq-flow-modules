@@ -37,6 +37,8 @@ Parameters that can be set
     :header: "Parameter", "Values", "Comments"
 
     "scope", "``sample`` | ``project``", "Use sample of project scope fasta file."
+    "get_lineage", "", "Path to one of the lineages to download from https://busco.ezlab.org/frame_wget.html. Will be downloaded, unzipped and used if no --lineage is passed."
+
     
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -55,6 +57,20 @@ Lines for parameter file
             --force:
             --restart:
             
+::
+
+    BUSCO1:
+        module:             BUSCO
+        base:               Trinity_assembl
+        script_path:        {Vars.paths.BUSCO}
+        scope:              project
+        get_lineage:        http://busco.ezlab.org/v2/datasets/eukaryota_odb9.tar.gz
+        redirects:
+            --mode:         transcriptome
+            --cpu:          65
+            --force:
+            --restart:
+
 
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -139,10 +155,31 @@ You must specify a 'mode':
         """ Add script to run BEFORE all other steps
         """
 
-        pass
+        if "get_lineage" in self.params:
 
-            
-         
+            use_dir = self.local_start(self.base_dir)
+
+            self.script = """
+# Moving into output location
+cd {use_dir} 
+
+wget {lineage}
+tar zxvf {lineage_loc}
+
+cd -
+            """.format(use_dir=use_dir,
+                       lineage=self.params["get_lineage"],
+                       lineage_loc=os.path.basename(self.params["get_lineage"]))
+
+            try:
+                lineage = re.match("(.*)\.tar\.gz", os.path.basename(self.params["get_lineage"]))
+                lineage = use_dir + lineage.group(1)
+            except AttributeError as attrerr:
+                raise AssertionExcept("Error with supplied lineage path ({lineage}".format(lineage=self.params["get_lineage"]))
+            # Store results to fasta and assembly slots:
+            self.sample_data["project_data"]["BUSCO.lineage"] = lineage
+            # Move all files from temporary local dir to permanent base_dir
+            self.local_finish(use_dir, self.base_dir)  # Sees to copying local files to final destination (and other stuff)
 
     def build_scripts(self):
     
@@ -173,8 +210,11 @@ You must specify a 'mode':
         self.script += "--out %s \\\n\t" % self.sample_data["Title"]
         self.script += "--in %s \\\n\t"  % self.sample_data["project_data"]["fasta.%s" % self.type]
         self.script += "--tmp %s \\\n\t"  % os.path.join(use_dir,"tmp")
-            
-        
+
+        if "BUSCO.lineage" in self.sample_data["project_data"] and "--lineage" not in self.params["redir_params"]:
+            self.script += "--lineage %s \\\n\t" % self.sample_data["project_data"]["BUSCO.lineage"]
+        self.script = self.script.rstrip("\\\n\t")
+
 
         # Store results to fasta and assembly slots:
         self.sample_data["project_data"]["BUSCO"] = os.path.join(self.base_dir,"run_%s" % self.sample_data["Title"])
@@ -215,7 +255,10 @@ You must specify a 'mode':
             self.script += "--in %s \\\n\t"  % self.sample_data[sample]["fasta.%s" % self.type]
             self.script += "--tmp %s \\\n\t"  % os.path.join(use_dir,"tmp")
             
-        
+            if "BUSCO.lineage" in self.sample_data["project_data"] and "--lineage" not in self.params["redir_params"]:
+                self.script += "--lineage %s \\\n\t" % self.sample_data["project_data"]["BUSCO.lineage"]
+
+            self.script = self.script.rstrip("\\\n\t")
 
             # Store results to fasta and assembly slots:
             self.sample_data[sample]["BUSCO"] = os.path.join(sample_dir,"run_%s" % sample)
@@ -225,9 +268,4 @@ You must specify a 'mode':
          
 
             self.create_low_level_script()
-            
-            
-            
-            
-                 
             

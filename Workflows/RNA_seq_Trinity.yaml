@@ -191,9 +191,10 @@ Step_params:
         base:               Rep_transcript
         script_path:        {Vars.paths.BUSCO} 
         scope:              project
+        # get_lineage:        http://busco.ezlab.org/v2/datasets/eukaryota_odb9.tar.gz
         redirects:
             --mode:         transcriptome
-            --lineage:      {Vars.databases.BUSCO}
+            # --lineage:      {Vars.databases.BUSCO}
             --cpu:          20
             --force:
             --restart:
@@ -289,7 +290,6 @@ Step_params:
             - Get_Trans_Map
         script_path:        {Vars.paths.Trinotate}
         scope:              project
-        setenv:             "dsdsdsd=dsdsdsds"
         sqlitedb:           {Vars.databases.trinotate.sqlitedb}
         cp_sqlitedb:        
 
