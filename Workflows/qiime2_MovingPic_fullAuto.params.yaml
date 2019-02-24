@@ -1,0 +1,210 @@
+Global_params:
+    Default_wait: 10
+    Qsub_opts: -V -cwd
+    Qsub_q: bioinfo.q
+    Qsub_nodes:         [sge1030,sge1031,sge1032,sge1033,sge213,sge214,sge224,sge37]
+    Qsub_path: /storage/SGE6U8/bin/lx24-amd64
+    module_path:  /gpfs0/bioinfo/apps/neatseq-flow/neatseq_flow_modules
+
+    conda:
+        path:   /gpfs0/bioinfo/apps/Miniconda3/Miniconda_v4.3.21
+        env:    qiime2-2018.11
+Vars:
+        
+Step_params:
+
+    merge_data:
+        module:         merge
+        src:            [barcodes, sequences, metadata, TaxonomicClassifier]
+        trg:            [barcodes, sequences, metadata, TaxonomicClassifier]
+        script_path:    [..import.., ..import.., 'curl -L', 'curl -L']
+        ext:            [null,null,tsv, qza]
+        scope:          project
+        
+        
+    get_sequences:
+        module:         Fillout_Generic
+        base:           merge_data
+        scope:          project
+        script_path: |
+            
+            mkdir {{o:EMPSingleEndSequences}}
+            
+            wget \
+                -O {{o:EMPSingleEndSequences}}/barcodes.fastq.gz \
+                {{project:barcodes}}
+            wget \
+                -O {{o:EMPSingleEndSequences}}/sequences.fastq.gz \
+                {{project:sequences}}
+        
+        output:
+            EMPSingleEndSequences:
+                scope:      project
+                string:     "{{base_dir}}{{project}}.emp-SE-seqs"
+        # stop_and_show:
+
+        
+    import:
+        module:         qiime2_import
+        base:           get_sequences   
+        script_path:    qiime tools import
+        redirects:
+            --type:     EMPSingleEndSequences
+            # --input-format: EMPSingleEndDirFmt
+    demux:
+        module:         qiime2_general
+        base:           import  
+        script_path:    qiime demux emp-single 
+        redirects:
+            --m-barcodes-file:     '{{metadata}}' 
+            --m-barcodes-column:    BarcodeSequence 
+        
+            
+    demux_summary:
+        module:         qiime2_general
+        base:           demux
+        script_path:    qiime demux summarize
+
+
+    dada2:
+        module:         qiime2_general
+        base:           demux
+        script_path:    qiime dada2 denoise-single 
+        setenv:         R_LIBS="$CONDA_PREFIX/lib/R/library"
+        redirects:
+            --p-trim-left:         0 
+            --p-trunc-len:         120
+            --p-n-threads:         60
+        qsub_params:
+            -pe:        shared 60
+
+    dada2_vis_summary:
+        module:                     qiime2_general
+        base:                       dada2
+        script_path:                qiime feature-table summarize
+        
+
+    dada2_vis_tabulate:
+        module:                     qiime2_general
+        base:                       dada2
+        script_path:                qiime metadata tabulate 
+        redirects:
+            --m-input-file:         "{{SampleData[DADA2Stats]}}"
+
+            
+    phylogeny:
+        module:                     qiime2_general
+        base:                       dada2
+        script_path:                qiime phylogeny align-to-tree-mafft-fasttree
+        redirects:
+            --p-n-threads:          60
+        qsub_params:
+            -pe:                    shared 60        
+            
+    diversity:
+        module:                     qiime2_general
+        base:                       phylogeny
+        script_path:                qiime diversity core-metrics-phylogenetic
+        store_output:
+            - --o-rarefied-table
+            - --o-faith-pd-vector
+            - --o-weighted-unifrac-distance-matrix
+            - --o-weighted-unifrac-pcoa-results
+            - --o-weighted-unifrac-emperor
+        redirects:
+            --p-sampling-depth:     1109
+            # --m-metadata-file:     /gpfs0/bioinfo/users/sklarz/QIIME_workshops/QIIME2_workshop_2018/NeatSeq-Flow/03.moving_pictures/sample-metadata.tsv
+        
+        
+        
+    alpha_group_signif_faith:
+        module:                     qiime2_general
+        base:                       diversity
+        script_path:                qiime diversity alpha-group-significance
+
+    diversity_evenness:
+        module:                     qiime2_general
+        base:                       phylogeny
+        script_path:                qiime diversity alpha
+        redirects:
+            --p-metric:             pielou_e
+       
+        
+    alpha_group_signif_pielou:
+        module:                     qiime2_general
+        base:                       diversity_evenness
+        script_path:                qiime diversity alpha-group-significance
+        # redirects:
+            # --m-metadata-file:     /gpfs0/bioinfo/users/sklarz/QIIME_workshops/QIIME2_workshop_2018/NeatSeq-Flow/03.moving_pictures/sample-metadata.tsv
+
+
+    beta_group_signif_BodySite:
+        module:                     qiime2_general
+        base:                       diversity
+        script_path:                qiime diversity beta-group-significance
+        redirects:
+            --m-metadata-column:    BodySite
+            --p-pairwise:
+            
+    beta_group_signif_Subject:
+        module:                     qiime2_general
+        base:                       diversity
+        script_path:                qiime diversity beta-group-significance
+        redirects:
+            --m-metadata-column:    Subject
+            --p-pairwise:
+
+    emperor_unifrac:
+        module:                     qiime2_general
+        base:                       diversity
+        script_path:                qiime emperor plot
+        redirects:
+            --p-custom-axes:        DaysSinceExperimentStart 
+    
+    ### Creating emperor for bray_curtis
+    
+    beta_braycurtis:
+        module:                     qiime2_general
+        base:                       dada2
+        script_path:                qiime diversity beta 
+        redirects:
+            --p-metric:             braycurtis
+
+    pcoa_braycurtis:
+        module:                     qiime2_general
+        base:                       beta_braycurtis
+        script_path:                qiime diversity pcoa 
+
+    emperor_braycurtis:
+        module:                     qiime2_general
+        base:                       pcoa_braycurtis
+        script_path:                qiime emperor plot
+        redirects:
+            --p-custom-axes:        DaysSinceExperimentStart 
+
+    ################
+    
+    alpha_rarefaction:
+        module:                     qiime2_general
+        base:                       phylogeny
+        script_path:                qiime diversity alpha-rarefaction
+        redirects:
+            # --m-metadata-file:      
+            --p-max-depth:          4000
+
+
+    classify:
+        module:                     qiime2_general
+        base:                       dada2
+        script_path:                qiime feature-classifier classify-sklearn
+
+    classify_barplot:
+        module:                     qiime2_general
+        base:                       classify
+        script_path:                qiime taxa barplot
+        
+
+# qiime metadata tabulate \
+  # --m-input-file taxonomy.qza \
+  # --o-visualization taxonomy.qzv
+

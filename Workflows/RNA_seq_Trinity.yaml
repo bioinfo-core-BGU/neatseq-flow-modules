@@ -30,6 +30,9 @@ Global_params:
 Vars:
     paths:
         multiqc:            /path/to/multiqc
+        fastqc:            /path/to/fastqc
+        java:               java
+        trimmo:             trimmo
         bowtie2:            /path/to/bowtie2_v2.2.5         # Path to the dir which includes bowtie2 and bowtie2-build executables
         Trinity:            /path/to/trinity/               # Path to the dir which contains Trinity executable and a dir util/ with the toolkit scripts
         SGE_Trinity_conf:   /path/to/cluster_Trinity_conf.txt  # Path to file with cluster configuration for trinity. See --grid_conf parameter in trinity manual.
@@ -68,7 +71,7 @@ Step_params:
     # FastQC on the files
     fqc_merge1:
         module:         fastqc_html
-        base:           merge1
+        base:           Merge
         script_path:    {Vars.paths.fastqc}
         qsub_params:
             -pe:        '{Vars.cluster_params.pe} 15'
@@ -77,7 +80,7 @@ Step_params:
     # Trim with trimmomatic if required
     trim1:
         module:         trimmo
-        base:           merge1
+        base:           Merge
         script_path:    '{Vars.paths.java} -jar {Vars.paths.trimmo}'
         qsub_params:
             -pe:        '{Vars.cluster_params.pe} 20'
@@ -111,12 +114,13 @@ Step_params:
         tag:                Trinity
     # Assemble the reads with Trinity. THIS STEP CAN TAKE A LONG TIME!
     Trinity_assembl:
-        module:             trinity_new
+        module:             trinity
         base:               Trinity_tags
         script_path:        '{Vars.paths.Trinity}/Trinity'
         qsub_params:
             -pe:            '{Vars.cluster_params.pe} 20'
         scope:              project
+        get_Trinity_gene_to_trans_map:  /path/to/get_Trinity_gene_to_trans_map.pl
         redirects:
             --grid_exec:        '"{Vars.paths.hpc_cmds_GridRunner} --grid_conf {Vars.paths.SGE_Trinity_conf} -c"'
             --seqType:          fq

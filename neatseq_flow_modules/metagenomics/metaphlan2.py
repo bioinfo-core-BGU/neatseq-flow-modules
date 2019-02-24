@@ -169,7 +169,7 @@ class Step_metaphlan2(Step):
             self.script += "%s \\\n\t" % self.params["ktImportText_path"]
             self.script += "-o %s \\\n\t" %  krona_report_fn
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-                self.script += "%s,%s \\\n\t" % (self.sample_data[sample]["classification"],sample)
+                self.script += "%s,%s \\\n\t" % (self.sample_data[sample]["classification"], sample)
             self.script = self.script.rstrip("\\\n\t") 
             self.script += "\n\n\n"
             # Storing and stamping results:
