@@ -169,7 +169,7 @@ class Step_Trinotate(Step):
         self.sqlitedb = self.params["sqlitedb"]
 
         self.script = self.get_setenv_part()
-        print(self.script)
+
         # If requested copy, create copy and change active sqlitedb
         if "cp_sqlitedb" in self.params:
             self.script += "cp {source} {dest}\n\n".format(source=self.params["sqlitedb"],
