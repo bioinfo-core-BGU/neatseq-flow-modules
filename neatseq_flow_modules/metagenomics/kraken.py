@@ -125,6 +125,7 @@ class Step_kraken(Step):
         # kraken_path = os.path.dirname(os.path.realpath(__file__))
         merge_kraken_reports = resource_filename(__name__, 'merge_kraken_reports.R')
 
+        self.script = self.get_setenv_part()
         ### Add code to create a unified krona plot
         if "ktImportTaxonomy_path" in list(self.params.keys()):
             self.script += "# Running ktImportTaxonomy to create a krona chart for samples\n"

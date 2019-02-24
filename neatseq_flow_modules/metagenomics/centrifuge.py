@@ -129,7 +129,8 @@ class Step_centrifuge(Step):
             sample_files = ""
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
                 sample_files += "%s.forKrona,%s \\\n\t" % (self.sample_data[sample]["raw_classification"],sample)
-            self.script = """
+            self.script = self.get_setenv_part()
+            self.script += """
 # Running ktImportTaxonomy to create a krona chart for samples
 {ktImportTaxonomy_path} \\
     -o {output_fn}%s \\
@@ -142,7 +143,6 @@ class Step_centrifuge(Step):
             
             self.script = re.sub("\\\\\s*$","\n\n",self.script)
 
-            
             self.sample_data["project_data"]["krona"] = self.base_dir + "krona_report.html"
     
             self.stamp_file(self.sample_data["project_data"]["krona"])

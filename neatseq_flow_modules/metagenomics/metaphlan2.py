@@ -160,10 +160,11 @@ class Step_metaphlan2(Step):
         else:
             krona_report_fn = self.base_dir + self.sample_data["Title"] + "_krona_report.html"
 
-            self.script = "# Creating krona html reports\n"
             # Adding env to script
-            if "env" in self.params:
-                self.script += "env %s \\\n\t" % self.params["env"]
+            self.script = self.get_setenv_part()
+            self.script += "# Creating krona html reports\n"
+            # if "env" in self.params:
+            #     self.script += "env %s \\\n\t" % self.params["env"]
             # Main part of script:
             self.script += "%s \\\n\t" % self.params["ktImportText_path"]
             self.script += "-o %s \\\n\t" %  krona_report_fn

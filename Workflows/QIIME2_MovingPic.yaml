@@ -1,9 +1,9 @@
 Global_params:
-    Default_wait: 10
-    Qsub_opts: -V -cwd
-    Qsub_q: queue.q
-    Qsub_path: /path/to/qsub
-    module_path:  ../neatseq_flow_modules
+    Default_wait:   10
+    Qsub_opts:      -V -cwd
+    Qsub_q:         queue.q
+    Qsub_path:      /path/to/qsub
+    module_path:    ../neatseq_flow_modules
 
     conda:
         path:  
@@ -20,8 +20,8 @@ Step_params:
         module:         merge
         src:            [EMPSingleEndSequences, metadata, TaxonomicClassifier]
         trg:            [EMPSingleEndSequences, metadata, TaxonomicClassifier]
-        script_path:    [..import..,cat, 'curl -L']
-        ext:            [..empty..,null, qza]
+        script_path:    [..import.., cat, 'curl -L']
+        ext:            [..empty.., null, qza]
         scope:          project
         
         
@@ -58,7 +58,7 @@ Step_params:
             --p-n-threads:         60
         qsub_params:
             -pe:        shared 60
-
+            
     dada2_vis_summary:
         module:                     qiime2_general
         base:                       dada2

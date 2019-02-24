@@ -60,5 +60,6 @@ Example of Sample File
 Download
 ~~~~~~~~~
 
-The workflow file is available :download:`here <../../../Workflows/QIIME2_MovingPic.yaml>`
+The workflow file is available :download:`here <../../../Workflows/qiime2_MovingPic_fullAuto.params.yaml>`
+The sample file is available :download:`here <../../../Workflows/qiime2_MovingPic_fullAuto.samples.nsfs>`
 
