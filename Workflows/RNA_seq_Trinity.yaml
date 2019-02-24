@@ -16,7 +16,7 @@ Description: |
     2. Adding tags required by trinity to the read titles (/1 and /2 for F and R. See https://github.com/trinityrnaseq/trinityrnaseq/wiki/Running-Trinity)
     3. Running Trinity. Trinity must be configured to run on a cluster. The configuration file is passed with --grid_conf. THIS STEP CAN TAKE A LONG TIME TO RUN!
     4. Mapping of the reads is performed with trinity_mapping module
-    5. Creating statistical tables is performed with trinmap_statistics module.
+    5. Creating statistical tables is performed with trinity_statistics module.
     6. Annotation with trinotate
     
 Global_params:
@@ -151,7 +151,7 @@ Step_params:
             --seqType:      fq
     # Count reads per transcript with RSEM
     Trinity_Map_Stats:
-        module:             trinmap_statistics
+        module:             trinity_statistics
         base:               Trinity_Map
         script_path:        '{Vars.paths.Trinity}/util/abundance_estimates_to_matrix.pl'
         # use_isoforms:          # use isoforms results. Remove to use genes results

@@ -19,7 +19,7 @@ Steps:
 #. Adding tags required by trinity to the read titles (/1 and /2 for F and R. See `Running-Trinity <https://github.com/trinityrnaseq/trinityrnaseq/wiki/Running-Trinity>`_. [1]_
 #. Running ``Trinity``. Trinity must be configured to run on a cluster. The configuration file is set in the ``SGE_Trinity_conf`` variable in the ``Vars`` section. [2]_
 #. Mapping of the reads is performed with ``trinity_mapping`` module.
-#. Creating statistical tables is performed with ``trinmap_statistics`` module.
+#. Creating statistical tables is performed with ``trinity_statistics`` module.
 
 .. [1] Since the Trinity example already includes tags in the read names, this step is tagged with ``SKIP``, and will not be executed. For raw fastq reads, you will need to remove the ``SKIP`` tag.
 .. [2] Trinity uses `hpc_cmds_GridRunner <https://github.com/HpcGridRunner/HpcGridRunner.github.io/wiki>`_ for executing on grids. See their wiki for correct configuration.

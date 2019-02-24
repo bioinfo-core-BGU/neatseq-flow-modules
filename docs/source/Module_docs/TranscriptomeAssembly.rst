@@ -15,7 +15,7 @@ Transcriptome Assembly
 
 .. automodule:: neatseq_flow_modules.RNA_seq.trinity_mapping
 
-.. automodule:: neatseq_flow_modules.RNA_seq.trinmap_statistics
+.. automodule:: neatseq_flow_modules.RNA_seq.trinity_statistics
 
 .. automodule:: neatseq_flow_modules.Liron.RSEM_module.RSEM
 

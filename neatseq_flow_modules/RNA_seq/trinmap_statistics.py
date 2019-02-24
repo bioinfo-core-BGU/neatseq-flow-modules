@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``trinmap_statistics``
+``trinity_statistics``
 -----------------------------------------------------------------
 :Authors: Menachem Sklarz
 :Affiliation: Bioinformatics core facility
@@ -51,7 +51,7 @@ Lines for parameter file
 
 
     trin_map_stats:
-        module:             trinmap_statistics
+        module:             trinity_statistics
         base:               trin_map1
         script_path:        /path/to/abundance_estimates_to_matrix.pl
         use_genes:       
@@ -77,7 +77,7 @@ __author__ = "Menachem Sklarz"
 __version__ = "1.2.0"
 
 
-class Step_trinmap_statistics(Step):
+class Step_trinity_statistics(Step):
     
     def step_specific_init(self):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
