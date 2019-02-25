@@ -54,7 +54,10 @@ Parameters that can be set
     :header: "Parameter", "Values", "Comments"
 
     "scope", "sample|project", "Set if project-wide fasta slot should be used"
-    
+    "skip_gene_to_trans_map", "", "Set to skip construction of the transcript map. You can use a dedicated module, ``Trinity_gene_to_trans_map``. Both put the map in the same slot (gene_trans_map)"
+    "get_Trinity_gene_to_trans_map", "", "Path to get_Trinity_gene_to_trans_map.pl. If not passed, will try guessing from Trinity path"
+
+
     
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -238,7 +241,6 @@ class Step_trinity(Step):
                     os.path.join(os.path.dirname(os.path.normpath(self.params["script_path"])), \
                                  "util/support_scripts/get_Trinity_gene_to_trans_map.pl")
             if "skip_gene_to_trans_map" not in self.params:
-
                 self.script += """
 # Create summary of biom table for use in rarefaction later
 

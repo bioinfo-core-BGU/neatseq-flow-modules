@@ -13,7 +13,7 @@ Vars:
         
 Step_params:
 
-    merge_data:
+    Merge_data:
         module:         merge
         src:            [barcodes, sequences, metadata, TaxonomicClassifier]
         trg:            [barcodes, sequences, metadata, TaxonomicClassifier]
@@ -22,9 +22,9 @@ Step_params:
         scope:          project
         
         
-    get_sequences:
+    Get_sequences:
         module:         Fillout_Generic
-        base:           merge_data
+        base:           Merge_data
         scope:          project
         script_path: |
             
@@ -46,7 +46,7 @@ Step_params:
         
     import:
         module:         qiime2_import
-        base:           get_sequences   
+        base:           Get_sequences   
         script_path:    qiime tools import
         redirects:
             --type:     EMPSingleEndSequences

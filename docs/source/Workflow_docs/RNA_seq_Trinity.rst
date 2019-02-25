@@ -9,8 +9,17 @@ A pipeline for RNA-seq analysis using Trinity.
 
 The workflow is built to run Trinity's sample data, which consists of stranded, paired-end reads. You should modify the workflow steps to suit your data.
 
-The workflow assembles a transcriptome with `Trinity` and then runs ``align_and_estimate_abundance.pl`` and ``abundance_estimates_to_matrix.pl`` to map the reads to the trascriptome and create normalized counts tables. These tables can then be used in `DEseq2` or other tools for statistical analysis of RNA-seq data. Finally, the workflow uses Trinotate to annotate the resulting transcriptome.
-    
+The workflow assembles a transcriptome with `Trinity` and then runs ``align_and_estimate_abundance.pl`` and ``abundance_estimates_to_matrix.pl`` to map the reads to the trascriptome and create normalized counts tables. These tables can then be used in `DEseq2` or other tools for statistical analysis of RNA-seq data.
+
+Finally, the workflow uses Trinotate to annotate the resulting transcriptome.
+
+Preparatorty steps:
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#. Create a conda environment with all the required programs::
+
+
+
 Steps:
 ~~~~~~~
 

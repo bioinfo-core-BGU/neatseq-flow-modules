@@ -15,7 +15,7 @@ Miscellaneous Modules
 
 .. automodule:: neatseq_flow_modules.main_NSF_classes.miscellaneous.split_fasta
 
-.. automodule:: neatseq_flow_modules.main_NSF_classes.miscellaneous.fasta_splitter
+.. automodule:: neatseq_flow_modules.main_NSF_classes.miscellaneous.fasta_splitter.fasta_splitter
 
 .. automodule:: neatseq_flow_modules.main_NSF_classes.miscellaneous.ProjectToSample
 
