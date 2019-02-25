@@ -18,7 +18,7 @@ Preparatorty steps:
 
 #. Create a conda environment with all the required programs::
 
-
+   curl -l
 
 Steps:
 ~~~~~~~
