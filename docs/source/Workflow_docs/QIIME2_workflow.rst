@@ -7,6 +7,11 @@ Microbiome analysis using QIIME2
 :Affiliation: Bioinformatics Core Facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
+.. contents:: Page Contents:
+   :depth: 1
+   :local:
+   :backlinks: top
+
 Captive and Wild Atlantic Salmon project
 --------------------------------------------
 
@@ -17,8 +22,46 @@ The data for the workflow is available on `datadryad <https://datadryad.org/reso
 Steps:
 ~~~~~~~~~~
 
+
+#. *MergeReads*: Get the data and files from the sample file.
+#. *FastQC_Merge*, *TrimGalore*, *FastQC_TrimGal*, and *MultiQC_TrimGal*: QC on the reads: FastQC and Trim Galore!. Depending on the quality of the reads, `TrimGalore`` might not be required.
+#. *AddMetadata*: Import the metadata file into the workflow.
+#. *import*: import sequence data into a QIIME2 artifact
+#. *sequence_qual*: Create quality report for the sequences.
+#. *dada2*: `dada2 <https://benjjneb.github.io/dada2/>`_  and visualization.
+
+   #. *dada2_vis_summary*:
+   #. *dada2_vis_tabulate*:
+
+#. *remove_metadata* and *filter_feature_table*: Filter low-expression features from the feature table (have to first remove metadata slot, to avoid filtering by metadata)
+
+   #. *filtered_vis_summary* and *filtered_vis_tabulate*: Visualization of the filtered table.
+
+   .. Tip:: From this step onwards, if you want to use the filtered feature table, base your steps on *filter_feature_table*.
+
+#. *phylogeny*: Building a phylogenetic tree
+#. *diversity*: Core diversity analysis
+#. *alpha_rarefaction*: Creating &alpha;-rarefaction curves.
+#. *alpha_group_signif*: alpha groups differences based on Faith's diversity index.
+#. Classification:
+
+   #. *add_classifier*: Adding an extrenal classifier.
+
+      .. Tip:: You can add steps to `train your own classifier <https://docs.qiime2.org/2018.11/tutorials/feature-classifier/>`_, but that is beyond the scope of this workflow.
+
+   #. *classify*: Classify the reads.
+   #. *classify_tabulate* and *classify_plot*: Visualization of the classification.
+
+#. *gneiss_**: Steps for executing the gneiss analysis
+#. *ANCOM**: Steps for executing the ANCOM analysis
+
+
+
 Workflow Schema
 ~~~~~~~~~~~~~~~~
+
+.. image:: QIIME2_workflow_Salmon.jpg
+   :alt: QIIME2 Salmon workflow scheme
 
 
 Requires
@@ -33,32 +76,18 @@ Programs required
 
 * `QIIME2 <https://qiime2.org/>`_, version 2018.11, `installed with conda as described here <https://docs.qiime2.org/2018.11/install/native/#natively-installing-qiime-2>`_.
 
-.. Attention:: Download the parameter file in the link below and set the conda path in line 10 to the location of your conda installation, not including ``bin``. *e.g.*, if using the default location of miniconda, the path should be ``$HOME/miniconda2``.
+.. Attention:: Download the parameter file in the link below and set the conda ``path`` in the ``Global_params`` section to the location of your conda installation, not including ``bin``. *e.g.*, if using the default location of miniconda, the path should be ``$HOME/miniconda2``. The ``env`` in the same section should be the name of the qiime environment, typically something like *qiime2-2018.11*.
 
-The workflow includes
 
 Download
 ~~~~~~~~~
 
-The workflow and sample files are available for download with the following commands::
+The workflow file is available for download with the following command::
 
-   wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow3-modules/master/Workflows/qiime2_MovingPic_fullAuto.params.yaml
-   wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow3-modules/master/Workflows/qiime2_MovingPic_fullAuto.samples.nsfs
-
-
+   wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow3-modules/master/Workflows/qiime2.analysis.salmon.yaml
 
 
 .. [#f1] `<https://onlinelibrary.wiley.com/doi/full/10.1111/eva.12658>`_
-
-
-
-
-
-
-
-
-
-
 
 
 

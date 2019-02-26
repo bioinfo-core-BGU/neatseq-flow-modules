@@ -1,0 +1,285 @@
+
+Description: |
+    A pipeline for basic QIIME2 workflow from reads
+    ---------------------------------------------------
+    
+    This workflow is based on the data described in Structural and compositional mismatch between captive and wild Atlantic salmon (Salmo salar) parrs gut microbiota highlights the relevance of integrating molecular ecology for management and conservation methods.
+    
+    The data for the workflow is available on `datadryad <https://datadryad.org/resource/doi:10.5061/dryad.5ff8m0q>`_.
+    
+Global_params:
+    Default_wait: 10
+    Qsub_opts: -V -cwd
+    Qsub_q: bioinfo.q
+    Qsub_nodes:         [sge1030,sge1031,sge1032,sge1033,sge213,sge214,sge224,sge37]
+    Qsub_path: /storage/SGE6U8/bin/lx24-amd64
+    conda:
+        path:   /gpfs0/bioinfo/users/sklarz/my_conda_envs_envs/qiime2-2018.11
+        env:    qiime2-2018.11
+
+Vars:
+    paths:
+        fastqc:         /gpfs0/bioinfo/apps/FastQC/FastQC_v0.11.7/fastqc
+        multiqc:        /gpfs0/bioinfo/apps/multiQC/multiQC_v1.4/multiqc
+        trimgal:        /gpfs0/bioinfo/apps/TrimGalore/TrimGalore-0.4.5/trim_galore
+        cutadapt:       /fastspace/bioinfo_apps/cutadapt/cutadapt_v1.12.1/cutadapt
+    QIIME:
+        classifier:   /gpfs0/bioinfo/users/sklarz/QIIME_workshops/QIIME2_workshop_2018/NeatSeq-Flow/07.molly/silva-132-99-nb-classifier.qza
+        metadata:       /gpfs0/bioinfo/users/sklarz/QIIME_workshops/QIIME2_workshop_2018/NeatSeq-Flow/06b.Salmo_salar_Rimouski/metadata.tsv
+        sampling_depth: 5684
+        type:           SampleData[PairedEndSequencesWithQuality]   # For single end reads, 'SampleData[SequencesWithQuality]'
+        input_format:   PairedEndFastqManifestPhred33   # Note: use the correct format! XXXEndFastqManifestPhredYYY where XXX is 'Paired' or 'Single' and YYY is '33' or '64'.
+        dada2_method:   denoise-single   # For paired-end reads, you can use 'denoise-paired'. 
+    
+Step_params:
+    MergeReads:
+        module:         merge
+        scope:          sample
+        script_path:
+        tag:            QC
+
+
+    FastQC_Merge:
+        module:         fastqc_html
+        base:           MergeReads
+        script_path:    {Vars.paths.fastqc}
+        setenv:         PERL5LIB=""
+        qsub_params:
+            -pe:        shared 15
+        redirects:
+            --threads:  15
+
+    TrimGalore: 
+        module:         Trim_Galore
+        base:           MergeReads
+        script_path:    {Vars.paths.trimgal}
+        cutadapt_path:  {Vars.paths.cutadapt}
+        setenv:         PERL5LIB=""
+        redirects:
+            --length:   150
+            --quality:  20 # Parameters for running Trim Galore
+            --max_n:    1
+            --trim-n:
+    FastQC_TrimGal:
+        module:         fastqc_html
+        base:           TrimGalore
+        script_path:    {Vars.paths.fastqc}
+        setenv:         PERL5LIB=""
+        qsub_params:
+            -pe:        shared 15
+        redirects:
+            --threads:  15
+        conda:
+
+    MultiQC_TrimGal:
+        module:         Multiqc
+        base:           FastQC_TrimGal
+        script_path:    {Vars.paths.multiqc}        
+        redirects:
+            --interactive:
+
+    AddMetadata:
+        module:             manage_types
+        base:               MergeReads
+        script_path:        
+        scope:              project
+        operation:          add
+        type:               metadata
+        path:               {Vars.QIIME.metadata} 
+        
+    
+    import:
+        module:                     qiime2_import
+        base:                       [TrimGalore,AddMetadata]
+        script_path:                qiime tools import
+        tag:                        qiime
+        redirects:
+            --type:                 {Vars.QIIME.type}
+            --input-format:         {Vars.QIIME.input_format}
+        # stop_and_show:
+        
+    sequence_qual:
+        module:                     qiime2_general
+        base:                       import
+        script_path:                qiime demux summarize 
+        # stop_and_show:
+
+    dada2:
+        module:                     qiime2_general
+        base:                       import
+        script_path:                'qiime dada2 {Vars.QIIME.dada2_method}'
+        setenv:                     R_LIBS="$CONDA_PREFIX/lib/R/library"
+        qsub_params:
+            -pe:            shared 60
+        export:
+            - --o-denoising-stats
+        redirects:
+            --p-trunc-q:           20 
+            # --p-chimera-method:    none 
+            --p-trim-left:         7 
+            --p-trunc-len:         275
+            --p-n-threads:          60
+            --verbose:
+        # stop_and_show:
+        
+        
+    dada2_vis_summary:
+        module:                     qiime2_general
+        base:                       dada2
+        script_path:                qiime feature-table summarize
+        export:
+                    
+    dada2_vis_tabulate:
+        module:                     qiime2_general
+        base:                       dada2
+        script_path:                qiime feature-table tabulate-seqs 
+        export:
+        
+    # Filtering out features in less than halp the samples
+    remove_metadata:                # Sample metadata interferes with filter...
+        module:                     manage_types
+        base:                       dada2
+        script_path:
+        operation:                  del
+        type:                       metadata
+        scope:                      project
+        
+    filter_feature_table:
+        module:                     qiime2_general
+        base:                       remove_metadata
+        script_path:                qiime feature-table filter-features
+        redirects:
+            --p-min-frequency:      10
+            --p-min-samples:        3
+    
+    filtered_vis_summary:
+        module:                     qiime2_general
+        base:                       filter_feature_table
+        script_path:                qiime feature-table summarize
+        export:
+                    
+    filtered_vis_tabulate:
+        module:                     qiime2_general
+        base:                       filter_feature_table
+        script_path:                qiime feature-table tabulate-seqs 
+        export:
+        
+            
+    phylogeny:
+        module:                     qiime2_general
+        base:                       dada2   #filter_samples
+        script_path:                qiime phylogeny align-to-tree-mafft-fasttree
+        # stop_and_show:
+        
+    diversity:
+        module:                     qiime2_general
+        base:                       phylogeny
+        script_path:                qiime diversity core-metrics-phylogenetic
+        store_output:
+            - --o-rarefied-table
+            - --o-faith-pd-vector       # Faith's PD is stored in 'SampleData[AlphaDiversity]' slot
+            - --o-weighted-unifrac-distance-matrix
+            - --o-weighted-unifrac-pcoa-results
+            - --o-weighted-unifrac-emperor
+        redirects:
+            --p-sampling-depth:     {Vars.QIIME.sampling_depth}
+        # stop_and_show:    
+        
+        
+    alpha_rarefaction:
+        module:                     qiime2_general
+        base:                       phylogeny   # diversity
+        script_path:                qiime diversity alpha-rarefaction
+        redirects:
+            --p-max-depth:          {Vars.QIIME.sampling_depth}
+            --p-metrics:            [faith_pd,chao1,shannon,observed_otus]
+            --p-steps:              40
+        # stop_and_show:
+        
+    alpha_group_signif:
+        module:                     qiime2_general
+        base:                       diversity
+        script_path:                qiime diversity alpha-group-significance
+
+    add_classifier:
+        module:             manage_types
+        base:               MergeReads
+        script_path:        
+        scope:              project
+        operation:          add
+        type:               TaxonomicClassifier
+        path:               {Vars.QIIME.classifier} 
+        
+
+    classify:
+        module:                     qiime2_general
+        base:                       [dada2,add_classifier]
+        script_path:                qiime feature-classifier classify-sklearn
+        # stop_and_show:
+
+    classify_tabulate:
+        module:                     qiime2_general
+        base:                       classify
+        script_path:                qiime metadata tabulate 
+        redirects:
+            --m-input-file:         '{{FeatureData[Taxonomy]}}'
+
+    classify_plot:
+        module:                     qiime2_general
+        base:                       classify
+        script_path:                qiime taxa barplot
+    
+#### Gneiss
+    gneiss_cor_clust:
+        module:                     qiime2_general
+        base:                       [filter_feature_table,AddMetadata]  #dada2
+        script_path:                qiime gneiss correlation-clustering
+        # stop_and_show:
+        
+    gneiss_ilr_clust:
+        module:                     qiime2_general
+        base:                       gneiss_cor_clust
+        script_path:                qiime gneiss ilr-hierarchical 
+        # stop_and_show:
+        
+    gneiss_ols_reg:
+        module:                     qiime2_general
+        base:                       gneiss_ilr_clust
+        script_path:                qiime gneiss ols-regression 
+        redirects:  
+            --p-formula:            '"Source"'
+        # stop_and_show:
+
+
+    gneiss_heatmap:
+        module:                     qiime2_general
+        base:                       gneiss_ols_reg
+        script_path:                qiime gneiss dendrogram-heatmap
+        redirects:  
+            --p-color-map:          seismic 
+            --m-metadata-column:    Source
+        # stop_and_show:
+    gneiss_balance_taxonomy:
+        module:                     qiime2_general
+        base:                       [gneiss_ols_reg,classify]
+        script_path:                qiime gneiss balance-taxonomy
+        redirects:  
+            --m-metadata-column:    Source
+            --p-taxa-level:         4 
+            --p-balance-name:       "'y2'"
+        # stop_and_show:
+
+#### ANCOM
+
+    ANCOM_mk_composition:
+        module:                     qiime2_general
+        base:                       dada2
+        script_path:                qiime composition add-pseudocount
+        
+    ANCOM:
+        module:                     qiime2_general
+        base:                       ANCOM_mk_composition
+        script_path:                qiime composition ancom
+        redirects:  
+            --m-metadata-column:    Source
+            --p-difference-function:    f_statistic

@@ -1,5 +1,53 @@
-#!/fastspace/bioinfo_apps/python-2.7_SL6/bin/python
+# -*- coding: UTF-8 -*-
+"""
+``GATK_CatVariants``
+-----------------------------------------------------------------
 
+:Authors: Michal Gordon
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
+
+A class that defines a module to concatenate chromosome to get one VCF file for each sample.
+
+.. attention:: The module generate script for each sample - chromosom.
+
+The programs included in the module are the following:
+
+* ``CatVariants`` (GATK) 
+
+
+
+**Requires**:
+
+
+    * ``self.sample_data[sample][chr]["GATK_vcf"]``
+    * ``self.params["genome_reference"]``
+    * ``self.params["chrom_list"]`` - list of chromosomes names as mentioned in BAM file separated by ','
+
+
+**Output**:
+
+    * ``self.sample_data[sample]["vcf"]``
+
+
+Lines for parameter file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+::
+
+    GATK_CatVariants1:
+        module: GATK_CatVariants
+        base: GATK_SelectVariants_VEPfiltered
+        script_path:     /path/to/java -cp /path/to/GenomeAnalysisTK.jar org.broadinstitute.gatk.tools.CatVariants
+        genome_reference:   /path/to/gatk/bundle/b37/human_g1k_v37_decoy.fasta
+        chrom_list: "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT"
+
+
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Van der Auwera, Geraldine A., et al. "From FastQ data to high‐confidence variant calls: the genome analysis toolkit best practices pipeline." Current protocols in bioinformatics 43.1 (2013): 11-10.‏
+
+"""
 
 import os
 import sys
@@ -7,6 +55,8 @@ from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Michal Gordon"
+__version__ = "1.6.0"
+
 
 class Step_GATK_CatVariants(Step):
     """ A class that defines a pipeline step name (=instance).

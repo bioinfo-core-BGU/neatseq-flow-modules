@@ -1,4 +1,73 @@
-#!/fastspace/bioinfo_apps/python-2.7_SL6/bin/python
+# -*- coding: UTF-8 -*-
+"""
+``VEP``
+-----------------------------------------------------------------
+
+:Authors: Michal Gordon
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
+
+A class that defines a module for annotation of the multi VCF file
+
+.. attention:: The module generates a script for each chromosome.
+
+The programs included in the module are the following:
+
+* ``VEP`` (`Variant Effect Predictor <https://www.ensembl.org/info/docs/tools/vep/index.html>`_. )
+
+
+
+Requires
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* ``self.sample_data[chr]["vcf"]``
+
+
+Output
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* ``self.sample_data[chr]["vcf"]`` - annotated multi-VCF per chromosome
+
+
+Parameters that can be set
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. csv-table::
+    :header: "Parameter", "Values", "Comments"
+    :widths: 15, 10, 10
+
+    "chrom_list", "list of chromosome names as mentioned in the BAM file separated by ','"
+
+.. Note:: VEP parameters can be passed via ``redirects``
+
+Lines for parameter file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+::
+
+    VEP1:
+        module: VEP 
+        base: GATK_hard_filters1
+        script_path: /path/to/vep
+        chrom_list: "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT" 
+        redirects:
+            --format: vcf
+            --offline: null
+            --species: homo_sapiens
+            --fork: 10
+            --assembly: GRCh37
+            --max_af: null
+            --pick: null
+            --dir: /path/to/VEP/ensembl-vep-release-88.10/cache
+            --check_existing: null
+            --symbol: null
+            --force_overwrite: null
+            --vcf: null
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+McLaren, William, et al. "The ensembl variant effect predictor." Genome biology 17.1 (2016): 122.‏
+
+"""
 
 
 import os
@@ -7,6 +76,7 @@ from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Michal Gordon"
+__version__ = "1.6.0"
 
 class Step_VEP(Step):
     """ A class that defines a pipeline step name (=instance).

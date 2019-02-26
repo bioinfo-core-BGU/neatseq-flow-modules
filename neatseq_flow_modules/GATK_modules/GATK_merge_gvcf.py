@@ -1,5 +1,53 @@
+# -*- coding: UTF-8 -*-
+"""
+``GATK_merge_gvcf``
+-----------------------------------------------------------------
 
-#!/fastspace/bioinfo_apps/python-2.7_SL6/bin/python
+:Authors: Michal Gordon
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
+
+A class that defines a module for combine g.vcf files to cohorts.
+
+.. attention:: The module generate script for each sample-chromosom.
+
+The programs included in the module are the following:
+
+* ``CombineGVCFs`` (GATK) 
+
+
+
+**Requires**:
+
+
+    * ``self.params["cohort_size"]`` - number of g.vcf file to be in each cohort
+    * ``self.params["genome_reference"]``
+    * ``self.params["chrom_list"]`` - list of chromosomes names as mentioned in BAM file separated by ','
+    * ``self.sample_data[sample][chr]["GATK_g.vcf"]``
+
+**Output**:
+
+    * ``self.sample_data["cohorts"]``
+
+Lines for parameter file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+::
+
+    gatk_merge_gvcf:
+        module: GATK_merge_gvcf
+        base: GATK_gvcf
+        script_path:     /path/to/java -jar /path/to/GenomeAnalysisTK.jar
+        genome_reference:    /path/to/gatk/bundle/b37/human_g1k_v37_decoy.fasta
+        cohort_size: 10
+        chrom_list: "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT" 
+
+
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Van der Auwera, Geraldine A., et al. "From FastQ data to high‐confidence variant calls: the genome analysis toolkit best practices pipeline." Current protocols in bioinformatics 43.1 (2013): 11-10.‏
+
+"""
 
 
 import os
@@ -8,6 +56,7 @@ from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Michal Gordon"
+__version__ = "1.6.0"
 
 class Step_GATK_merge_gvcf(Step):
     """ A class that defines a pipeline step name (=instance).

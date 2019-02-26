@@ -1,5 +1,76 @@
-#!/fastspace/bioinfo_apps/python-2.7_SL6/bin/python
+# -*- coding: UTF-8 -*-
+"""
+``GATK_pre_processing``
+-----------------------------------------------------------------
 
+:Authors: Michal Gordon
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
+
+A class that defines a module for generating *ready-to-GATK-use* BAM files from fastq files.
+
+.. attention:: The module lacks the "base recalibration process (BQSR)" step
+
+The programs included in the module are the following:
+
+* ``FastqToSam`` Picard tool to generate uBAM
+* ``MarkIlluminaAdapters`` Picard tool to Mark Illumina Adapters
+* ``SamToFastq`` Picard tool uBAM to fastq
+* ``MergeBamAlignment`` Picard tool to merge BAM and uBAM
+* ``MarkDuplicates`` Picard tool to remove PCR duplicates
+* ``BWA MEM`` mapping with BWA MEM
+
+
+
+Requires
+~~~~~~~~~~~~~~~
+
+* A fastq file in the following locations:
+
+    * ``self.sample_data[sample]["fastq.F"]``
+    * ``self.sample_data[sample]["fastq.R"]``
+
+
+Output
+~~~~~~~~~~~~~~~~
+
+    * ``self.sample_data[sample]["bam"]``
+
+
+Parameters that can be set
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. csv-table::
+    :header: "Parameter", "Values", "Comments"
+    :widths: 15, 10, 10
+
+    "picard_path", "path to PICARD", "Full path to the PICARD .jar file"
+    "bwa_mem_path", "", ""
+    "genome_reference", "", ""
+
+Lines for parameter file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+::
+
+    GATK_pre_processing:
+        module: GATK_pre_processing
+        base: fQC_trim
+        script_path: /path/to/java -jar /path/to/GenomeAnalysisTK.jar
+        picard_path:     /path/to/picard.jar
+        bwa_mem_path:    /path/to/bwa mem
+        genome_reference:    /path/to/gatk/bundle/b37/human_g1k_v37_decoy.fasta
+        threads: 20
+        qsub_params:
+            -pe: shared 20
+
+
+
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+http://broadinstitute.github.io/picard/
+
+"""
 
 import os
 import sys
@@ -7,6 +78,7 @@ from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Michal Gordon"
+__version__ = "1.6.0"
 
 class Step_GATK_pre_processing(Step):
     """ A class that defines a pipeline step name (=instance).

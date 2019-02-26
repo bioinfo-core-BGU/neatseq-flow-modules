@@ -27,8 +27,8 @@ The samtools programs included in the module are the following:
     The ``samtools`` programs are executed in the order above. It is up to you to have a sensible combination...
 
 
-**Requires**:
-
+Requires
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * A SAM file in the following location:
 
     * ``sample_data[<sample>]["sam"]`` (for ``scope=sample``)
@@ -39,7 +39,8 @@ The samtools programs included in the module are the following:
     * ``sample_data[<sample>]["bam"]`` (for ``scope=sample``)
     * ``sample_data["bam"]`` (for ``scope=project``)
 
-**Output**:
+Output
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * Depending on the parameters, will put files in the following locations:
 
@@ -68,6 +69,9 @@ The samtools programs included in the module are the following:
     scope, e.g. ``sample_data["project_data"]["stats"]``..
 
 .. Note:: If ``merge`` is included, ``scope`` must be ``sample`` and the merged *bam* is located in ``sample_data["project_data"]["stats"]``..
+
+Parameters that can be set
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. csv-table:: Parameters that can be set:
     :header: "Parameter", "Values", "Comments"

@@ -1,4 +1,66 @@
-#!/fastspace/bioinfo_apps/python-2.7_SL6/bin/python
+# -*- coding: UTF-8 -*-
+"""
+``GATK_SelectVariants``
+-----------------------------------------------------------------
+
+:Authors: Michal Gordon
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
+
+A class that defines a module for separation of multi-VCF per-chromosome to one VCF per-sample per-chromosome
+
+.. attention:: The module generates a script for each sample/chromosome.
+
+The programs included in the module are the following:
+
+* ``SelectVariants`` (GATK) 
+
+
+
+Requires
+~~~~~~~~~~~~
+
+
+* ``self.sample_data[chr]["vcf"]``
+* ``self.params["genome_reference"]``
+* ``self.params["chrom_list"]`` - list of chromosomes names as mentioned in BAM file separated by ','
+
+
+Output
+~~~~~~~~~~~~~
+
+* ``self.sample_data[sample][chr]["GATK_vcf"]``
+
+
+Parameters that can be set
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. csv-table::
+    :header: "Parameter", "Values", "Comments"
+    :widths: 15, 10, 10
+
+    "genome_reference", "path to reference genome", "..."
+    "chrom_list", "", "list of chromosome names as mentioned in the BAM file separated by ',' "
+
+Lines for parameter file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+::
+
+    GATK_SelectVariants_VEPfiltered:
+        module: GATK_SelectVariants
+        base: VEP1
+        script_path: /path/to/GenomeAnalysisTK.jar        
+        chrom_list: "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT" 
+        genome_reference:   /path/to/gatk/bundle/b37/human_g1k_v37_decoy.fasta
+        redirects:
+            --setFilteredGtToNocall: null
+
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Van der Auwera, Geraldine A., et al. "From FastQ data to high‐confidence variant calls: the genome analysis toolkit best practices pipeline." Current protocols in bioinformatics 43.1 (2013): 11-10.‏
+
+"""
 
 import os
 import sys
@@ -6,6 +68,7 @@ from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Michal Gordon"
+__version__ = "1.6.0"
 
 class Step_GATK_SelectVariants (Step):
     """ A class that defines a pipeline step name (=instance).
