@@ -99,7 +99,7 @@ from pprint import pprint as pp
 
 
 __author__ = "Menachem Sklarz"
-__version__ = "1.1.0"
+__version__ = "1.6.0"
 
 
 

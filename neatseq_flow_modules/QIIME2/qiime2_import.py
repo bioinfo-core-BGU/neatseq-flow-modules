@@ -112,7 +112,6 @@ class Step_qiime2_import(Step):
     def step_specific_init(self):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
 
-
         # Read YAML of plugin arguments
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                "importable_types_and_formats.yml"),"r") as fileh:
@@ -136,7 +135,6 @@ class Step_qiime2_import(Step):
         if "--type" in self.params["redir_params"]:
             self.type = self.params["redir_params"]["--type"]
 
-
             if self.type == "SampleData[SequencesWithQuality]":
                 # Check single reads exist
                 for sample in self.sample_data["samples"]:
@@ -159,12 +157,6 @@ class Step_qiime2_import(Step):
 
             else:
                 raise AssertionExcept("For type '{type}', please supply an '--input-path'.".format(type=self.type))
-
-            # print self.params["redir_params"]["--input-format"]
-            # print self.type
-            # sys.exit()
-            # if "--input-format" not in self.params["redir_params"]:
-            #     raise AssertionExcept("Please supply an --input-format to use!")
 
             if "--input-format" in self.params["redir_params"]:
                 if self.params["redir_params"]["--input-format"] not in self.qiime_types_formats["importable-formats"]:
@@ -198,12 +190,6 @@ class Step_qiime2_import(Step):
             self.params["qiime_types"] = [self.type]
             self.type = None
 
-        # print self.get_step_name()
-        # print self.params["qiime_types"]
-        # print self.type
-        # print self.params["redir_params"]
-        # sys.exit()
-
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
@@ -212,11 +198,7 @@ class Step_qiime2_import(Step):
 
     def build_scripts(self):
 
-
-        # If type is defined, import only the requested type
-
         if self.type:
-
 
             # Name of specific script:
             self.spec_script_name = self.set_spec_script_name()

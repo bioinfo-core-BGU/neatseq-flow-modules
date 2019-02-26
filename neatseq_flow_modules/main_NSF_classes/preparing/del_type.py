@@ -41,7 +41,7 @@ from  modules.global_defs import ZIPPED_EXTENSIONS, ARCHIVE_EXTENSIONS, KNOWN_FI
 
 
 __author__ = "Menachem Sklarz"
-__version__ = "1.1.0"
+__version__ = "1.6.0"
 
 
 

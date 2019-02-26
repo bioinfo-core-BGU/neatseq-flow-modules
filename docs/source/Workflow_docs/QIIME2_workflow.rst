@@ -7,6 +7,62 @@ Microbiome analysis using QIIME2
 :Affiliation: Bioinformatics Core Facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
+Captive and Wild Atlantic Salmon project
+--------------------------------------------
+
+This workflow is based on the data described in *Structural and compositional mismatch between captive and wild Atlantic salmon (Salmo salar) parrs gut microbiota highlights the relevance of integrating molecular ecology for management and conservation methods* [#f1]_.
+
+The data for the workflow is available on `datadryad <https://datadryad.org/resource/doi:10.5061/dryad.5ff8m0q>`_.
+
+Steps:
+~~~~~~~~~~
+
+Workflow Schema
+~~~~~~~~~~~~~~~~
+
+
+Requires
+~~~~~~~~
+
+Raw reads for the analysis can be downloaded as follows::
+
+   curl -sl https://datadryad.org/bitstream/handle/10255/dryad.181830/16S_reads_salmo_salar_V3_V4_gut_microbiota.tar.gz | tar zxv
+
+Programs required
+~~~~~~~~~~~~~~~~~~
+
+* `QIIME2 <https://qiime2.org/>`_, version 2018.11, `installed with conda as described here <https://docs.qiime2.org/2018.11/install/native/#natively-installing-qiime-2>`_.
+
+.. Attention:: Download the parameter file in the link below and set the conda path in line 10 to the location of your conda installation, not including ``bin``. *e.g.*, if using the default location of miniconda, the path should be ``$HOME/miniconda2``.
+
+The workflow includes
+
+Download
+~~~~~~~~~
+
+The workflow and sample files are available for download with the following commands::
+
+   wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow3-modules/master/Workflows/qiime2_MovingPic_fullAuto.params.yaml
+   wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow3-modules/master/Workflows/qiime2_MovingPic_fullAuto.samples.nsfs
+
+
+
+
+.. [#f1] `<https://onlinelibrary.wiley.com/doi/full/10.1111/eva.12658>`_
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 The Moving Pictures tutorial
 -------------------------------
 
@@ -51,8 +107,8 @@ Steps:
 Workflow Schema
 ~~~~~~~~~~~~~~~~
 
-.. image:: QIIME2_workflow.jpg
-   :alt: QIIME2 workflow DAG
+.. image:: QIIME2_workflow_MovPic.jpg
+   :alt: QIIME2 moving pictures workflow scheme
 
 Requires
 ~~~~~~~~

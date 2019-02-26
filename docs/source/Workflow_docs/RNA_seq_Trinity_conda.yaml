@@ -21,7 +21,7 @@ dependencies:
   - trinotate=3.1.1
   - bowtie2>=2.3.1
   - rsem=1.3.1
-  - samtools>=1.6.0
+  - samtools=1.3.*
   - busco=3.0.2
   - transdecoder=5.5.0
   - hmmer=3.2.1

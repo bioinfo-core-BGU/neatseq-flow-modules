@@ -74,7 +74,7 @@ from pkg_resources import resource_filename
 
 
 __author__ = "Menachem Sklarz"
-__version__ = "1.2.0"
+__version__ = "1.6.0"
 
 
 class Step_kraken_biom(Step):
