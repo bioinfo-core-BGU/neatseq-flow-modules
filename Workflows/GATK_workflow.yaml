@@ -1,138 +1,120 @@
 Global_params:
     Default_wait: 10
-    # Qsub_nodes:         
     Qsub_opts: -V -cwd
     Qsub_q: bioinfo.q
-    module_path:      ../neatseq_flow_modules
-
-Vars:
-    paths:
-        fastqc:     /path/to/fastqc
-        trimmo:     /path/to/java -jar /path/to/trimmomatic-0.36.jar
-        trimmo_adapters:    /path/to/Trimmomatic_v0.36/adapters/
-        multiqc:    /path/to/multiqc    
-        GATK:       /path/to/java/java -jar /path/to/GenomeAnalysisTK.jar
-        PICARD:     /path/to/java/java -jar /path/to/picard.jar
-        bwa_mem:    /path/to/bwa mem
-        VEP:        /path/to/vep
-    databases:
-        GATK:       /path/to/gatk/bundle/b37/human_g1k_v37_decoy.fasta
-        VEP:        /path/to/VEP/ensembl-vep-release-88.10/cache
-    chrom_list:     "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT"
-    
+    job_limit: /gpfs0/bioinfo/projects/Amir_Sagi/17.RNA_novo_seq_Pandalus/02.Assembly/job_limit.txt
+    module_path: 
+        - /gpfs0/bioinfo/apps/neatseq-flow/neatseq_flow3_modules
 Step_params:
     merge1:
-        module:         merge
-        script_path:    
-
-    fQC_merge:
-        module:         fastqc_html
-        base:           merge1
-        script_path:    {Vars.paths.fastqc}
-        qsub_params:
-            -pe:        shared 20
-        redirects:
-            --threads:  20
+        module: merge
+        script_path: gzip -cd
     trim1:
-        module:         trimmo
-        base:           merge1
-        script_path:    {Vars.paths.trimmo}
+        module: trimmo
+        base: merge1
+        script_path: /fastspace/bioinfo_apps/java/jre1.8.0_73/bin/java -jar /gpfs0/bioinfo/apps/Trimmomatic/Trimmomatic_v0.36/trimmomatic-0.36.jar
         qsub_params:
-            -pe:        shared 20
-        todo:           ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:20 TRAILING:20 SLIDINGWINDOW:4:15 MINLEN:36
-        spec_dir:       {Vars.paths.trimmo_adapters}
+            -pe: shared 20
+        todo: ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:20 TRAILING:20 SLIDINGWINDOW:4:15 MINLEN:36
+        spec_dir: /gpfs0/bioinfo/apps/Trimmomatic/Trimmomatic_v0.36/adapters/
         redirects:
-            -threads:   20
+            -threads: 20
     fQC_trim:
-        module:         fastqc_html
-        base:           trim1
-        script_path:    {Vars.paths.fastqc}
+        module: fastqc_html
+        base: trim1
+        script_path: /fastspace/bioinfo_apps/FastQC/fastqc
         qsub_params:
-            -pe:        shared 20
+            -pe: shared 20
+        after: merge
+        final_script: perl /fastspace/bioinfo_scripts/utilities/spice/fastqc_and_Generate_refferens_for_fastqIndex.pl
         redirects:
-            --threads:  20
-
+            --threads: 20
     qc_report:
-        module:         Multiqc
+        module: Multiqc
         base: 
-            - fQC_merge
             - fQC_trim
-        script_path:    {Vars.paths.multiqc}
+        script_path: /gpfs0/bioinfo/apps/multiQC/multiQC_v0.9/multiqc
     GATK_pre_processing:
-        module:         GATK_pre_processing
-        base:           fQC_trim
-        script_path:    {Vars.paths.GATK}
-        picard_path:    {Vars.paths.PICARD}
-        bwa_mem_path:   {Vars.paths.bwa_mem}
-        genome_reference:    {Vars.databases.GATK}
-        threads:        20
+        module: GATK_pre_processing
+        base: fQC_trim
+        script_path: /fastspace/bioinfo_apps/java/jre1.8.0_73/bin/java -jar /gpfs0/bioinfo/apps/GATK/GATK_v3.8/GenomeAnalysisTK.jar
+        picard_path:     /fastspace/bioinfo_apps/java/jre1.8.0_73/bin/java -jar /fastspace/bioinfo_apps/picard-1.139/dist/picard.jar
+        bwa_mem_path:    /storage16/app/bioinfo/bwa-0.7.5a/bwa mem
+        genome_reference:    /fastspace/bioinfo_databases/gatk/bundle/b37/human_g1k_v37_decoy.fasta
+        threads: 20
         qsub_params:
-            -pe:        shared 20
-        
+            -pe: shared 20
     GATK_gvcf:
-        module:         GATK_gvcf
-        base:           GATK_pre_processing
-        script_path:    {Vars.paths.GATK}
-        genome_reference:    {Vars.databases.GATK}
-        chrom_list:     {Vars.chrom_list} 
-        
+        module: GATK_gvcf
+        base: GATK_pre_processing
+        script_path: /fastspace/bioinfo_apps/java/jre1.8.0_73/bin/java -jar /gpfs0/bioinfo/apps/GATK/GATK_v3.8/GenomeAnalysisTK.jar
+        genome_reference:    /fastspace/bioinfo_databases/gatk/bundle/b37/human_g1k_v37_decoy.fasta
+        chrom_list: "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT" 
+        qsub_params:
+            -pe:      shared 15
+        redirects:
+            -nct: 15
+    Picard_CollectAlignmentSummaryMatrics1:
+        module: Picard_CollectAlignmentSummaryMatrics
+        base: GATK_pre_processing
+        script_path: /fastspace/bioinfo_apps/java/jre1.8.0_73/bin/java -jar /fastspace/bioinfo_apps/picard-1.139/dist/picard.jar
+        genome_reference:    /fastspace/bioinfo_databases/gatk/bundle/b37/human_g1k_v37_decoy.fasta
     gatk_merge_gvcf:
-        module:         GATK_merge_gvcf
-        base:           GATK_gvcf
-        script_path:    {Vars.paths.GATK}
-        genome_reference:    {Vars.databases.GATK}
-        cohort_size:    10
-        chrom_list:     {Vars.chrom_list} 
-
+        module: GATK_merge_gvcf
+        base: GATK_gvcf
+        script_path:     /fastspace/bioinfo_apps/java/jre1.8.0_73/bin/java -jar /gpfs0/bioinfo/apps/GATK/GATK_v3.8/GenomeAnalysisTK.jar
+        genome_reference:    /fastspace/bioinfo_databases/gatk/bundle/b37/human_g1k_v37_decoy.fasta
+        cohort_size: 10
+        chrom_list: "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT" 
     GenotypeGVCFs1:
-        module:         GenotypeGVCFs
-        base:           gatk_merge_gvcf
-        script_path:    {Vars.paths.GATK}
-        chrom_list:     {Vars.chrom_list} 
-        genome_reference:   {Vars.databases.GATK} 
-        
+        module: GenotypeGVCFs
+        base: gatk_merge_gvcf
+        script_path:     /fastspace/bioinfo_apps/java/jre1.8.0_73/bin/java -jar /gpfs0/bioinfo/apps/GATK/GATK_v3.8/GenomeAnalysisTK.jar
+        chrom_list: "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT" 
+        genome_reference:   /fastspace/bioinfo_databases/gatk/bundle/b37/human_g1k_v37_decoy.fasta # /fastspace/bioinfo_databases/gatk/bundle/hg19/ucsc.hg19.fasta #
     GATK_hard_filters1:
-        module:         GATK_hard_filters 
-        base:           GenotypeGVCFs1
-        script_path:    {Vars.paths.GATK}
-        genome_reference:   {Vars.databases.GATK}
-        chrom_list:     {Vars.chrom_list} 
+        module: GATK_hard_filters 
+        base: GenotypeGVCFs1
+        script_path:     /fastspace/bioinfo_apps/java/jre1.8.0_73/bin/java -jar /gpfs0/bioinfo/apps/GATK/GATK_v3.8/GenomeAnalysisTK.jar
+        genome_reference:   /fastspace/bioinfo_databases/gatk/bundle/b37/human_g1k_v37_decoy.fasta
+        chrom_list: "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT" 
         filterExpression_SNP: '"QD < 2.0 || MQ < 40.0 || FS > 60.0 || SOR > 3.0 || MQRankSum < -12.5 || ReadPosRankSum < -8.0"'
         filterExpression_INDEL: '"QD < 2.0 || ReadPosRankSum < -20.0 || FS > 200.0 || SOR > 10.0 || InbreedingCoeff < -0.8"'
-        
     VEP1:
-        module:         VEP 
-        base:           GATK_hard_filters1
-        script_path:    {Vars.paths.VEP}
-        chrom_list:     {Vars.chrom_list} 
+        module: VEP 
+        base: GATK_hard_filters1
+        script_path: /gpfs0/bioinfo/apps/VEP/ensembl-vep-release-88.10/vep
+        chrom_list: "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT" 
         redirects:
-            --format:   vcf
-            --offline:  
-            --species:  homo_sapiens
-            --fork:     10
+            --format: vcf
+            --offline: null
+            --species: homo_sapiens
+            --fork: 10
             --assembly: GRCh37
-            --max_af: 
-            --pick: 
-            --dir:      {Vars.databases.VEP}
-            --check_existing: 
-            --symbol: 
-            --force_overwrite: 
-            --vcf: 
-
-
+            --max_af: null
+            --pick: null
+            --dir: /gpfs0/bioinfo/apps/VEP/ensembl-vep-release-88.10/cache
+            --check_existing: null
+            --symbol: null
+            --force_overwrite: null
+            --vcf: null
+    Picard_CollectVariantCalling1:
+        module: Picard_CollectVariantCalling 
+        base: GATK_hard_filters1
+        script_path: /fastspace/bioinfo_apps/java/jre1.8.0_73/bin/java -jar /fastspace/bioinfo_apps/picard-1.139/dist/picard.jar
+        DBSNP: /fastspace/bioinfo_databases/gatk/bundle/b37/dbsnp_138.b37.vcf
+        chrom_list: "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT" 
     GATK_SelectVariants_VEPfiltered:
-        module:     GATK_SelectVariants
-        base:       VEP1
-        script_path: {Vars.paths.GATK}        
-        chrom_list:     {Vars.chrom_list} 
-        genome_reference:   {Vars.databases.GATK}
+        module: GATK_SelectVariants
+        base: VEP1
+        script_path: /fastspace/bioinfo_apps/java/jre1.8.0_73/bin/java -jar /gpfs0/bioinfo/apps/GATK/GATK_v3.8/GenomeAnalysisTK.jar        
+        chrom_list: "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT" 
+        genome_reference:   /fastspace/bioinfo_databases/gatk/bundle/b37/human_g1k_v37_decoy.fasta
         redirects:
-            --setFilteredGtToNocall: 
-            
+            --setFilteredGtToNocall: null
     GATK_CatVariants1:
-        module:         GATK_CatVariants
-        base:           GATK_SelectVariants_VEPfiltered
-        script_path:    '{Vars.paths.GATK} org.broadinstitute.gatk.tools.CatVariants'
-        genome_reference:   {Vars.databases.GATK}
-        chrom_list:     {Vars.chrom_list} 
-
+        module: GATK_CatVariants
+        base: GATK_SelectVariants_VEPfiltered
+        script_path:     /fastspace/bioinfo_apps/java/jre1.8.0_73/bin/java -cp /gpfs0/bioinfo/apps/GATK/GATK_v3.8/GenomeAnalysisTK.jar org.broadinstitute.gatk.tools.CatVariants
+        genome_reference:   /fastspace/bioinfo_databases/gatk/bundle/b37/human_g1k_v37_decoy.fasta
+        chrom_list: "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT" 
