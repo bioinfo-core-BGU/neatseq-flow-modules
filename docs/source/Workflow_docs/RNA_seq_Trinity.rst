@@ -1,7 +1,7 @@
 *de-novo* RNA-seq using Trinity
 --------------------------------------------------------------
 
-.. include:: links.rst
+.. include:: ../links.rst
 
 :Author: Menachem Sklarz
 :Affiliation: Bioinformatics Core Facility
@@ -15,7 +15,7 @@ The workflow assembles a transcriptome with ``Trinity`` and then runs ``align_an
 
 Finally, the workflow uses Trinotate to annotate the resulting transcriptome.
 
-Preparatory steps:
+Preparatory steps
 ~~~~~~~~~~~~~~~~~~~
 
 #. If you want to use Trinotate, you must create and define the Trinotate databases [#f3]_.
@@ -36,7 +36,7 @@ Preparatory steps:
     #. Set the Vars.databases.BUSCO variable to the URL or the BUSCO dataset to use. Choose a URL from this list: `<https://busco.ezlab.org/frame_wget.html>`_.
 
 
-Steps:
+Steps
 ~~~~~~~
 
 #. Importing and QC
@@ -147,15 +147,17 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
 #. Create a sample file. It should look like the following, only the file names should be replaced with absolute file names::
 
-    Title   Trinity_example
+        Title   Trinity_example
 
-    #SampleID       Type    Path
-    Sample1 Forward 00.Raw_reads/reads.right.fq.gz
-    Sample1 Reverse 00.Raw_reads/reads.left.fq.gz
+        #SampleID       Type    Path
+        Sample1 Forward 00.Raw_reads/reads.right.fq.gz
+        Sample1 Reverse 00.Raw_reads/reads.left.fq.gz
 
-.. Tip:: To get the full path to a file, use the following command::
+   .. Tip:: To get the full path to a file, use the following command:
 
-    readlink -f 00.Raw_reads/reads.left.fq.gz
+      .. code-block:: bash
+
+         readlink -f 00.Raw_reads/reads.left.fq.gz
 
 #. Get the parameter file with::
 

@@ -1,4 +1,51 @@
 # -*- coding: UTF-8 -*-
+"""
+``Picard_CollectVariantCalling``
+-----------------------------------------------------------------
+
+:Authors: Michal Gordon
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
+
+A class that defines a module for generating SNP and indel statistics information
+
+
+The programs included in the module are the following:
+
+* ``CollectVariantCallingMetrics`` Picard tool to generate A collection of metrics relating to snps and indels within a variant-calling file (VCF) 
+
+
+Requires
+~~~~~~~~~~~~
+
+* A fastq file in the following location:
+
+    * ``self.sample_data[chr]["vcf"]``
+
+Output
+~~~~~~~~~~~~~
+
+
+Lines for parameter file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+::
+
+    Picard_CollectVariantCalling1:
+        module: Picard_CollectVariantCalling 
+        base: GATK_hard_filters1
+        script_path: /path/to/java -jar /path/to/picard.jar
+        DBSNP: /path/to/bundle/b37/dbsnp_138.b37.vcf
+        chrom_list: "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT"
+
+
+
+
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+http://broadinstitute.github.io/picard/
+
+"""
 
 import os
 import sys
@@ -6,7 +53,6 @@ from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Michal Gordon"
-__version__ = "1.6.0"
 
 class Step_Picard_CollectVariantCalling(Step):
     """ A class that defines a pipeline step name (=instance).
@@ -61,7 +107,7 @@ class Step_Picard_CollectVariantCalling(Step):
                     %(picard_path)s CollectVariantCallingMetrics \\
                     INPUT=%(input_file)s \\
                     DBSNP=%(DBSNP)s \\
-                    OUTPUT=%(dir)s%(output_file)s
+                    OUTPUT=%(output_file)s
 
                 """ % { 
                         "picard_path" : self.params["script_path"],

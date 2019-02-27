@@ -22,8 +22,6 @@ Requires
 
 
 * ``self.sample_data[chr]["vcf"]``
-* ``self.params["genome_reference"]``
-* ``self.params["chrom_list"]`` - list of chromosomes names as mentioned in BAM file separated by ','
 
 
 Output
@@ -39,8 +37,8 @@ Parameters that can be set
     :header: "Parameter", "Values", "Comments"
     :widths: 15, 10, 10
 
-    "genome_reference", "path to reference genome", "..."
-    "chrom_list", "", "list of chromosome names as mentioned in the BAM file separated by ',' "
+    "genome_reference", "", "path to reference genome"
+    "chrom_list", "", "Comma-separated list of chromosome names as mentioned in the BAM file "
 
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

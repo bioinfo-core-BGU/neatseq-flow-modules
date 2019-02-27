@@ -28,19 +28,19 @@ See also the `main NeatSeq-Flow website <https://neatseq-flow.readthedocs.io/en/
    :maxdepth: 1
    :caption: Workflows
 
-   Workflow_docs/Assembly_Indexing_mapping
    Workflow_docs/RNA_seq_reference
    Workflow_docs/RNA_seq_Trinity
-   Workflow_docs/ChIP_seq_bowtie2
-   Workflow_docs/GATK_workflow
-   Workflow_docs/Clustering
-   Workflow_docs/BLAST_db
-   Workflow_docs/BLAST_fasta   
    Workflow_docs/QIIME_workflow
    Workflow_docs/QIIME2_workflow
-   Workflow_docs/Metagenomics
+   Workflow_docs/GATK_workflow
    Workflow_docs/Microbe-Flow
 
+..   Workflow_docs/Metagenomics
+..   Workflow_docs/ChIP_seq_bowtie2
+..   Workflow_docs/Clustering
+..   Workflow_docs/BLAST_db
+..   Workflow_docs/BLAST_fasta
+..   Workflow_docs/Assembly_Indexing_mapping
 
 
 .. _neatseq_flow_modules:
@@ -63,6 +63,7 @@ See also the `main NeatSeq-Flow website <https://neatseq-flow.readthedocs.io/en/
    Module_docs/Microbiology
    Module_docs/QIIME
    Module_docs/QIIME2
+   Module_docs/GATK
    Module_docs/SequenceClustering
    Module_docs/VariousReportingPrograms
    Module_docs/Miscellaneous

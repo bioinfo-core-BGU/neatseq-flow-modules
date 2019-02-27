@@ -20,15 +20,23 @@ The programs included in the module are the following:
 Requires
 ~~~~~~~~~~~~~~~~~~~~
 
-* ``self.sample_data[]["cohorts"]``
-* ``self.params["genome_reference"]``
-* ``self.params["chrom_list"]`` - list of chromosomes names as mentioned in BAM file separated by ','
+* ``self.sample_data["cohorts"]``
 
 
 Output
 ~~~~~~~~~~~~~~~~~~~~
 
 * ``self.sample_data[chr]["vcf"]``
+
+Parameters that can be set
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. csv-table::
+    :header: "Parameter", "Values", "Comments"
+    :widths: 15, 10, 10
+
+    "genome_reference", "", ""
+    "chrom_list", "", "list of chromosomes names as mentioned in BAM file separated by ','"
 
 
 Lines for parameter file

@@ -17,16 +17,25 @@ The programs included in the module are the following:
 
 
 
-**Requires**:
+Requires
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+* ``self.sample_data[sample]["bam"]``
 
-    * ``self.sample_data[sample]["bam"]``
-    * ``self.params["genome_reference"]``
-    * ``self.params["chrom_list"]`` list of chromosomes names as mentioned in BAM file separated by ','
+Output
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Output**:
+* ``self.sample_data[sample][chr]["GATK_g.vcf"]``
 
-    * ``self.sample_data[sample][chr]["GATK_g.vcf"]``
+Parameters that can be set
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. csv-table::
+    :header: "Parameter", "Values", "Comments"
+    :widths: 15, 10, 10
+
+    "genome_reference", "", ""
+    "chrom_list", "Comma-separated list of chromosome names as mentioned in the BAM file"
 
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

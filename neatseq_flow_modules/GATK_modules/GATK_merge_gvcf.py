@@ -17,17 +17,29 @@ The programs included in the module are the following:
 
 
 
-**Requires**:
+Requires
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-    * ``self.params["cohort_size"]`` - number of g.vcf file to be in each cohort
-    * ``self.params["genome_reference"]``
-    * ``self.params["chrom_list"]`` - list of chromosomes names as mentioned in BAM file separated by ','
-    * ``self.sample_data[sample][chr]["GATK_g.vcf"]``
+* ``self.sample_data[sample][chr]["GATK_g.vcf"]``
 
-**Output**:
+Output
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    * ``self.sample_data["cohorts"]``
+* ``self.sample_data["cohorts"]``
+
+
+Parameters that can be set
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. csv-table::
+    :header: "Parameter", "Values", "Comments"
+    :widths: 15, 10, 10
+
+    "genome_reference", "", ""
+    "chrom_list", "Comma-separated list of chromosome names as mentioned in the BAM file"
+    "cohort_size", "", "number of g.vcf file to be in each cohort"
+
 
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

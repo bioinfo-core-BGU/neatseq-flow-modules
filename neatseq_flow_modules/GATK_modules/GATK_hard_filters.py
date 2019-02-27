@@ -17,19 +17,30 @@ The programs included in the module are the following:
 
 
 
-**Requires**:
+Requires
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-    * ``self.sample_data[chr]["vcf"]``
-    * ``self.params["genome_reference"]``
-    * ``self.params["chrom_list"]`` - list of chromosomes names as mentioned in BAM file separated by ','
-    * ``self.params["filterExpression_SNP"]`` - filter e xpression for SNP
-    * ``self.params["filterExpression_INDEL"]`` - filter e xpression for INDEL
+* ``self.sample_data[chr]["vcf"]``
 
 
-**Output**:
+Output
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    * ``self.sample_data[chr]["vcf"]``
+* ``self.sample_data[chr]["vcf"]``
+
+
+Parameters that can be set
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. csv-table::
+    :header: "Parameter", "Values", "Comments"
+    :widths: 15, 10, 10
+
+    "genome_reference",     "",      ""
+    "chrom_list",           "",      "Comma-separated list of chromosome names as mentioned in the BAM file"
+    "filterExpression_SNP", "", "filter e xpression for SNP"
+    "filterExpression_INDEL", "", "filter e xpression for INDEL"
 
 
 Lines for parameter file

@@ -1,4 +1,76 @@
 # -*- coding: UTF-8 -*-
+"""
+``GATK_VQSR``
+-----------------------------------------------------------------
+
+:Authors: Michal Gordon
+:Affiliation: Bioinformatics core facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
+
+A class that defines a module for apply VQSR filters
+
+.. attention:: The module generates script for each chromosoms.
+
+The programs included in the module are the following:
+
+* ``VariantRecalibrator`` and ``ApplyRecalibration`` (GATK)
+
+
+Requires
+~~~~~~~~~~~~
+
+
+* ``self.sample_data[chr]["vcf"]``
+
+
+Output
+~~~~~~~~~~~~~
+
+* ``self.sample_data[chr]["vcf"]``
+
+Parameters that can be set
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. csv-table::
+    :header: "Parameter", "Values", "Comments"
+    :widths: 15, 10, 10
+
+    "genome_reference", "", ""
+    "chrom_list", "", "list of chromosomes names as mentioned in BAM file separated by ','"
+    "ts_filter_level_SNP", "", "filter e xpression for SNP"
+    "ts_filter_level_INDEL", "", "filter e xpression for INDEL"
+    "resource_SNP", "", ""
+    "resource_INDEL", "", ""
+
+Lines for parameter file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+::
+
+    GATK_VQSR1:
+        module: GATK_VQSR 
+        base: GenotypeGVCFs1
+        script_path:     /path/to/java -jar /path/to/GenomeAnalysisTK.jar
+        genome_reference:   /path/to/bundle/b37/human_g1k_v37_decoy.fasta
+        resource_SNP: 
+            - hapmap,known=false,training=true,truth=true,prior=15.0 /path/to/bundle/b37/hapmap_3.3.b37.vcf
+            - omni,known=false,training=true,truth=true,prior=12.0 /path/to/bundle/b37/1000G_omni2.5.b37.vcf
+            - 1000G,known=false,training=true,truth=false,prior=10.0 /path/to/bundle/b37/1000G_phase1.snps.high_confidence.b37.vcf
+            - dbsnp,known=true,training=false,truth=false,prior=2.0 /path/to/bundle/b37/dbsnp_138.b37.vcf
+        resource_INDEL: 
+            - mills,known=false,training=true,truth=true,prior=12.0 /path/to/bundle/b37/Mills_and_1000G_gold_standard.indels.b37.sites.vcf
+            - dbsnp,known=true,training=false,truth=false,prior=2.0 /path/to/bundle/b37/dbsnp_138.b37.vcf 
+        ts_filter_level_SNP: 99.0
+        ts_filter_level_INDEL: 99.0
+        maxGaussians: 4
+        chrom_list: "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT"
+
+
+References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Van der Auwera, Geraldine A., et al. "From FastQ data to high‐confidence variant calls: the genome analysis toolkit best practices pipeline." Current protocols in bioinformatics 43.1 (2013): 11-10.‏
+
+"""
 
 import os
 import sys
@@ -6,7 +78,6 @@ from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Michal Gordon"
-__version__ = "1.6.0"
 
 class Step_GATK_VQSR(Step):
     """ A class that defines a pipeline step name (=instance).

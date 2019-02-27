@@ -36,7 +36,7 @@ Parameters that can be set
     :header: "Parameter", "Values", "Comments"
     :widths: 15, 10, 10
 
-    "chrom_list", "list of chromosome names as mentioned in the BAM file separated by ','"
+    "chrom_list", "Comma-separated list of chromosome names as mentioned in the BAM file"
 
 .. Note:: VEP parameters can be passed via ``redirects``
 
@@ -63,6 +63,7 @@ Lines for parameter file
             --symbol: null
             --force_overwrite: null
             --vcf: null
+
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 McLaren, William, et al. "The ensembl variant effect predictor." Genome biology 17.1 (2016): 122.‏
