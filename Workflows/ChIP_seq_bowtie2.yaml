@@ -124,6 +124,22 @@ Step_params:
         redirects:
             -bg:
             -g:         {Vars.reference.chrom_sizes}
+        # stop_and_show:
+    Sort_BED:
+        module:         Fillout_Generic
+        base:           genCovBed
+        script_path: |
+            LC_COLLATE=C \
+                sort -k1,1 -k2,2n {{sample:bdg}} \
+                > {{o:bdg}}
+            
+        output:
+            bdg:
+                scope:  sample
+                string: '{{dir}}{{sample}}.sort.bdg'
+        conda:
+
+            
     UCSCmap_bams:
         module:         UCSC_BW_wig
         base:           genCovBed

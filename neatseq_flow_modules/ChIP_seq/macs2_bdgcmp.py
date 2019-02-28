@@ -88,6 +88,9 @@ class Step_macs2_bdgcmp(Step):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = "macs2"
 
+        if self.params["ucscTools_path"]:
+            self.params["ucscTools_path"] = self.params["ucscTools_path"].rstrip(os.sep) + os.sep
+
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
@@ -162,53 +165,49 @@ class Step_macs2_bdgcmp(Step):
             if "slop_path" in self.params and "ucscTools_path" in self.params:
                 self.script += """\n\n
 # Running slop | bedClip
-%(slop_path)s \\
-        -i %(INPUT_BDG)s \\
-        -g %(genome)s \\
+{slop_path} \\
+        -i {INPUT_BDG} \\
+        -g {genome} \\
         -b 0 | \\
-%(ucscTools_path)s/bedClip \\
+{ucscTools_path}bedClip \\
     stdin \\
-    %(genome)s \\
-    %(OUT_CLIP)s
+    {genome} \\
+    {OUT_CLIP}
 
 # Running bedGraphToBigWig
-%(ucscTools_path)s/bedGraphToBigWig \\
-    %(OUT_CLIP)s \\
-    %(genome)s \\
-    %(OUT_BW)s
+{ucscTools_path}bedGraphToBigWig \\
+    {OUT_CLIP} \\
+    {genome} \\
+    {OUT_BW}
 
 # Running bigWigToWig 
-%(ucscTools_path)s/bigWigToWig  \\
-    %(OUT_BW)s \\
-    %(OUT_W)s
+{ucscTools_path}bigWigToWig  \\
+    {OUT_BW} \\
+    {OUT_W}
 
 
-rm \\
-        -f %(OUT_CLIP)s
-""" % {
-"slop_path"      : self.params["slop_path"] ,
-"ucscTools_path" : self.params["ucscTools_path"] ,
-"genome"         : self.params["genome"] ,
-"INPUT_BDG"      : "%s%s.%s_%s.bdg" % (use_dir,sample, self.file_tag, method2use),
-"OUT_BW"         : "%s%s.%s_%s.bw" % (use_dir,sample, self.file_tag, method2use),
-"OUT_W"          : "%s%s.%s_%s.wig" % (use_dir,sample, self.file_tag, method2use),
-"OUT_CLIP"       : "%s%s.%s_%s.clip" % (use_dir,sample, self.file_tag, method2use)
-}
+rm -f {OUT_CLIP}
+""".format(slop_path= self.params["slop_path"] ,
+           ucscTools_path= self.params["ucscTools_path"] ,
+           genome= self.params["genome"] ,
+           INPUT_BDG= "%s%s.%s_%s.bdg" % (use_dir,sample, self.file_tag, method2use),
+           OUT_BW= "%s%s.%s_%s.bw" % (use_dir,sample, self.file_tag, method2use),
+           OUT_W= "%s%s.%s_%s.wig" % (use_dir,sample, self.file_tag, method2use),
+           OUT_CLIP= "%s%s.%s_%s.clip" % (use_dir,sample, self.file_tag, method2use))
 
                 if "toTDF_path" in list(self.params.keys()):
                     self.script += """\n\n
 # Converting to TDF:
-%(toTDF_path)s  \\
-    %(OUT_W)s \\
-    %(OUT_TDF)s \\
-    %(genome)s 
+{toTDF_path}  \\
+    {OUT_W} \\
+    {OUT_TDF} \\
+    {genome} 
     
-""" % {
-"toTDF_path"     : self.params["toTDF_path"] ,
-"genome"         : self.params["genome"] ,
-"OUT_TDF"        : "%s%s.%s_%s.tdf" % (use_dir,sample, self.file_tag, method2use),
-"OUT_W"          : "%s%s.%s_%s.wig" % (use_dir,sample, self.file_tag, method2use)
-}
+""".format(toTDF_path= self.params["toTDF_path"] ,
+           genome= self.params["genome"] ,
+           OUT_TDF= "%s%s.%s_%s.tdf" % (use_dir,sample, self.file_tag, method2use),
+           OUT_W= "%s%s.%s_%s.wig" % (use_dir,sample, self.file_tag, method2use))
+
                     self.sample_data[sample]["tdf"] = "".join([sample_dir, "%s.%s_%s.tdf" % (sample, self.file_tag, method2use)])
 
                     # Stamping files produced in this step:

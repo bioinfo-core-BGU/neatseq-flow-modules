@@ -167,9 +167,20 @@ class Step_Fillout_Generic(Step):
                 except KeyError:
                     raise AssertionExcept("Make sure you have a 'string' and 'scope' defined "
                                           "for output {output}!".format(output=outp))
+                if not re.search(pattern="dir",string=self.params["output"][outp]["string"]):
+                    raise AssertionExcept("Please include {{{{dir}}}} or {{{{base_dir}}}} in output '{output}'".
+                                          format(output=outp))
+
                 variables.extend(result)
         except KeyError:
             self.write_warning("No 'output' section defined. Are you sure this is what you intended?")
+        except TypeError:
+            raise AssertionExcept("""\
+Make sure 'output' section is defined correctly: 
+output:
+    TYPE:
+        scope:
+        string:""")
 
         # Default scope is project
         scope = "project"
