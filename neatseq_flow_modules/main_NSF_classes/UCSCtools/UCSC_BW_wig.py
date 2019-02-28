@@ -151,7 +151,7 @@ class Step_UCSC_BW_wig(Step):
             # Adding bedGraphToBigWig executable
             self.script += "%sbedGraphToBigWig \\\n\t" % (self.params["script_path"])
             # Adding parameters, if the exist
-            if "bedGraphToBigWig_params" in self.params:
+            if "bedGraphToBigWig_params" in self.params and self.params["bedGraphToBigWig_params"]:
                 self.script += "%s \\\n\t" % self.params["bedGraphToBigWig_params"]
             # Adding input, genome and output files:
             self.script += "%s \\\n\t" % (input_file)
@@ -161,7 +161,7 @@ class Step_UCSC_BW_wig(Step):
             # Creating bigWigToWig script:
             self.script += "# Converting bigWig to wig:\n\n"
             self.script += "%sbigWigToWig \\\n\t" % (self.params["script_path"])
-            if "bigWigToWig_params" in self.params:
+            if "bigWigToWig_params" in self.params and self.params["bigWigToWig_params"]:
                 self.script += "%s \\\n\t" % self.params["bigWigToWig_params"]
             self.script += "%s \\\n\t" % (use_dir + output_file_bw)
             self.script += "%s\n\n" % (use_dir + output_file_wig)

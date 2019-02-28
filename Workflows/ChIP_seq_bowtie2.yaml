@@ -148,7 +148,7 @@ Step_params:
         base:           genCovBed
         script_path:    {Vars.paths.kentUtils}
         bedGraphToBigWig_params: -blockSize 10 -itemsPerSlot 20
-        bigWigToWig_params: -chrom X1 -start X2 -end X3
+        bigWigToWig_params: #-chrom X1 -start X2 -end X3
         genome:         {Vars.reference.chrom_sizes}
         # stop_and_show:
     multiqc_sum:
