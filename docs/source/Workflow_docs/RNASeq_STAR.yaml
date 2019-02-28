@@ -1,0 +1,102 @@
+Documentation: |
+    A pipeline for executing a RNA-seq analysis on a model organism
+    ----------------------------------------------------------------
+    
+    The pipeline includes the following stages:
+    
+        1. Merge Decompression and Concatenation (IF NEADED) of read files into single files per direction.
+        2. FastQC_Merge Quality tests on the original reads using FastQC.
+        3. MultiQC_pre_trim Quality report on the original reads using MultiQC.
+        4. Trim_Galore  Reads trimming using Trim_Galore.
+        5. FastQC_Trim_Galore Quality tests on reads after trimming using FastQC.
+        6. RSEM_Genome indexing of the reference genome, mapping of the post trimming reads and count data creation.
+        7. MultiQC_post_trim Quality report on the trimmed reads and mapping information using MultiQC.
+    
+
+
+Global_params:
+    Default_wait:      10
+    Qsub_opts:         -cwd
+    Qsub_path:         /path/to/qsub/bin
+    Qsub_q:            myqueue.q
+    Executor:          Local
+    conda:
+        env: RNASeq
+        path: null
+Vars:
+  Programs_path:
+    FastQC: fastqc
+    Multiqc: multiqc
+    RSEM: rsem-calculate-expression
+    RSEM_generate_data_matrix: rsem-generate-data-matrix
+    RSEM_plot: rsem-plot-model
+    RSEM_prepare_reference: rsem-prepare-reference
+    Trim_Galore: trim_galore
+    bowtie2: null
+    cutadapt: cutadapt
+    star: null
+  Genome:
+    gtf: /PATH2GTF/genome.gtf
+    reference: /PATH2reference/genome.fa
+  More_info:
+    cpu_per_sample: '1'
+    min_length: '25'
+    min_quality: '25'
+Step_params:
+  Merge:
+    module: merge
+    script_path: 
+  FastQC_Merge:
+    base: Merge
+    module: fastqc_html
+    redirects:
+      --threads: '{Vars.More_info.cpu_per_sample}'
+    script_path: '{Vars.Programs_path.FastQC}'
+  Trim_Galore:
+    base: Merge
+    cutadapt_path: '{Vars.Programs_path.cutadapt}'
+    module: Trim_Galore
+    redirects:
+      --length: '{Vars.More_info.min_length}'
+      -q: '{Vars.More_info.min_quality}'
+    script_path: '{Vars.Programs_path.Trim_Galore}'
+  FastQC_Trim_Galore:
+    base: Trim_Galore
+    module: fastqc_html
+    redirects:
+      --threads: '{Vars.More_info.cpu_per_sample}'
+    script_path: '{Vars.Programs_path.FastQC}'
+  RSEM_Genome:
+    annotation: '{Vars.Genome.gtf}'
+    base: Trim_Galore
+    mapper: star
+    mapper_path: '{Vars.Programs_path.star}'
+    mode: genome
+    module: RSEM
+    plot_stat: null
+    plot_stat_script_path: '{Vars.Programs_path.RSEM_plot}'
+    redirects:
+      --append-names: null
+      --estimate-rspd: null
+      --keep-intermediate-files: null
+      --output-genome-bam: null
+      -p: '{Vars.More_info.cpu_per_sample}'
+    reference: '{Vars.Genome.reference}'
+    rsem_generate_data_matrix_script_path: '{Vars.Programs_path.RSEM_generate_data_matrix}'
+    rsem_prepare_reference_script_path: '{Vars.Programs_path.RSEM_prepare_reference}'
+    script_path: '{Vars.Programs_path.RSEM}'
+  MultiQC_pre_trim:
+    base: FastQC_Merge
+    module: Multiqc
+    modules: fastqc,cutadapt,trimmomatic,bowtie2,bowtie1,star,htseq,prokka,samtools,quast
+    redirects:
+      --template: default
+    script_path: '{Vars.Programs_path.Multiqc}'
+  MultiQC_post_trim:
+    base:
+    - RSEM_Genome
+    - FastQC_Trim_Galore
+    module: Multiqc
+    redirects:
+      --template: default
+    script_path: '{Vars.Programs_path.Multiqc}'
