@@ -85,6 +85,8 @@ class Step_UCSC_BW_wig(Step):
 
         if self.params["script_path"]:
             self.params["script_path"] = self.params["script_path"].rstrip(os.sep) + os.sep
+        else:
+            self.params["script_path"] = ""
 
         if "scope" not in self.params:
             self.params["scope"] = "sample"

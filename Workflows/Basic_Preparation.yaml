@@ -33,7 +33,7 @@ Vars:
         human:              /path/to/human/bowtie2_ind
         mouse:              /path/to/mouse/bowtie2_ind
         phix:               /path/to/phiX/bowtie2_ind    
-            
+    empty:
 Step_params:
 # ---------------------------------- 1. Merge, QC  and trimming
     merge1:
@@ -79,6 +79,7 @@ Step_params:
         script_path:        {Vars.paths.fastq_screen}
         qsub_params:
             -pe:        shared 10
+        empty:
         redirects:
             --conf:     {Vars.paths.fastq_screen_conf}
             --filter:   200
@@ -108,6 +109,10 @@ Step_params:
         module:         fastqc_html
         base:           merge1
         script_path:    {Vars.paths.fastqc}
+        empty:          {Vars.empty}    #None
+        empty2:         "'{Vars.empty}'"   # None
+        empty3:             # None
+        empty4:         '""'
         qsub_params:
             -pe:        shared 15
         redirects:

@@ -90,6 +90,8 @@ class Step_macs2_bdgcmp(Step):
 
         if self.params["ucscTools_path"]:
             self.params["ucscTools_path"] = self.params["ucscTools_path"].rstrip(os.sep) + os.sep
+        else:
+            self.params["ucscTools_path"] = ""
 
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data

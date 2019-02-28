@@ -43,6 +43,8 @@ Vars:
         kentUtils:      "" #/path/to/kentUtils/bin
         ceas:           /path/to/CEAS/    # Path to the directory. Should include /bin/ceas and /lib/python2.7
         multiqc:        /path/to/multiqc
+        empty:
+        
     reference:
         fasta:          /path/to/fasta
         chrom_sizes:    /path/to/chrom.sizes
@@ -54,6 +56,7 @@ Step_params:
     merge1:
         module:         merge
         script_path:    {Vars.paths.merge}
+        empty:
     fqc_merge1:
         module:         fastqc_html
         base:           merge1
