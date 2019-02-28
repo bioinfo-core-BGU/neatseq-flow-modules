@@ -68,7 +68,7 @@ See also the `main NeatSeq-Flow website <https://neatseq-flow.readthedocs.io/en/
    Module_docs/SequenceClustering
    Module_docs/VariousReportingPrograms
    Module_docs/Miscellaneous
-   Module_docs/GenericModule
+   Module_docs/GenericModules
 
 ..   all_modules
    

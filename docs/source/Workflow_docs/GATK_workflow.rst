@@ -1,7 +1,11 @@
-.. _gatk_var_analysis::
+.. _gatk_var_analysis:
 
 Variant analysis using GATK
 ---------------------------
+
+:Authors: Michal Gordon
+:Affiliation: Bioinformatics Core Facility
+:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
 A workflow for somatic short variant discovery (SNVs + Indels), based on `GATK Best Practices <https://software.broadinstitute.org/gatk/best-practices/workflow?id=11146>`_.
 adapted for the analysis of rare diseases.
@@ -10,13 +14,11 @@ adapted for the analysis of rare diseases.
 
     * This workflow lacks the "base recalibration process (BQSR)" step.
     * In this workflow we use the option "hard filtering". The module for variant recalibration (VQSR) exists, and GATK recommends to use it with at least 30 exome samples.
-    * Because some GATK modules work at the sample-chromosome level, the number of jobs is 24 times higher than the number of samples. Please make sure that the platform on which you work can handle such amount of jobs, in terms of memory management, CPU management, and the number of jobs that can wait in the queue.
-It is recommended to carefully follow the log file and ensure that all jobs are completed successfully
+    * Because some GATK modules work at the sample-chromosome level, the number of jobs is 24 times larger than the number of samples. Please make sure that the platform on which you work can handle such an amount of jobs, in terms of memory management, CPU management, and the number of jobs that can wait in the queue.
 
-:Authors: Michal Gordon
-:Affiliation: Bioinformatics Core Facility
-:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
- 
+      **It is recommended to carefully follow the log file and ensure that all jobs have completed successfully.**
+
+
 Steps:
 ~~~~~~~
 

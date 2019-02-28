@@ -16,28 +16,21 @@ File and directory names are embedded in the script by describing the file or di
 1. File names:
 ***************
 
-Include 4 ``:``-separated fields: (a) scope, (b) slot, (c) separator and (d) base.
+Include 4 colon-separated fields: (a) scope, (b) slot, (c) separator and (d) base.
 For example: ``{{sample:fastq.F:,:merge1}}`` is replaced with sample ``fastq.F`` files from ``merge1`` instance, seperated by commas (only for project scope scripts, of course).
 Leave fields empty if you do not want to pass a value, e.g. ``{{sample:fastq.F}}`` is replaced with the sample ``fastq.F`` file.
 
 2. Sample and project names:
 ******************************
 
-You can include the sample or project names in the script by leaving out the file type field. *e.g.* {{sample}} will be replaced by the sample name.
+You can include the sample or project names in the script by leaving out the file type field. *e.g.* ``{{sample}}`` will be replaced by the sample name.
 
-To get a list of sample names, set the separator field to the separator of your choice, *e.g.* {{sample::,}} will be replaced with a comma-separated list of sample names.
+To get a list of sample names, set the separator field to the separator of your choice, *e.g.* ``{{sample::,}}`` will be replaced with a comma-separated list of sample names.
 
 3. Directories
 *****************
 
-You can include two directories in your command: the base directory of the instance results (``{{base_dir}}``) and a
-specific directory for the current sample (``{{dir}}``).
-
-.. Note:: For project-scope scripts, ``{{base_dir}}`` and ``{{dir}}`` refer to the same directory.
-
-.. Tip:: You can obtain the ``base_dir`` or ``dir`` values for a base step, by including the name of the base in the 4th colon separated position, just as you'd do for the file slots. *e.g.* ``{{base_dir:::merge1}}`` will return the ``base_dir`` for step ``merge1`` and ``{{dir:::merge1}}`` will return the ``dir`` for the current sample for step ``merge1``.
-
-Can take one of two values:
+You can include two directories in your command:
 
 .. csv-table::
     :header: "Dir descriptor", "Result"
@@ -45,6 +38,11 @@ Can take one of two values:
 
     "``{{base_dir}}``", "Returns the base directory for the step."
     "``{{dir}}``", "Returns the active directory of the script. For project-scope scripts, this is identical to ``base_dir``. For sample scope scripts, this will be a direcotry within ``base_dir`` for sample related files."
+
+.. Tip:: You can obtain the ``base_dir`` or ``dir`` values for a base step, by including the name of the base in the 4th colon separated position, just as you'd do for the file slots. *e.g.* ``{{base_dir:::merge1}}`` will return the ``base_dir`` for step ``merge1`` and ``{{dir:::merge1}}`` will return the ``dir`` for the current sample for step ``merge1``.
+
+
+
 
 3. Outputs
 ***********
@@ -54,6 +52,8 @@ Will be replaced with the filename specified in the named output. *e.g.* ``{{o:f
 Each output block must contain 2 fields: ``scope`` and ``string``. The string contains a string describing the file to be stored in the equivalent slot. In the example above, there must be a block called ``fasta.nucl`` in the ``output`` block which can be defined as shown in the example in section **Lines for parameter file** below.
 
 
+3. Examples
+*************
 
 The following examples cover most of the options:
 
