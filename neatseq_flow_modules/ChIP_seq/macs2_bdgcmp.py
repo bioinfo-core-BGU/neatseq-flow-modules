@@ -169,14 +169,19 @@ class Step_macs2_bdgcmp(Step):
         -i {INPUT_BDG} \\
         -g {genome} \\
         -b 0 | \\
-{ucscTools_path}bedClip \\
-    stdin \\
-    {genome} \\
-    {OUT_CLIP}
+    {ucscTools_path}bedClip \\
+        stdin \\
+        {genome} \\
+        {OUT_CLIP}
+
+LC_COLLATE=C sort -k1,1 -k2,2n \\
+    {OUT_CLIP} \\
+    > {OUT_SRT_CLIP} 
+
 
 # Running bedGraphToBigWig
 {ucscTools_path}bedGraphToBigWig \\
-    {OUT_CLIP} \\
+    {OUT_SRT_CLIP} \\
     {genome} \\
     {OUT_BW}
 
@@ -193,7 +198,8 @@ rm -f {OUT_CLIP}
            INPUT_BDG= "%s%s.%s_%s.bdg" % (use_dir,sample, self.file_tag, method2use),
            OUT_BW= "%s%s.%s_%s.bw" % (use_dir,sample, self.file_tag, method2use),
            OUT_W= "%s%s.%s_%s.wig" % (use_dir,sample, self.file_tag, method2use),
-           OUT_CLIP= "%s%s.%s_%s.clip" % (use_dir,sample, self.file_tag, method2use))
+           OUT_CLIP= "%s%s.%s_%s.clip" % (use_dir,sample, self.file_tag, method2use),
+           OUT_SRT_CLIP = "%s%s.%s_%s.srt.clip" % (use_dir, sample, self.file_tag, method2use))
 
                 if "toTDF_path" in list(self.params.keys()):
                     self.script += """\n\n
