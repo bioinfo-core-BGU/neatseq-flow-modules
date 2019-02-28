@@ -8,7 +8,7 @@ NeatSeq-Flow Tutorial Workflow
 This tutorial describes how to create and execute the workflow described in the **NeatSeq-Flow** manuscript
 (`Article on BioRXiv <https://www.biorxiv.org/content/early/2018/12/18/173005>`_).
 
-See `NeatSeq-Flow Tutorial <https://neatseq-flow3.readthedocs.io/en/latest/Tutorial.html>`_ for detailed instructions for quick installation of the tutorial workflow with conda.
+See `NeatSeq-Flow Tutorial <https://neatseq-flow.readthedocs.io/en/latest/Tutorial.html>`_ for detailed instructions for quick installation of the tutorial workflow with conda.
 
 The example workflow receives FASTQ files and the sequenced genome of a bacteria. It then performs:
 

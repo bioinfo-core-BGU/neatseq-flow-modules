@@ -7,7 +7,7 @@ RNA-Seq using a reference genome
 
 .. Note:: In order to use this Work-Flow first:
 
-    1. Install `NeatSeq-Flow <https://neatseq-flow3.readthedocs.io/en/latest/Installation_guide.html#install-with-script>`_ using conda 
+    1. Install `NeatSeq-Flow <https://neatseq-flow.readthedocs.io/en/latest/Installation_guide.html#install-with-script>`_ using conda
     2. Make sure that conda is in your **PATH**.
     
     
@@ -84,7 +84,7 @@ Instructions
 
        .. code-block:: bash
 
-            curl https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow3-modules/master/Workflows/RNASeq_env_install.yaml > RNASeq_env_install.yaml
+            curl https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/RNASeq_env_install.yaml > RNASeq_env_install.yaml
             
 
     2. Create the RNASeq conda environment:
@@ -99,14 +99,14 @@ Instructions
     
     .. code-block:: bash
 
-            curl https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow3-modules/master/Workflows/RNASeq_STAR.yaml > RNASeq.yaml
+            curl https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/RNASeq_STAR.yaml > RNASeq.yaml
 
 
     Using Bowtie2 as the mapper:
     
     .. code-block:: bash
 
-            curl https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow3-modules/master/Workflows/RNASeq_Bowtie2.yaml > RNASeq.yaml
+            curl https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/RNASeq_Bowtie2.yaml > RNASeq.yaml
 
 **Activate the NeatSeq_Flow conda environment:**
 
@@ -129,7 +129,7 @@ Instructions
    
             NeatSeq_Flow_GUI.py
             
-        Learn more about `How to use NeatSeq-Flow GUI <https://neatseq-flow3.readthedocs.io/en/latest/Tutorial.html#learn-how-to-use-the-graphical-user-interface>`_
+        Learn more about `How to use NeatSeq-Flow GUI <https://neatseq-flow.readthedocs.io/en/latest/Tutorial.html#learn-how-to-use-the-graphical-user-interface>`_
         
         Alternatively, It is possible to use a text editor. 
         

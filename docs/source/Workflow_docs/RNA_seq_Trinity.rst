@@ -124,7 +124,7 @@ Download
 
 The workflow file is available for download with the following command::
 
-   wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow3-modules/master/Workflows/RNA_seq_Trinity.yaml
+   wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/RNA_seq_Trinity.yaml
 
 
 Quick start with conda
@@ -135,7 +135,7 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
 #. Create and activate a conda environment with all the required programs::
 
-    wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow3-modules/master/docs/source/Workflow_docs/RNA_seq_Trinity_conda.yaml
+    wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/Workflow_docs/RNA_seq_Trinity_conda.yaml
     conda env create -f RNA_seq_Trinity_conda.yaml
     conda activate RNA_trinity
 
@@ -161,7 +161,7 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
 #. Get the parameter file with::
 
-    wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow3-modules/master/Workflows/RNA_seq_Trinity.yaml
+    wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/RNA_seq_Trinity.yaml
 
 #. In the conda definitions (line 46), set ``base:`` to the path to the conda installation which you used to install the environment.
 
@@ -193,4 +193,4 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
     #. Set the Vars.databases.BUSCO variable to the URL or the BUSCO dataset to use. Choose a URL from this list: `<https://busco.ezlab.org/frame_wget.html>`_.
 
-#. `Execute NeatSeq-Flow  <https://neatseq-flow3.readthedocs.io/en/latest/02b.execution.html#executing-neatseq-flow>`_.
+#. `Execute NeatSeq-Flow  <https://neatseq-flow.readthedocs.io/en/latest/02b.execution.html#executing-neatseq-flow>`_.

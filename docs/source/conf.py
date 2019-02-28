@@ -160,7 +160,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
 html_logo = "figs/logo_Hor.png"
-html_baseurl = "https://neatseq-flow3.readthedocs.io/en/latest/#"
+html_baseurl = "https://neatseq-flow.readthedocs.io/en/latest/#"
 
 
 # The name of an image file (within the static path) to use as favicon of the
@@ -321,7 +321,7 @@ texinfo_documents = [
 # Example configuration for intersphinx: refer to the Python standard library.
 # intersphinx_mapping = {'https://docs.python.org/': None}
 intersphinx_mapping = {'python': ('https://docs.python.org/', None),
-                       'neatseq_flow':('http://neatseq-flow3.readthedocs.io/en/latest/', None)}
+                       'neatseq_flow':('http://neatseq-flow.readthedocs.io/en/latest/', None)}
 
 
 

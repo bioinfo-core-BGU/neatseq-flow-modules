@@ -12,7 +12,7 @@ setup(
     description         = 'Shared modules and workflows for use with NeatSeq-Flow',
     license             = 'Creative Commons Attribution-Noncommercial-Share Alike license',
     long_description    =  open('README').read(),
-    download_url        = 'https://github.com/bioinfo-core-BGU/neatseq-flow3-modules',
+    download_url        = 'https://github.com/bioinfo-core-BGU/neatseq-flow-modules',
     platforms           = ["POSIX","Windows"],
     packages            = find_packages(),
     include_package_data= True,  # See  MANIFEST.in
