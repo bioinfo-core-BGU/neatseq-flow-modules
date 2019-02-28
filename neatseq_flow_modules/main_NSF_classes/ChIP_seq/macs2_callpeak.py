@@ -171,7 +171,7 @@ class Step_macs2_callpeak(Step):
                 self.script += "-c %s \\\n\t" % self.sample_data[control]["bam"]
         
             # Add output directory
-            self.script += "--name %s \n\n" % output_filename
+            self.script += "--name %s \\\n\t" % output_filename
             self.script += "--outdir %s \n\n" % use_dir
             
             # Storing the output file in samples_data
