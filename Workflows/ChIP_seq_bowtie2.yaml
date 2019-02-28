@@ -40,7 +40,7 @@ Vars:
         igvtools:       /path/to/igvtools.jar
         NGSplot:        /path/to/ngsplot-2.61/    # Path to bin/ directory in which the executabe is installed
         bedtools:       /path/to/bedtools  # Path to bedtools bin/. Should contain bedtools and genomeCoverageBed executables
-        kentUtils:      /path/to/kentUtils/bin
+        kentUtils:      "" #/path/to/kentUtils/bin
         ceas:           /path/to/CEAS/    # Path to the directory. Should include /bin/ceas and /lib/python2.7
         multiqc:        /path/to/multiqc
     reference:
@@ -131,6 +131,7 @@ Step_params:
         bedGraphToBigWig_params: -blockSize 10 -itemsPerSlot 20
         bigWigToWig_params: -chrom X1 -start X2 -end X3
         genome:         {Vars.reference.chrom_sizes}
+        # stop_and_show:
     multiqc_sum:
         module:         Multiqc
         base:
