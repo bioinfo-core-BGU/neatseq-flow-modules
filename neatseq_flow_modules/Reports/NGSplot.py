@@ -95,13 +95,13 @@ class Step_NGSplot(Step):
         """ A place to do initiation stages following setting of sample_data
         """
 
-        # # Assert there is mapping data and a sorted bam in particular:
-        # for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
+        # Assert there is mapping data and a sorted bam in particular:
+        for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
             # if not "mapping" in self.sample_data[sample]["fastq"]:
-                # raise AssertionExcept("No mapping data defined\n", sample)
-            # if not "unsorted_bam" in self.sample_data[sample]["fastq"]["mapping"]:
-                # raise AssertionExcept("No sorted bam for sample %s", sample)
-                # # If there is an unsorted BAM, then there is a sorted one as well :)
+            #     raise AssertionExcept("No mapping data defined\n", sample)
+            if not "bam" in self.sample_data[sample]:
+                raise AssertionExcept("No sorted bam for sample %s", sample)
+                # If there is an unsorted BAM, then there is a sorted one as well :)
 
 
         # pass

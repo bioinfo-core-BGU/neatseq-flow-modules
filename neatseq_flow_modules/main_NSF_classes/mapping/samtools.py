@@ -141,6 +141,10 @@ class Step_samtools(Step):
         if "scope" not in self.params:
             self.params["scope"] = "sample"
 
+        for prog in "view sort index flagstat stats idxstats fastq fasta merge".split(" "):
+            if prog in self.params and self.params[prog] is None:
+                self.params[prog] = ""
+
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
@@ -244,7 +248,7 @@ class Step_samtools(Step):
             sort_suffix = ".srt"
             index_suffix = ".bai"
 
-            if "view" in list(self.params.keys()):
+            if "view" in self.params:
 
                 output_type = "bam" if re.search("\-\w*b", self.params["view"]) else "sam"
                 outfile = ".".join([os.path.basename(active_file), output_type])

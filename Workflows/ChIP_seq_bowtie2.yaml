@@ -108,7 +108,7 @@ Step_params:
         qsub_params:
             -pe:        shared 20
         view:           -buh  -q 30 -@ 20 -F 4
-        sort:           -@ 20
+        sort:           #-@ 20
         flagstat: 
         index: 
         stats:          --remove-dups
