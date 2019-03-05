@@ -1,0 +1,255 @@
+Description: |
+    A pipeline for executing a standard ChIP-seq analysis
+    --------------------------------------------------------------
+    
+    The workflow is based on a workflow kindly provided by Dr. Dena Leshkowitz of the Life Sciences Core Facilities, Weizmann Institute of Science.
+    
+    The pipeline includes the following stages:
+    1. Preparation and QA:
+        a. Merging the reads into a signle file per sample.
+        b. QC with fastqc
+        c. Trimming with trimmomatic
+        d. QC on trimmed reads with fastqc
+    2. Mapping 
+        a. Mapping the reads to the reference genome with bowtie2
+        b. Conversion to sorted BAM with samtools
+        c. Converting to UCSC and IGV format
+    3. Finding ChIP peaks
+        a. Peak calling is performed with macs2 callpeak
+        b. Further analysis of the peaks is done with macs2 bdgcmp
+        c. Analysis of ChIP-seq results with CEAS
+    4. Reporting
+        a. Analysis of the BAM files is done with NGSplot, with -R set to enhancer, exon, genebody and tss
+       
+Global_params:
+    Executor:       SGE
+    Default_wait:   10
+    Qsub_opts:      -cwd -V -notify
+    Qsub_q:         bioinfo.q
+    Qsub_path:      /storage/SGE6U8/bin/lx24-amd64
+    conda:
+        path:   
+        env:    ChIP_seq_WF
+
+
+Vars:
+    paths:
+        fastqc:         fastqc
+        trimmo:         trimmomatic
+        bowtie2:        bowtie2
+        samtools:       samtools
+        macs2:          macs2
+        java:           java
+        igvtools:       java -Xmx1500m -jar $CONDA_PREFIX/share/igvtools-2.3.93-0/igvtools.jar
+        bedtools:        #bedtools  # Path to bedtools bin/. Should contain bedtools and genomeCoverageBed executables
+        kentUtils:       #kentUtils/bin
+        ceas:           CEAS/    # Path to the directory. Should include /bin/ceas and /lib/python2.7
+        multiqc:        multiqc
+    reference:
+        fasta:          /gpfs0/bioinfo/databases/Reference_Genomes/Human/ensembl/GRCh38.p10/Homo_sapiens.GRCh38.dna.primary_assembly.fa
+        chrom_sizes:    /gpfs0/bioinfo/databases/Reference_Genomes/Human/ensembl/GRCh38.p10/Homo_sapiens.GRCh38.dna.primary_assembly.fa.sizes.genome
+        gtf:            /gpfs0/bioinfo/databases/Reference_Genomes/Human/ensembl/GRCh38.p10/Homo_sapiens.GRCh38.91.gtf
+
+Step_params:
+# ---------------------------------- 1. Merge, QC  and trimming
+    merge1:
+        module:         merge
+        script_path:    
+        tag:            QC
+    fqc_merge1:
+        module:         fastqc_html
+        base:           merge1
+        script_path:    {Vars.paths.fastqc}
+        setenv:         "PERL5LIB=''"
+        qsub_params:
+            -pe:        shared 15
+        redirects:
+            --threads:  15
+    trim1:
+        module:         trimmo
+        base:           merge1
+        script_path:    '{Vars.paths.trimmo}'
+        qsub_params:
+            -pe:        shared 20
+#        spec_dir: 
+        todo:           LEADING:20 TRAILING:20
+        redirects:
+            -threads:   20
+    fqc_trim1:
+        module:         fastqc_html
+        base:           trim1
+        script_path:    {Vars.paths.fastqc}
+        setenv:         "PERL5LIB=''"
+        qsub_params:
+            -pe:        shared 15
+        redirects:
+            --threads:  15
+            
+    add_genome:
+        module:         manage_types
+        base:           merge1
+        script_path:
+        operation:      add
+        type:           [fasta.nucl, gtf]    
+        scope:          project
+        path:
+            - {Vars.reference.fasta}
+            - {Vars.reference.gtf}
+# ---------------------------------- 2. Mapping and format conversion
+
+    bwt2_build_index:
+        bwt2_build:
+        module:         bowtie2_builder
+        base:           add_genome
+        script_path:    '{Vars.paths.bowtie2}-build'
+        scope:          project
+        tag:            Mapping    
+
+    bwt2_map:
+        module:         bowtie2_mapper
+        base:           bwt2_build_index
+        script_path:    {Vars.paths.bowtie2}
+        setenv:         "PERL5LIB=''"
+        qsub_params:
+            -pe:        shared 20
+        get_map_log:
+        get_stderr:
+        # ref_genome:     {Vars.reference.fasta}
+        scope:          project
+        redirects:
+            --end-to-end:
+            -L:         32
+            -N:         1
+            -k:         2
+            -p:         20
+            -q:     
+            # -x:         {Vars.reference.bowtie2_ind}
+
+    sam2bam:
+        module:         samtools
+        base:           bwt2_map
+        script_path:    {Vars.paths.samtools}
+        qsub_params:
+            -pe:        shared 20
+        view:           -buh  -q 30 -@ 20 -F 4
+        sort:           -@ 20
+        flagstat: 
+        index: 
+        stats:          --remove-dups
+        del_sam: 
+        del_unsorted: 
+        
+    multiqc_sum:
+        module:         Multiqc
+        base:
+            - sam2bam
+            - fqc_trim1
+            - fqc_merge1
+        script_path:    {Vars.paths.multiqc}
+
+
+    IGVcount1:
+        module:         IGV_count
+        base:           sam2bam
+        script_path:    '{Vars.paths.igvtools} count'
+        format:         tdf
+        genome:         {Vars.reference.chrom_sizes}
+    genCovBed:
+        module:         genomeCoverageBed
+        base:           sam2bam
+        script_path:    '{Vars.paths.bedtools}genomeCoverageBed'
+        redirects:
+            -bg:
+            -g:         {Vars.reference.chrom_sizes}
+    
+    # Sort by name for bedGraphToBigWig
+    # Is done with one of the generic modules:
+    
+    # Sort_BED:
+        # module:         Fillout_Generic
+        # base:           genCovBed
+        # script_path: |
+            # LC_COLLATE=C \
+                # sort -k1,1 -k2,2n {{sample:bdg}} \
+                # > {{o:bdg}}
+            
+        # output:
+            # bdg:
+                # scope:  sample
+                # string: '{{dir}}{{sample}}.sort.bdg'
+        # conda:
+        # # stop_and_show:
+        
+    Sort_coverage_BDG:
+        module:         Generic             
+        base:           genCovBed
+        script_path:    LC_COLLATE=C sort -k1,1 -k2,2n 
+        scope:          sample                
+        shell:          bash
+        inputs:                     
+            "":                    
+                scope: sample
+                File_Type:    bdg   
+        outputs:                    
+            ">":                                         
+                File_Type:    bdg      
+                suffix:       .sort.bdg     
+        
+    UCSCmap_bams:
+        module:         UCSC_BW_wig
+        base:           Sort_coverage_BDG
+        script_path:    {Vars.paths.kentUtils}
+        bedGraphToBigWig_params: -blockSize=10 -itemsPerSlot=20
+        bigWigToWig_params: 
+        genome:         {Vars.reference.chrom_sizes}
+        # stop_and_show:
+
+            
+# ---------------------------------- 3. Peak finding and format, comparison to input and format conversion
+    macs1_findpeaks:
+        module:         macs2_callpeak
+        base:           sam2bam
+        script_path:    '{Vars.paths.macs2} callpeak'
+        bedToBigBed_path: '{Vars.paths.kentUtils}/bedToBigBed'
+        chrom.sizes:    {Vars.reference.chrom_sizes}
+        getfasta:       '{Vars.paths.bedtools}/bedtools getfasta -name -s'
+        redirects:
+            --SPMR:
+            --bdg:
+            -g:         mm
+    bdgcmp_comp:
+        module:         macs2_bdgcmp
+        base:           macs1_findpeaks
+        script_path:    '{Vars.paths.macs2} bdgcmp'
+        genome:         {Vars.reference.chrom_sizes}
+        slop_path:      '{Vars.paths.bedtools}bedtools slop'
+        toTDF_path:     '{Vars.paths.igvtools} toTDF'
+        ucscTools_path: {Vars.paths.kentUtils}
+        redirects:
+            --method:   FE
+    Sort_peaks_BDG:
+        module:         Generic             
+        base:           macs1_findpeaks
+        script_path:    LC_COLLATE=C sort -k1,1 -k2,2n 
+        scope:          sample                
+        shell:          bash
+        inputs:                     
+            "":                    
+                scope: sample
+                File_Type:    bdg   
+        outputs:                    
+            ">":                                         
+                File_Type:    bdg      
+                suffix:       .sort.bdg  
+    macs1_findpeaks_UCSC:
+        module:         UCSC_BW_wig
+        base:           Sort_peaks_BDG
+        script_path:    {Vars.paths.kentUtils}
+        bedGraphToBigWig_params: -blockSize=10 -itemsPerSlot=20
+        bigWigToWig_params: 
+        genome:         {Vars.reference.chrom_sizes}
+    macs1_findpeaks_tdf:
+        module:         IGV_toTDF
+        base:           macs1_findpeaks_UCSC
+        script_path:    '{Vars.paths.igvtools} toTDF'
+        genome:         mm10
