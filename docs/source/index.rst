@@ -72,7 +72,12 @@ See also the `main NeatSeq-Flow website <https://neatseq-flow.readthedocs.io/en/
 
 ..   all_modules
    
-   
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Tutorials
+
+   Module_docs/Generic_module
 
 
 
