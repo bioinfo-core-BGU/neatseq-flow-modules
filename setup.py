@@ -19,7 +19,7 @@ setup(
     data_files          = [('NeatSeq-Flow-Workflows',['Workflows/Assembly_Indexing_mapping.yaml',
                                                       'Workflows/BLAST_db.yaml',
                                                       'Workflows/BLAST_fasta.yaml',
-                                                      'Workflows/ChIP_seq_bowtie2.yaml',
+                                                      'Workflows/ChIP_seq.yaml',
                                                       'Workflows/Clustering.yaml',
                                                       'Workflows/Metagenomics.yaml',
                                                       'Workflows/parameter_set_QIIME/qiime1_mapping.txt',

@@ -10,17 +10,18 @@ Description: |
         b. QC with fastqc
         c. Trimming with trimmomatic
         d. QC on trimmed reads with fastqc
+        e. Adding the genome and the GTF file to the project 
     2. Mapping 
-        a. Mapping the reads to the reference genome with bowtie2
-        b. Conversion to sorted BAM with samtools
-        c. Converting to UCSC and IGV format
+        a. Creating a bowtie2 index for the genome.
+        b. Mapping the reads to the reference genome with bowtie2
+        c. Conversion to sorted BAM with samtools
+        c. Sorting by name for *bedGraphToBigWig* with the ``Generic`` module.
+        d. Converting to UCSC and IGV format
     3. Finding ChIP peaks
         a. Peak calling is performed with macs2 callpeak
         b. Further analysis of the peaks is done with macs2 bdgcmp
-        c. Analysis of ChIP-seq results with CEAS
-    4. Reporting
-        a. Analysis of the BAM files is done with NGSplot, with -R set to enhancer, exon, genebody and tss
-       
+        
+        
 Global_params:
     Executor:       SGE
     Default_wait:   10
@@ -139,14 +140,6 @@ Step_params:
         del_sam: 
         del_unsorted: 
         
-    multiqc_sum:
-        module:         Multiqc
-        base:
-            - sam2bam
-            - fqc_trim1
-            - fqc_merge1
-        script_path:    {Vars.paths.multiqc}
-
 
     IGVcount1:
         module:         IGV_count
@@ -253,3 +246,12 @@ Step_params:
         base:           macs1_findpeaks_UCSC
         script_path:    '{Vars.paths.igvtools} toTDF'
         genome:         mm10
+
+
+    multiqc_sum:
+        module:         Multiqc
+        base:
+            - bdgcmp_comp
+            - fqc_trim1
+            - fqc_merge1
+        script_path:    {Vars.paths.multiqc}
