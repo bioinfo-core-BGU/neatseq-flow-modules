@@ -31,6 +31,7 @@ Global_params:
     conda:
         path:   
         env:    ChIP_seq_WF
+    # module_path:  ../neatseq_flow_modules
 
 
 Vars:
