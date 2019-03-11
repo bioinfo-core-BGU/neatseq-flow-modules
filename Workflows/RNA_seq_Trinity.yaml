@@ -37,8 +37,9 @@ Description: |
 
     
 Global_params:
+    # Executor: Local
     Default_wait: 10
-    Qsub_opts:  -V -cwd -notify
+    # Qsub_opts:  -V -cwd -notify
     Qsub_path:  /storage/SGE6U8/bin/lx24-amd64/qstat
     Qsub_q:     bioinfo.q
     conda:

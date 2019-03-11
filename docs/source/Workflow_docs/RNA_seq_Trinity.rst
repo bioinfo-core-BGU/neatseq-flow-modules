@@ -150,8 +150,8 @@ For easy setup of the workflow, including a sample dataset, use the following in
         Title   Trinity_example
 
         #SampleID       Type    Path
-        Sample1 Forward 00.Raw_reads/reads.right.fq.gz
-        Sample1 Reverse 00.Raw_reads/reads.left.fq.gz
+        Sample1 Forward 00.Raw_reads/reads.left.fq.gz
+        Sample1 Reverse 00.Raw_reads/reads.right.fq.gz
 
    .. Tip:: To get the full path to a file, use the following command:
 
