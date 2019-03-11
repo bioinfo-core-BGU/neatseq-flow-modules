@@ -168,6 +168,7 @@ Step_params:
         base:           fqc_trimgal
         script_path:    {Vars.paths.multiqc}        
         tag:
+        SKIP:   False
         redirects:
             --interactive:
         # stop_and_show:

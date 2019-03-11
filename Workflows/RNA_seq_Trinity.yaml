@@ -3,7 +3,8 @@ Description: |
     A pipeline for basic RNA-seq analysis using Trinity
     ---------------------------------------------------
     
-    The workflow is built to run Trinity's sample data, which consists of stranded, paired-end reads. You should modify the workflow steps to suit your data.
+    The workflow was tested on Trinity's sample data, which consists of stranded, paired-end reads. 
+    For your own fastq files, you should modify the workflow steps appropriately. (Most importantly, see comment in step ``Trinity_tags``)
     
     The workflow assembles a transcriptome with ``Trinity`` and then runs ``align_and_estimate_abundance.pl`` and ``abundance_estimates_to_matrix.pl`` to map the reads to the trascriptome and create normalized counts tables. The tables are used to select a representative transcript per gene, by expression.
     
@@ -16,12 +17,12 @@ Description: |
         1.	Merge: Concatenating the read files into single files per direction
         2.	FastQC_Merge, Trimmo, FastQC_Trimmo and MultiQC: QC on the reads: FastQC and trimmomatic. Depending on the quality of the reads, trimmomatic` might not be required.
     2.	Trinity
-        1.	Trinity_tags: Adding tags required by trinity to the read titles (/1 and /2 for F and R. See Running-Trinity. [2]
-        2.	Trinity_assembl: Running Trinity. In this workflow, Trinity is executed on a single computer. Trinity can be configured to run on a cluster. The configuration file is set in the SGE_Trinity_conf variable in the Vars section. [3]
+        1.	Trinity_tags: Adding tags required by trinity to the read titles (/1 and /2 for F and R. See Running-Trinity. 
+        2.	Trinity_assembl: Running Trinity. In this workflow, Trinity is executed on a single computer. Trinity can be configured to run on a cluster. The configuration file is set in the SGE_Trinity_conf variable in the Vars section. 
         3.	Trinity_Map: Mapping of the reads is performed with trinity_mapping module.
-        4.	Trinity_Map_Stats: Creating statistical tables is performed with trinity_statisticsmodule.
+        4.	Trinity_Map_Stats: Creating statistical tables is performed with trinity_statistics module.
         5.	Rep_transcript: Uses filter_low_expr_transcripts.pl to keep only a single transcript per gene.
-        6.	BUSCO: Run BUSCO on the transcripts file. See `Preparatory steps`_ above for setting up BUSCO in the parameter file.
+        6.	BUSCO: Run BUSCO on the transcripts file. First, you have to set up a BUSCO database. 
     3.	Trinotate
         1.	Split_Fasta: Splits the fasta file of transcripts for parallelization.
         From this step onwards, analysis is performed on subsets of the transcriptome. Recombining the results is done in step Trino_merge_tables.
@@ -37,26 +38,30 @@ Description: |
 
     
 Global_params:
-    # Executor: Local
+    # # Executor defines the type of job manager to use. The default is 'SGE'. Other options are 'Local' and 'SLURM'
+    Executor: Local
     Default_wait: 10
+    # # If using SGE or SLURM in Executor, set the following params:
     # Qsub_opts:  -V -cwd -notify
-    Qsub_path:  /storage/SGE6U8/bin/lx24-amd64/qstat
-    Qsub_q:     bioinfo.q
+    # Qsub_path:
+    # Qsub_q:     bioinfo.q
+    # # When NOT using the 'RNA_trinity' conda environment for the analysis, comment out the following two lines.
     conda:
         path:   {Vars.conda.base}
         env:    {Vars.conda.env}
-    module_path:            ../neatseq_flow_modules
+    # # If executing from within a NeatSeq-Flow conda environment, you do not need to set the following. If you installed NeatSeq-Flow and it's module repo yourself, set the following to the module repo location:
+    # module_path:            /path/to/neatseq_flow_modules
 
-    
+
 Vars:
     conda:
-        base: /gpfs0/bioinfo/users/sklarz/qiime2-moving-pictures-tutorial/NSF/NeatSeq_Flow_install
+        base:
         env: RNA_trinity
     paths:
         multiqc:            multiqc
         fastqc:             fastqc
         trimmomatic:        trimmomatic
-        Trinity:            Trinity  
+        Trinity:            Trinity
         get_Trinity_gene_to_trans_map: get_Trinity_gene_to_trans_map.pl
         trinity_scripts:    ""
         BUSCO:              run_BUSCO.py
@@ -67,13 +72,16 @@ Vars:
         hmmscan:            hmmscan
         blastx:             blastx
         blastp:             blastp
-        blastn:             blastn        
+        blastn:             blastn
+        RnammerTranscriptome: RnammerTranscriptome.pl
+        rnammer:            /path/to/rnammer
     databases:
         BUSCO:              http://busco.ezlab.org/v2/datasets/eukaryota_odb9.tar.gz
+        # # These are the locations of the databases when installed using the instructions in the accompanying webpage (step 6 in https://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/Workflow_docs/RNA_seq_Trinity.html#quick-start-with-conda).
         trinotate:
             sprot:          $PWD/Trinotate_dbs/uniprot_sprot.pep
             pfam:           $PWD/Trinotate_dbs/Pfam-A.hmm
-            sqlitedb:       $PWD/Trinotate_dbs/trino_test.sqlite
+            sqlitedb:       $PWD/Trinotate_dbs/Trinotate.sqlite
     cluster_params:
         pe:                 shared
     split_fasta_n:          2           # In how many parallel chunks should Trinotate run?
@@ -83,7 +91,7 @@ Step_params:
     # Copy and concatenate files into data directory:
     Merge:
         module:             merge
-        script_path:        
+        script_path:
         tag:                QC
     # FastQC on the files
     FastQC_Merge:
@@ -128,11 +136,11 @@ Step_params:
     Trinity_tags:
         module:             add_trinity_tags
         base:               Trimmo
-        script_path: 
+        script_path:
         tag:                Trinity
-        # For the files supplied by trinity, this step is not required. 
+        # For the files supplied by trinity, this step is not required.
         # Included for completeness. You can skip this step by uncommenting the next line
-        # SKIP:             
+        # SKIP:
     # Assemble the reads with Trinity. THIS STEP CAN TAKE A LONG TIME!
     Trinity_assembl:
         module:             trinity
@@ -147,7 +155,7 @@ Step_params:
             --seqType:          fq
             --min_kmer_cov:     2
             --max_memory:       10G
-            --SS_lib_type:      RF 
+            --SS_lib_type:      RF
             # --full_cleanup:
 
     # Map the reads to the assembly
@@ -174,12 +182,12 @@ Step_params:
         scope:              project
         redirects:
             --est_method:   RSEM
-            # --gene_trans_map:   
+            # --gene_trans_map:
         # stop_and_show:
 
     # Keep the most highly expressed transcript per gene - Representative transcript
-    Rep_transcript:                   # Name of this step
-        module:             Generic             # Name of module
+    Rep_transcript:
+        module:             Generic
         base:               Trinity_Map_Stats
         script_path:        '{Vars.paths.trinity_scripts}filter_low_expr_transcripts.pl'
         setenv:             'PERL5LIB=""'
@@ -206,7 +214,7 @@ Step_params:
     BUSCO:
         module:             BUSCO
         base:               Rep_transcript
-        script_path:        {Vars.paths.BUSCO} 
+        script_path:        {Vars.paths.BUSCO}
         scope:              project
         setenv:             'BUSCO_CONFIG_FILE={Vars.paths.BUSCO_cfg}'
         get_lineage:        {Vars.databases.BUSCO}
@@ -217,11 +225,11 @@ Step_params:
             --restart:
         qsub_params:
             -pe:            '{Vars.cluster_params.pe} 20'
-            
+
 
 # -------------------- Part 2: Annotate with Trinotate:
 
-    # Splitting into 4 parts, for parallelization. Increase number for faster analysis. 
+    # Splitting into 4 parts, for parallelization. Increase number for faster analysis.
     Split_Fasta:
         module:             split_fasta
         base:               Rep_transcript
@@ -275,28 +283,38 @@ Step_params:
     Trino_rnammer:
         module:             RnammerTranscriptome
         base:               Split_Fasta
-        script_path:        /gpfs0/bioinfo/apps/Trinity/Trinotate-v3.1.1/util/rnammer_support/RnammerTranscriptome.pl #{Vars.paths.hmmscan}
+        script_path:        {Vars.paths.RnammerTranscriptome}
         scope:              sample
         redirects:
-            --path_to_rnammer:  /gpfs0/bioinfo/apps/RNAMMER/RNAMMER_v1.2/rnammer
-    
+            --path_to_rnammer:    {Vars.paths.rnammer}
+
     Trino_merge_tables:
         module:             merge_table
-        base:               [Trino_blastp_sprot,Trino_blastx_sprot,Trino_rnammer,Trino_hmmscan1]
-        script_path:        
-        type:               [blast.prot,blast.nucl,transcripts.fasta.nucl,fasta.prot,rnammer,hmmscan.prot]
-        header:             [0,0,0,0,0,5]
+        base:               
+            - Trino_blastp_sprot
+            - Trino_blastx_sprot
+            - Trino_rnammer
+            - Trino_hmmscan1
+        script_path:
+        type:               
+            - blast.prot
+            - blast.nucl
+            - transcripts.fasta.nucl
+            - fasta.prot
+            - rnammer
+            - hmmscan.prot
+        header:             [0,   0,   0,   0,   0,   5]
         ext:                [out, out, fna, faa, out, hmm.out]
         # stop_and_show:
 
     Trino_Trinotate1:
         module:             Trinotate
-        base:               
+        base:
             - Trino_merge_tables
             - Rep_transcript
         script_path:        {Vars.paths.Trinotate}
         scope:              project
         setenv:             'PERL5LIB=""'
         sqlitedb:           {Vars.databases.trinotate.sqlitedb}
-        cp_sqlitedb:        
+        cp_sqlitedb:
 

@@ -26,15 +26,15 @@ Preparatory steps
 
 #. If you want to use BUSCO:
 
-    #. Download a template config file with the following command and edit is as necessary. In the parameter file, set Vars.paths.BUSCO_cfg to the full path to the config file.
+    #. Download a template config file with the following command and edit is as necessary. In the parameter file, set ``Vars.paths.BUSCO_cfg`` to the full path to the config file.
 
         ::
 
             wget -O config.ini https://gitlab.com/ezlab/busco/raw/master/config/config.ini.default
 
 
-    #. Set the Vars.databases.BUSCO variable to the URL or the BUSCO dataset to use. Choose a URL from this list: `<https://busco.ezlab.org/frame_wget.html>`_.
-
+    #. Set the ``Vars.databases.BUSCO`` variable to the URL of the BUSCO dataset to use. `Choose a URL from this list <https://busco.ezlab.org/frame_wget.html>`_.
+    #. Alternatively, download the lineage of interest, unzip it, and pass the path to the ``BUSCO`` module via the ``--lineage`` *redirect* parameter.
 
 Steps
 ~~~~~~~
@@ -55,8 +55,7 @@ Steps
 
 #. Trinotate
 
-    #. *Split_Fasta*: Splits the fasta file of transcripts for parallelization.
-        From this step onwards, analysis is performed on subsets of the transcriptome. Recombining the results is done in step *Trino_merge_tables*.
+    #. *Split_Fasta*: Splits the fasta file of transcripts for parallelization. **From this step onwards, analysis is performed on subsets of the transcriptome**. Recombining the results is done in step *Trino_merge_tables*.
     #. *Trino_blastx_sprot*: Runs blastx against swissprot with the transcript sequences.
     #. *Trino_Transdecode*: Finds coding sequences in the transcripts and produces predicted protein sequences.
     #. *Trino_blastp_sprot*: Runs blastp against swissprot with the translated transcript sequences.
@@ -70,7 +69,7 @@ Steps
 
 
 .. [#f3] See instructions here: `<https://github.com/Trinotate/Trinotate.github.io/wiki/Software-installation-and-data-required#2-sequence-databases-required>`_.
-.. [#f1] For the Trinity example described below (), this step can be tagged with ``SKIP``, since the reads names already include tags.
+.. [#f1] For the Trinity example described below, this step can be tagged with ``SKIP``, since the reads names already include tags.
 .. [#f2] Trinity uses `hpc_cmds_GridRunner <https://github.com/HpcGridRunner/HpcGridRunner.github.io/wiki>`_ for executing on grids. See their wiki for correct configuration.
 
 Workflow Schema
@@ -94,7 +93,7 @@ Programs required
 * `blast          <https://blast.ncbi.nlm.nih.gov/Blast.cgi>`_
 * `hmmer          <http://hmmer.org/>`_
 * `Trinotate      <https://github.com/Trinotate/Trinotate.github.io/wiki>`_
-* busco
+* BUSCO
 * transdecoder
 * multiqc
 * fastqc
@@ -132,6 +131,7 @@ Quick start with conda
 
 For easy setup of the workflow, including a sample dataset, use the following instructions for complete installation with conda:
 
+.. Attention:: ``rnammer`` is not available with CONDA. To use it, you will have to install it and modify it `following the instructions here <https://github.com/Trinotate/Trinotate.github.io/wiki/Software-installation-and-data-required#rnammer-free-academic-download>`_.
 
 #. Create and activate a conda environment with all the required programs::
 
