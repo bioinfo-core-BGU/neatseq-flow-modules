@@ -168,7 +168,7 @@ class Step_Fillout_Generic(Step):
                     raise AssertionExcept("Make sure you have a 'string' and 'scope' defined "
                                           "for output {output}!".format(output=outp))
                 if not re.search(pattern="dir",string=self.params["output"][outp]["string"]):
-                    raise AssertionExcept("Please include {{{{dir}}}} or {{{{base_dir}}}} in output '{output}'".
+                    self.write_warning("Are you sure you didn't mean to include {{{{dir}}}} or {{{{base_dir}}}} in output '{output}'?".
                                           format(output=outp))
 
                 variables.extend(result)
