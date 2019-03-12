@@ -50,7 +50,7 @@ Global_params:
         path:   {Vars.conda.base}
         env:    {Vars.conda.env}
     # # If executing from within a NeatSeq-Flow conda environment, you do not need to set the following. If you installed NeatSeq-Flow and it's module repo yourself, set the following to the module repo location:
-    # module_path:            /path/to/neatseq_flow_modules
+    module_path:            ../neatseq_flow_modules
 
 
 Vars:
