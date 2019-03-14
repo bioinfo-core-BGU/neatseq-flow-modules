@@ -1,4 +1,5 @@
 Global_params:
+    # Executor:   Local
     Default_wait:           10
     Qsub_opts:              -V -cwd
     Qsub_path:              /path/to/qsub/bin
