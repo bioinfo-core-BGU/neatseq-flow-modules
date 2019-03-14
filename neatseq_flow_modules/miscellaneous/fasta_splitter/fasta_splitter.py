@@ -15,7 +15,14 @@ Convenient for parallelizing processes on the cluster. You can take a project wi
 
 The parts can then be combined with ``merge_table`` module, which can concatenate any type of file.
 
-The module ships with ``fasta-splitter.pl``  version 0.2.6, 2017-08-01
+.. Attention::
+   The module ships with ``fasta-splitter.pl``  version 0.2.6, 2017-08-01.
+
+   Leave ``script_path`` empty to use the perl script provided. **Perl must be in the path!**
+
+   To use a different version, supply it via ``script_path``.
+
+
 
 Usage::
 
@@ -35,9 +42,16 @@ Usage::
             --version            - Show version.
             --help               - Show help.
 
+
+
 You can't use the ``--part-size`` method, since it will end up in an unknown number of files, which is not defined in Neat-Seq Flow.
 
 Please do **not** use the ``--nopad`` parameter. There is no reason to...
+
+.. Important:: When splitting sample-scope fasta files, the subsamples are stored with a ``source`` category set to the
+    original sample name. You can use this for merging results at the sample scope downstream.
+    See documentation for ``merge_table``.
+
 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -58,7 +72,7 @@ Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * Puts output files in the following slots:
-        
+
     * ``sample_data[<sample>]["fasta.nucl"]``
     * ``sample_data[<sample>]["fasta.prot"]``
 
@@ -71,9 +85,9 @@ Parameters that can be set
 .. csv-table:: Parameters that can be set:
     :header: "Parameter", "Values", "Comments"
 
-    "type", "nucl|prot", "The type of fasta file to split"
-    "redirects --n-parts", "", "Number of fragments"
-    
+    "``type``", "nucl|prot", "The type of fasta file to split"
+    "``redirects: --n-parts``", "", "Number of fragments"
+
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -82,7 +96,7 @@ Lines for parameter file
     split_fasta1:
         module:         fasta_splitter
         base:           Trinity1
-        script_path:    
+        script_path:
         type:           nucl
         redirects:
             --n-parts:      4
@@ -91,48 +105,44 @@ Lines for parameter file
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-`http://kirill-kryukov.com/study/tools/fasta-splitter/`_
+`<http://kirill-kryukov.com/study/tools/fasta-splitter>`_
 
 
 
 """
 
-
-
 import os
 import sys
-from neatseq_flow.PLC_step import Step,AssertionExcept
-
+from neatseq_flow.PLC_step import Step, AssertionExcept
 
 __author__ = "Menachem Sklarz"
 __version__ = "1.6.0"
 
-class Step_fasta_splitter(Step):
 
+class Step_fasta_splitter(Step):
     auto_redirs = "--out-dir --nopad --version --help".split(" ")
 
-    
     def step_specific_init(self):
-        self.shell = "bash"      # Can be set to "bash" by inheriting instances
+        self.shell = "bash"  # Can be set to "bash" by inheriting instances
         # self.file_tag = "Bowtie_mapper"
 
         if "type" not in self.params:
             raise AssertionExcept("Please supply a 'type' parameter: 'nucl' or 'prot'")
-        if self.params["type"] not in ["nucl","prot"]:
+        if self.params["type"] not in ["nucl", "prot"]:
             raise AssertionExcept("'type' parameter must be 'nucl' or 'prot'")
         if "scope" not in self.params:
             raise AssertionExcept("Please supply a 'scope' parameter: 'sample' or 'project'")
-        if self.params["scope"] not in ["sample","project"]:
-                raise AssertionExcept("'scope' parameter must be 'sample' or 'project'")
+        if self.params["scope"] not in ["sample", "project"]:
+            raise AssertionExcept("'scope' parameter must be 'sample' or 'project'")
 
         # If user did not pass script_path, use the one packaged with the module
         if not self.params["script_path"]:
             cur_dir = os.path.dirname(os.path.realpath(__file__))
-            self.params["script_path"] = "perl " + os.sep.join([cur_dir,"fasta-splitter.pl"])
+            self.params["script_path"] = "perl " + os.sep.join([cur_dir, "fasta-splitter.pl"])
 
         if "--n-parts" not in self.params["redir_params"]:
-            raise  AssertionExcept("The module supports only the --n-parts version, since the number of chunks "
-                                   "must be known at run-time! Please include the number of parts in the redirects")
+            raise AssertionExcept("The module supports only the --n-parts version, since the number of chunks "
+                                  "must be known at run-time! Please include the number of parts in the redirects")
 
         try:
             self.params["redir_params"]["--n-parts"] = int(self.params["redir_params"]["--n-parts"])
@@ -142,11 +152,11 @@ class Step_fasta_splitter(Step):
             raise AssertionExcept("--n-parts must be an integer or a string interpretable as an integer!")
 
         if "--measure" in self.params["redir_params"] and \
-                self.params["redir_params"]["--measure"] not in ["all","seq","count"]:
-            raise  AssertionExcept("--measure must be one of all, seq and count.")
+                self.params["redir_params"]["--measure"] not in ["all", "seq", "count"]:
+            raise AssertionExcept("--measure must be one of all, seq and count.")
         if "--part-num-prefix" in self.params["redir_params"]:
             if not isinstance(self.params["redir_params"]["--part-num-prefix"], str):
-                raise  AssertionExcept("--part-num-prefix must be a string.")
+                raise AssertionExcept("--part-num-prefix must be a string.")
         else:
             self.params["redir_params"]["--part-num-prefix"] = ".part-"
 
@@ -159,27 +169,25 @@ class Step_fasta_splitter(Step):
         # Check that type exists
 
         self.params["type"] = "fasta.{type}".format(type=self.params["type"])
-        if self.params["scope"]=="project":
+        if self.params["scope"] == "project":
             if self.params["type"] not in self.sample_data["project_data"]:
                 raise AssertionExcept("{type} does not exist in project".format(type=self.params["type"]))
         else:
             for sample in self.sample_data["samples"]:
                 if self.params["type"] not in self.sample_data[sample]:
                     raise AssertionExcept("{type} does not exist in sample".format(type=self.params["type"]), sample)
-                
-        
+
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
         pass
-        
-    
+
     def build_scripts(self):
         """ This is the actual script building function
-            Most, if not all, editing should be done here 
+            Most, if not all, editing should be done here
             HOWEVER, DON'T FORGET TO CHANGE THE CLASS NAME AND THE FILENAME!
         """
-        
+
         if self.params["scope"] == "project":
 
             # Name of specific script:
@@ -203,17 +211,17 @@ class Step_fasta_splitter(Step):
             num_of_digits = len(str(subsample_num))
 
             try:
-                sample_list = ["subsample{num:0={res}}".format(num=num,res=num_of_digits)
+                sample_list = ["subsample{num:0={res}}".format(num=num, res=num_of_digits)
                                for num
-                               in range(1,int(subsample_num)+1)]
+                               in range(1, int(subsample_num) + 1)]
             except ValueError:
                 raise AssertionExcept("'subsample_num' must be an integer")
             self.stash_sample_list(sample_list)
 
             # Creating data container for subsamples:
-            for i in range(1, int(subsample_num)+1):             #self.sample_data["samples"]:
+            for i in range(1, int(subsample_num) + 1):  # self.sample_data["samples"]:
                 # Formatting i to length of max i
-                part_i = "{num:0={res}}".format(num=i,res=num_of_digits)
+                part_i = "{num:0={res}}".format(num=i, res=num_of_digits)
                 # Formatting sample name (same as in loop above
                 sample = "subsample{part}".format(part=part_i)
                 self.sample_data[sample] = dict()
@@ -227,19 +235,20 @@ class Step_fasta_splitter(Step):
                 # self.stamp_file(self.sample_data[sample][self.params["type"]])
 
             # Wrapping up function. Leave these lines at the end of every iteration:
-            self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
+            self.local_finish(use_dir,
+                              self.base_dir)  # Sees to copying local files to final destination (and other stuff)
 
             self.create_low_level_script()
-                    
+
         else:  # self.params["scope"] == "sample"
-        
+
             # raise AssertionExcept("Not defined yet...")
             # Each iteration must define the following class variables:
-                # spec_script_name
-                # script
+            # spec_script_name
+            # script
             new_sample_list = list()
             new_sample_dict = dict()
-            
+
             for sample in self.sample_data["samples"]:
 
                 # Name of specific script:
@@ -266,9 +275,10 @@ class Step_fasta_splitter(Step):
                 num_of_digits = len(str(subsample_num))
 
                 try:
-                    subsample_list = ["{sample}.subsample{num:0={res}}".format(num=num, res=num_of_digits,sample=sample)
-                                   for num
-                                   in range(1, int(subsample_num) + 1)]
+                    subsample_list = [
+                        "{sample}.subsample{num:0={res}}".format(num=num, res=num_of_digits, sample=sample)
+                        for num
+                        in range(1, int(subsample_num) + 1)]
                 except ValueError:
                     raise AssertionExcept("'subsample_num' must be an integer")
                 new_sample_list.extend(subsample_list)
@@ -282,16 +292,18 @@ class Step_fasta_splitter(Step):
                     self.sample_data[subsample] = dict()
                     self.sample_data[subsample][self.params["type"]] = \
                         "{use_dir}{main}{prefix}{part}{ext}".format(use_dir=sample_dir,
-                                                                  part=part_i,
-                                                                  prefix=self.params["redir_params"]["--part-num-prefix"],
-                                                                  main=file_info[0],
-                                                                  ext=file_info[1])
+                                                                    part=part_i,
+                                                                    prefix=self.params["redir_params"][
+                                                                        "--part-num-prefix"],
+                                                                    main=file_info[0],
+                                                                    ext=file_info[1])
                     self.sample_data[subsample]["grouping"] = dict()
                     self.sample_data[subsample]["grouping"]["source"] = sample
-                    self.sample_data[subsample]["type"] = self.determine_sample_types(subsample,self.sample_data[subsample])
+                    self.sample_data[subsample]["type"] = self.determine_sample_types(subsample,
+                                                                                      self.sample_data[subsample])
 
                 # Wrapping up function. Leave these lines at the end of every iteration:
-                self.local_finish(use_dir,sample_dir)
+                self.local_finish(use_dir, sample_dir)
                 self.create_low_level_script()
 
             self.sample_data["samples"] = new_sample_list

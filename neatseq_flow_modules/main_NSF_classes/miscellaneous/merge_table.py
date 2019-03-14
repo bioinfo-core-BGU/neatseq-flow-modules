@@ -20,6 +20,8 @@ Can be used for merging fasta and fastq files as well.
 
 The extension of the resulting file will be the same as that of the files being merged, if they are all the same. If not, will not add an extension. To change the default behaviour, set an ``ext`` parameter with the extension to use, *e.g.* ``fna``. If several types are being merged, if ``ext`` is a string, the string will be used for all types. For a different ``ext`` for each file type, use a list of strings, in the same order as the ``type`` parameter.
 
+.. Attention:: If you split sample-scope fasta files with ``fasta_splitter`` or ``split_fasta`` modules, the new subsamples are stored with a ``source`` category, containing the sample name from which the subsample was produced. When merging back into the sample scope, use ``scope: group`` and ``category: source``.
+
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -57,14 +59,26 @@ Parameters that can be set
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-::
+Merge sample-scope tables into single project-scope table::
 
     merge_blast_tables:
         module:         merge_table
         base:           merge1
         script_path:
-        type:           [blast,blast.prot]
-        header:         1
+        scope:          project
+        type:           blast.prot
+        header:         0
+
+Merge sample-scope tables into group-scope table, by category *country*::
+
+    merge_blast_tables:
+        module:         merge_table
+        base:           merge1
+        script_path:
+        scope:          group
+        category:       country
+        type:           blast.prot
+        header:         0
 
 
 """

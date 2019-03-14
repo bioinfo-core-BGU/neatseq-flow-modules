@@ -11,11 +11,14 @@
 
 A module for splitting `fasta` files into parts.
 
-Convenient for parallelizing processes on the cluster. You can take a project wide fasta file (such as a transcriptome), split it into sub-fasta files, and run various processes on the sub-files.
+Convenient for parallelizing processes on the cluster. You can take a project wide fasta file (such as a transcriptome),
+split it into sub-fasta files, and run various processes on the sub-files.
 
 The parts can then be combined with ``merge_table`` module, which can concatenate any type of file.
 
-.. Attention:: This module is not defined on the sample scope, yet. It will only take a project wide fasta and split it into pieces, each one in a new ``subsample``. The original set of samples will be overridden for the rest of the branch. (However, you can get them back by using one of the upstream instances as first base.
+.. Important:: When splitting sample-scope fasta files, the subsamples are stored with a ``source`` category set to the
+    original sample name. You can use this for merging results at the sample scope downstream.
+    See documentation for ``merge_table``.
 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -25,15 +28,23 @@ Requires
     * ``sample_data["project_data"]["fasta.nucl"]``
     * ``sample_data["project_data"]["fasta.prot"]``
 
-    
+* A `fasta` file in one of the following slots (scope = "sample"):
+
+    * ``sample_data[<sample>]["fasta.nucl"]``
+    * ``sample_data[<sample>]["fasta.prot"]``
+
+
+
 
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * Puts output files in the following slots:
-        
+
     * ``sample_data[<sample>]["fasta.nucl"]``
     * ``sample_data[<sample>]["fasta.prot"]``
+
+* For sample scope, the original sample list will be overridden with the new sample list.
 
 
 
