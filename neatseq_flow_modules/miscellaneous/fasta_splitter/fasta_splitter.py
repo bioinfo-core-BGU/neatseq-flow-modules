@@ -15,7 +15,14 @@ Convenient for parallelizing processes on the cluster. You can take a project wi
 
 The parts can then be combined with ``merge_table`` module, which can concatenate any type of file.
 
-The module ships with ``fasta-splitter.pl``  version 0.2.6, 2017-08-01
+.. Attention::
+   The module ships with ``fasta-splitter.pl``  version 0.2.6, 2017-08-01.
+
+   Leave ``script_path`` empty to use the perl script provided. **Perl must be in the path!**
+
+   To use a different version, supply it via ``script_path``.
+
+
 
 Usage::
 
@@ -34,6 +41,8 @@ Usage::
             --nopad              - Don't pad part numbers with 0.
             --version            - Show version.
             --help               - Show help.
+
+
 
 You can't use the ``--part-size`` method, since it will end up in an unknown number of files, which is not defined in Neat-Seq Flow.
 
@@ -71,8 +80,8 @@ Parameters that can be set
 .. csv-table:: Parameters that can be set:
     :header: "Parameter", "Values", "Comments"
 
-    "type", "nucl|prot", "The type of fasta file to split"
-    "redirects --n-parts", "", "Number of fragments"
+    "``type``", "nucl|prot", "The type of fasta file to split"
+    "``redirects: --n-parts``", "", "Number of fragments"
     
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -91,7 +100,7 @@ Lines for parameter file
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-`http://kirill-kryukov.com/study/tools/fasta-splitter/`_
+`<http://kirill-kryukov.com/study/tools/fasta-splitter>`_
 
 
 
