@@ -117,6 +117,8 @@ Step_params:
         script_path:        {Vars.paths.humann2}
         join_tables: 
         renorm_table:       --units cpm -p
+        # humann2_join_tables_path:   /path/to/humann2_join_tables_path
+        # humann2_renorm_table_path:  /path/to/humann2_renorm_table_path
         redirects:
             --bowtie2:      {Vars.paths.bowtie2}
             --diamond:      {Vars.paths.diamond}

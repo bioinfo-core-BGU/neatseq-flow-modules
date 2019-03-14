@@ -62,7 +62,8 @@ Parameters that can be set
 
     "renorm_table",      "Empty or parameters to pass to ``humann2_renorm_table``", "Runs ``humann2_renorm_table`` on HUMAnN2 outputs with the specified parameters"
     "join_tables", "", "Runs ``humann2_join_tables`` to gather all sample tables."
-
+    "humann2_join_tables_path", "", "Path to ``humann2_join_tables``. If not passed, will try guessing"
+    "humann2_renorm_table_path", "", "Path to ``humann2_renorm_table``. If not passed, will try guessing"
 
     
 Lines for parameter file
@@ -141,8 +142,25 @@ class Step_HUMAnN2(Step):
                                                             # os.sep, \
                                                             # "utils/merge_metaphlan_tables.py")
         
-            
-        
+        humann2_dir,main_script = os.path.split(self.params["script_path"])
+
+        for prog_name in ["humann2_join_tables","humann2_renorm_table"]:
+
+            if prog_name+"_path" not in self.params:  # Prog path was not passed. Guessing:
+                # 1. humann2_dir is empty, i.e. it is in PATH. prog, therefore, is also in path,
+                # hopefully (installed with conda?)
+                if humann2_dir == "":
+                    self.params[prog_name+"_path"] = prog_name
+                    self.write_warning("%s_path not passed. Assuming it is in path"%prog_name)
+                # 2. script_path is a path to humann2. Assume prog is installed in same location
+                else:
+                    self.params[prog_name+"_path"] = os.sep.join([humann2_dir,prog_name])
+                    self.write_warning("{prog_name} not passed. Using '{path}' ".
+                                       format(prog_name=prog_name,
+                                              path=self.params[prog_name+"_path"]))
+            else:  # prog path was passed explicitly. Keeping
+                pass
+
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
@@ -159,7 +177,7 @@ class Step_HUMAnN2(Step):
             humann2_dir,main_script = os.path.split(self.params["script_path"])
 
             # Merging genefamilies:
-            self.script += "%s \\\n\t" % (humann2_dir + os.sep + "humann2_join_tables")
+            self.script += "%s \\\n\t" % (self.params["humann2_join_tables_path"])
             self.script += "-i %s \\\n\t" % self.base_dir
             self.script += "--search-subdirectories \\\n\t" 
             if "renorm_table" in list(self.params.keys()):
@@ -175,7 +193,7 @@ class Step_HUMAnN2(Step):
             self.stamp_file(self.sample_data["project_data"]["HUMAnN2." + output_filename])
 
             # Merging pathabundance:
-            self.script += "%s \\\n\t" % (humann2_dir + os.sep + "humann2_join_tables")
+            self.script += "%s \\\n\t" % (self.params["humann2_join_tables_path"])
             self.script += "-i %s \\\n\t" % self.base_dir
             self.script += "--search-subdirectories \\\n\t" 
             if "renorm_table" in list(self.params.keys()):
@@ -191,7 +209,7 @@ class Step_HUMAnN2(Step):
             self.stamp_file(self.sample_data["project_data"]["HUMAnN2." + output_filename])
 
             # Merging pathcoverage:
-            self.script += "%s \\\n\t" % (humann2_dir + os.sep + "humann2_join_tables")
+            self.script += "%s \\\n\t" % (self.params["humann2_join_tables_path"])
             self.script += "-i %s \\\n\t" % self.base_dir
             self.script += "--search-subdirectories \\\n\t" 
             output_filename = "pathcoverage"
@@ -272,13 +290,13 @@ class Step_HUMAnN2(Step):
                 # Get location of humann2 scripts:
                 humann2_dir,main_script = os.path.split(self.params["script_path"])
 
-                self.script += "%s \\\n\t" % (humann2_dir + os.sep + "humann2_renorm_table")
+                self.script += "%s \\\n\t" % (self.params["humann2_renorm_table_path"])
                 if self.params["renorm_table"]: # If user passed parameters to renorm_table, add them
                     self.script += "%s \\\n\t" % self.params["renorm_table"]
                 self.script += "-i %s \\\n\t" % "%s_genefamilies.tsv" % (use_dir + output_filename)
                 self.script += "-o %s \n\n" % "%s_genefamilies.norm.tsv" % (use_dir + output_filename)
 
-                self.script += "%s \\\n\t" % (humann2_dir + os.sep + "humann2_renorm_table")
+                self.script += "%s \\\n\t" % (self.params["humann2_renorm_table_path"])
                 if self.params["renorm_table"]: # If user passed parameters to renorm_table, add them
                     self.script += "%s \\\n\t" % self.params["renorm_table"]
                 self.script += "-i %s \\\n\t" % "%s_pathabundance.tsv" % (use_dir + output_filename)
