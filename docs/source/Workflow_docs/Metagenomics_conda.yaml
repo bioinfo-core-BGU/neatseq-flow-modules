@@ -25,3 +25,5 @@ dependencies:
   - prokka
   - quast
   - spades
+  - trim-galore 
+  - cutadapt

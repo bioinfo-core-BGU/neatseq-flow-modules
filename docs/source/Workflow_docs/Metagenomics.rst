@@ -90,19 +90,11 @@ Quick start with conda
 
 For easy setup of the workflow, including a sample dataset, use the following instructions for complete installation with conda:
 
-.. Attention:: ``rnammer`` is not available with CONDA. To use it, you will have to install it and modify it `following the instructions here <https://github.com/Trinotate/Trinotate.github.io/wiki/Software-installation-and-data-required#rnammer-free-academic-download>`_.
-
 #. Create and activate a conda environment with all the required programs::
 
     wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/Workflow_docs/Metagenomics_conda.yaml
-    conda env create -f RNA_seq_Trinity_conda.yaml
-    conda activate RNA_trinity
-
-#. Get the raw data from Trinity::
-
-    mkdir 00.Raw_reads
-    cp $CONDA_PREFIX/opt/trinity-2.8.4/Docker/test_data/reads.right.fq.gz 00.Raw_reads/
-    cp $CONDA_PREFIX/opt/trinity-2.8.4/Docker/test_data/reads.left.fq.gz 00.Raw_reads/
+    conda env create -f Metagenomics_conda.yaml
+    conda activate Metagenomics
 
 #. Create a sample file. It should look like the following, only the file names should be replaced with absolute file names::
 
@@ -118,9 +110,94 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
          readlink -f 00.Raw_reads/reads.left.fq.gz
 
+#. Install required databases:
+
+    metaphlan:
+        `The following instrauctions are based on this website <https://groups.google.com/forum/#!topic/metaphlan-users/7TfY_h-SELQ>`_:
+
+      .. code-block:: bash
+
+            mkdir -p $CONDA_PREFIX/bin/db_v20
+            cd $CONDA_PREFIX/bin/db_v20
+            # Get the file from the repo
+            wget https://bitbucket.org/biobakery/metaphlan2/downloads/mpa_v20_m200.tar
+            # Untar and unzip
+            tar -xvf mpa_v20_m200.tar
+            bzip -dk mpa_v20_m200.fna.bz2
+            # Build the bowtie2 index:
+            bowtie2-build --threads 4 mpa_v20_m200.fna mpa_v20_m200
+            cd -
+
+    kraken2:
+
+       Installing kraken2 database takes a long time and requires a consideral amount of disk space.
+
+       .. code-block:: bash
+
+            mkdir -p $CONDA_PREFIX/databases/kraken2
+            kraken2-build \
+                --standard \
+                --threads 10 \
+                --db $CONDA_PREFIX/databases/kraken2
+
+       .. Attention::  If ``rsync`` dosen't work for you, you can try adding the ``--use-ftp`` to the ``kraken2-build`` command to use ``wget`` instead.
+
+    centrifuge:
+
+       .. code-block:: bash
+
+            mkdir -p $CONDA_PREFIX/databases/centrifuge
+            centrifuge-download \
+                -o $CONDA_PREFIX/databases/centrifuge/taxonomy \
+                taxonomy
+
+            centrifuge-download \
+                -o $CONDA_PREFIX/databases/centrifuge \
+                -m -d "archaea,bacteria,viral" refseq \
+                > $CONDA_PREFIX/databases/centrifuge/seqid2taxid.map
+
+            cat $CONDA_PREFIX/databases/centrifuge/library/*/*.fna > input-sequences.fna
+
+            centrifuge-build -p 4 \
+                --conversion-table $CONDA_PREFIX/databases/centrifuge/seqid2taxid.map \
+                --taxonomy-tree $CONDA_PREFIX/databases/centrifuge/taxonomy/nodes.dmp \
+                --name-table $CONDA_PREFIX/databases/centrifuge/taxonomy/names.dmp \
+                input-sequences.fna
+
+        .. Attention:: The download commands may fail because of the libssl version.
+
+    krona:
+
+       .. code-block:: bash
+
+            ktUpdateTaxonomy.sh $CONDA_PREFIX/databases/krona/taxonomy
+
+    kaiju:
+
+       .. code-block:: bash
+
+            mkdir -p $CONDA_PREFIX/databases/kaiju
+            cd $CONDA_PREFIX/databases/kaiju
+            makeDB.sh -r
+            cd -
+
+    HUMAnN2:
+
+       `Online help on downloading databases <https://bitbucket.org/biobakery/humann2/wiki/Home#markdown-header-5-download-the-databases>`_.
+
+.. http://evomicsorg.wpengine.netdna-cdn.com/wp-content/uploads/2015/07/cfar_lab_09182015.pdf
+
+       .. code-block:: bash
+
+            humann2_databases --download chocophlan full $CONDA_PREFIX/databases/HUMAnN2
+            humann2_databases --download uniref uniref90_diamond $CONDA_PREFIX/databases/HUMAnN2
+
+        .. Attention:: The last comand downloads the recommended translated databases. For other options, see
+            the `Download a translated search database <https://bitbucket.org/biobakery/humann2/wiki/Home#markdown-header-download-a-translated-search-database>`_ section of the tutorial.
+
 #. Get the parameter file with::
 
-    wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/RNA_seq_Trinity.yaml
+    wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Menagenomics.yaml
 
 #. In the conda definitions (line 46), set ``base:`` to the path to the conda installation which you used to install the environment.
 

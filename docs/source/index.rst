@@ -36,8 +36,8 @@ See also the `main NeatSeq-Flow website <https://neatseq-flow.readthedocs.io/en/
    Workflow_docs/GATK_workflow
    Workflow_docs/Microbe-Flow
    Workflow_docs/ChIP_seq
+   Workflow_docs/Metagenomics
 
-..   Workflow_docs/Metagenomics
 ..   Workflow_docs/Clustering
 ..   Workflow_docs/BLAST_db
 ..   Workflow_docs/BLAST_fasta

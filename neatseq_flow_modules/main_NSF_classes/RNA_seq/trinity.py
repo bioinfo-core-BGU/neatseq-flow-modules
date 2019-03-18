@@ -148,7 +148,7 @@ class Step_trinity(Step):
     def build_scripts(self):
     
         if self.params["scope"] == "project":
-            sample_list = ["project_data"]
+            sample_list = self.sample_data["project_data"]
             # self.build_scripts_project()
         elif self.params["scope"] == "sample":
             sample_list = self.sample_data["samples"]

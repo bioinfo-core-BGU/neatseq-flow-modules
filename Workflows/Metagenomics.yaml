@@ -7,6 +7,8 @@ Global_params:
     conda:
         path:   /gpfs0/bioinfo/apps/Miniconda2/Miniconda_v4.3.21/bin
         env:    NeatSeq_Flow
+        
+        
 Description: |
     A pipeline for executing various analyses on metagenomics data
     --------------------------------------------------------------
@@ -153,6 +155,20 @@ Step_params:
             --preload: 
             --quick: 
             --threads:      20
+            
+    kraken2:
+        module:             kraken2
+        base:               trim1
+        script_path:        '{Vars.paths.kraken}'
+        qsub_params:
+            -pe:            shared 20
+        ktImportTaxonomy_path: '{Vars.paths.KronaTools}/bin/ktImportTaxonomy -u  http://krona.sourceforge.net'
+        redirects:
+            --db:           {Vars.databases.kraken}
+            --quick: 
+            --threads:      20
+            
+            
     kraken_biom1:
         module:             kraken_biom
         base:               kraken1
