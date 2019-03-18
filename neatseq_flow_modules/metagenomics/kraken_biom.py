@@ -17,7 +17,7 @@ Requires
 
 * Kraken reports:
 
-    * ``sample_data[<sample>]["classification_report"]``
+    * ``sample_data[<sample>]["kraken.report"]``
 
 
 Output
@@ -102,8 +102,8 @@ class Step_kraken_biom(Step):
         """
         
         for sample in self.sample_data["samples"]:
-            if not "classification_report" in self.sample_data[sample]:
-                raise AssertionExcept("Sample does not own a 'classification_report'", sample)
+            if not "kraken.report" in self.sample_data[sample]:
+                raise AssertionExcept("Sample does not own a 'kraken.report'", sample)
         
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
@@ -136,7 +136,7 @@ class Step_kraken_biom(Step):
         self.script += self.get_script_const()
         self.script += "--output_fp {use_biom_path} \\\n\t".format(use_biom_path = use_biom_path)
         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-            self.script += "{kraken_report} \\\n\t".format(kraken_report = self.sample_data[sample]["classification_report"])
+            self.script += "{kraken_report} \\\n\t".format(kraken_report = self.sample_data[sample]["kraken.report"])
 
         self.script.rstrip("\\\n\t")
 
