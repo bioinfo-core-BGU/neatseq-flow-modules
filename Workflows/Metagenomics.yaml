@@ -167,11 +167,11 @@ Step_params:
             --db:           {Vars.databases.kraken}
             --quick: 
             --threads:      20
-            
+        # stop_and_show:
             
     kraken_biom1:
         module:             kraken_biom
-        base:               kraken1
+        base:               kraken2
         script_path:        '{Vars.paths.kraken_biom}'
         # skip_tsv:
         biom_path:          '{Vars.paths.biom}'

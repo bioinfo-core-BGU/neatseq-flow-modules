@@ -37,7 +37,7 @@ Output
 
     * ``self.sample_data[<sample>]["raw_classification"]``
     * ``self.sample_data[<sample>]["classification"]``
-    * ``self.sample_data[<sample>]["classification_report"]``
+    * ``self.sample_data[<sample>]["kraken.report"]``
     
     * If ``ktImportTaxonomy_path`` parameter was passed, puts the krona reports in 
 
@@ -240,11 +240,11 @@ fi
             # Storing the output file in $samples_hash
             self.sample_data[sample]["raw_classification"]        = "%s" % (sample_dir + os.path.basename(output_filename))
             self.sample_data[sample]["classification"]        = "%s.labels" % (sample_dir + os.path.basename(output_filename))
-            self.sample_data[sample]["classification_report"] = "%s.report" % (sample_dir + os.path.basename(output_filename))
+            self.sample_data[sample]["kraken.report"] = "%s.report" % (sample_dir + os.path.basename(output_filename))
                 
             self.stamp_file(self.sample_data[sample]["raw_classification"])
             self.stamp_file(self.sample_data[sample]["classification"])
-            self.stamp_file(self.sample_data[sample]["classification_report"])
+            self.stamp_file(self.sample_data[sample]["kraken.report"])
             
             # Move all files from temporary local dir to permanent base_dir
             self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
@@ -261,7 +261,7 @@ fi
         with open(self.base_dir + "kraken_files_index.txt", "w") as index_fh:
             index_fh.write("Sample\tkraken_report\n")
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-                index_fh.write("%s\t%s\n" % (sample,self.sample_data[sample]["classification_report"]))
+                index_fh.write("%s\t%s\n" % (sample,self.sample_data[sample]["kraken.report"]))
                 
         self.sample_data["project_data"]["kraken_file_index"] = self.base_dir + "kraken_files_index.txt"
         
