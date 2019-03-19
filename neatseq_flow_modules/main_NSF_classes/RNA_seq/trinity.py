@@ -148,7 +148,7 @@ class Step_trinity(Step):
     def build_scripts(self):
     
         if self.params["scope"] == "project":
-            sample_list = self.sample_data["project_data"]
+            sample_list = ["project_data"]
             # self.build_scripts_project()
         elif self.params["scope"] == "sample":
             sample_list = self.sample_data["samples"]
@@ -178,6 +178,7 @@ class Step_trinity(Step):
             forward = list()  # List of all forward files
             reverse = list()  # List of all reverse files
             single = list()  # List of all single files
+            print(sample)
             if sample=="project_data":
                 # Loop over samples and concatenate read files to $forward and $reverse respectively
                 # add cheack if paiered or single !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

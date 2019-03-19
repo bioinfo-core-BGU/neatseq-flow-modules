@@ -164,7 +164,7 @@ class Step_kraken2(Step):
         """
 
         if self.params["scope"] == "project":
-            sample_list = self.sample_data["project_data"]
+            sample_list = ["project_data"]
         else:   #self.params["scope"] == "sample"
             sample_list = self.sample_data["samples"]
 
