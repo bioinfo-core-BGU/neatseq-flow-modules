@@ -151,10 +151,10 @@ class Step_kraken2(Step):
 
             self.script += """# Running ktImportTaxonomy to create a krona chart for samples
 {ktImportTaxonomy_path} \\
-    -o {out} \\
-    -q 1 \\
-    -t 2 \\
-    """.format(ktImportTaxonomy_path=self.params["ktImportTaxonomy"]["path"]+" "+redirects,
+\t-o {out} \\
+\t-q 1 \\
+\t-t 2 \\
+\t""".format(ktImportTaxonomy_path=self.params["ktImportTaxonomy"]["path"]+" "+redirects,
                       out=self.base_dir + self.sample_data["Title"] + "_krona_report.html")
             
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
