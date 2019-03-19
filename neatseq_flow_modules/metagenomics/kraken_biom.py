@@ -103,7 +103,7 @@ class Step_kraken_biom(Step):
         
         for sample in self.sample_data["samples"]:
             if not "kraken.report" in self.sample_data[sample]:
-                raise AssertionExcept("Sample does not own a 'kraken.report'", sample)
+                raise AssertionExcept("Sample does not contain a 'kraken.report'", sample)
         
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data

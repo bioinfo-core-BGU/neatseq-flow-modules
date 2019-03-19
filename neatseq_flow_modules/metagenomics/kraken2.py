@@ -192,8 +192,8 @@ class Step_kraken2(Step):
             if "fastq.F" in self.sample_data[sample] and "fastq.R" in self.sample_data[sample]:
                 reads = """\
 --paired \\
-    {forward} \\
-    {reverse} """.format(forward=self.sample_data[sample]["fastq.F"],
+\t{forward} \\
+\t{reverse} """.format(forward=self.sample_data[sample]["fastq.F"],
                          reverse=self.sample_data[sample]["fastq.R"])
             elif "fastq.S" in self.sample_data[sample]:
                 reads = self.sample_data[sample]["fastq.S"]
@@ -205,10 +205,10 @@ class Step_kraken2(Step):
             # self.script += self.get_redir_parameters_script()
             self.script = """
 {const}--output {out} \\
-    --report {out}.report \\
-    --unclassified-out {out}.unclassified \\ 
-    --classified-out {out}.classified \\
-    {reads}
+\t--report {out}.report \\
+\t--unclassified-out {out}.unclassified \\
+\t--classified-out {out}.classified \\
+\t{reads}
             """.format(out=use_dir+output_filename,
                        const=self.get_script_const(),
                        reads=reads)
