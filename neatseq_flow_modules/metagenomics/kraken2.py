@@ -206,8 +206,8 @@ class Step_kraken2(Step):
             self.script = """
 {const}--output {out} \\
 \t--report {out}.report \\
-\t--unclassified-out {out}.unclassified \\
-\t--classified-out {out}.classified \\
+\t--unclassified-out {out}.unclassified.#.fq \\
+\t--classified-out {out}.classified.#.fq \\
 \t{reads}
             """.format(out=use_dir+output_filename,
                        const=self.get_script_const(),
