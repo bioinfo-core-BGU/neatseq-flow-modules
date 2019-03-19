@@ -162,7 +162,10 @@ Step_params:
         script_path:        '{Vars.paths.kraken}'
         qsub_params:
             -pe:            shared 20
-        ktImportTaxonomy_path: '{Vars.paths.KronaTools}/bin/ktImportTaxonomy -u  http://krona.sourceforge.net'
+        ktImportTaxonomy:
+            path:           ktImportTaxonomy
+            redirects:      
+                -u:         http://krona.sourceforge.net
         redirects:
             --db:           {Vars.databases.kraken}
             --quick: 

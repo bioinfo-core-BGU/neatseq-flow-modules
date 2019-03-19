@@ -118,6 +118,12 @@ class Step_kraken2(Step):
             self.write_warning("No 'scope' specified. Using 'sample' scope")
             self.params["scope"] = "sample"
 
+        # For backwards comaptibility:
+        if "ktImportTaxonomy_path" in list(self.params):
+            self.params["ktImportTaxonomy"] = dict()
+            self.params["ktImportTaxonomy"]["path"] = self.params["ktImportTaxonomy_path"]
+            self.params["ktImportTaxonomy"]["redirects"] = ""
+
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
@@ -134,14 +140,21 @@ class Step_kraken2(Step):
         merge_kraken_reports = resource_filename(__name__, 'merge_kraken_reports.R')
 
         self.script = self.get_setenv_part()
+
         ### Add code to create a unified krona plot
-        if "ktImportTaxonomy_path" in list(self.params.keys()):
+
+        if "ktImportTaxonomy" in list(self.params):
+            if "redirects" in self.params["ktImportTaxonomy"]:
+                redirects = " \\\n\t" + " \\\n\t".join([key+" "+val for key,val in self.params["ktImportTaxonomy"]["redirects"].items()])
+            else:
+                redirects = ""
+
             self.script += """# Running ktImportTaxonomy to create a krona chart for samples
 {ktImportTaxonomy_path} \\
     -o {out} \\
     -q 1 \\
     -t 2 \\
-    """.format(ktImportTaxonomy_path=self.params["ktImportTaxonomy_path"],
+    """.format(ktImportTaxonomy_path=self.params["ktImportTaxonomy"]["path"]+" "+redirects,
                       out=self.base_dir + self.sample_data["Title"] + "_krona_report.html")
             
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
@@ -206,8 +219,8 @@ class Step_kraken2(Step):
             self.script = """
 {const}--output {out} \\
 \t--report {out}.report \\
-\t--unclassified-out {out}.unclassified.#.fq \\
-\t--classified-out {out}.classified.#.fq \\
+\t--unclassified-out {out}.unclassified#.fq \\
+\t--classified-out {out}.classified#.fq \\
 \t{reads}
             """.format(out=use_dir+output_filename,
                        const=self.get_script_const(),
@@ -215,7 +228,7 @@ class Step_kraken2(Step):
 
 
             ######### Step 4, create krona report:
-            if "ktImportTaxonomy_path" in list(self.params.keys()):
+            if "ktImportTaxonomy" in list(self.params.keys()):
                 self.script += """
 # Create file for ktImportTaxonomy
 if [ -e {krak_out} ]
