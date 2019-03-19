@@ -1,4 +1,4 @@
-name: Metagenomics_WF
+name: Metagenomics
 channels:
   - conda-forge
   - bioconda
@@ -12,7 +12,7 @@ dependencies:
   - multiqc
   - fastqc
   - trimmomatic
-  - kraken
+  - kraken2
   - kraken-biom
   - centrifuge
   - biom-format
@@ -20,10 +20,11 @@ dependencies:
   - krona
   - metaphlan2
   - bowtie2
-  - diamond
+  - diamond<0.9.0,>=0.8.22
   - humann2
   - prokka
   - quast
   - spades
+  - blast>=2.7.0
   - trim-galore 
   - cutadapt
