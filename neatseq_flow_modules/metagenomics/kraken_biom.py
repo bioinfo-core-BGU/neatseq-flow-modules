@@ -25,7 +25,7 @@ Output
 
 * Puts the resulting *biom* output files in:  
 
-    * ``self.sample_data["project_data"]["kraken_biom"]``
+    * ``self.sample_data["project_data"]["kraken.biom"]``
     * ``self.sample_data["project_data"]["biom_table"]``
     * ``self.sample_data["project_data"]["biom_table_tsv"]`` (if ``skip_tsv`` is not set)
     
@@ -108,9 +108,7 @@ class Step_kraken_biom(Step):
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
-        
 
-    
     def build_scripts(self):
         """ This is the actual script building function
             Most, if not all, editing should be done here 
@@ -124,7 +122,6 @@ class Step_kraken_biom(Step):
         # Use the dir it returns as the base_dir for this step.
         use_dir = self.local_start(self.base_dir)
 
-        
         prefix = self.sample_data["Title"]
         # Decide on ".gz" suffix by whether --gzip is in redirects:
         dotgz = ".gz" if "--gzip" in self.params["redir_params"] else ""
@@ -140,14 +137,14 @@ class Step_kraken_biom(Step):
 
         self.script.rstrip("\\\n\t")
 
-        
         # Storing the output file in $samples_hash
-        self.sample_data["project_data"]["kraken_biom"]        = "{base_dir}{prefix}.kraken.biom{suffix}".format(base_dir = self.base_dir,
-                                                                                                 prefix = prefix,
-                                                                                                 suffix = dotgz)
-        self.sample_data["project_data"]["biom_table"]        = self.sample_data["project_data"]["kraken_biom"]
+        self.sample_data["project_data"]["kraken.biom"] = "{base_dir}{prefix}.kraken.biom{suffix}".\
+                                                                format(base_dir = self.base_dir,
+                                                                       prefix = prefix,
+                                                                       suffix = dotgz)
+        self.sample_data["project_data"]["biom_table"] = self.sample_data["project_data"]["kraken.biom"]
             
-        self.stamp_file(self.sample_data["project_data"]["kraken_biom"])
+        self.stamp_file(self.sample_data["project_data"]["kraken.biom"])
 
 
 
