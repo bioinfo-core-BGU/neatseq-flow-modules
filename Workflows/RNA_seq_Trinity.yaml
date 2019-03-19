@@ -50,7 +50,9 @@ Global_params:
         path:   {Vars.conda.base}
         env:    {Vars.conda.env}
     # # If executing from within a NeatSeq-Flow conda environment, you do not need to set the following. If you installed NeatSeq-Flow and it's module repo yourself, set the following to the module repo location:
-    # module_path:            /path/to/neatseq_flow_modules
+    module_path:            
+        - /path/to/neatseq_flow_modules
+        - ../neatseq_flow_modules
 
 
 Vars:
@@ -157,7 +159,8 @@ Step_params:
             --max_memory:       10G
             --SS_lib_type:      RF
             # --full_cleanup:
-
+        # stop_and_show:
+        
     # Map the reads to the assembly
     Trinity_Map:
         module:             trinity_mapping
