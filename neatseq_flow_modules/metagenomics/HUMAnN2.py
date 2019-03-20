@@ -179,7 +179,9 @@ class Step_HUMAnN2(Step):
             if "redirects" in self.params["humann2_join_tables"]:
                 if isinstance(self.params["humann2_join_tables"]["redirects"], dict):
                     redirects = " \\\n\t" + " \\\n\t".join(
-                        [key + " " + val for key, val in self.params["humann2_join_tables"]["redirects"].items()])
+                        [key + " " + (val if val else "")
+                         for key, val
+                         in self.params["humann2_join_tables"]["redirects"].items()])
                 else:
                     redirects = " \\\n\t" + self.params["humann2_join_tables"]["redirects"]
             else:
@@ -303,7 +305,9 @@ class Step_HUMAnN2(Step):
                 if "redirects" in self.params["humann2_renorm_table"]:
                     if isinstance(self.params["humann2_renorm_table"]["redirects"], dict):
                         redirects = " \\\n\t".join(
-                            [key + " " + val for key, val in self.params["humann2_renorm_table"]["redirects"].items()])
+                            [key + " " + (val if val else "")
+                             for key, val
+                             in self.params["humann2_renorm_table"]["redirects"].items()])
                     else:
                         redirects = self.params["humann2_renorm_table"]["redirects"]
                 else:

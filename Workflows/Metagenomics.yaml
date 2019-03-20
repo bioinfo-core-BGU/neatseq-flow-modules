@@ -135,7 +135,7 @@ Step_params:
             path:  /path/to/humann2_renorm_table_path
             redirects:
                 -s:     hjhjhds
-                -p:     dsdsds
+                -p:     
         humann2_join_tables:
             path:       /path/to/humann2_join_tables_path
             redirects:  -d kljlkjkljl -r kjhkhkjhk
