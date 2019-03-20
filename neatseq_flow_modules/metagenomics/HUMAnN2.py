@@ -116,16 +116,6 @@ class Step_HUMAnN2(Step):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = "HUMAnN2"
 
-            
-        # # Checking this once and then applying to each sample:
-        # try:
-            # self.params["redir_params"]
-        # except KeyError:
-            # raise AssertionExcept("You must specify --mpa_pkl and --bowtie2db as redirected params.\n")
-            
-        # if "--mpa_pkl" not in self.params["redir_params"].keys() or "--bowtie2db" not in self.params["redir_params"].keys():
-            # raise AssertionExcept("You must specify --mpa_pkl and --bowtie2db as redirected params.\n")
-
         if "--input-format" in list(self.params["redir_params"].keys()):
             self.write_warning("At the moment metaphlan supports only --input-format fastq. Ignoring the value you passed\n")
         
@@ -134,14 +124,6 @@ class Step_HUMAnN2(Step):
         if "--o-log" in list(self.params["redir_params"].keys()):
             self.write_warning("Ignoring the value you passed for --o-log.\nWill store data in sample specific location\n")
 
-           
-
-        # if "merge_metaphlan_tables" in self.params.keys():
-            # if self.params["merge_metaphlan_tables"] == None:
-                # self.params["merge_metaphlan_tables"] = "%s%s%s" % (os.path.basename(self.params["script_path"]), \
-                                                            # os.sep, \
-                                                            # "utils/merge_metaphlan_tables.py")
-        
         humann2_dir,main_script = os.path.split(self.params["script_path"])
 
         for prog_name in ["humann2_join_tables","humann2_renorm_table"]:
@@ -161,6 +143,27 @@ class Step_HUMAnN2(Step):
             else:  # prog path was passed explicitly. Keeping
                 pass
 
+        # For backwards compatibility
+        if "humann2_renorm_table" not in self.params:
+            if "renorm_table" in self.params:
+                self.params["humann2_renorm_table"] = dict()
+                if "humann2_renorm_table_path" in self.params:
+                    self.params["humann2_renorm_table"]["path"] = self.params["humann2_renorm_table_path"]
+                else:
+                    humann2_dir, main_script = os.path.split(self.params["script_path"])
+                    self.params["humann2_renorm_table"]["path"] = humann2_dir + "humann2_renorm_table"
+                self.params["humann2_renorm_table"]["redirects"] = self.params["renorm_table"]
+
+        if "humann2_join_tables" not in self.params:
+            if "join_tables" in self.params:
+                self.params["humann2_join_tables"] = dict()
+                if "humann2_join_tables_path" in self.params:
+                    self.params["humann2_join_tables"]["path"] = self.params["humann2_join_tables_path"]
+                else:
+                    humann2_dir, main_script = os.path.split(self.params["script_path"])
+                    self.params["humann2_join_tables"]["path"] = humann2_dir + "humann2_join_tables"
+                self.params["humann2_join_tables"]["redirects"] = self.params["join_tables"]
+
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
@@ -171,69 +174,71 @@ class Step_HUMAnN2(Step):
         """ Add stuff to check and agglomerate the output data
         """
         
-        if "join_tables" in list(self.params.keys()):
-            
+        if "humann2_join_tables" in self.params:
+
+            if "redirects" in self.params["humann2_join_tables"]:
+                if isinstance(self.params["humann2_join_tables"]["redirects"], dict):
+                    redirects = " \\\n\t" + " \\\n\t".join(
+                        [key + " " + val for key, val in self.params["humann2_join_tables"]["redirects"].items()])
+                else:
+                    redirects = " \\\n\t" + self.params["humann2_join_tables"]["redirects"]
+            else:
+                redirects = ""
+
             # Get location of humann2 scripts:
-            humann2_dir,main_script = os.path.split(self.params["script_path"])
-
-            # Merging genefamilies:
-            self.script += "%s \\\n\t" % (self.params["humann2_join_tables_path"])
-            self.script += "-i %s \\\n\t" % self.base_dir
-            self.script += "--search-subdirectories \\\n\t" 
+            # humann2_dir,main_script = os.path.split(self.params["script_path"])
             if "renorm_table" in list(self.params.keys()):
-                output_filename = "genefamilies.norm"
+                gene_filename = "genefamilies.norm"
+                pw_filename = "pathabundance.norm"
             else:
-                output_filename = "genefamilies"
-            self.script += "--file_name %s \\\n\t" % output_filename
+                gene_filename = "genefamilies"
+                pw_filename = "pathabundance"
 
-            self.script += "-o %smerged.%s.tsv \n\n" % (self.base_dir, output_filename)
+            self.script += """\
+# Adding code for normalizing genefamilies and pathabundance tables\n\n
+{path} \\
+\t-i {dir} \\
+\t--search-subdirectories \\
+\t--file_name {gene} \\
+\t-o {dir}merged.{gene}.tsv {redirs}
 
-            ## Storing in dict and stamping
-            self.sample_data["project_data"]["HUMAnN2." + output_filename] = "%smerged.%s.tsv" % (self.base_dir,  output_filename)
-            self.stamp_file(self.sample_data["project_data"]["HUMAnN2." + output_filename])
+{path} \\
+\t-i {dir} \\
+\t--search-subdirectories \\
+\t--file_name {pw} \\
+\t-o {dir}merged.{pw}.tsv {redirs}
 
-            # Merging pathabundance:
-            self.script += "%s \\\n\t" % (self.params["humann2_join_tables_path"])
-            self.script += "-i %s \\\n\t" % self.base_dir
-            self.script += "--search-subdirectories \\\n\t" 
-            if "renorm_table" in list(self.params.keys()):
-                output_filename = "pathabundance.norm"
-            else:
-                output_filename = "pathabundance"
-            self.script += "--file_name %s \\\n\t" % output_filename
+{path} \\
+\t-i {dir} \\
+\t--search-subdirectories \\
+\t--file_name pathcoverage \\
+\t-o {dir}merged.pathcoverage.tsv {redirs}
 
-            self.script += "-o %smerged.%s.tsv \n\n" % (self.base_dir, output_filename)
 
-            ## Storing in dict and stamping
-            self.sample_data["project_data"]["HUMAnN2." + output_filename] = "%smerged.%s.tsv" % (self.base_dir,  output_filename)
-            self.stamp_file(self.sample_data["project_data"]["HUMAnN2." + output_filename])
-
-            # Merging pathcoverage:
-            self.script += "%s \\\n\t" % (self.params["humann2_join_tables_path"])
-            self.script += "-i %s \\\n\t" % self.base_dir
-            self.script += "--search-subdirectories \\\n\t" 
-            output_filename = "pathcoverage"
-            self.script += "--file_name %s \\\n\t" % output_filename
-
-            self.script += "-o %smerged.%s.tsv \n\n" % (self.base_dir, output_filename)
+""".format(path=self.params["humann2_join_tables"]["path"],
+           dir = self.base_dir,
+           gene= gene_filename,
+           pw=pw_filename,
+           redirs=redirects)
 
             ## Storing in dict and stamping
-            self.sample_data["project_data"]["HUMAnN2." + output_filename] = "%smerged.%s.tsv" % (self.base_dir,  output_filename)
-            self.stamp_file(self.sample_data["project_data"]["HUMAnN2." + output_filename])
+            self.sample_data["project_data"]["HUMAnN2." + gene_filename] = "%smerged.%s.tsv" % (self.base_dir,  gene_filename)
+            self.stamp_file(self.sample_data["project_data"]["HUMAnN2." + gene_filename])
 
-            
-        
+            ## Storing in dict and stamping
+            self.sample_data["project_data"]["HUMAnN2." + pw_filename] = "%smerged.%s.tsv" % (self.base_dir,  pw_filename)
+            self.stamp_file(self.sample_data["project_data"]["HUMAnN2." + pw_filename])
+
+            ## Storing in dict and stamping
+            self.sample_data["project_data"]["HUMAnN2.pathcoverage"] = "%smerged.pathcoverage.tsv" % (self.base_dir)
+            self.stamp_file(self.sample_data["project_data"]["HUMAnN2.pathcoverage"])
+
     def build_scripts(self):
         """ This is the actual script building function
             Most, if not all, editing should be done here 
             HOWEVER, DON'T FORGET TO CHANGE THE CLASS NAME AND THE FILENAME!
         """
         
-    
-        
-        # Each iteration must define the following class variables:
-            # spec_script_name
-            # script
         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
             
             # Name of specific script:
@@ -246,9 +251,7 @@ class Step_HUMAnN2(Step):
             # This line should be left before every new script. It sees to local issues.
             # Use the dir it returns as the base_dir for this step.
             use_dir = self.local_start(sample_dir)
-                
- 
-         
+
             # Define output filename 
             output_filename = "%s_%s" % (sample , self.file_tag)
 
@@ -257,21 +260,32 @@ class Step_HUMAnN2(Step):
             if "--o-log" in list(self.params["redir_params"].keys()):
                 self.params["redir_params"]["--o-log"] = "%s.log" % output_filename
 
-
-            self.script += self.get_script_const()
-            
-            # Adding reads
-            if "PE" in self.sample_data[sample]["type"]:
+            # Input file
+            if "fastq.F" in self.sample_data[sample] and "fastq.R" in self.sample_data[sample]:
                 self.write_warning("PE not defined in HUMAnN2. Using only forward reads.\n")
-                self.script += "--input %s \\\n\t" % (self.sample_data[sample]["fastq.F"])
-            elif "SE" in self.sample_data[sample]["type"]:
-                self.script += "--input %s \n\n" % self.sample_data[sample]["fastq.S"]
+            if "fastq.F" in self.sample_data[sample]:
+                # self.script += "--input %s \\\n\t" % (self.sample_data[sample]["fastq.F"])
+                inputf = self.sample_data[sample]["fastq.F"]
+            elif "fastq.S" in self.sample_data[sample]:
+                inputf = self.sample_data[sample]["fastq.S"]
+                # self.script += "--input %s \n\n" % self.sample_data[sample]["fastq.S"]
             else:
-                self.write_warning("metaphlan2 on mixed PE/SE samples is not defined. Using only forward data!\n")
-                self.script += "--input %s \\\n\t" % self.sample_data[sample]["fastq.F"]
+                raise AssertionExcept("Are you sure you have fastq files in sample?",sample)
 
-            self.script += "--output %s \\\n\t" % use_dir
-            self.script += "--output-basename %s\n\n" % output_filename
+            self.script += """
+{const} --output {dir} \\
+\t--output-basename {basename} \\
+\t--input {inputf}
+
+ 
+""".format(const=self.get_script_const(),
+           dir=use_dir,
+           basename=output_filename,
+           inputf=inputf)
+            
+
+            # self.script += "--output %s \\\n\t" % use_dir
+            # self.script += "--output-basename %s\n\n" % output_filename
 
             
             self.sample_data[sample]["HUMAnN2.genefamilies"] = "%s_genefamilies.tsv" % (sample_dir + output_filename)
@@ -282,41 +296,48 @@ class Step_HUMAnN2(Step):
             self.stamp_file(self.sample_data[sample]["HUMAnN2.pathabundance"])
             self.stamp_file(self.sample_data[sample]["HUMAnN2.pathcoverage"])
 
-            
-            # Adding code for normalization if required
-            
-            if "renorm_table" in list(self.params.keys()):
-                self.script += "# Adding code for normalizing genefamilies and pathabundance tables\n\n"
-                # Get location of humann2 scripts:
-                humann2_dir,main_script = os.path.split(self.params["script_path"])
 
-                self.script += "%s \\\n\t" % (self.params["humann2_renorm_table_path"])
-                if self.params["renorm_table"]: # If user passed parameters to renorm_table, add them
-                    self.script += "%s \\\n\t" % self.params["renorm_table"]
-                self.script += "-i %s \\\n\t" % "%s_genefamilies.tsv" % (use_dir + output_filename)
-                self.script += "-o %s \n\n" % "%s_genefamilies.norm.tsv" % (use_dir + output_filename)
+            if "humann2_renorm_table" in self.params:
 
-                self.script += "%s \\\n\t" % (self.params["humann2_renorm_table_path"])
-                if self.params["renorm_table"]: # If user passed parameters to renorm_table, add them
-                    self.script += "%s \\\n\t" % self.params["renorm_table"]
-                self.script += "-i %s \\\n\t" % "%s_pathabundance.tsv" % (use_dir + output_filename)
-                self.script += "-o %s \n\n" % "%s_pathabundance.norm.tsv" % (use_dir + output_filename)
+                # Adding code for normalization if required
+                if "redirects" in self.params["humann2_renorm_table"]:
+                    if isinstance(self.params["humann2_renorm_table"]["redirects"], dict):
+                        redirects = " \\\n\t".join(
+                            [key + " " + val for key, val in self.params["humann2_renorm_table"]["redirects"].items()])
+                    else:
+                        redirects = self.params["humann2_renorm_table"]["redirects"]
+                else:
+                    redirects = ""
+
+                self.script += """\
+# Adding code for normalizing genefamilies and pathabundance tables\n\n
+{path} \\
+\t-i {in_gene} \\
+\t-o {out_gene} \\
+\t{redirs}
+
+{path} \\
+\t-i {in_pw} \\
+\t-o {out_pw} \\
+\t{redirs}
+
+""".format(path=self.params["humann2_renorm_table"]["path"],
+           in_gene="%s_genefamilies.tsv" % (use_dir + output_filename),
+           out_gene="%s_genefamilies.norm.tsv" % (use_dir + output_filename),
+           in_pw="%s_pathabundance.tsv" % (use_dir + output_filename),
+           out_pw="%s_pathabundance.norm.tsv" % (use_dir + output_filename),
+           redirs=redirects)
 
                 self.sample_data[sample]["HUMAnN2.genefamilies.norm"] = "%s_genefamilies.norm.tsv" % (sample_dir + output_filename)
                 self.sample_data[sample]["HUMAnN2.pathabundance.norm"] = "%s_pathabundance.norm.tsv" % (sample_dir + output_filename)
                 self.stamp_file(self.sample_data[sample]["HUMAnN2.genefamilies.norm"])
                 self.stamp_file(self.sample_data[sample]["HUMAnN2.pathabundance.norm"])
- 
 
-            
             # Move all files from temporary local dir to permanent base_dir
             self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
                         
-            
             self.create_low_level_script()
-                    
 
-                    
     def make_sample_file_index(self):
         """ Make file containing samples and target file names for use by kraken analysis R script
         """
@@ -327,4 +348,3 @@ class Step_HUMAnN2(Step):
                 index_fh.write("%s\t%s\n" % (sample,self.sample_data[sample]["classification"]))
                 
         self.sample_data["project_data"]["HUMAnN2.files_index"] = self.base_dir + "HUMAnN2_files_index.txt"
-        

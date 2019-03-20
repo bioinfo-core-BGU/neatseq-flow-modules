@@ -117,8 +117,8 @@ Step_params:
         module:             HUMAnN2
         base:               trim1
         script_path:        {Vars.paths.humann2}
-        join_tables: 
-        renorm_table:       --units cpm -p
+        # join_tables: 
+        # renorm_table:       --units cpm -p
         # humann2_join_tables_path:   /path/to/humann2_join_tables_path
         # humann2_renorm_table_path:  /path/to/humann2_renorm_table_path
         redirects:
@@ -131,6 +131,15 @@ Step_params:
             --nucleotide-database: {Vars.databases.humann2.chocophlan}
             --protein-database: {Vars.databases.humann2.uniref}
             --threads:      30
+        humann2_renorm_table:
+            path:  /path/to/humann2_renorm_table_path
+            redirects:
+                -s:     hjhjhds
+                -p:     dsdsds
+        humann2_join_tables:
+            path:       /path/to/humann2_join_tables_path
+            redirects:  -d kljlkjkljl -r kjhkhkjhk
+
     kaiju1:
         module:             kaiju
         base:               trim1
