@@ -48,12 +48,20 @@ option_list = list(
               help="The LRT DeSeq Design", metavar="character"),
   make_option(c("--ALPHA"), type="numeric", default = 0.05, 
               help="Significant Level Cutoff, The Default is 0.05", metavar="character"),
+  make_option(c("--Post_statistical_ALPHA"), type="numeric", default = NA, 
+              help="Post Statistical FDR P-value Filtering ", metavar="character"),
   make_option(c("--FoldChange"), type="numeric", default = 1, 
               help="Fold change Cutoff [testing for fold changes greater in absolute value], The Default is 1", metavar="character"),
+  make_option(c("--Post_statistical_FoldChange"), type="numeric", default = NA, 
+              help="Post Statistical Fold change Filtering ", metavar="character"),
   make_option(c("--CONTRAST"), type="character", default=NA,
               help="The DeSeq Contrast Design [Not For LTR]", metavar="character"),
   make_option(c("--modelMatrixType"), type="character", default="standard",
               help="How the DeSeq model matrix of the GLM formula is formed [standard or expanded] ,The Default is standard", metavar="character"),
+  make_option(c("--removeBatchEffect"), type="character", default=NA,
+              help="Will Remove Batch Effect from the Normalized counts data up to 2 [using the limma package and only one using the sva package] Batch Effect fields [from the Sample Data ] separated by , ", metavar="character"),
+  make_option(c("--removeBatchEffect_method"), type="character", default="sva",
+              help="The method to Remove Remove Batch Effect from the Normalized counts data using the limma or sva packages [sva is the default] ", metavar="character"),
   
   
   make_option(c("--GENES_PLOT"), type="character", default=NA,
@@ -64,6 +72,8 @@ option_list = list(
               help="The Filed In the Sample Data To Group By [can be two fields separated by ,]", metavar="character"),
   make_option(c("--SPLIT_BY"), type="character", default=NA,
               help="The Filed In the Sample Data To Split the Analysis By ", metavar="character"),
+  make_option(c("--SPLIT_BY_CONTRAST"), action="store_true",default=FALSE, 
+              help="Only use Samples found in the relevant contrast for Clustering and Enrichment Analysis", metavar="character"),
   
   make_option(c("--FUNcluster"), type="character", default='hclust',
               help='A clustering function including [kmeans,pam,clara,fanny,hclust,agnes,diana,click]. The default is hclust', metavar="character"),
@@ -95,7 +105,12 @@ option_list = list(
   make_option(c("--PCA_SHAPE"), type="character", default=NA,
               help="The Filed In the Sample Data To Determine Shape In The PCA Plot", metavar="character"),
   make_option(c("--PCA_SIZE"), type="character", default='Library_sizes',
-              help="The Filed In the Sample Data To Determine Size In The PCA Plot", metavar="character")
+              help="The Filed In the Sample Data To Determine Size In The PCA Plot", metavar="character"),
+              
+  make_option(c("--only_clustering"), action="store_true",default=FALSE, 
+              help="Don't Perform Differential Analysis!!!", metavar="character"), 
+  make_option(c("--significant_genes"), type="character", default=NA,
+              help="Use these genes as the set of significant genes [a comma separated list]", metavar="character")
 ); 
 
 
@@ -407,11 +422,19 @@ plot_clusters<-function(clusters,vs_ano,color_group=c('Type','Time_int'),titles=
                                 )
         }
 
+       
         if (smooth){
             plot_list[count]=list(plot_list[[count]]+
                                     stat_smooth(method="loess", fullrange=F, size=0.5 ,aes(linetype=Type,color=Type)) 
                                 )
-
+            gp2=plot_list[count]
+            res<-try(get_legend(gp2[[1]] + theme(legend.position  ="right")+guides(color=guide_legend(title=titles[1]),linetype=guide_legend(title=titles[1]))) ,silent = T)
+            if (inherits(res,"try-error")){
+                plot_list[count]=list(plot_list[[count]]+
+                                        stat_summary(fun.y=mean, geom="point", size = 3,aes(color=Type))+
+                                        stat_summary(fun.data = "mean_se", geom = "errorbar", width = .3,size = 1,aes(color=Type),show.legend = F)
+                                     )
+            }
         }else{
             plot_list[count]=list(plot_list[[count]]+
                                     stat_summary(fun.y=mean, geom="line", size = 1.3,aes(linetype=Type,color=Type))+
@@ -421,14 +444,15 @@ plot_clusters<-function(clusters,vs_ano,color_group=c('Type','Time_int'),titles=
 
         count=count+1  
     }
+    
     gp2=plot_list[1]
     if (color_group[1]==color_group[2]){
-        ml<-marrangeGrob(plot_list, nrow=3, ncol=3, top=NULL)
+        ml<-marrangeGrob(plot_list, nrow=2, ncol=3, top=NULL)
     }else{
         legend <- get_legend(gp2[[1]] + theme(legend.position  ="right")+guides(color=guide_legend(title=titles[1]),linetype=guide_legend(title=titles[1])))
-        ml<-marrangeGrob(plot_list, nrow=3, ncol=3,right=legend, top=NULL)
+        ml<-marrangeGrob(plot_list, nrow=2, ncol=3,right=legend, top=NULL)
+        
     }
-
     return(ml)
 }
 
@@ -656,7 +680,9 @@ if (opt$COUNT_SOURCE=='RSEM'){
 }else{
   print('Reading count data..')
   countData <- as.matrix(read.csv(opt$COUNT_DATA_FILE,sep="\t",row.names=1))
-  countData=apply(X =countData,MARGIN = c(1,2),FUN =round )
+  if (opt$only_clustering==FALSE){
+    countData = apply(X =countData,MARGIN = c(1,2),FUN =round )
+  }
   colnames(countData)=lapply(X =colnames(countData),FUN = function(x) unlist(stringi::stri_split(str = x,regex = ".genes.results"))[1] )
   if (!is.na(opt$GENE_ID_TYPE)) {
     rownames(countData)=lapply(X =rownames(countData),FUN = function(x) unlist(stringi::stri_split(str = x,regex = "_"))[1] )
@@ -913,6 +939,18 @@ if ("package:clusterProfiler" %in% search()){
         ORGANISM_Pathway2name=Pathway_info[rev(colnames(Pathway_info))]
         ORGANISM_KEGG_flag  = TRUE
         
+        write.table(ORGANISM_Pathway2name,
+                file = file.path(opt$outDir,paste('ORGANISM_Pathway2name','tab', sep = '.')) ,
+                quote = F,
+                row.names = F,
+                sep = "\t")
+                
+        write.table(ORGANISM_Pathway2gene,
+                file = file.path(opt$outDir,paste('ORGANISM_Pathway2gene','tab', sep = '.')) ,
+                quote = F,
+                row.names = F,
+                sep = "\t")
+        
       }else{
         if ("kegg" %in% colnames(Annotation)){
           
@@ -942,7 +980,17 @@ if ("package:clusterProfiler" %in% search()){
           Pathway2name=Pathway_info[rev(colnames(Pathway_info))]
           KEGG_flag = TRUE
           
-          
+          write.table(Pathway2name,
+                file = file.path(opt$outDir,paste('Pathway2name','tab', sep = '.')) ,
+                quote = F,
+                row.names = F,
+                sep = "\t")
+                
+          write.table(Pathway2gene,
+                file = file.path(opt$outDir,paste('Pathway2gene','tab', sep = '.')) ,
+                quote = F,
+                row.names = F,
+                sep = "\t")
         }      
       }
     } else if (!is.na(opt$Trinotate)) {
@@ -1062,6 +1110,18 @@ if ("package:clusterProfiler" %in% search()){
       KASS_Pathway2name = KASS_Pathway2name[!duplicated.data.frame(KASS_Pathway2name),]
       
       KEGG_KAAS_flag = TRUE
+      
+      write.table(KASS_Pathway2name,
+                file = file.path(opt$outDir,paste('KASS_Pathway2name','tab', sep = '.')) ,
+                quote = F,
+                row.names = F,
+                sep = "\t")
+                
+      write.table(KASS_Pathway2gene,
+                file = file.path(opt$outDir,paste('KASS_Pathway2gene','tab', sep = '.')) ,
+                quote = F,
+                row.names = F,
+                sep = "\t")
     }
     
   }else{
@@ -1114,6 +1174,30 @@ if (!is.na(Annotation)) {
           GO2gene_BP        = GO2gene_BP[!duplicated.data.frame(GO2gene_BP),]
           
           GO_flag           = TRUE
+          write.table(GO2gene_MF,
+                file = file.path(opt$outDir,paste('GO2gene_MF','tab', sep = '.')) ,
+                quote = F,
+                row.names = F,
+                sep = "\t")
+                
+          write.table(GO2name_MF,
+                file = file.path(opt$outDir,paste('GO2name_MF','tab', sep = '.')) ,
+                quote = F,
+                row.names = F,
+                sep = "\t")
+                
+                
+          write.table(GO2gene_BP,
+                file = file.path(opt$outDir,paste('GO2gene_BP','tab', sep = '.')) ,
+                quote = F,
+                row.names = F,
+                sep = "\t")
+                
+          write.table(GO2name_BP,
+                file = file.path(opt$outDir,paste('GO2name_BP','tab', sep = '.')) ,
+                quote = F,
+                row.names = F,
+                sep = "\t")
         }
     }
   
@@ -1157,7 +1241,7 @@ if ((opt$FILTER_SAMPLES) | (opt$FILTER_GENES)){
   sce <- newSCESet(countData=countData)
   dim(sce)
   sce <- calculateQCMetrics(sce)
-  pdf(file = "Pre_QA_hist.pdf")
+  pdf(file = file.path(opt$outDir,"Pre_QA_hist.pdf"))
   par(mfrow=c(1,2))
   hist(sce$total_counts/1e6, xlab="Library sizes (millions)", main="", 
        breaks=20, col="grey80", ylab="Number of Samples")
@@ -1166,26 +1250,30 @@ if ((opt$FILTER_SAMPLES) | (opt$FILTER_GENES)){
   dev.off() 
   
   if (opt$FILTER_SAMPLES){
-    #Filtering Samples
+    print('Filtering Samples')
     libsize.drop <- isOutlier(sce$total_counts, nmads=3, type="lower", log=TRUE)
     feature.drop <- isOutlier(sce$total_features, nmads=3, type="lower", log=TRUE)
     sce <- sce[,!(libsize.drop | feature.drop )]
-    data.frame(ByLibSize=sum(libsize.drop), ByFeature=sum(feature.drop), Remaining=ncol(sce))
+    print.data.frame(data.frame(ByLibSize=sum(libsize.drop), ByFeature=sum(feature.drop), Remaining=ncol(sce)))
     use_names=colnames(sce)
     countData=countData[,use_names]
     colData=colData[use_names,]
   }
   
   if (opt$FILTER_GENES){
-    #Filtering low-abundance genes
+    print('Filtering low-abundance genes')
+    print('Before Filtering:')
+    print(dim(sce))
     ave.counts <- rowMeans(counts(sce))
     keep <- ave.counts >= 1
-    sum(keep)
-    dim(sce)
+    #print(sum(keep))
+    sce <- sce[names(keep[keep==T]),]
+    print('After Filtering:')
+    print(dim(sce))
     countData=countData[names(keep[keep==T]),]
   }
   
-  pdf(file = "Post_QA_hist.pdf")
+  pdf(file = file.path(opt$outDir,"Post_QA_hist.pdf"))
   par(mfrow=c(1,2))
   hist(sce$total_counts/1e6, xlab="Library sizes (millions)", main="", 
        breaks=20, col="grey80", ylab="Number of Samples")
@@ -1198,46 +1286,55 @@ if ((opt$FILTER_SAMPLES) | (opt$FILTER_GENES)){
 
 ##################DeSeq- design and normalization ########################################
 
+if (opt$only_clustering==FALSE){
+        if (is.na(opt$DESIGN)){
+            opt$DESIGN   = '~ 1'
+            opt$BLIND    = T
+            opt$CONTRAST = 'No_DESIGN'
+            print('No DESIGN found, will only normalize and cluster all genes')
+        }
+        if (opt$COUNT_SOURCE=='RSEM'){
+          zero_len           = unique( rownames(which(txi.rsem$length == 0,arr.ind = TRUE)))
+          countData          = countData[!( rownames(countData) %in% zero_len ),]
+          txi.rsem$counts    = countData
+          txi.rsem$abundance = txi.rsem$abundance[row.names(countData),colnames(countData)]
+          txi.rsem$length    = txi.rsem$length[row.names(countData),colnames(countData)]
+          
+          DESeqDataSet_base <- DESeqDataSetFromTximport(txi = txi.rsem,
+                                                   colData = colData,
+                                                   design  = as.formula(opt$DESIGN))
+        }else{ 
+          DESeqDataSet_base <- DESeqDataSetFromMatrix(countData = countData,
+                                                 colData = colData,
+                                                 design = as.formula(opt$DESIGN))
+        }
+        if (opt$modelMatrixType=='standard'){ 
+          DESeqDataSet_base <- DESeq(DESeqDataSet_base,parallel=F)
+        }else{
+          DESeqDataSet_base <- DESeq(DESeqDataSet_base,
+                                parallel=F,
+                                betaPrior = TRUE,
+                                modelMatrixType=opt$modelMatrixType)
+        }
 
-if (is.na(opt$DESIGN)){
-    opt$DESIGN   = '~ 1'
-    opt$BLIND    = T
-    opt$CONTRAST = NA
-    print('No DESIGN found, will only normalize and cluster all genes')
-}
-if (opt$COUNT_SOURCE=='RSEM'){
-  zero_len           = unique( rownames(which(txi.rsem$length == 0,arr.ind = TRUE)))
-  countData          = countData[!( rownames(countData) %in% zero_len ),]
-  txi.rsem$counts    = countData
-  txi.rsem$abundance = txi.rsem$abundance[row.names(countData),colnames(countData)]
-  txi.rsem$length    = txi.rsem$length[row.names(countData),colnames(countData)]
-  
-  DESeqDataSet_base <- DESeqDataSetFromTximport(txi = txi.rsem,
-                                           colData = colData,
-                                           design  = as.formula(opt$DESIGN))
-}else{ 
-  DESeqDataSet_base <- DESeqDataSetFromMatrix(countData = countData,
-                                         colData = colData,
-                                         design = as.formula(opt$DESIGN))
-}
-if (opt$modelMatrixType=='standard'){ 
-  DESeqDataSet_base <- DESeq(DESeqDataSet_base,parallel=F)
+        test_count=list()
+
+        if (!is.na(opt$CONTRAST)){
+            test_count = unlist(stringi::stri_split(str = opt$CONTRAST ,fixed = "|"))
+        }
+
+        if (!is.na(opt$LRT)){
+            test_count=c('LTR',test_count)
+        }
+
 }else{
-  DESeqDataSet_base <- DESeq(DESeqDataSet_base,
-                        parallel=F,
-                        betaPrior = TRUE,
-                        modelMatrixType=opt$modelMatrixType)
+    DESeqDataSet_base=NA
+    test_count=c('only_clustering')
 }
 
-test_count=list()
 
-if (!is.na(opt$CONTRAST)){
-    test_count = unlist(stringi::stri_split(str = opt$CONTRAST ,fixed = "|"))
-}
 
-if (!is.na(opt$LRT)){
-    test_count=c('LTR',test_count)
-}
+
 
 base_out_dir=opt$outDir
 
@@ -1250,11 +1347,15 @@ if (!is.na(opt$Rmarkdown)){
     }
 }
 
+save.image(file.path(base_out_dir,'Session.RSession'))
+
+Original_colData   = colData
+Original_countData = countData
 
 for (test2do in test_count){
     print(test2do)
     if (Rmarkdown_flag){
-        if (test2do=='LTR'){
+        if ((test2do=='LTR')||(test2do=='No_DESIGN')||(test2do=='only_clustering') ){
             test_name=test2do
         }else{
             contrast_list = unlist(stringi::stri_split(str = test2do,regex = ','))
@@ -1282,8 +1383,26 @@ for (test2do in test_count){
            opt$LRT=NA 
         }    
     } else {
+        
+        
+        if (!is.na(opt$Post_statistical_ALPHA)){
+            FDR_PVAL_CUTOFF = opt$Post_statistical_ALPHA
+        }else{
+            FDR_PVAL_CUTOFF = opt$ALPHA
+        }
+        
+        if (!is.na(opt$Post_statistical_FoldChange)){
+            FC_CUTOFF = opt$Post_statistical_FoldChange #in linear scale
+            FC_CUTOFF_log2 = log2(opt$Post_statistical_FoldChange) 
+        }else{
+            FC_CUTOFF = opt$FoldChange #in linear scale
+            FC_CUTOFF_log2 = log2(opt$FoldChange) 
+        }
+        
+        
         DESeqDataSet_Results = NA
         Normalized_counts = NA
+        Normalized_counts_list=c()
         DESeqDataSet=DESeqDataSet_base
         if (test2do=='LTR'){
           opt$outDir=file.path(base_out_dir,'LTR')
@@ -1294,6 +1413,14 @@ for (test2do in test_count){
                                 parallel=F)
           
           DESeqDataSet_Results <- results(DESeqDataSet,alpha = opt$ALPHA)
+          
+        }else if (test2do=='No_DESIGN') {
+          opt$outDir=file.path(base_out_dir,'No_DESIGN')
+          dir.create(opt$outDir, showWarnings = FALSE)
+        }else if (test2do=='only_clustering'){
+          opt$outDir=file.path(base_out_dir,'Only_Clustering')
+          dir.create(opt$outDir, showWarnings = FALSE)
+          Normalized_counts_assay = countData
         }else{
             opt$CONTRAST=test2do
             contrast_list = unlist(stringi::stri_split(str =  opt$CONTRAST,regex = ','))
@@ -1314,11 +1441,66 @@ for (test2do in test_count){
         }
 
         # Normalization
-        if (opt$NORMALIZATION_TYPE=='RLOG'){
-            Normalized_counts <- rlog(DESeqDataSet, blind=opt$BLIND)
-        }else{
-            Normalized_counts <- varianceStabilizingTransformation(DESeqDataSet, blind=opt$BLIND)
+        if (!is.na(DESeqDataSet)){
+            if (opt$NORMALIZATION_TYPE=='RLOG'){
+                Normalized_counts <- rlog(DESeqDataSet, blind=opt$BLIND)
+            }else{
+                Normalized_counts <- varianceStabilizingTransformation(DESeqDataSet, blind=opt$BLIND)
+            }
+            Normalized_counts_list=list(Normalized_counts)
+            if (!is.na(opt$removeBatchEffect)){
+                if (opt$removeBatchEffect_method=="sva"){
+                    if(!(all(c('sva') %in% installed.packages()))) {
+                        if (Sys.getenv("CONDA_PREFIX")!=""){
+                            source("http://bioconductor.org/biocLite.R")
+                            try(biocLite("sva", version = "3.8"),silent = F)
+                        }else{
+                          cat("The Bioconductor sva package is not installed. You must install it for this script to work!")
+                        }
+                    } 
+                    try(library("sva"),silent = F)
+                    if ("package:sva" %in% search()==FALSE){
+                        cat(sprintf("%s","The Bioconductor sva package is not installed!! will use limma instead"))
+                        opt$removeBatchEffect_method="limma"
+                    }
+                }
+                BatchEffects = unlist(stringi::stri_split(str = opt$removeBatchEffect ,regex = ','))
+                if (opt$removeBatchEffect_method=="sva"){
+                        if (length(BatchEffects)>1){
+                            cat(sprintf("%s","It is Not possible to use more then one batch effect using the sva package, will use only the first one!!"))
+                        }
+                        DESIGN_list = unlist(stringi::stri_split( stringi::stri_replace(str = opt$DESIGN,
+                                                                                   regex =' |~',
+                                                                                   mode = 'all',
+                                                                                   replacement = ''),
+                                                            fixed = '+'))
+                        New_DESIGN =paste0('~',paste(DESIGN_list[DESIGN_list!=BatchEffects[1]],collapse ='+'))
+                        
+                        modcombat = model.matrix( as.formula(New_DESIGN) , data=Original_colData)
+                        combat_edata = ComBat(dat = assay(Normalized_counts),
+                                              batch = Original_colData[,BatchEffects[1]],
+                                              mod = modcombat,
+                                              par.prior = T,
+                                              mean.only=F)
+                        assay(Normalized_counts) = combat_edata
+                        
+                }else{
+                
+                    if (length(BatchEffects)>1){
+                            assay(Normalized_counts) = limma::removeBatchEffect(assay(Normalized_counts),
+                                                                                batch = Normalized_counts@colData[,BatchEffects[1]],
+                                                                                batch2= Normalized_counts@colData[,BatchEffects[2]])
+                    }else{
+                            assay(Normalized_counts) = limma::removeBatchEffect(assay(Normalized_counts),
+                                                                                batch = Normalized_counts@colData[,BatchEffects[1]])
+                    }
+                }
+                Normalized_counts_list = c(Normalized_counts_list,Normalized_counts)
+            }
+            
+            Normalized_counts_assay = assay(Normalized_counts)
         }
+
 
 
         ##################DeSeq-END####################################
@@ -1352,7 +1534,7 @@ for (test2do in test_count){
 
         ##################Print Normalized counts######################
         if (!is.na(Normalized_counts)){
-            write.table(assay(Normalized_counts),
+            write.table(Normalized_counts_assay,
                         file = file.path(opt$outDir,paste(test_name,opt$NORMALIZATION_TYPE,'Normalized_counts.txt', sep = '_')) ,
                         quote = F,
                         sep = "\t")
@@ -1362,11 +1544,7 @@ for (test2do in test_count){
         ##################Volcano plot and MA plot Vered##################
 
         if (!is.na(DESeqDataSet_Results)){
-            FDR_PVAL_CUTOFF = opt$ALPHA
-            FC_CUTOFF = opt$FoldChange #in linear scale
-            FC_CUTOFF_log2 = log2(opt$FoldChange)  
-
-
+           
             if (!is.na(opt$LRT)){
               print('No Volcano plot for LTR')
             }else{
@@ -1403,11 +1581,21 @@ for (test2do in test_count){
             abline(h=c(-FC_CUTOFF_log2,FC_CUTOFF_log2), col="red")
             dev.off() 
         }
+        
+        ############################Original-PCA-START##############################################
+        
+        if (length(Normalized_counts_list)==2){
+            PCA_Normalized_counts = Normalized_counts_list[[1]]
+        }else if (length(Normalized_counts_list)==1){
+            PCA_Normalized_counts = Normalized_counts_list[[1]]
+        }else if (length(Normalized_counts_list)==0){
+            PCA_Normalized_counts = NA
+        }
         ##################PCA-TOP500####################################
-        if (!is.na(Normalized_counts)){
+        if (!is.na(PCA_Normalized_counts)){
             intgroup=c(opt$PCA_COLOR,opt$PCA_SHAPE,opt$PCA_SIZE)
             intgroup=intgroup[!is.na(intgroup)]
-            PCA_data <- plotPCA(Normalized_counts, intgroup=make.names(intgroup), returnData=TRUE,ntop=500)
+            PCA_data <- plotPCA(PCA_Normalized_counts, intgroup=make.names(intgroup), returnData=TRUE,ntop=500)
             percentVar <- round(100 * attr(PCA_data, "percentVar"))
 
             if (is.na(opt$PCA_COLOR)){
@@ -1460,8 +1648,8 @@ for (test2do in test_count){
         ##################PCA-TOP500-END####################################
 
         ##################PCA-ALL####################################
-        if (!is.na(Normalized_counts)){
-            PCA_data <- plotPCA(Normalized_counts, intgroup=make.names(intgroup), returnData=TRUE,ntop='all')
+        if (!is.na(PCA_Normalized_counts)){
+            PCA_data <- plotPCA(PCA_Normalized_counts, intgroup=make.names(intgroup), returnData=TRUE,ntop='all')
             percentVar <- round(100 * attr(PCA_data, "percentVar"))
 
             if (is.na(opt$PCA_COLOR)){
@@ -1512,7 +1700,129 @@ for (test2do in test_count){
             }
         }
         ##################PCA-END####################################
+        
+    ############################Original-PCA-ENDS##############################################
 
+
+   ############################Batch-Effect-Corrected-PCA-START##############################################
+    
+    if (length(Normalized_counts_list)==2){
+        PCA_Normalized_counts = Normalized_counts_list[[2]]
+        extra_string="Batch_Effect_Corrected_"
+    }        
+        ##################PCA-TOP500####################################
+        if (length(Normalized_counts_list)==2){
+            intgroup=c(opt$PCA_COLOR,opt$PCA_SHAPE,opt$PCA_SIZE)
+            intgroup=intgroup[!is.na(intgroup)]
+            PCA_data <- plotPCA(PCA_Normalized_counts, intgroup=make.names(intgroup), returnData=TRUE,ntop=500)
+            percentVar <- round(100 * attr(PCA_data, "percentVar"))
+
+            if (is.na(opt$PCA_COLOR)){
+              opt$PCA_COLOR='name'
+            }
+
+            if (is.na(opt$PCA_SHAPE)){
+                pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),size=make.names(opt$PCA_SIZE)) )+
+                    geom_count()+
+                    scale_shape_discrete(solid=F)+
+                    guides(color=guide_legend(order = 1 ,title=opt$PCA_COLOR))+
+                    guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
+                    xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+                    ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+                    coord_fixed()
+                ggsave(file.path(opt$outDir,paste(c(extra_string,'TOP500_PCA_pc1_pc2',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
+
+                pca_res=ggplot(PCA_data, aes_string('PC1', 'PC3', color=make.names(opt$PCA_COLOR),size=make.names(opt$PCA_SIZE)) )+
+                    geom_count()+
+                    guides(color=guide_legend(order = 1 ,title=opt$PCA_COLOR))+
+                    guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
+                    xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+                    ylab(paste0("PC3: ",percentVar[3],"% variance")) +
+                    coord_fixed()
+                ggsave(file.path(opt$outDir,paste(c(extra_string,'TOP500_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
+              
+            }else{
+                pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
+                    geom_count()+
+                    scale_shape_discrete(solid=F)+
+                    guides(color=guide_legend(order = 1 ,title=opt$PCA_COLOR))+
+                    guides(shape=guide_legend(order  = 2,title=opt$PCA_SHAPE))+
+                    guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
+                    xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+                    ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+                    coord_fixed()
+                ggsave(file.path(opt$outDir,paste(c(extra_string,'TOP500_PCA_pc1_pc2',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
+
+                pca_res=ggplot(PCA_data, aes_string('PC1', 'PC3', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
+                    geom_count()+
+                    guides(color=guide_legend(order = 1 ,title=opt$PCA_COLOR))+
+                    guides(shape=guide_legend(order  = 2,title=opt$PCA_SHAPE))+
+                    guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
+                    xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+                    ylab(paste0("PC3: ",percentVar[3],"% variance")) +
+                    coord_fixed()
+                ggsave(file.path(opt$outDir,paste(c(extra_string,'TOP500_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
+            }
+        }
+        ##################PCA-TOP500-END####################################
+
+        ##################PCA-ALL####################################
+         if (length(Normalized_counts_list)==2){
+            PCA_data <- plotPCA(PCA_Normalized_counts, intgroup=make.names(intgroup), returnData=TRUE,ntop='all')
+            percentVar <- round(100 * attr(PCA_data, "percentVar"))
+
+            if (is.na(opt$PCA_COLOR)){
+              opt$PCA_COLOR='name'
+            }
+
+            if (is.na(opt$PCA_SHAPE)){
+                pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),size=make.names(opt$PCA_SIZE)) )+
+                    geom_count()+
+                    scale_shape_discrete(solid=F)+
+                    guides(color=guide_legend(order = 1 ,title=opt$PCA_COLOR))+
+                    guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
+                    xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+                    ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+                    coord_fixed()
+                ggsave(file.path(opt$outDir,paste(c(extra_string,'ALL_PCA_pc1_pc2',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
+
+                pca_res=ggplot(PCA_data, aes_string('PC1', 'PC3', color=make.names(opt$PCA_COLOR),size=make.names(opt$PCA_SIZE)) )+
+                    geom_count()+
+                    guides(color=guide_legend(order = 1 ,title=opt$PCA_COLOR))+
+                    guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
+                    xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+                    ylab(paste0("PC3: ",percentVar[3],"% variance")) +
+                    coord_fixed()
+                ggsave(file.path(opt$outDir,paste(c(extra_string,'ALL_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
+              
+            }else{
+                pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
+                    geom_count()+
+                    scale_shape_discrete(solid=F)+
+                    guides(color=guide_legend(order = 1 ,title=opt$PCA_COLOR))+
+                    guides(shape=guide_legend(order  = 2,title=opt$PCA_SHAPE))+
+                    guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
+                    xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+                    ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+                    coord_fixed()
+                ggsave(file.path(opt$outDir,paste(c(extra_string,'ALL_PCA_pc1_pc2',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
+              
+                pca_res=ggplot(PCA_data, aes_string('PC1', 'PC3', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
+                    geom_count()+
+                    guides(color=guide_legend(order = 1 ,title=opt$PCA_COLOR))+
+                    guides(shape=guide_legend(order  = 2,title=opt$PCA_SHAPE))+
+                    guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
+                    xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+                    ylab(paste0("PC3: ",percentVar[3],"% variance")) +
+                    coord_fixed()
+                ggsave(file.path(opt$outDir,paste(c(extra_string,'ALL_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
+            }
+        }
+        ##################PCA-END####################################
+        
+    ############################Batch-Effect-Corrected-PCA-ENDS##############################################
+
+        
 
         ##################Plot Counts################################    
         if (!is.na(Normalized_counts)){
@@ -1550,8 +1860,14 @@ for (test2do in test_count){
         ##################Plot Counts-END#############################    
 
         ##################Clustering##################################    
-        if (!is.na(DESeqDataSet_Results)){
-            sig.genes=rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"padj"]<opt$ALPHA)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
+        if (!is.na(opt$significant_genes)){ 
+            sig.genes = unlist(stringi::stri_split(str = opt$significant_genes,regex = ','))
+            Normalized_counts_assay = Normalized_counts_assay[sig.genes,]
+        }else if (!is.na(DESeqDataSet_Results)){
+            #sig.genes=rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"padj"]<opt$ALPHA)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
+            up_reg    = rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"log2FoldChange"]>FC_CUTOFF_log2)&(DESeqDataSet_Results_redOrdered[,"padj"]<FDR_PVAL_CUTOFF)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
+            down_reg  = rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"log2FoldChange"]<FC_CUTOFF_log2)&(DESeqDataSet_Results_redOrdered[,"padj"]<FDR_PVAL_CUTOFF)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
+            sig.genes = c(up_reg,down_reg)
         }else{
             sig.genes=rownames(countData)
         }
@@ -1566,10 +1882,31 @@ for (test2do in test_count){
                 }else{
                     GROUP=opt$GROUP
                 }
-
+                
+                if (is.na(opt$SPLIT_BY)){
+                    if (!is.na(opt$CONTRAST)){
+                        if (opt$SPLIT_BY_CONTRAST){
+                            contrast_list_split = unlist(stringi::stri_split(str =  opt$CONTRAST,regex = ','))
+                            if (length(contrast_list_split)==3){
+                                colData = Original_colData[(Original_colData[contrast_list_split[1]]==contrast_list_split[2]) | (Original_colData[contrast_list_split[1]]==contrast_list_split[3]),]
+                                
+                                if (length(unique(colData[,X_AXIS]))==1){
+                                    if (length(unique(colData[,GROUP]))>1){
+                                        temp_X_AXIS = X_AXIS
+                                        X_AXIS      = GROUP
+                                        GROUP       = temp_X_AXIS
+                                        
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                
                 if (X_AXIS!=GROUP){
                     if (is.na(opt$SPLIT_BY)){
-                        Normalized_counts_Annotated=merge(colData[c(X_AXIS,GROUP)],t(assay(Normalized_counts)) ,by="row.names",sort=F)
+                        Normalized_counts_Annotated=merge(colData[c(X_AXIS,GROUP)],t(Normalized_counts_assay),all.x = T  ,by="row.names",sort=F)
                         SPLIT_BY=opt$SPLIT_BY
                         Normalized_counts_Annotated_mean=aggregate.data.frame(x = Normalized_counts_Annotated,by = c(Normalized_counts_Annotated[GROUP],Normalized_counts_Annotated[X_AXIS]),FUN = mean)
                         rownames(Normalized_counts_Annotated_mean)=paste(unlist(Normalized_counts_Annotated_mean[GROUP]),unlist(Normalized_counts_Annotated_mean[X_AXIS]))
@@ -1588,7 +1925,7 @@ for (test2do in test_count){
                         Heatmap_Normalized_counts_Annotated[unique(c(X_AXIS,GROUP))]=NULL
 
                     }else{
-                        Normalized_counts_Annotated=merge(colData[unique(c(X_AXIS,GROUP,opt$SPLIT_BY))],t(assay(Normalized_counts)) ,by="row.names",sort=F)
+                        Normalized_counts_Annotated=merge(colData[unique(c(X_AXIS,GROUP,opt$SPLIT_BY))],t(Normalized_counts_assay),all.x = T  ,by="row.names",sort=F)
                         SPLIT_BY=unlist(as.list(unique(Normalized_counts_Annotated[opt$SPLIT_BY])))
                         Normalized_counts_Annotated_mean=aggregate.data.frame(x = Normalized_counts_Annotated,by = c(Normalized_counts_Annotated[GROUP],Normalized_counts_Annotated[X_AXIS]),FUN = mean)
                         rownames(Normalized_counts_Annotated_mean)=paste(unlist(Normalized_counts_Annotated_mean[GROUP]),unlist(Normalized_counts_Annotated_mean[X_AXIS]))
@@ -1610,7 +1947,7 @@ for (test2do in test_count){
 
                 }else{
                     if (is.na(opt$SPLIT_BY)){
-                        Normalized_counts_Annotated=merge(colData[c(X_AXIS)],t(assay(Normalized_counts)),by="row.names",sort=F)
+                        Normalized_counts_Annotated=merge(colData[c(X_AXIS)],t(Normalized_counts_assay),all.x = T ,by="row.names",sort=F)
                         SPLIT_BY=opt$SPLIT_BY
                         Normalized_counts_Annotated_mean=aggregate.data.frame(x = Normalized_counts_Annotated,by = Normalized_counts_Annotated[X_AXIS],FUN = mean)
                         rownames(Normalized_counts_Annotated_mean)=unlist(Normalized_counts_Annotated_mean[X_AXIS])
@@ -1629,7 +1966,7 @@ for (test2do in test_count){
 
                       
                     }else{
-                        Normalized_counts_Annotated=merge(colData[unique(c(X_AXIS,opt$SPLIT_BY))],t(assay(Normalized_counts)),by="row.names",sort=F)
+                        Normalized_counts_Annotated=merge(colData[unique(c(X_AXIS,opt$SPLIT_BY))],t(Normalized_counts_assay),all.x = T ,by="row.names",sort=F)
                         SPLIT_BY=unlist(as.list(unique(Normalized_counts_Annotated[opt$SPLIT_BY])))
                         Normalized_counts_Annotated_mean=aggregate.data.frame(x = Normalized_counts_Annotated,by = Normalized_counts_Annotated[X_AXIS],FUN = mean)
                         rownames(Normalized_counts_Annotated_mean)=unlist(Normalized_counts_Annotated_mean[X_AXIS])
@@ -1674,45 +2011,77 @@ for (test2do in test_count){
                     if (length(no_var)>0){
                       SPLIT_Normalized_counts_Annotated_mean=SPLIT_Normalized_counts_Annotated_mean[!(row.names(SPLIT_Normalized_counts_Annotated_mean)  %in% no_var),]
                     }
-
-
+                    
                     if (opt$stand){
-                      SPLIT_Normalized_counts_Annotated_mean=t(scale(t(SPLIT_Normalized_counts_Annotated_mean)))
+                      SPLIT_Normalized_counts_Annotated_mean = t(scale(t(SPLIT_Normalized_counts_Annotated_mean)))
+                      SPLIT_Normalized_counts_Annotated_mean = apply(SPLIT_Normalized_counts_Annotated_mean,
+                                                                     MARGIN = c(1,2),
+                                                                     FUN = function(x) round(x,digits = 5))
                     }
                     
-                    if (nrow(SPLIT_Normalized_counts_Annotated_mean)<=opt$k.max) {
-                        opt$k.max=nrow(SPLIT_Normalized_counts_Annotated_mean)-1
-                    }
-                    if ((opt$FUNcluster=='click')&(!is.na(opt$CLICK_PATH))){
-                        clusters = run_click(mat =as.matrix(SPLIT_Normalized_counts_Annotated_mean),click_path = opt$CLICK_PATH,outDir = opt$outDir,HOMOGENEITY = opt$CLICK_HOMOGENEITY)
-                    }else{
-                        if (opt$Mclust){
-                            Fit_Mclust <- Mclust( as.matrix(SPLIT_Normalized_counts_Annotated_mean) ,G=1:opt$k.max,modelNames = mclust.options("emModelNames"))
-                            Number_Of_Clusters=Fit_Mclust$G
-                            Clustering <- eclust(as.matrix(SPLIT_Normalized_counts_Annotated_mean),
-                                               stand =F, 
-                                               FUNcluster= opt$FUNcluster,
-                                               hc_metric =opt$hc_metric, 
-                                               graph = FALSE,
-                                               hc_method = opt$hc_method, 
-                                               k=Number_Of_Clusters ) 
+                    if (sum(duplicated(SPLIT_Normalized_counts_Annotated_mean)==F)>1){
+                        if (nrow(SPLIT_Normalized_counts_Annotated_mean)>2) {
+                           
+                            
+                            if (nrow(SPLIT_Normalized_counts_Annotated_mean)<=opt$k.max) {
+                                k.max=nrow(SPLIT_Normalized_counts_Annotated_mean)-1
+                            }else{
+                                k.max=opt$k.max
+                            }
+                            if ((opt$FUNcluster=='click')&(!is.na(opt$CLICK_PATH))){
+                                clusters = Run_click(mat =as.matrix(SPLIT_Normalized_counts_Annotated_mean),click_path = opt$CLICK_PATH,outDir = opt$outDir,HOMOGENEITY = opt$CLICK_HOMOGENEITY)
+                            }else{
+                                if (opt$Mclust){
+                                    Fit_Mclust <- Mclust( as.matrix(SPLIT_Normalized_counts_Annotated_mean) ,G=1:k.max,modelNames = mclust.options("emModelNames"))
+                                    Number_Of_Clusters=Fit_Mclust$G
+                                    Clustering <- eclust(as.matrix(SPLIT_Normalized_counts_Annotated_mean),
+                                                       stand =F, 
+                                                       FUNcluster= opt$FUNcluster,
+                                                       hc_metric =opt$hc_metric, 
+                                                       graph = FALSE,
+                                                       hc_method = opt$hc_method, 
+                                                       k=Number_Of_Clusters ) 
+                                    clusters=Clustering$cluster
+                                }else{
+
+                                    Clustering <- eclust(as.matrix(SPLIT_Normalized_counts_Annotated_mean),stand =F,
+                                                       FUNcluster= opt$FUNcluster,
+                                                       hc_metric =opt$hc_metric,
+                                                       graph = FALSE,
+                                                       hc_method = opt$hc_method,
+                                                       k.max =  k.max,
+                                                       nboot = opt$nboot,
+                                                       gap_maxSE = list(method= "Tibs2001SEmax", SE.factor = 1) )
+                                    clusters=Clustering$cluster
+                                }
+                            }
+                        }else if (nrow(SPLIT_Normalized_counts_Annotated_mean)==1){
+                            clusters=c(1)
+                            names(clusters)=rownames((SPLIT_Normalized_counts_Annotated_mean))
+                        }else if (nrow(SPLIT_Normalized_counts_Annotated_mean)==2){
+                            Clustering <- eclust(as.matrix(SPLIT_Normalized_counts_Annotated_mean),stand = F,
+                                                       FUNcluster= 'kmeans',
+                                                       graph = FALSE,
+                                                       k.max = 2,
+                                                       nboot = opt$nboot,
+                                                       gap_maxSE = list(method= "Tibs2001SEmax", SE.factor = 1) )
                             clusters=Clustering$cluster
+                            sprintf("%s",'Since only 2 significant genes were detected, the clustering was performed using the kmeans method')
+                            
                         }else{
-
-                            Clustering <- eclust(as.matrix(SPLIT_Normalized_counts_Annotated_mean),stand =F,
-                                               FUNcluster= opt$FUNcluster,
-                                               hc_metric =opt$hc_metric,
-                                               graph = FALSE,
-                                               hc_method = opt$hc_method,
-                                               k.max =  opt$k.max,
-                                               nboot = opt$nboot,
-                                               gap_maxSE = list(method= "Tibs2001SEmax", SE.factor = 1) )
-                            clusters=Clustering$cluster
+                            clusters=c()
                         }
+                    
+                    }else{
+                        clusters=rep(1,nrow(SPLIT_Normalized_counts_Annotated_mean) )
+                        names(clusters)=rownames((SPLIT_Normalized_counts_Annotated_mean))
                     }
-
                     if (length(no_var)>0){
-                      temp=rep(max(clusters)+1,length(no_var) )
+                      if (length(clusters)>0){
+                        temp=rep(max(clusters)+1,length(no_var) )
+                      }else{
+                        temp=rep(1,length(no_var) )
+                      }
                       names(temp)=no_var
                       clusters=c(clusters,temp)
                     }
@@ -1742,6 +2111,8 @@ for (test2do in test_count){
                                                 cluster_cols = F,silent = T)
                             }
                             New_clusters=c(New_clusters,clusters[heat_map$tree_row$labels[heat_map$tree_row$order]])
+                        }else{
+                            New_clusters=c(New_clusters,clusters[Genes])
                         }
                     }
 
@@ -1750,7 +2121,7 @@ for (test2do in test_count){
                     intgroup=c(opt$GROUP,opt$X_AXIS)
                     intgroup=intgroup[!is.na(intgroup)]
                     Clustering_Plot=plot_clusters(clusters,SPLIT_Normalized_counts_Annotated,c(GROUP,X_AXIS),c(GROUP,X_AXIS,"Normalized counts"),X_AXIS_ORDER=unique(colData[X_AXIS]))
-                    ggsave(file.path(opt$outDir,paste('Clusters_',SPLIT,".pdf",sep="")),Clustering_Plot,dpi = 600, width = 6.99, height =6.99, units = "in")
+                    ggsave(file.path(opt$outDir,paste('Clusters_',SPLIT,".pdf",sep="")),Clustering_Plot,dpi = 600,  width = 6.99, height =4.99, units = "in")
 
 
 
@@ -1869,13 +2240,16 @@ for (test2do in test_count){
 
                         mat2=t(scale(t(mat)))
                         mat3=cbind(clusters[rownames(mat2)],mat2)
-                        mat3=cbind(mat3,DESeqDataSet_Results_redOrdered[rownames(mat3),c('log2FoldChange',"padj")])
+                        if (!is.na(DESeqDataSet_Results)){
+                            mat3=cbind(mat3,DESeqDataSet_Results_redOrdered[rownames(mat3),c('log2FoldChange',"padj")])
+                        }
                         if (!is.na(Annotation)) {
                           mat3=merge.data.frame(mat3,Annotation,by="row.names",all.x = T,sort = F)
                           rownames(mat3)=mat3$Row.names
                           mat3$Row.names=NULL
                         }
                         colnames(mat3)[colnames(mat3)=="V1"]="Clusters"
+                        colnames(mat3)[colnames(mat3)==""]="Clusters"
                         mat3=mat3[rownames(mat2),]
                         write.csv(x = mat3,
                                   file = file.path(opt$outDir, paste('Clustering_heatmap_',SPLIT,'_',Heatmap_Type,".csv",sep="") ),
@@ -1965,10 +2339,13 @@ for (test2do in test_count){
         }else{
             print('The "X_AXIS" parameter must be given for clustering analysis')
         }
+        colData   = Original_colData   
+        countData = Original_countData 
     }
     if (test2do=='LTR'){ 
        opt$LRT=NA 
     }
+    
 }
 
 

@@ -25,7 +25,6 @@ Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * puts output bam files (if the input is fastq) in:
         ``self.sample_data[sample]["bam"]``
-        ``self.sample_data[sample]["unsorted_bam"]``
     * puts the location of RSEM results in:
         ``self.sample_data[sample]["RSEM"]``
         ``self.sample_data[sample]["genes.results"]``
@@ -40,7 +39,6 @@ Parameters that can be set
 
     "mode",  "transcriptome/genome ", "Is the reference is a genome or a transcriptome?"
     "gff3","None","Use if the mode is genome and the annotation file is in gff3 format"
-    "del_unsorted_bam","None","Delete unsorted bam files to save space"
 
 Comments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -73,7 +71,6 @@ Lines for parameter file
         reference:                                               # The reference genome/transcriptome location [FASTA file]
         rsem_generate_data_matrix_script_path:                   # Location of the final matrix generating script
                                                                  # If this line is empty or missing it will try using the module's associated script
-        del_unsorted_bam:                                        # Delete unsorted bam files to save space.
         redirects:
             --append-names:                                      # RSEM will append gene_name/transcript_name to the result files
             --estimate-rspd:                                     # Enables RSEM to learn from the data how the reads are distributed across a transcript
@@ -177,14 +174,14 @@ class Step_RSEM(Step):
                 self.script +="--gff3 %s \\\n\t" % self.params["annotation"]
         else:
             sys.exit("mode can only be transcriptome or genome !!! \n")
-        if  "bowtie" == self.params["mapper"]:
-            self.script +="--%s-path %%s  \\\n\t" % self.params["mapper"] \
-                                                  % self.params["mapper_path"]
-
-        else:
+        if self.params["mapper_path"]!=None:
             self.script +="--%s --%%s-path %%%%s  \\\n\t" % self.params["mapper"] \
                                                           % self.params["mapper"] \
                                                           % self.params["mapper_path"]
+        else:
+            self.script +="--%s  \\\n\t" % self.params["mapper"] 
+                                                   
+                                                          
         self.script +="%s  \\\n\t%%s \n\n" % self.params["reference"] \
                                            % os.sep.join([REF_dir.rstrip(os.sep),"REF"])
         #update the reference slot to the new reference folder location and the reference files prefix 
@@ -234,14 +231,14 @@ class Step_RSEM(Step):
                                                         % (self.sample_data[sample]["RSEM"]) \
                                                         % (results_dir+sample+"_diagnostic.pdf")
         
-        if "del_unsorted_bam" in list(self.params.keys()):
-            for sample in self.sample_data["samples"]:
-                try:  # Does a unsorted_bam slot exist? 
-                    self.sample_data[sample]["unsorted_bam"]
-                except KeyError:  # If failed...
-                        pass
-                else:  #Delete unsorted bams                    
-                    self.script +="rm -f %s  \n\n" % self.sample_data[sample]["unsorted_bam"]
+        # if "del_unsorted_bam" in self.params.keys():
+            # for sample in self.sample_data["samples"]:
+                # try:  # Does a unsorted_bam slot exist? 
+                    # self.sample_data[sample]["unsorted_bam"]
+                # except KeyError:  # If failed...
+                        # pass
+                # else:  #Delete unsorted bams                    
+                    # self.script +="rm -f %s  \n\n" % self.sample_data[sample]["unsorted_bam"]
                     
                     
                     
@@ -272,14 +269,12 @@ class Step_RSEM(Step):
             # Get constant part of script:
             self.script += self.get_script_const()
             # Adding the mapper type and script location
-            if  "bowtie" == self.params["mapper"]:
-                self.script +="--%s-path %%s  \\\n\t" % self.params["mapper"] \
-                                                      % self.params["mapper_path"]
-
-            else:
+            if self.params["mapper_path"]!='None':
                 self.script +="--%s --%%s-path %%%%s  \\\n\t" % self.params["mapper"] \
                                                               % self.params["mapper"] \
                                                               % self.params["mapper_path"]
+            else:
+                self.script +="--%s  \\\n\t" % self.params["mapper"] 
             #Check if to use bam or fastq files
             if "--bam" not in list(self.params["redir_params"].keys()): 
                 #if fastq check if it is a paired-end
@@ -293,14 +288,16 @@ class Step_RSEM(Step):
                 #Append the new bam file location to the bam slot 
                 if "--output-genome-bam" in list(self.params["redir_params"].keys()):
                     #if the --output-genome-bam option is present use the genome sorted bam
-                    self.sample_data[sample]["bam"]=os.sep.join([sample_dir.rstrip(os.sep),sample+".genome.sorted.bam"])
+                    #self.sample_data[sample]["bam"]=os.sep.join([sample_dir.rstrip(os.sep),sample+".genome.sorted.bam"])
+                    self.sample_data[sample]["bam"]=os.sep.join([sample_dir.rstrip(os.sep),sample+".genome.bam"])
                     #remember the unsorted bam as well
-                    self.sample_data[sample]["unsorted_bam"]=os.sep.join([sample_dir.rstrip(os.sep),sample+".genome.bam"])
+                    #self.sample_data[sample]["unsorted_bam"]=os.sep.join([sample_dir.rstrip(os.sep),sample+".genome.bam"])
                 else:
                     # the default is the transcript sorted bam
-                    self.sample_data[sample]["bam"]=os.sep.join([sample_dir.rstrip(os.sep),sample+".transcript.sorted.bam"])
+                    #self.sample_data[sample]["bam"]=os.sep.join([sample_dir.rstrip(os.sep),sample+".transcript.sorted.bam"])
+                    self.sample_data[sample]["bam"]=os.sep.join([sample_dir.rstrip(os.sep),sample+".transcript.bam"])
                     #remember the unsorted bam as well
-                    self.sample_data[sample]["unsorted_bam"]=os.sep.join([sample_dir.rstrip(os.sep),sample+".transcript.bam"])
+                    #self.sample_data[sample]["unsorted_bam"]=os.sep.join([sample_dir.rstrip(os.sep),sample+".transcript.bam"])
             else:
                 #Add the bam file
                 self.script +="%s \\\n\t" % self.sample_data[sample]["bam"]
