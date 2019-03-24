@@ -359,12 +359,20 @@ plot_clusters<-function(clusters,vs_ano,color_group=c('Type','Time_int'),titles=
                                     #scale_y_continuous(breaks=c(seq(0,10,by=2)) )
                                 )
         }
-
+        
+        
         if (smooth){
             plot_list[count]=list(plot_list[[count]]+
                                     stat_smooth(method="loess", fullrange=F, size=0.5 ,aes(linetype=Type,color=Type)) 
                                 )
-
+            gp2=plot_list[count]
+            res<-try(get_legend(gp2[[1]] + theme(legend.position  ="right")+guides(color=guide_legend(title=titles[1]),linetype=guide_legend(title=titles[1]))) ,silent = T)
+            if (inherits(res,"try-error")){
+                plot_list[count]=list(plot_list[[count]]+
+                                        stat_summary(fun.y=mean, geom="point", size = 3,aes(color=Type))+
+                                        stat_summary(fun.data = "mean_se", geom = "errorbar", width = .3,size = 1,aes(color=Type),show.legend = F)
+                                     )
+            }
         }else{
             plot_list[count]=list(plot_list[[count]]+
                                     stat_summary(fun.y=mean, geom="line", size = 1.3,aes(linetype=Type,color=Type))+
@@ -375,30 +383,31 @@ plot_clusters<-function(clusters,vs_ano,color_group=c('Type','Time_int'),titles=
         count=count+1  
     }
     
-    ml_plotly = sapply(X =c(1:length(plot_list)),
-                       FUN = function(x) list(ggplotly(plot_list[[x]]) %>% 
-                                                       style(text=paste(
-                                                                          paste("Cluster:",title_list[[x]][1],sep=" ") ,
-                                                                          paste("Number of Genes:",title_list[[x]][2],sep=" ") ,
-                                                                          sep = "<br />" ),
-                                                              hoverinfo = "text")))
+    # ml_plotly = sapply(X =c(1:length(plot_list)),
+                       # FUN = function(x) list(ggplotly(plot_list[[x]]) %>% 
+                                                       # style(text=paste(
+                                                                          # paste("Cluster:",title_list[[x]][1],sep=" ") ,
+                                                                          # paste("Number of Genes:",title_list[[x]][2],sep=" ") ,
+                                                                          # sep = "<br />" ),
+                                                              # hoverinfo = "text")))
                        
-    ml_plotly = subplot(c(ml_plotly),
-                        nrows = ceiling(length(plot_list)/3),
-                        titleX = T,
-                        titleY  = F,
-                        shareX = T,
-                        shareY = F) %>%
-                        layout(title='Clusters',legend = list(orientation = 'h', y = -0.2))
+    # ml_plotly = subplot(c(ml_plotly),
+                        # nrows = ceiling(length(plot_list)/3),
+                        # titleX = T,
+                        # titleY  = F,
+                        # shareX = T,
+                        # shareY = F) %>%
+                        # layout(title='Clusters',legend = list(orientation = 'h', y = -0.2))
     gp2=plot_list[1]
     if (color_group[1]==color_group[2]){
         ml<-marrangeGrob(plot_list, nrow=2, ncol=3, top=NULL)
     }else{
         legend <- get_legend(gp2[[1]] + theme(legend.position  ="right")+guides(color=guide_legend(title=titles[1]),linetype=guide_legend(title=titles[1])))
         ml<-marrangeGrob(plot_list, nrow=2, ncol=3,right=legend, top=NULL)
+        
     }
 
-    return(list(ml,ml_plotly))
+    return(list(ml))#,ml_plotly))
 }
 
 
@@ -584,15 +593,34 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
     ORGANISM_KEGG_flag = params$ORGANISM_KEGG_flag
     KEGG_KAAS_flag = params$KEGG_KAAS_flag
     GO_flag = params$GO_flag
-
+    
+    Original_colData   = colData
+    Original_countData = countData
+    
+    if (!is.na(opt$Post_statistical_ALPHA)){
+        FDR_PVAL_CUTOFF = opt$Post_statistical_ALPHA
+    }else{
+        FDR_PVAL_CUTOFF = opt$ALPHA
+    }
+    
+    if (!is.na(opt$Post_statistical_FoldChange)){
+        FC_CUTOFF = opt$Post_statistical_FoldChange #in linear scale
+        FC_CUTOFF_log2 = log2(opt$Post_statistical_FoldChange) 
+    }else{
+        FC_CUTOFF = opt$FoldChange #in linear scale
+        FC_CUTOFF_log2 = log2(opt$FoldChange) 
+    }
+     
+    
         statistical_string = unlist(stringi::stri_split(str =  test2do,regex = ','))
         if (length(statistical_string)==3){
-             htmltools::h4(sprintf("The statistical results of %s VS %s in %s:",statistical_string[3],statistical_string[2],statistical_string[1]))
+             htmltools::h4(sprintf("The statistical results of %s VS %s in %s:",statistical_string[2],statistical_string[3],statistical_string[1]))
         }else{
              htmltools::h4(sprintf("The statistical results of %s:",test2do))
         }
         DESeqDataSet_Results = NA
         Normalized_counts = NA
+        Normalized_counts_list=c()
         DESeqDataSet=DESeqDataSet_base
         if (test2do=='LTR'){
           opt$outDir=file.path(base_out_dir,'LTR')
@@ -603,13 +631,25 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                                 parallel=F)
           
           DESeqDataSet_Results <- results(DESeqDataSet,alpha = opt$ALPHA)
+          opt$CONTRAST=NA
+        }else if (test2do=='No_DESIGN') {
+          opt$outDir=file.path(base_out_dir,'No_DESIGN')
+          dir.create(opt$outDir, showWarnings = FALSE)
+          opt$CONTRAST=NA
+        }else if (test2do=='only_clustering'){
+          opt$outDir=file.path(base_out_dir,'Only_Clustering')
+          dir.create(opt$outDir, showWarnings = FALSE)
+          Normalized_counts_assay = countData
+          opt$CONTRAST=NA
         }else{
             opt$CONTRAST=test2do
             contrast_list = unlist(stringi::stri_split(str =  opt$CONTRAST,regex = ','))
-            test_name = paste(contrast_list[3],contrast_list[2],sep = '_vs_')
+            if (length(contrast_list)==2){
+                contrast_list=c('',contrast_list)
+            }
+            test_name = paste(contrast_list[2],contrast_list[3],sep = '_vs_')
             opt$outDir=file.path(base_out_dir,test_name)
             dir.create(opt$outDir, showWarnings = FALSE)
-            
             DESeqDataSet_Results <- results(DESeqDataSet,
                                             contrast     = unlist(stringi::stri_split(str = opt$CONTRAST ,regex = ",")) ,
                                             alpha        = opt$ALPHA,
@@ -623,10 +663,64 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
         }
 
         # Normalization
-        if (opt$NORMALIZATION_TYPE=='RLOG'){
-            Normalized_counts <- rlog(DESeqDataSet, blind=opt$BLIND)
-        }else{
-            Normalized_counts <- varianceStabilizingTransformation(DESeqDataSet, blind=opt$BLIND)
+        if (!is.na(DESeqDataSet)){
+            if (opt$NORMALIZATION_TYPE=='RLOG'){
+                Normalized_counts <- rlog(DESeqDataSet, blind=opt$BLIND)
+            }else{
+                Normalized_counts <- varianceStabilizingTransformation(DESeqDataSet, blind=opt$BLIND)
+            }
+            Normalized_counts_list=list(Normalized_counts)
+            if (!is.na(opt$removeBatchEffect)){
+                if (opt$removeBatchEffect_method=="sva"){
+                    if(!(all(c('sva') %in% installed.packages()))) {
+                        if (Sys.getenv("CONDA_PREFIX")!=""){
+                            source("http://bioconductor.org/biocLite.R")
+                            try(biocLite("sva", version = "3.8"),silent = F)
+                        }else{
+                          cat("The Bioconductor sva package is not installed. You must install it for this script to work!")
+                        }
+                    } 
+                    try(library("sva"),silent = F)
+                    if ("package:sva" %in% search()==FALSE){
+                        cat(sprintf("%s","The Bioconductor sva package is not installed!! will use limma instead"))
+                        opt$removeBatchEffect_method="limma"
+                    }
+                }
+                BatchEffects = unlist(stringi::stri_split(str = opt$removeBatchEffect ,regex = ','))
+                if (opt$removeBatchEffect_method=="sva"){
+                        if (length(BatchEffects)>1){
+                            cat(sprintf("%s","It is Not possible to use more then one batch effect using the sva package, will use only the first one!!"))
+                        }
+                        DESIGN_list = unlist(stringi::stri_split( stringi::stri_replace(str = opt$DESIGN,
+                                                                                   regex =' |~',
+                                                                                   mode = 'all',
+                                                                                   replacement = ''),
+                                                            fixed = '+'))
+                        New_DESIGN =paste0('~',paste(DESIGN_list[DESIGN_list!=BatchEffects[1]],collapse ='+'))
+                        
+                        modcombat = model.matrix( as.formula(New_DESIGN) , data=Original_colData)
+                        combat_edata = ComBat(dat = assay(Normalized_counts),
+                                              batch = Original_colData[,BatchEffects[1]],
+                                              mod = modcombat,
+                                              par.prior = T,
+                                              mean.only=F)
+                        assay(Normalized_counts) = combat_edata
+                        
+                }else{
+                
+                    if (length(BatchEffects)>1){
+                            assay(Normalized_counts) = limma::removeBatchEffect(assay(Normalized_counts),
+                                                                                batch = Normalized_counts@colData[,BatchEffects[1]],
+                                                                                batch2= Normalized_counts@colData[,BatchEffects[2]])
+                    }else{
+                            assay(Normalized_counts) = limma::removeBatchEffect(assay(Normalized_counts),
+                                                                                batch = Normalized_counts@colData[,BatchEffects[1]])
+                    }
+                }
+                Normalized_counts_list = c(Normalized_counts_list,Normalized_counts)
+            }
+            
+            Normalized_counts_assay = assay(Normalized_counts)
         }
 
 
@@ -650,7 +744,10 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                 if (!is.na(opt$CONTRAST)){
                     Results_for_print = Results_for_print[,c('log2FoldChange','pvalue','padj')]
                     contrast_list = unlist(stringi::stri_split(str =  opt$CONTRAST,regex = ','))
-                    test_name = paste(contrast_list[3],contrast_list[2],sep = '.vs.')
+                    if (length(contrast_list)==2){
+                        contrast_list=c('',contrast_list)
+                    }
+                    test_name = paste(contrast_list[2],contrast_list[3],sep = '.vs.')
                 }
             }
 
@@ -665,19 +762,19 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
 
         ##################Print Normalized counts######################
         if (!is.na(Normalized_counts)){
-            write.table(assay(Normalized_counts),
+            write.table(Normalized_counts_assay,
                         file = file.path(opt$outDir,paste(test_name,opt$NORMALIZATION_TYPE,'Normalized_counts.txt', sep = '_')) ,
                         quote = F,
                         sep = "\t")
            
             
             if (!is.na(Annotation)) {
-                  Normalized_counts_DATA = merge.data.frame(assay(Normalized_counts),Annotation,by="row.names",all.x = T,sort = F)
+                  Normalized_counts_DATA = merge.data.frame(Normalized_counts_assay,Annotation,by="row.names",all.x = T,sort = F)
                   rownames(Normalized_counts_DATA) = Normalized_counts_DATA$Row.names
                   Normalized_counts_DATA$Row.names=NULL
                   Annotation_TEXT = ' and Annotation'
             }else{
-                Normalized_counts_DATA = assay(Normalized_counts)
+                Normalized_counts_DATA = Normalized_counts_assay
                 Annotation_TEXT = ''
             }
             cat(sprintf("<h4>%s</h4>",paste("The Next Table is of ",test_name,opt$NORMALIZATION_TYPE,'Normalized Counts',Annotation_TEXT, sep = ' ')))
@@ -714,9 +811,7 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
         
         
         if (!is.na(DESeqDataSet_Results)){
-            FDR_PVAL_CUTOFF = opt$ALPHA
-            FC_CUTOFF = opt$FoldChange #in linear scale
-            FC_CUTOFF_log2 = log2(opt$FoldChange)  
+
             topT <- as.data.frame(DESeqDataSet_Results)
 
             if (!is.na(opt$LRT)){
@@ -725,7 +820,10 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                 if (!is.na(opt$CONTRAST)){
                     cat(sprintf("<h4>%s</h4>",paste("Volcano Plot of ",test_name, sep = ' ')))
                     contrast_list = unlist(stringi::stri_split(str =  opt$CONTRAST,regex = ','))
-                    test_name = paste(contrast_list[3],contrast_list[2],sep = ' vs ')
+                    if (length(contrast_list)==2){
+                        contrast_list=c('',contrast_list)
+                    }
+                    test_name = paste(contrast_list[2],contrast_list[3],sep = ' vs ')
                     plotTitle = paste('Volcano Plot (', test_name, ')', sep="")
                    
                     par(mar=c(5,5,5,5), cex=1.0, cex.main=1.4, cex.axis=1.4, cex.lab=1.4)
@@ -737,7 +835,6 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                     with(subset(topT, padj<FDR_PVAL_CUTOFF & abs(log2FoldChange)>FC_CUTOFF_log2), points(log2FoldChange, -log10(padj), pch=20, col="red", cex=0.5))
 
                     #Add lines for absolute adjusted p-value and FC cutoffs 
-                    #abline(v=0, col="black", lty=3, lwd=1.0)  #adds a vertical line at 0
                     abline(v=-FC_CUTOFF_log2, col="black", lty=4, lwd=2.0)
                     abline(v=FC_CUTOFF_log2, col="black", lty=4, lwd=2.0)
                     if (length(topT$padj[topT$padj<FDR_PVAL_CUTOFF])>0){
@@ -822,11 +919,24 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
         # MA_plot
         # grid::grid.newpage()
         
-        ##################PCA-TOP500####################################
-        if (!is.na(Normalized_counts)){
+        
+    ############################Original-PCA-START##############################################
+    
+        cat(sprintf("<h2>%s</h2>", 'PCA Plots:'))
+        if (length(Normalized_counts_list)==2){
+            PCA_Normalized_counts = Normalized_counts_list[[1]]
+            cat(sprintf("<h3>%s</h3>", 'PCA Plot Using Original Data:'))
+        }else if (length(Normalized_counts_list)==1){
+            PCA_Normalized_counts = Normalized_counts_list[[1]]
+        }else if (length(Normalized_counts_list)==0){
+            PCA_Normalized_counts = NA
+        }
+        
+    ##################PCA-TOP500####################################
+        if (!is.na(PCA_Normalized_counts)){
             intgroup=c(opt$PCA_COLOR,opt$PCA_SHAPE,opt$PCA_SIZE)
             intgroup=intgroup[!is.na(intgroup)]
-            PCA_data <- plotPCA(Normalized_counts, intgroup=make.names(intgroup), returnData=TRUE,ntop=500)
+            PCA_data <- plotPCA(PCA_Normalized_counts, intgroup=make.names(intgroup), returnData=TRUE,ntop=500)
             percentVar <- round(100 * attr(PCA_data, "percentVar"))
 
             if (is.na(opt$PCA_COLOR)){
@@ -853,21 +963,33 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                     coord_fixed()
                 ggsave(file.path(opt$outDir,paste(c('TOP500_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
                 
-                PCA_plot=plot_ly(PCA_data, x = ~PC1, y = ~PC3, z = ~PC2,
-                                 text=~paste(row.names(PCA_data),
-                                             paste("color:",opt$PCA_COLOR,get(make.names(opt$PCA_COLOR)),sep=" ") ,
-                                             paste("size:",opt$PCA_SIZE,get(make.names(opt$PCA_SIZE)),sep=" ") ,
-                                             sep = "<br />" ),
-                                 hoverinfo = "text",
-                                 color = ~factor(get(make.names(opt$PCA_COLOR))),
-                                 size  = ~get(make.names(opt$PCA_SIZE)),
-                                 name=row.names(PCA_data) )%>% 
-                         add_markers(sizes = c(150,700)
-                                     )%>%
-                         layout(title = 'PCA of the TOP 500 Most Variable Genes',
-                                scene = list(xaxis = list(title = paste0("PC1: ",percentVar[1],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
-                                             yaxis = list(title = paste0("PC3: ",percentVar[3],"% variance"), showspikes = FALSE ,autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
-                                             zaxis = list(title = paste0("PC2: ",percentVar[2],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE))) 
+                PCA_plot = plot_ly(PCA_data, x = ~PC1, y = ~PC3, z = ~PC2,
+                                    text=~paste(row.names(PCA_data),
+                                                 paste("color:",opt$PCA_COLOR,get(make.names(opt$PCA_COLOR)),sep=" ") ,
+                                                 paste("size:",opt$PCA_SIZE,get(make.names(opt$PCA_SIZE)),sep=" ") ,
+                                                 sep = "<br />" ),
+                                    hoverinfo = "text")%>%
+                                    add_trace( mode="markers",
+                                               visible ="legendonly",
+                                               type='scatter3d', x = ~PC1, y = ~PC3, z = ~PC2,
+                                               color=~get(make.names(opt$PCA_COLOR)),
+                                               symbols = c("circle","square","diamond","cross","x"),
+                                               opacity = 1)%>%
+                                    add_trace( mode="markers",
+                                               type='scatter3d', x = ~PC1, y = ~PC3, z = ~PC2,
+                                               size  = ~get(make.names((opt$PCA_SIZE))),
+                                               sizes = c(3,15),
+                                               name=row.names(PCA_data),
+                                               color=~get(make.names(opt$PCA_COLOR)),
+                                               marker = list( line=list(color="black",width = 1),
+                                                                sizemode = 'diameter'
+                                                            ),
+                                               showlegend =F,
+                                               opacity = 0.8)%>%
+                                    layout(title = 'PCA of the TOP 500 Most Variable Genes',
+                                           scene = list(xaxis = list(title = paste0("PC1: ",percentVar[1],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
+                                                        yaxis = list(title = paste0("PC3: ",percentVar[3],"% variance"), showspikes = FALSE ,autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
+                                                        zaxis = list(title = paste0("PC2: ",percentVar[2],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE))) 
                 PCA_plot
             }else{
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
@@ -891,36 +1013,60 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                     coord_fixed()
                 ggsave(file.path(opt$outDir,paste(c('TOP500_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
                 
-                PCA_plot=plot_ly(PCA_data, x = ~PC1, y = ~PC3, z = ~PC2,
-                                 text=~paste(row.names(PCA_data),
-                                             paste("shape:",opt$PCA_SHAPE,get(make.names(opt$PCA_SHAPE)),sep=" ") ,
-                                             paste("color:",opt$PCA_COLOR,get(make.names(opt$PCA_COLOR)),sep=" ") ,
-                                             paste("size:",opt$PCA_SIZE,get(make.names(opt$PCA_SIZE)),sep=" ") ,
-                                             sep = "<br />" ),
-                                 hoverinfo = "text",
-                                 color = ~factor(get(make.names(opt$PCA_COLOR))),
-                                 size  = ~get(make.names(opt$PCA_SIZE)),
-                                 symbol= ~factor(get(make.names(opt$PCA_SHAPE))),
-                                 name=row.names(PCA_data) )%>% 
-                         add_markers(symbols=c(1:length(~unique(get(make.names(opt$PCA_SHAPE))))),
-                                     sizes = c(150,700)
-                                     )%>%
-                         layout(title = 'PCA of the TOP 500 Most Variable Genes',
-                                scene = list(xaxis = list(title = paste0("PC1: ",percentVar[1],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
-                                             yaxis = list(title = paste0("PC3: ",percentVar[3],"% variance"), showspikes = FALSE ,autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
-                                             zaxis = list(title = paste0("PC2: ",percentVar[2],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE))) 
+                PCA_plot = plot_ly(PCA_data, x = ~PC1, y = ~PC3, z = ~PC2,
+                                    text=~paste(row.names(PCA_data),
+                                                 paste("shape:",opt$PCA_SHAPE,get(make.names(opt$PCA_SHAPE)),sep=" ") ,
+                                                 paste("color:",opt$PCA_COLOR,get(make.names(opt$PCA_COLOR)),sep=" ") ,
+                                                 paste("size:",opt$PCA_SIZE,get(make.names(opt$PCA_SIZE)),sep=" ") ,
+                                                 sep = "<br />" ),
+                                    hoverinfo = "text")%>%
+                                    add_trace( mode="markers",
+                                               visible ="legendonly",
+                                               type='scatter3d', x = ~PC1, y = ~PC3, z = ~PC2,
+                                               symbol = ~get(make.names((opt$PCA_SHAPE))),
+                                               symbols = c("circle","square","diamond","cross","x"),
+                                               sizes = c(3,15),
+                                               marker = list( line=list(color="black",width = 1),
+                                                                sizemode = 'diameter',
+                                                                color="white"),
+                                               opacity = 0.8)%>%
+                                    add_trace( mode="markers",
+                                               visible ="legendonly",
+                                               type='scatter3d', x = ~PC1, y = ~PC3, z = ~PC2,
+                                               color=~get(make.names(opt$PCA_COLOR)),
+                                               symbols = c("circle","square","diamond","cross","x"),
+                                               opacity = 1)%>%
+                                    add_trace( mode="markers",
+                                               type='scatter3d', x = ~PC1, y = ~PC3, z = ~PC2,
+                                               symbol = ~get(make.names((opt$PCA_SHAPE))),
+                                               symbols = c("circle","square","diamond","cross","x"),
+                                               size  = ~get(make.names((opt$PCA_SIZE))),
+                                               sizes = c(3,15),
+                                               name=row.names(PCA_data),
+                                               color=~get(make.names(opt$PCA_COLOR)),
+                                               marker = list( line=list(color="black",width = 1),
+                                                                sizemode = 'diameter'
+                                                            ),
+                                               showlegend =F,
+                                               opacity = 0.8)%>%
+                                    layout(title = 'PCA of the TOP 500 Most Variable Genes',
+                                           scene = list(xaxis = list(title = paste0("PC1: ",percentVar[1],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
+                                                        yaxis = list(title = paste0("PC3: ",percentVar[3],"% variance"), showspikes = FALSE ,autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
+                                                        zaxis = list(title = paste0("PC2: ",percentVar[2],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE))) 
                 PCA_plot
             }
         }
         ##################PCA-TOP500-END####################################
 
-        ##################PCA-ALL####################################
-        if (!is.na(Normalized_counts)){
-            PCA_data <- plotPCA(Normalized_counts, intgroup=make.names(intgroup), returnData=TRUE,ntop='all')
+        # ##################PCA-ALL####################################
+        if (!is.na(PCA_Normalized_counts)){
+            intgroup=c(opt$PCA_COLOR,opt$PCA_SHAPE,opt$PCA_SIZE)
+            intgroup=intgroup[!is.na(intgroup)]
+            PCA_data <- plotPCA(PCA_Normalized_counts, intgroup=make.names(intgroup), returnData=TRUE,ntop='all')
             percentVar <- round(100 * attr(PCA_data, "percentVar"))
 
             if (is.na(opt$PCA_COLOR)){
-              opt$PCA_COLOR='name'
+                opt$PCA_COLOR='name'
             }
 
             if (is.na(opt$PCA_SHAPE)){
@@ -944,20 +1090,32 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                 ggsave(file.path(opt$outDir,paste(c('ALL_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
                 
                 PCA_plot_ALL = plot_ly(PCA_data, x = ~PC1, y = ~PC3, z = ~PC2,
-                                       text=~paste(row.names(PCA_data),
-                                                   paste("color:",opt$PCA_COLOR,get(make.names(opt$PCA_COLOR)),sep=" ") ,
-                                                   paste("size:",opt$PCA_SIZE,get(make.names(opt$PCA_SIZE)),sep=" ") ,
-                                                   sep = "<br />" ),
-                                       hoverinfo = "text",
-                                       color = ~factor(get(make.names(opt$PCA_COLOR))),
-                                       size  = ~get(make.names(opt$PCA_SIZE)),
-                                       name=row.names(PCA_data) )%>% 
-                               add_markers(sizes = c(150,700)
-                                           )%>%
-                               layout(title = 'PCA Using All Genes',
-                                      scene = list(xaxis = list(title = paste0("PC1: ",percentVar[1],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
-                                                   yaxis = list(title = paste0("PC3: ",percentVar[3],"% variance"), showspikes = FALSE ,autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
-                                                   zaxis = list(title = paste0("PC2: ",percentVar[2],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE))) 
+                                    text=~paste(row.names(PCA_data),
+                                                 paste("color:",opt$PCA_COLOR,get(make.names(opt$PCA_COLOR)),sep=" ") ,
+                                                 paste("size:",opt$PCA_SIZE,get(make.names(opt$PCA_SIZE)),sep=" ") ,
+                                                 sep = "<br />" ),
+                                    hoverinfo = "text")%>%
+                                    add_trace( mode="markers",
+                                               visible ="legendonly",
+                                               type='scatter3d', x = ~PC1, y = ~PC3, z = ~PC2,
+                                               color=~get(make.names(opt$PCA_COLOR)),
+                                               symbols = c("circle","square","diamond","cross","x"),
+                                               opacity = 1)%>%
+                                    add_trace( mode="markers",
+                                               type='scatter3d', x = ~PC1, y = ~PC3, z = ~PC2,
+                                               size  = ~get(make.names((opt$PCA_SIZE))),
+                                               sizes = c(3,15),
+                                               name=row.names(PCA_data),
+                                               color=~get(make.names(opt$PCA_COLOR)),
+                                               marker = list( line=list(color="black",width = 1),
+                                                                sizemode = 'diameter'
+                                                            ),
+                                               showlegend =F,
+                                               opacity = 0.8)%>%
+                                    layout(title = 'PCA Using All Genes',
+                                           scene = list(xaxis = list(title = paste0("PC1: ",percentVar[1],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
+                                                        yaxis = list(title = paste0("PC3: ",percentVar[3],"% variance"), showspikes = FALSE ,autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
+                                                        zaxis = list(title = paste0("PC2: ",percentVar[2],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE))) 
                 PCA_plot_ALL
             }else{
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
@@ -981,28 +1139,319 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                     coord_fixed()
                 ggsave(file.path(opt$outDir,paste(c('ALL_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
                 
-                PCA_plot_ALL  =  plot_ly(PCA_data, x = ~PC1, y = ~PC3, z = ~PC2,
-                                         text=~paste(row.names(PCA_data),
-                                                     paste("shape:",opt$PCA_SHAPE,get(make.names(opt$PCA_SHAPE)),sep=" ") ,
-                                                     paste("color:",opt$PCA_COLOR,get(make.names(opt$PCA_COLOR)),sep=" ") ,
-                                                     paste("size:",opt$PCA_SIZE,get(make.names(opt$PCA_SIZE)),sep=" ") ,
-                                                     sep = "<br />" ),
-                                         hoverinfo = "text",
-                                         color = ~factor(get(make.names(opt$PCA_COLOR))),
-                                         size  = ~get(make.names(opt$PCA_SIZE)),
-                                         symbol= ~factor(get(make.names(opt$PCA_SHAPE))),
-                                         name=row.names(PCA_data) )%>% 
-                                 add_markers(symbols=c(1:length(~unique(get(make.names(opt$PCA_SHAPE))))),
-                                             sizes = c(150,700)
-                                             )%>%
-                                 layout(title = 'PCA Using All Genes',
-                                        scene = list(xaxis = list(title = paste0("PC1: ",percentVar[1],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
-                                                     yaxis = list(title = paste0("PC3: ",percentVar[3],"% variance"), showspikes = FALSE ,autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
-                                                     zaxis = list(title = paste0("PC2: ",percentVar[2],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE))) 
+                PCA_plot_ALL = plot_ly(PCA_data, x = ~PC1, y = ~PC3, z = ~PC2,
+                                    text=~paste(row.names(PCA_data),
+                                                 paste("shape:",opt$PCA_SHAPE,get(make.names(opt$PCA_SHAPE)),sep=" ") ,
+                                                 paste("color:",opt$PCA_COLOR,get(make.names(opt$PCA_COLOR)),sep=" ") ,
+                                                 paste("size:",opt$PCA_SIZE,get(make.names(opt$PCA_SIZE)),sep=" ") ,
+                                                 sep = "<br />" ),
+                                    hoverinfo = "text")%>%
+                                    add_trace( mode="markers",
+                                               visible ="legendonly",
+                                               type='scatter3d', x = ~PC1, y = ~PC3, z = ~PC2,
+                                               symbol = ~get(make.names((opt$PCA_SHAPE))),
+                                               symbols = c("circle","square","diamond","cross","x"),
+                                               sizes = c(3,15),
+                                               marker = list( line=list(color="black",width = 1),
+                                                                sizemode = 'diameter',
+                                                                color="white"),
+                                               opacity = 0.8)%>%
+                                    add_trace( mode="markers",
+                                               visible ="legendonly",
+                                               type='scatter3d', x = ~PC1, y = ~PC3, z = ~PC2,
+                                               color=~get(make.names(opt$PCA_COLOR)),
+                                               symbols = c("circle","square","diamond","cross","x"),
+                                               opacity = 1)%>%
+                                    add_trace( mode="markers",
+                                               type='scatter3d', x = ~PC1, y = ~PC3, z = ~PC2,
+                                               symbol = ~get(make.names((opt$PCA_SHAPE))),
+                                               symbols = c("circle","square","diamond","cross","x"),
+                                               size  = ~get(make.names((opt$PCA_SIZE))),
+                                               sizes = c(3,15),
+                                               name=row.names(PCA_data),
+                                               color=~get(make.names(opt$PCA_COLOR)),
+                                               marker = list( line=list(color="black",width = 1),
+                                                                sizemode = 'diameter'
+                                                            ),
+                                               showlegend =F,
+                                               opacity = 0.8)%>%
+                                    layout(title = 'PCA Using All Genes',
+                                           scene = list(xaxis = list(title = paste0("PC1: ",percentVar[1],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
+                                                        yaxis = list(title = paste0("PC3: ",percentVar[3],"% variance"), showspikes = FALSE ,autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
+                                                        zaxis = list(title = paste0("PC2: ",percentVar[2],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE))) 
                 PCA_plot_ALL
             }
         }
-        ##################PCA-END####################################
+        # ##################PCA-END####################################
+        
+    ############################Original-PCA-ENDS##############################################
+
+
+
+
+    ############################Batch-Effect-Corrected-PCA-START##############################################
+    
+    if (length(Normalized_counts_list)==2){
+        PCA_Normalized_counts = Normalized_counts_list[[2]]
+        cat(sprintf("<h3>%s</h3>", 'PCA Plot Using Batch Effect Corrected Data:'))
+        extra_string="Batch_Effect_Corrected_"
+    }        
+        ##################PCA-TOP500####################################
+        if (length(Normalized_counts_list)==2){
+            intgroup=c(opt$PCA_COLOR,opt$PCA_SHAPE,opt$PCA_SIZE)
+            intgroup=intgroup[!is.na(intgroup)]
+            PCA_data <- plotPCA(PCA_Normalized_counts, intgroup=make.names(intgroup), returnData=TRUE,ntop=500)
+            percentVar <- round(100 * attr(PCA_data, "percentVar"))
+
+            if (is.na(opt$PCA_COLOR)){
+              opt$PCA_COLOR='name'
+            }
+
+            if (is.na(opt$PCA_SHAPE)){
+                pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),size=make.names(opt$PCA_SIZE)) )+
+                    geom_count()+
+                    scale_shape_discrete(solid=F)+
+                    guides(color=guide_legend(order = 1 ,title=opt$PCA_COLOR))+
+                    guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
+                    xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+                    ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+                    coord_fixed()
+                ggsave(file.path(opt$outDir,paste(c(extra_string,'TOP500_PCA_pc1_pc2',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
+
+                pca_res=ggplot(PCA_data, aes_string('PC1', 'PC3', color=make.names(opt$PCA_COLOR),size=make.names(opt$PCA_SIZE)) )+
+                    geom_count()+
+                    guides(color=guide_legend(order = 1 ,title=opt$PCA_COLOR))+
+                    guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
+                    xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+                    ylab(paste0("PC3: ",percentVar[3],"% variance")) +
+                    coord_fixed()
+                ggsave(file.path(opt$outDir,paste(c(extra_string,'TOP500_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
+                
+                PCA_plot = plot_ly(PCA_data, x = ~PC1, y = ~PC3, z = ~PC2,
+                                    text=~paste(row.names(PCA_data),
+                                                 paste("color:",opt$PCA_COLOR,get(make.names(opt$PCA_COLOR)),sep=" ") ,
+                                                 paste("size:",opt$PCA_SIZE,get(make.names(opt$PCA_SIZE)),sep=" ") ,
+                                                 sep = "<br />" ),
+                                    hoverinfo = "text")%>%
+                                    add_trace( mode="markers",
+                                               visible ="legendonly",
+                                               type='scatter3d', x = ~PC1, y = ~PC3, z = ~PC2,
+                                               color=~get(make.names(opt$PCA_COLOR)),
+                                               symbols = c("circle","square","diamond","cross","x"),
+                                               opacity = 1)%>%
+                                    add_trace( mode="markers",
+                                               type='scatter3d', x = ~PC1, y = ~PC3, z = ~PC2,
+                                               size  = ~get(make.names((opt$PCA_SIZE))),
+                                               sizes = c(3,15),
+                                               name=row.names(PCA_data),
+                                               color=~get(make.names(opt$PCA_COLOR)),
+                                               marker = list( line=list(color="black",width = 1),
+                                                                sizemode = 'diameter'
+                                                            ),
+                                               showlegend =F,
+                                               opacity = 0.8)%>%
+                                    layout(title = 'PCA of the TOP 500 Most Variable Genes',
+                                           scene = list(xaxis = list(title = paste0("PC1: ",percentVar[1],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
+                                                        yaxis = list(title = paste0("PC3: ",percentVar[3],"% variance"), showspikes = FALSE ,autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
+                                                        zaxis = list(title = paste0("PC2: ",percentVar[2],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE))) 
+                PCA_plot
+            }else{
+                pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
+                    geom_count()+
+                    scale_shape_discrete(solid=F)+
+                    guides(color=guide_legend(order = 1 ,title=opt$PCA_COLOR))+
+                    guides(shape=guide_legend(order  = 2,title=opt$PCA_SHAPE))+
+                    guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
+                    xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+                    ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+                    coord_fixed()
+                ggsave(file.path(opt$outDir,paste(c(extra_string,'TOP500_PCA_pc1_pc2',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
+
+                pca_res=ggplot(PCA_data, aes_string('PC1', 'PC3', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
+                    geom_count()+
+                    guides(color=guide_legend(order = 1 ,title=opt$PCA_COLOR))+
+                    guides(shape=guide_legend(order  = 2,title=opt$PCA_SHAPE))+
+                    guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
+                    xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+                    ylab(paste0("PC3: ",percentVar[3],"% variance")) +
+                    coord_fixed()
+                ggsave(file.path(opt$outDir,paste(c(extra_string,'TOP500_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
+                
+                PCA_plot = plot_ly(PCA_data, x = ~PC1, y = ~PC3, z = ~PC2,
+                                    text=~paste(row.names(PCA_data),
+                                                 paste("shape:",opt$PCA_SHAPE,get(make.names(opt$PCA_SHAPE)),sep=" ") ,
+                                                 paste("color:",opt$PCA_COLOR,get(make.names(opt$PCA_COLOR)),sep=" ") ,
+                                                 paste("size:",opt$PCA_SIZE,get(make.names(opt$PCA_SIZE)),sep=" ") ,
+                                                 sep = "<br />" ),
+                                    hoverinfo = "text")%>%
+                                    add_trace( mode="markers",
+                                               visible ="legendonly",
+                                               type='scatter3d', x = ~PC1, y = ~PC3, z = ~PC2,
+                                               symbol = ~get(make.names((opt$PCA_SHAPE))),
+                                               symbols = c("circle","square","diamond","cross","x"),
+                                               sizes = c(3,15),
+                                               marker = list( line=list(color="black",width = 1),
+                                                                sizemode = 'diameter',
+                                                                color="white"),
+                                               opacity = 0.8)%>%
+                                    add_trace( mode="markers",
+                                               visible ="legendonly",
+                                               type='scatter3d', x = ~PC1, y = ~PC3, z = ~PC2,
+                                               color=~get(make.names(opt$PCA_COLOR)),
+                                               symbols = c("circle","square","diamond","cross","x"),
+                                               opacity = 1)%>%
+                                    add_trace( mode="markers",
+                                               type='scatter3d', x = ~PC1, y = ~PC3, z = ~PC2,
+                                               symbol = ~get(make.names((opt$PCA_SHAPE))),
+                                               symbols = c("circle","square","diamond","cross","x"),
+                                               size  = ~get(make.names((opt$PCA_SIZE))),
+                                               sizes = c(3,15),
+                                               name=row.names(PCA_data),
+                                               color=~get(make.names(opt$PCA_COLOR)),
+                                               marker = list( line=list(color="black",width = 1),
+                                                                sizemode = 'diameter'
+                                                            ),
+                                               showlegend =F,
+                                               opacity = 0.8)%>%
+                                    layout(title = 'PCA of the TOP 500 Most Variable Genes',
+                                           scene = list(xaxis = list(title = paste0("PC1: ",percentVar[1],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
+                                                        yaxis = list(title = paste0("PC3: ",percentVar[3],"% variance"), showspikes = FALSE ,autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
+                                                        zaxis = list(title = paste0("PC2: ",percentVar[2],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE))) 
+                PCA_plot
+            }
+        }
+        ##################PCA-TOP500-END####################################
+
+        # ##################PCA-ALL####################################
+        if (length(Normalized_counts_list)==2){
+            intgroup=c(opt$PCA_COLOR,opt$PCA_SHAPE,opt$PCA_SIZE)
+            intgroup=intgroup[!is.na(intgroup)]
+            PCA_data <- plotPCA(PCA_Normalized_counts, intgroup=make.names(intgroup), returnData=TRUE,ntop='all')
+            percentVar <- round(100 * attr(PCA_data, "percentVar"))
+
+            if (is.na(opt$PCA_COLOR)){
+                opt$PCA_COLOR='name'
+            }
+
+            if (is.na(opt$PCA_SHAPE)){
+                pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),size=make.names(opt$PCA_SIZE)) )+
+                    geom_count()+
+                    scale_shape_discrete(solid=F)+
+                    guides(color=guide_legend(order = 1 ,title=opt$PCA_COLOR))+
+                    guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
+                    xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+                    ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+                    coord_fixed()
+                ggsave(file.path(opt$outDir,paste(c(extra_string,'ALL_PCA_pc1_pc2',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
+
+                pca_res=ggplot(PCA_data, aes_string('PC1', 'PC3', color=make.names(opt$PCA_COLOR),size=make.names(opt$PCA_SIZE)) )+
+                    geom_count()+
+                    guides(color=guide_legend(order = 1 ,title=opt$PCA_COLOR))+
+                    guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
+                    xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+                    ylab(paste0("PC3: ",percentVar[3],"% variance")) +
+                    coord_fixed()
+                ggsave(file.path(opt$outDir,paste(c(extra_string,'ALL_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
+                
+                PCA_plot_ALL = plot_ly(PCA_data, x = ~PC1, y = ~PC3, z = ~PC2,
+                                    text=~paste(row.names(PCA_data),
+                                                 paste("color:",opt$PCA_COLOR,get(make.names(opt$PCA_COLOR)),sep=" ") ,
+                                                 paste("size:",opt$PCA_SIZE,get(make.names(opt$PCA_SIZE)),sep=" ") ,
+                                                 sep = "<br />" ),
+                                    hoverinfo = "text")%>%
+                                    add_trace( mode="markers",
+                                               visible ="legendonly",
+                                               type='scatter3d', x = ~PC1, y = ~PC3, z = ~PC2,
+                                               color=~get(make.names(opt$PCA_COLOR)),
+                                               symbols = c("circle","square","diamond","cross","x"),
+                                               opacity = 1)%>%
+                                    add_trace( mode="markers",
+                                               type='scatter3d', x = ~PC1, y = ~PC3, z = ~PC2,
+                                               size  = ~get(make.names((opt$PCA_SIZE))),
+                                               sizes = c(3,15),
+                                               name=row.names(PCA_data),
+                                               color=~get(make.names(opt$PCA_COLOR)),
+                                               marker = list( line=list(color="black",width = 1),
+                                                                sizemode = 'diameter'
+                                                            ),
+                                               showlegend =F,
+                                               opacity = 0.8)%>%
+                                    layout(title = 'PCA Using All Genes',
+                                           scene = list(xaxis = list(title = paste0("PC1: ",percentVar[1],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
+                                                        yaxis = list(title = paste0("PC3: ",percentVar[3],"% variance"), showspikes = FALSE ,autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
+                                                        zaxis = list(title = paste0("PC2: ",percentVar[2],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE))) 
+                PCA_plot_ALL
+            }else{
+                pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
+                    geom_count()+
+                    scale_shape_discrete(solid=F)+
+                    guides(color=guide_legend(order = 1 ,title=opt$PCA_COLOR))+
+                    guides(shape=guide_legend(order  = 2,title=opt$PCA_SHAPE))+
+                    guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
+                    xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+                    ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+                    coord_fixed()
+                ggsave(file.path(opt$outDir,paste(c(extra_string,'ALL_PCA_pc1_pc2',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
+              
+                pca_res=ggplot(PCA_data, aes_string('PC1', 'PC3', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
+                    geom_count()+
+                    guides(color=guide_legend(order = 1 ,title=opt$PCA_COLOR))+
+                    guides(shape=guide_legend(order  = 2,title=opt$PCA_SHAPE))+
+                    guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
+                    xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+                    ylab(paste0("PC3: ",percentVar[3],"% variance")) +
+                    coord_fixed()
+                ggsave(file.path(opt$outDir,paste(c(extra_string,'ALL_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
+                
+                PCA_plot_ALL = plot_ly(PCA_data, x = ~PC1, y = ~PC3, z = ~PC2,
+                                    text=~paste(row.names(PCA_data),
+                                                 paste("shape:",opt$PCA_SHAPE,get(make.names(opt$PCA_SHAPE)),sep=" ") ,
+                                                 paste("color:",opt$PCA_COLOR,get(make.names(opt$PCA_COLOR)),sep=" ") ,
+                                                 paste("size:",opt$PCA_SIZE,get(make.names(opt$PCA_SIZE)),sep=" ") ,
+                                                 sep = "<br />" ),
+                                    hoverinfo = "text")%>%
+                                    add_trace( mode="markers",
+                                               visible ="legendonly",
+                                               type='scatter3d', x = ~PC1, y = ~PC3, z = ~PC2,
+                                               symbol = ~get(make.names((opt$PCA_SHAPE))),
+                                               symbols = c("circle","square","diamond","cross","x"),
+                                               sizes = c(3,15),
+                                               marker = list( line=list(color="black",width = 1),
+                                                                sizemode = 'diameter',
+                                                                color="white"),
+                                               opacity = 0.8)%>%
+                                    add_trace( mode="markers",
+                                               visible ="legendonly",
+                                               type='scatter3d', x = ~PC1, y = ~PC3, z = ~PC2,
+                                               color=~get(make.names(opt$PCA_COLOR)),
+                                               symbols = c("circle","square","diamond","cross","x"),
+                                               opacity = 1)%>%
+                                    add_trace( mode="markers",
+                                               type='scatter3d', x = ~PC1, y = ~PC3, z = ~PC2,
+                                               symbol = ~get(make.names((opt$PCA_SHAPE))),
+                                               symbols = c("circle","square","diamond","cross","x"),
+                                               size  = ~get(make.names((opt$PCA_SIZE))),
+                                               sizes = c(3,15),
+                                               name=row.names(PCA_data),
+                                               color=~get(make.names(opt$PCA_COLOR)),
+                                               marker = list( line=list(color="black",width = 1),
+                                                                sizemode = 'diameter'
+                                                            ),
+                                               showlegend =F,
+                                               opacity = 0.8)%>%
+                                    layout(title = 'PCA Using All Genes',
+                                           scene = list(xaxis = list(title = paste0("PC1: ",percentVar[1],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
+                                                        yaxis = list(title = paste0("PC3: ",percentVar[3],"% variance"), showspikes = FALSE ,autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE),
+                                                        zaxis = list(title = paste0("PC2: ",percentVar[2],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE))) 
+                PCA_plot_ALL
+            }
+        }
+        # ##################PCA-END####################################
+        
+    ############################Batch-Effect-Corrected-PCA-ENDS##############################################
+
+
+
 
 
         ##################Plot Counts################################    
@@ -1068,12 +1517,18 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
         main_plot_list  = list()
         up_reg   = c()
         down_reg = c()
-        if (!is.na(DESeqDataSet_Results)){
-            sig.genes = rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"padj"]<opt$ALPHA)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
-            up_reg    = rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"log2FoldChange"]>0)&(DESeqDataSet_Results_redOrdered[,"padj"]<opt$ALPHA)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
-            down_reg  = rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"log2FoldChange"]<0)&(DESeqDataSet_Results_redOrdered[,"padj"]<opt$ALPHA)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
+        if (!is.na(opt$significant_genes)){ 
+            sig.genes = unlist(stringi::stri_split(str = opt$significant_genes,regex = ','))
+            Normalized_counts_assay = Normalized_counts_assay[sig.genes,]
+            cat(sprintf("<h3>%s</h3>", 'NOTE: Clustering Analysis is done on the user defined significant genes !!!!'))
+        }else if (!is.na(DESeqDataSet_Results)){
+            #sig.genes = rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"padj"]<FDR_PVAL_CUTOFF)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
+            up_reg    = rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"log2FoldChange"]>FC_CUTOFF_log2)&(DESeqDataSet_Results_redOrdered[,"padj"]<FDR_PVAL_CUTOFF)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
+            down_reg  = rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"log2FoldChange"]<FC_CUTOFF_log2)&(DESeqDataSet_Results_redOrdered[,"padj"]<FDR_PVAL_CUTOFF)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
+            sig.genes = c(up_reg,down_reg)
         }else{
-            sig.genes=rownames(countData)
+            sig.genes = rownames(countData)
+            cat(sprintf("<h3>%s</h3>", 'NOTE: Clustering Analysis is done on all input genes !!!!'))
         }
 
         if (!is.na(opt$X_AXIS)){
@@ -1086,10 +1541,35 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                 }else{
                     GROUP=opt$GROUP
                 }
-
+                
+                if (is.na(opt$SPLIT_BY)){
+                    if (!is.na(opt$CONTRAST)){
+                        if (opt$SPLIT_BY_CONTRAST){
+                            contrast_list_split = unlist(stringi::stri_split(str =  opt$CONTRAST,regex = ','))
+                            if (length(contrast_list_split)==3){
+                                colData = Original_colData[(Original_colData[contrast_list_split[1]]==contrast_list_split[2]) | (Original_colData[contrast_list_split[1]]==contrast_list_split[3]),]
+                                
+                                if (length(unique(colData[,X_AXIS]))==1){
+                                    if (length(unique(colData[,GROUP]))>1){
+                                        temp_X_AXIS = X_AXIS
+                                        X_AXIS      = GROUP
+                                        GROUP       = temp_X_AXIS
+                                        cat(sprintf("<h4>%s%s%s%s%s</h4>",
+                                                    'NOTE: Since there is only one group in "',
+                                                    X_AXIS,
+                                                    '" the X Axis will be replace with the grouping category "',
+                                                    GROUP,
+                                                    '"'))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
                 if (X_AXIS!=GROUP){
                     if (is.na(opt$SPLIT_BY)){
-                        Normalized_counts_Annotated=merge(colData[c(X_AXIS,GROUP)],t(assay(Normalized_counts)) ,by="row.names",sort=F)
+                        Normalized_counts_Annotated=merge(colData[c(X_AXIS,GROUP)],t(Normalized_counts_assay),all.x = T ,by="row.names",sort=F)
                         SPLIT_BY=opt$SPLIT_BY
                         Normalized_counts_Annotated_mean=aggregate.data.frame(x = Normalized_counts_Annotated,by = c(Normalized_counts_Annotated[GROUP],Normalized_counts_Annotated[X_AXIS]),FUN = mean)
                         rownames(Normalized_counts_Annotated_mean)=paste(unlist(Normalized_counts_Annotated_mean[GROUP]),unlist(Normalized_counts_Annotated_mean[X_AXIS]))
@@ -1108,7 +1588,7 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                         Heatmap_Normalized_counts_Annotated[unique(c(X_AXIS,GROUP))]=NULL
 
                     }else{
-                        Normalized_counts_Annotated=merge(colData[unique(c(X_AXIS,GROUP,opt$SPLIT_BY))],t(assay(Normalized_counts)) ,by="row.names",sort=F)
+                        Normalized_counts_Annotated=merge(colData[unique(c(X_AXIS,GROUP,opt$SPLIT_BY))],t(Normalized_counts_assay),all.x = T ,by="row.names",sort=F)
                         SPLIT_BY=unlist(as.list(unique(Normalized_counts_Annotated[opt$SPLIT_BY])))
                         Normalized_counts_Annotated_mean=aggregate.data.frame(x = Normalized_counts_Annotated,by = c(Normalized_counts_Annotated[GROUP],Normalized_counts_Annotated[X_AXIS]),FUN = mean)
                         rownames(Normalized_counts_Annotated_mean)=paste(unlist(Normalized_counts_Annotated_mean[GROUP]),unlist(Normalized_counts_Annotated_mean[X_AXIS]))
@@ -1130,7 +1610,7 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
 
                 }else{
                     if (is.na(opt$SPLIT_BY)){
-                        Normalized_counts_Annotated=merge(colData[c(X_AXIS)],t(assay(Normalized_counts)),by="row.names",sort=F)
+                        Normalized_counts_Annotated=merge(colData[c(X_AXIS)],t(Normalized_counts_assay),all.x = T,by="row.names",sort=F)
                         SPLIT_BY=opt$SPLIT_BY
                         Normalized_counts_Annotated_mean=aggregate.data.frame(x = Normalized_counts_Annotated,by = Normalized_counts_Annotated[X_AXIS],FUN = mean)
                         rownames(Normalized_counts_Annotated_mean)=unlist(Normalized_counts_Annotated_mean[X_AXIS])
@@ -1149,7 +1629,7 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
 
                       
                     }else{
-                        Normalized_counts_Annotated=merge(colData[unique(c(X_AXIS,opt$SPLIT_BY))],t(assay(Normalized_counts)),by="row.names",sort=F)
+                        Normalized_counts_Annotated=merge(colData[unique(c(X_AXIS,opt$SPLIT_BY))],t(Normalized_counts_assay),all.x = T,by="row.names",sort=F)
                         SPLIT_BY=unlist(as.list(unique(Normalized_counts_Annotated[opt$SPLIT_BY])))
                         Normalized_counts_Annotated_mean=aggregate.data.frame(x = Normalized_counts_Annotated,by = Normalized_counts_Annotated[X_AXIS],FUN = mean)
                         rownames(Normalized_counts_Annotated_mean)=unlist(Normalized_counts_Annotated_mean[X_AXIS])
@@ -1195,44 +1675,77 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                       SPLIT_Normalized_counts_Annotated_mean=SPLIT_Normalized_counts_Annotated_mean[!(row.names(SPLIT_Normalized_counts_Annotated_mean)  %in% no_var),]
                     }
 
-
+                    
+                    
                     if (opt$stand){
-                      SPLIT_Normalized_counts_Annotated_mean=t(scale(t(SPLIT_Normalized_counts_Annotated_mean)))
+                      SPLIT_Normalized_counts_Annotated_mean = t(scale(t(SPLIT_Normalized_counts_Annotated_mean)))
+                      SPLIT_Normalized_counts_Annotated_mean = apply(SPLIT_Normalized_counts_Annotated_mean,
+                                                                     MARGIN = c(1,2),
+                                                                     FUN = function(x) round(x,digits = 5))
+                    }
+                    if (sum(duplicated(SPLIT_Normalized_counts_Annotated_mean)==F)>1){
+                        if (nrow(SPLIT_Normalized_counts_Annotated_mean)>2) {
+                           
+                            
+                            if (nrow(SPLIT_Normalized_counts_Annotated_mean)<=opt$k.max) {
+                                k.max=nrow(SPLIT_Normalized_counts_Annotated_mean)-1
+                            }else{
+                                k.max=opt$k.max
+                            }
+                            if ((opt$FUNcluster=='click')&(!is.na(opt$CLICK_PATH))){
+                                clusters = Run_click(mat =as.matrix(SPLIT_Normalized_counts_Annotated_mean),click_path = opt$CLICK_PATH,outDir = opt$outDir,HOMOGENEITY = opt$CLICK_HOMOGENEITY)
+                            }else{
+                                if (opt$Mclust){
+                                    Fit_Mclust <- Mclust( as.matrix(SPLIT_Normalized_counts_Annotated_mean) ,G=1:k.max,modelNames = mclust.options("emModelNames"))
+                                    Number_Of_Clusters=Fit_Mclust$G
+                                    Clustering <- eclust(as.matrix(SPLIT_Normalized_counts_Annotated_mean),
+                                                       stand =F, 
+                                                       FUNcluster= opt$FUNcluster,
+                                                       hc_metric =opt$hc_metric, 
+                                                       graph = FALSE,
+                                                       hc_method = opt$hc_method, 
+                                                       k=Number_Of_Clusters ) 
+                                    clusters=Clustering$cluster
+                                }else{
+
+                                    Clustering <- eclust(as.matrix(SPLIT_Normalized_counts_Annotated_mean),stand =F,
+                                                       FUNcluster= opt$FUNcluster,
+                                                       hc_metric =opt$hc_metric,
+                                                       graph = FALSE,
+                                                       hc_method = opt$hc_method,
+                                                       k.max =  k.max,
+                                                       nboot = opt$nboot,
+                                                       gap_maxSE = list(method= "Tibs2001SEmax", SE.factor = 1) )
+                                    clusters=Clustering$cluster
+                                }
+                            }
+                        }else if (nrow(SPLIT_Normalized_counts_Annotated_mean)==1){
+                            clusters=c(1)
+                            names(clusters)=rownames((SPLIT_Normalized_counts_Annotated_mean))
+                        }else if (nrow(SPLIT_Normalized_counts_Annotated_mean)==2){
+                            Clustering <- eclust(as.matrix(SPLIT_Normalized_counts_Annotated_mean),stand = F,
+                                                       FUNcluster= 'kmeans',
+                                                       graph = FALSE,
+                                                       k.max = 2,
+                                                       nboot = opt$nboot,
+                                                       gap_maxSE = list(method= "Tibs2001SEmax", SE.factor = 1) )
+                            clusters=Clustering$cluster
+                            cat(sprintf("<h4>%s</h4>",'Since only 2 significant genes were detected, the clustering was performed using the kmeans method'))
+                            
+                        }else{
+                            clusters=c()
+                        }
+                    }else{
+                        clusters=rep(1,nrow(SPLIT_Normalized_counts_Annotated_mean) )
+                        names(clusters)=rownames((SPLIT_Normalized_counts_Annotated_mean))
                     }
                     
-                    if (nrow(SPLIT_Normalized_counts_Annotated_mean)<=opt$k.max) {
-                        opt$k.max=nrow(SPLIT_Normalized_counts_Annotated_mean)-1
-                    }
-                    if ((opt$FUNcluster=='click')&(!is.na(opt$CLICK_PATH))){
-                        clusters = run_click(mat =as.matrix(SPLIT_Normalized_counts_Annotated_mean),click_path = opt$CLICK_PATH,outDir = opt$outDir,HOMOGENEITY = opt$CLICK_HOMOGENEITY)
-                    }else{
-                        if (opt$Mclust){
-                            Fit_Mclust <- Mclust( as.matrix(SPLIT_Normalized_counts_Annotated_mean) ,G=1:opt$k.max,modelNames = mclust.options("emModelNames"))
-                            Number_Of_Clusters=Fit_Mclust$G
-                            Clustering <- eclust(as.matrix(SPLIT_Normalized_counts_Annotated_mean),
-                                               stand =F, 
-                                               FUNcluster= opt$FUNcluster,
-                                               hc_metric =opt$hc_metric, 
-                                               graph = FALSE,
-                                               hc_method = opt$hc_method, 
-                                               k=Number_Of_Clusters ) 
-                            clusters=Clustering$cluster
-                        }else{
-
-                            Clustering <- eclust(as.matrix(SPLIT_Normalized_counts_Annotated_mean),stand =F,
-                                               FUNcluster= opt$FUNcluster,
-                                               hc_metric =opt$hc_metric,
-                                               graph = FALSE,
-                                               hc_method = opt$hc_method,
-                                               k.max =  opt$k.max,
-                                               nboot = opt$nboot,
-                                               gap_maxSE = list(method= "Tibs2001SEmax", SE.factor = 1) )
-                            clusters=Clustering$cluster
-                        }
-                    }
-
                     if (length(no_var)>0){
-                      temp=rep(max(clusters)+1,length(no_var) )
+                      if (length(clusters)>0){
+                        temp=rep(max(clusters)+1,length(no_var) )
+                      }else{
+                        temp=rep(1,length(no_var) )
+                      }
                       names(temp)=no_var
                       clusters=c(clusters,temp)
                     }
@@ -1242,6 +1755,7 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                     }else{
                       hc_metric=opt$hc_metric
                     }
+                    
                     
                     New_clusters=c()
                     for (num in sort(unique(clusters))){
@@ -1262,11 +1776,14 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                                                 cluster_cols = F,silent = T)
                             }
                             New_clusters=c(New_clusters,clusters[heat_map$tree_row$labels[heat_map$tree_row$order]])
+                        }else{
+                            New_clusters=c(New_clusters,clusters[Genes])
                         }
                     }
 
                     clusters=New_clusters
-
+                    
+                    
                     intgroup=c(opt$GROUP,opt$X_AXIS)
                     intgroup=intgroup[!is.na(intgroup)]
                     clusters_plots = plot_clusters(clusters,SPLIT_Normalized_counts_Annotated,c(GROUP,X_AXIS),c(GROUP,X_AXIS,"Normalized counts"),X_AXIS_ORDER=unique(colData[X_AXIS]))
@@ -1322,7 +1839,7 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                                     quote = F,
                                     sep = "\t")
                         
-          
+                        
                         
                         if (X_AXIS!=GROUP){
                             split=sapply(X =colnames(mat),FUN = function(x) unlist(strsplit(x =x,split = " "))[1])
@@ -1407,13 +1924,19 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
 
                         mat2=t(scale(t(mat)))
                         mat3=cbind(clusters[rownames(mat2)],mat2)
-                        mat3=cbind(mat3,DESeqDataSet_Results_redOrdered[rownames(mat3),c('log2FoldChange',"padj")])
+                        if (!is.na(DESeqDataSet_Results)){
+                            mat3=cbind(mat3,DESeqDataSet_Results_redOrdered[rownames(mat3),c('log2FoldChange',"padj")])
+                        }
                         if (!is.na(Annotation)) {
                           mat3=merge.data.frame(mat3,Annotation,by="row.names",all.x = T,sort = F)
                           rownames(mat3)=mat3$Row.names
                           mat3$Row.names=NULL
                         }
                         colnames(mat3)[colnames(mat3)=="V1"]="Clusters"
+                        colnames(mat3)[colnames(mat3)==""]="Clusters"
+                        # col_names=colnames(mat3)
+                        # col_names[col_names=="V1"]="Clusters"
+                        # colnames(mat3)=col_names
                         mat3=mat3[rownames(mat2),]
                         write.csv(x = mat3,
                                   file = file.path(opt$outDir, paste('Clustering_heatmap_',SPLIT,'_',Heatmap_Type,".csv",sep="") ),
@@ -1663,5 +2186,8 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
         }else{
             cat('The "X_AXIS" parameter must be given for clustering analysis')
         }
+ save.image(file.path(opt$outDir,'Session.RSession'))
+ colData   = Original_colData   
+ countData = Original_countData 
 
 ```

@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*-
+
 """ 
 ``cgMLST_and_MLST_typing``
 ---------------------------

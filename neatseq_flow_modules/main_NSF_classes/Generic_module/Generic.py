@@ -72,6 +72,8 @@ Lines for parameter file
         shell:                      # Type of shell [csh OR bash]. bash is the default. only bash can be used in conda environment  
         arg_separator:              # The separator between the arguments and values [The default is space].
         inputs_last:                # The inputs arguments will be at the end of the command. [The default is inputs arguments at the beginning of the command]
+        use_base_dir:               # Use the base step directory as the output for this step, it is possible to specify the base to use.
+        cd:                         # Change current working directory to the output location.
         inputs:                     # The inputs for this module
             STR:                    # Input argument, e.g. -i, --input [could be also 'empty1', 'empty2'.. for no input argument string]
                 scope:              # The scope of this input argument could be sample/project
@@ -119,8 +121,8 @@ Lines for parameter file
 import os
 import sys
 import re
-from neatseq_flow.PLC_step import Step,AssertionExcept
 from functools import reduce
+from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
 __author__ = "Liron Levin"
@@ -210,7 +212,22 @@ class Step_Generic(Step):
                 self.step_sample_initiation_bysample()
         else:
             self.step_sample_initiation_bysample()
-        pass
+        
+        
+        
+        if "use_base_dir" in list(self.params.keys()):
+            if self.params['use_base_dir']==None:
+                self.base_step_to_use = self.get_base_step_list()[0]
+            else:
+                depend_dir_dic = get_base_dirs_dict(self)
+                print((list(depend_dir_dic.keys())))
+                if self.params['use_base_dir'] in list(depend_dir_dic.keys()):
+                    self.base_step_to_use = depend_dir_dic[self.params['use_base_dir']]
+                else:
+                    raise AssertionExcept("The step name %s is not one of the previous steps of the %%s step" % self.params['use_base_dir'] % self.step )
+
+        
+    pass
         
     def step_sample_initiation_bysample(self):
         """ A place to do initiation stages following setting of sample_data
@@ -367,12 +384,23 @@ class Step_Generic(Step):
             inputs_script = ""
             outputs_script = ""
             
-            # Make a dir for the current sample:
-            sample_dir = self.make_folder_for_sample(sample)
             
+            
+            
+            if 'use_base_dir' in list(self.params.keys()):
+                sample_dir    = self.base_step_to_use.make_folder_for_sample(sample)
+                self.base_dir = self.base_step_to_use.base_dir
+            else:
+                # Make a dir for the current sample:
+                sample_dir = self.make_folder_for_sample(sample)
+                
+                
             # This line should be left before every new script. It sees to local issues.
             # Use the dir it returns as the base_dir for this step.
             use_dir = self.local_start(sample_dir)
+            
+            if 'cd' in list(self.params.keys()):
+                self.script += "cd %s \n\n" % use_dir
             
             # Add the script constant args 
             self.script += self.get_script_const()
@@ -406,10 +434,9 @@ class Step_Generic(Step):
                         if len(File_Type)>0:
                             File_Type+=sep
                         if get_File_Type_data(self.params["inputs"],[inputs,"scope"])=="project":
-                            File_Type+=os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  ,prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix)
+                            File_Type += os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot]) , (prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).lstrip(os.sep) )
                         else:
-                            File_Type+=os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]    )  ,prefix + os.path.basename(     inputs_sample_data[sample][File_Type_slot]     ) + suffix)
-                            
+                            File_Type += os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]   ) , (prefix + os.path.basename( inputs_sample_data[sample][File_Type_slot]       ) + suffix).lstrip(os.sep) )
                     if inputs.startswith("Empty".lower()):
                         inputs_script +="%s   \\\n\t"    % File_Type
                     else:
@@ -441,11 +468,11 @@ class Step_Generic(Step):
                         
                         for File_Type_slot in str(get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])).replace("'",'').replace(" ",'').replace('[','').replace(']','').split(','):
                             if get_File_Type_data(self.params["inputs"],[inputs,"scope"])=="project":
-                                self.project_del_script.append("rm -rf %s   \n\n" % os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  ,prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix))
-                                self.project_del_script.append("echo > %s_DELETED \n\n" % os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  ,prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).rstrip(os.path.sep))
+                                self.project_del_script.append("rm -rf %s   \n\n"       % os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  , ( prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).lstrip(os.sep)) )
+                                self.project_del_script.append("echo > %s_DELETED \n\n" % os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  , ( prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).lstrip(os.sep)).rstrip(os.sep) )
                             else:
-                                del_script +="rm -rf %s   \n\n" % os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]    )  ,prefix + os.path.basename(     inputs_sample_data[sample][File_Type_slot]     ) + suffix)
-                                del_script +="echo > %s_DELETED  \n\n" % os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]    )  ,prefix + os.path.basename(     inputs_sample_data[sample][File_Type_slot]     ) + suffix).rstrip(os.path.sep)
+                                del_script +="rm -rf %s   \n\n"        % os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]    )  , ( prefix + os.path.basename(     inputs_sample_data[sample][File_Type_slot]     ) + suffix).lstrip(os.sep) )
+                                del_script +="echo > %s_DELETED  \n\n" % os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]    )  , ( prefix + os.path.basename(     inputs_sample_data[sample][File_Type_slot]     ) + suffix).lstrip(os.sep) ).rstrip(os.sep)
                 
             if len(get_File_Type_data(self.params,["outputs"]))>0:
                 # Add output files
@@ -456,10 +483,13 @@ class Step_Generic(Step):
                         suffix=get_File_Type_data(self.params["outputs"],[outputs,"suffix"])
                         if "use_base_name" not in list(self.params["outputs"][outputs].keys()):                            
                             output_filename = "".join([use_dir ,prefix, sample , suffix])    
+                            real_filename   = "".join([sample_dir ,prefix, sample , suffix]) 
                         else:
                             output_filename = "".join([prefix, sample , suffix])
+                            real_filename   = "".join([prefix, sample , suffix])
                     else:
                         output_filename = "".join([use_dir ,get_File_Type_data(self.params["outputs"],[outputs,"constant_file_name"])])
+                        real_filename   = "".join([sample_dir ,get_File_Type_data(self.params["outputs"],[outputs,"constant_file_name"])])
                     File_Type=""
                     if outputs.startswith("No_run")==False:
                         if outputs.startswith("Empty".lower()):
@@ -473,7 +503,7 @@ class Step_Generic(Step):
                     if get_File_Type_data(self.params["outputs"],[outputs,"File_Type"],None)!=None:
                         File_Type=get_File_Type_data(self.params["outputs"],[outputs,"File_Type"])
                         # Save output file location in File_Type
-                        self.sample_data[sample][File_Type]=(sample_dir + os.path.basename(output_filename))
+                        self.sample_data[sample][File_Type]=(real_filename)
                         # Stamp the output file
                         self.stamp_file(self.sample_data[sample][File_Type])
             
@@ -510,11 +540,18 @@ class Step_Generic(Step):
         inputs_script = ""
         outputs_script = ""
         
+        
+        if 'use_base_dir' in list(self.params.keys()):
+            self.base_dir = self.base_step_to_use.base_dir
+        
         # This line should be left before every new script. It sees to local issues.
         # Use the dir it returns as the base_dir for this step.
         use_dir = self.local_start(self.base_dir)
         
-         # Add the script constant args 
+        if 'cd' in list(self.params.keys()):
+            self.script += "cd %s \n\n" % use_dir
+        
+        # Add the script constant args 
         self.script += self.get_script_const()
         # Adds inputs files
         if len(get_File_Type_data(self.params,["inputs"]))>0:
@@ -548,12 +585,12 @@ class Step_Generic(Step):
                         if len(File_Type)>0:
                             File_Type+=sep
                         
-                        File_Type+=os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  ,prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix)
+                        File_Type+=os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  , ( prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).lstrip(os.sep) )
                 else:
                     for sample in self.sample_data["samples"]:
                         if len(File_Type)>0:
                             File_Type+=sep
-                        File_Type+=os.path.join(os.path.dirname(     inputs_sample_data[sample][get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])]     )  ,prefix + os.path.basename(    inputs_sample_data[sample][get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])]     ) + suffix)
+                        File_Type+=os.path.join(os.path.dirname(     inputs_sample_data[sample][get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])]     )  , ( prefix + os.path.basename(    inputs_sample_data[sample][get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])]     ) + suffix).lstrip(os.sep) )
                 
                 if inputs.startswith("Empty".lower()):
                     inputs_script +="%s   \\\n\t"    % File_Type
@@ -586,12 +623,12 @@ class Step_Generic(Step):
                     
                     for File_Type_slot in str(get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])).replace("'",'').replace(" ",'').replace('[','').replace(']','').split(','):
                         if get_File_Type_data(self.params["inputs"],[inputs,"scope"])=="project":
-                            self.project_del_script.append("rm -rf %s   \n\n" % os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  ,prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix) )
-                            self.project_del_script.append("echo > %s_DELETED \n\n" % os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  ,prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).rstrip(os.path.sep))
+                            self.project_del_script.append("rm -rf %s   \n\n"       % os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  , ( prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).rstrip(os.sep) )                    )
+                            self.project_del_script.append("echo > %s_DELETED \n\n" % os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  , ( prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).rstrip(os.sep) ).rstrip(os.path.sep))
                         else:
                             for sample in self.sample_data["samples"]:
-                                del_script +="rm -rf %s   \n\n" % os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]    )  ,prefix + os.path.basename(     inputs_sample_data[sample][File_Type_slot]     ) + suffix)
-                                del_script +="echo > %s_DELETED  \n\n" % os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]    )  ,prefix + os.path.basename(     inputs_sample_data[sample][File_Type_slot]     ) + suffix).rstrip(os.path.sep)
+                                del_script +="rm -rf %s   \n\n"        % os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]    )  , ( prefix + os.path.basename(     inputs_sample_data[sample][File_Type_slot]     ) + suffix).rstrip(os.sep)  )
+                                del_script +="echo > %s_DELETED  \n\n" % os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]    )  , ( prefix + os.path.basename(     inputs_sample_data[sample][File_Type_slot]     ) + suffix).lstrip(os.sep)  ).rstrip(os.path.sep)
 
         if len(get_File_Type_data(self.params,["outputs"]))>0:
             # Add output files
@@ -602,10 +639,13 @@ class Step_Generic(Step):
                     suffix=get_File_Type_data(self.params["outputs"],[outputs,"suffix"])
                     if "use_base_name" not in list(self.params["outputs"][outputs].keys()):                       
                         output_filename = "".join([use_dir ,prefix, self.sample_data["Title"] , suffix])
+                        real_filename   = "".join([self.base_dir ,prefix, self.sample_data["Title"] , suffix])
                     else:
                         output_filename = "".join([prefix, self.sample_data["Title"] , suffix])
+                        real_filename   = "".join([prefix, self.sample_data["Title"] , suffix])
                 else:
                     output_filename = "".join([use_dir ,get_File_Type_data(self.params["outputs"],[outputs,"constant_file_name"])])            
+                    real_filename   = "".join([self.base_dir ,get_File_Type_data(self.params["outputs"],[outputs,"constant_file_name"])])    
                 if outputs.startswith("No_run")==False:
                     if outputs.startswith("Empty".lower()):
                         outputs_script +="%s   \\\n\t"    % output_filename
@@ -618,7 +658,7 @@ class Step_Generic(Step):
                 if get_File_Type_data(self.params["outputs"],[outputs,"File_Type"],None)!=None:
                     File_Type=get_File_Type_data(self.params["outputs"],[outputs,"File_Type"])
                     # Save output file location in File_Type
-                    self.sample_data["project_data"][File_Type] = (self.base_dir + os.path.basename(output_filename))
+                    self.sample_data["project_data"][File_Type] = (real_filename)
                     # Stamp the output file
                     self.stamp_file(self.sample_data["project_data"][File_Type])
                     
@@ -652,3 +692,17 @@ def get_File_Type_data(dic,category,default=""):
             return res
     except:
         return default
+        
+        
+def get_base_dirs_dict(step,depend_dir_dic={}):
+    """ Recursion. Beware
+    Returns list of base dirs of the base steps of 'step'
+    """
+
+    
+    if step.base_step_list:
+        for base_step in step.base_step_list:
+            depend_dir_dic[base_step.name]=base_step
+            get_base_dirs_dict(base_step,depend_dir_dic)
+            
+    return depend_dir_dic

@@ -85,11 +85,18 @@ Lines for parameter file
             --NORMALIZATION_TYPE:           # The DeSeq2 Normalization Type To Use [VSD , RLOG] The Default is VSD
             --BLIND_NORM:                   # Perform Blind Normalization
             --DESIGN:                       # The Main DeSeq2 Design [ ~ Group ]
+            --removeBatchEffect             # Will Remove Batch Effect from the Normalized counts data up to 2 
+                                            # [using the limma package and only one using the sva package]
+                                            # Batch Effect fields [from the Sample Data ] separated by , 
+            --removeBatchEffect_method      # The method to Remove Batch Effect from the Normalized counts data using the limma or sva packages [sva is the default]
             --LRT:                          # The LRT DeSeq2 Design
             --ALPHA:                        # Significant Level Cutoff, The Default is 0.05
+            --Post_statistical_ALPHA        # Post Statistical P-value Filtering
             --FoldChange:                   # Fold change Cutoff [testing for fold changes greater in absolute value], The Default is 1
+            --Post_statistical_FoldChange   # Post Statistical Fold change Filtering
             --CONTRAST:                     # The DeSeq Contrast Design ["Group,Treatment,Control"] [Not For LTR] .
                                             # It is possible to define more then one contrast Design ["Group,Treatment1,Control1|Group,Treatment2,Control2|..."]
+            --SPLIT_BY_CONTRAST             # Only use Samples found in the relevant contrast for Clustering and Enrichment Analysis
             --modelMatrixType:              # How the DeSeq model matrix of the GLM formula is formed [standard or expanded] ,The Default is standard
             --GENES_PLOT:                   # Genes Id To Plot count Data [separated by ','] 
             --X_AXIS:                       # The Filed In the Sample Data To Use as X Axis
@@ -109,6 +116,8 @@ Lines for parameter file
             --PCA_SIZE:                     # The Filed In the Sample Data To Determine Size In The PCA Plot. The default is Library Size
             --Enriched_terms_overlap:       # Test for genes overlap in enriched terms
             --USE_INPUT_GENES_AS_BACKGROUND # Use The input Genes as the Background for Enrichment Analysis
+            --only_clustering               # Don't Perform Differential Analysis!!!
+            --significant_genes             # Use these genes as the set of significant genes [a comma separated list]
             
 """
 import os

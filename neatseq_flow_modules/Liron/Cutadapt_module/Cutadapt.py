@@ -124,96 +124,94 @@ class Step_Cutadapt(Step):
             # Use the dir it returns as the base_dir for this step.
             use_dir = self.local_start(self.base_dir)
             
-            if "fastq.F" in self.sample_data[sample] and "fastq.R" in self.sample_data[sample]:
-            # for direction in self.sample_data[sample]["type"]:    # Iterate over Forward and single, if they exist in sample_data
+            for direction in self.sample_data[sample]["type"]:    # Iterate over Forward and single, if they exist in sample_data
 
 
-                # if direction == "PE":
-                # Here we do the script constructing for paired end
-                # raise AssertionExcept(self.sample_data)
-                # Define target filenames:
-                basename_F = os.path.basename(self.sample_data[sample]["fastq.F"])
-                basename_R = os.path.basename(self.sample_data[sample]["fastq.R"])
+                if direction == "PE":
+                    # Here we do the script constructing for paired end
+                    # raise AssertionExcept(self.sample_data)
+                    # Define target filenames:
+                    basename_F = os.path.basename(self.sample_data[sample]["fastq.F"])
+                    basename_R = os.path.basename(self.sample_data[sample]["fastq.R"])
+                    # TODO: Remove ".fq" in middle of file name
+                    # Setting filenames before adding output arguments to script
+                    if "Demultiplexing" in list(self.params.keys()):
+                        fq_fn_F = use_dir + "".join([re.sub("\.\w+$","",basename_F ), "{name}_cutadapt_1.fq"])  #The filename containing the end result. Used both in script and to set reads in $sample_params    
+                        fq_fn_R = use_dir + "".join([re.sub("\.\w+$","",basename_R ), "{name}_cutadapt_2.fq"])  #The filename containing the end result. Used both in script and to set reads in $sample_params
+                    else:
+                        fq_fn_F = use_dir + "".join([re.sub("\.\w+$","",basename_F ), "_cutadapt_1.fq"])  #The filename containing the end result. Used both in script and to set reads in $sample_params    
+                        fq_fn_R = use_dir + "".join([re.sub("\.\w+$","",basename_R), "_cutadapt_2.fq"])  #The filename containing the end result. Used both in script and to set reads in $sample_params
+                    fq_fn_F_bn = os.path.basename(fq_fn_F)
+                    fq_fn_R_bn = os.path.basename(fq_fn_R)
 
-                # Setting filenames before adding output arguments to script
-                if "Demultiplexing" in list(self.params.keys()):
-                    fq_fn_F = use_dir + "".join([re.sub("\.\w+$","",basename_F ), "{name}_cutadapt_1.fq"])  #The filename containing the end result. Used both in script and to set reads in $sample_params
-                    fq_fn_R = use_dir + "".join([re.sub("\.\w+$","",basename_R ), "{name}_cutadapt_2.fq"])  #The filename containing the end result. Used both in script and to set reads in $sample_params
-                else:
-                    fq_fn_F = use_dir + "".join([re.sub("\.\w+$","",basename_F ), "_cutadapt_1.fq"])  #The filename containing the end result. Used both in script and to set reads in $sample_params
-                    fq_fn_R = use_dir + "".join([re.sub("\.\w+$","",basename_R), "_cutadapt_2.fq"])  #The filename containing the end result. Used both in script and to set reads in $sample_params
-                fq_fn_F_bn = os.path.basename(fq_fn_F)
-                fq_fn_R_bn = os.path.basename(fq_fn_R)
+                    if ("paired" in list(self.params.keys()))&("Demultiplexing" not in list(self.params.keys())):
+                        # Add 'env' and 'script_path':
+                        self.script += "("+self.get_script_env_path()
+                        for key in list(original_self_params_redir_params.keys()):
+                            if original_self_params_redir_params[key].startswith("@"):
+                                self.params["redir_params"][key]=os.path.join(use_dir,original_self_params_redir_params[key].replace("@",""))
+                        self.script += self.get_redir_parameters_script()
+                        self.script += "-o %s \\\n\t" % fq_fn_F 
+                        self.script += "-p %s \\\n\t" % fq_fn_R
+                        self.script += "%s \\\n\t" % self.sample_data[sample]["fastq.F"]
+                        self.script += "%s \\\n\t"   % self.sample_data[sample]["fastq.R"]
+                        self.script += "> %s.log ) >& %%s.out\n\n"  % os.sep.join([use_dir.rstrip(os.sep),sample+"_cutadapt"]) \
+                                                                    % os.sep.join([use_dir.rstrip(os.sep),sample+"_cutadapt"])
+                    else:
+                        for files_types in ["fastq.F","fastq.R"]:
+                            # Add 'env' and 'script_path':
+                            self.script +="("+ self.get_script_env_path()
+                            for key in list(original_self_params_redir_params.keys()):
+                                if original_self_params_redir_params[key].startswith("@"):
+                                    self.params["redir_params"][key]=os.path.join(use_dir,original_self_params_redir_params[key].replace("@",files_types+"_"))
 
-                if ("paired" in list(self.params.keys()))&("Demultiplexing" not in list(self.params.keys())):
+                            self.script += self.get_redir_parameters_script()
+                            if files_types=="fastq.F":
+                                self.script += "-o %s \\\n\t" % fq_fn_F
+                                self.script += "%s \\\n\t" % self.sample_data[sample][files_types]
+                                self.script += "> %s.log ) >& %%s.out\n\n"  % fq_fn_F \
+                                                                            % fq_fn_F                            
+                            else:
+                                self.script += "-o %s \\\n\t" % fq_fn_R
+                                self.script += "%s \\\n\t" % self.sample_data[sample][files_types]
+                                self.script += "> %s.log ) >& %%s.out\n\n"  % fq_fn_R \
+                                                                            % fq_fn_R                            
+                elif direction=="SE":
+                    # Here we do the script constructing for single end
+                    # Define target filenames:
+                    basename_S = os.path.basename(self.sample_data[sample]["fastq.S"])
+                    if "Demultiplexing" in list(self.params.keys()):
+                        fq_fn_S = use_dir + "".join([re.sub("\.\w+$","",basename_S ), "{name}_cutadapt_trimmed.fq"])  #The filename containing the end result. Used both in script and to set reads in $sample_params    
+                    else:
+                        fq_fn_S = use_dir + "".join([re.sub("\.\w+$","",basename_S ), "_cutadapt_trimmed.fq"])          #The filename containing the end result. Used both in script and to set reads in $sample_params
+                    fq_fn_S_bn = os.path.basename(fq_fn_S);
                     # Add 'env' and 'script_path':
                     self.script += "("+self.get_script_env_path()
                     for key in list(original_self_params_redir_params.keys()):
-                        if isinstance(original_self_params_redir_params[key], str) and \
-                                original_self_params_redir_params[key].startswith("@"):
+                        if original_self_params_redir_params[key].startswith("@"):
                             self.params["redir_params"][key]=os.path.join(use_dir,original_self_params_redir_params[key].replace("@",""))
                     self.script += self.get_redir_parameters_script()
-                    self.script += "-o %s \\\n\t" % fq_fn_F
-                    self.script += "-p %s \\\n\t" % fq_fn_R
-                    self.script += "%s \\\n\t" % self.sample_data[sample]["fastq.F"]
-                    self.script += "%s \\\n\t"   % self.sample_data[sample]["fastq.R"]
-                    self.script += "> %s.log ) >& %%s.out\n\n"  % os.sep.join([use_dir.rstrip(os.sep),sample+"_cutadapt"]) \
-                                                                % os.sep.join([use_dir.rstrip(os.sep),sample+"_cutadapt"])
-                else:
-                    for files_types in ["fastq.F","fastq.R"]:
-                        # Add 'env' and 'script_path':
-                        self.script +="("+ self.get_script_env_path()
-                        for key in list(original_self_params_redir_params.keys()):
-                            if isinstance(original_self_params_redir_params[key], str) and \
-                                    original_self_params_redir_params[key].startswith("@"):
-                                self.params["redir_params"][key]=os.path.join(use_dir,original_self_params_redir_params[key].replace("@",files_types+"_"))
+                    self.script += "-o %s \\\n\t" %  fq_fn_S
+                    self.script += "%s \\\n\t" % self.sample_data[sample]["fastq.S"]
+                    self.script += "> %s.log ) >& %%s.out\n\n"  % fq_fn_S \
+                                                                % fq_fn_S
 
-                        self.script += self.get_redir_parameters_script()
-                        if files_types=="fastq.F":
-                            self.script += "-o %s \\\n\t" % fq_fn_F
-                            self.script += "%s \\\n\t" % self.sample_data[sample][files_types]
-                            self.script += "> %s.log ) >& %%s.out\n\n"  % fq_fn_F \
-                                                                        % fq_fn_F
-                        else:
-                            self.script += "-o %s \\\n\t" % fq_fn_R
-                            self.script += "%s \\\n\t" % self.sample_data[sample][files_types]
-                            self.script += "> %s.log ) >& %%s.out\n\n"  % fq_fn_R \
-                                                                        % fq_fn_R
-            elif "fastq.S" in self.sample_data[sample]:
-                # elif direction=="SE":
-                # Here we do the script constructing for single end
-                # Define target filenames:
-                basename_S = os.path.basename(self.sample_data[sample]["fastq.S"])
-                if "Demultiplexing" in list(self.params.keys()):
-                    fq_fn_S = use_dir + "".join([re.sub("\.\w+$","",basename_S ), "{name}_cutadapt_trimmed.fq"])  #The filename containing the end result. Used both in script and to set reads in $sample_params
-                else:
-                    fq_fn_S = use_dir + "".join([re.sub("\.\w+$","",basename_S ), "_cutadapt_trimmed.fq"])          #The filename containing the end result. Used both in script and to set reads in $sample_params
-                fq_fn_S_bn = os.path.basename(fq_fn_S);
-                # Add 'env' and 'script_path':
-                self.script += "("+self.get_script_env_path()
-                for key in list(original_self_params_redir_params.keys()):
-                    if isinstance(original_self_params_redir_params[key], str) and \
-                            original_self_params_redir_params[key].startswith("@"):
-                        self.params["redir_params"][key]=os.path.join(use_dir,original_self_params_redir_params[key].replace("@",""))
-                self.script += self.get_redir_parameters_script()
-                self.script += "-o %s \\\n\t" %  fq_fn_S
-                self.script += "%s \\\n\t" % self.sample_data[sample]["fastq.S"]
-                self.script += "> %s.log ) >& %%s.out\n\n"  % fq_fn_S \
-                                                            % fq_fn_S
+                else: # direction=="Reverse". Ignore (included in "Forward")
+                    pass
+                    
+                    
 
-            else: # direction=="Reverse". Ignore (included in "Forward")
-                pass
+                
 
-            if "fastq.F" in self.sample_data[sample] and "fastq.R" in self.sample_data[sample]:
-
-                if "Demultiplexing" not in list(self.params.keys()):
-                    #Set current active sequence files to tagged files
-                    self.sample_data[sample]["fastq.F"] = self.base_dir + fq_fn_F_bn
-                    self.sample_data[sample]["fastq.R"] = self.base_dir + fq_fn_R_bn
-
-            elif "fastq.S" in self.sample_data[sample]:
-                if "Demultiplexing" not in list(self.params.keys()):
-                    self.sample_data[sample]["fastq.S"] = self.base_dir + fq_fn_S_bn
+                if direction == "PE":
+                    if "Demultiplexing" not in list(self.params.keys()):
+                        #Set current active sequence files to tagged files
+                        self.sample_data[sample]["fastq.F"] = self.base_dir + fq_fn_F_bn
+                        self.sample_data[sample]["fastq.R"] = self.base_dir + fq_fn_R_bn
+                    
+                elif direction == "SE":
+                    if "Demultiplexing" not in list(self.params.keys()):
+                        self.sample_data[sample]["fastq.S"] = self.base_dir + fq_fn_S_bn
                         
                     
             # Move all files from temporary local dir to permanent base_dir

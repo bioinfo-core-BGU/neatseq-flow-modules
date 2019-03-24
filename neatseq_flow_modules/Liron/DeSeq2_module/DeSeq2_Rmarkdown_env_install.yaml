@@ -1,4 +1,4 @@
-name: DeSeq2
+name: DeSeq2_Rmarkdown
 channels:
     - bioconda
     - conda-forge
@@ -23,4 +23,4 @@ dependencies:
     - r-rmarkdown=1.10
     - r-plotly=4.8.0
     - r-dt=0.4
-    - bioconductor-sva=3.28.0 
+    
