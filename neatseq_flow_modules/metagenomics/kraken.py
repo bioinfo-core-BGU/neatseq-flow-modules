@@ -108,8 +108,6 @@ class Step_kraken(Step):
         if "--db" not in list(self.params["redir_params"].keys()):
             raise AssertionExcept("--db not set.\n")
 
-            
-        
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
@@ -264,4 +262,3 @@ fi
                 index_fh.write("%s\t%s\n" % (sample,self.sample_data[sample]["kraken.report"]))
                 
         self.sample_data["project_data"]["kraken_file_index"] = self.base_dir + "kraken_files_index.txt"
-        

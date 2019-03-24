@@ -166,10 +166,7 @@ class Step_kraken2(Step):
             self.sample_data["project_data"]["krona"] = self.base_dir + "krona_report.html"
     
             self.stamp_file(self.sample_data["project_data"]["krona"])
-            
 
-        
-    
     def build_scripts(self):
         """ This is the actual script building function
             Most, if not all, editing should be done here 
@@ -213,9 +210,6 @@ class Step_kraken2(Step):
             else:
                 self.write_warning("KRAKEN on mixed PE/SE samples is not defined. Using only PE data!\n")
 
-            # self.script += self.get_script_const()
-            # self.script += "%s \\\n\t" % self.params["script_path"]
-            # self.script += self.get_redir_parameters_script()
             self.script = """
 {const}--output {out} \\
 \t--report {out}.report \\
@@ -225,7 +219,6 @@ class Step_kraken2(Step):
             """.format(out=use_dir+output_filename,
                        const=self.get_script_const(),
                        reads=reads)
-
 
             ######### Step 4, create krona report:
             if "ktImportTaxonomy" in list(self.params.keys()):
@@ -251,12 +244,9 @@ fi
             self.stamp_file(self.sample_data[sample]["kraken.report"])
             
             # Move all files from temporary local dir to permanent base_dir
-            self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
-
+            self.local_finish(use_dir,self.base_dir)
             self.create_low_level_script()
-                    
 
-                    
     def make_sample_file_index(self):
         """ Make file containing samples and target file names for use by kraken analysis R script
         """
@@ -267,4 +257,3 @@ fi
                 index_fh.write("%s\t%s\n" % (sample,self.sample_data[sample]["kraken.report"]))
                 
         self.sample_data["project_data"]["kraken_file_index"] = self.base_dir + "kraken_files_index.txt"
-        
