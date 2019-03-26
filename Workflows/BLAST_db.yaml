@@ -68,7 +68,7 @@ Step_params:
         module:             parse_blast
         base:               blst_asmbl
         script_path:        {Vars.paths.parse_blast}
-        blast_merge_path:   {Vars.paths.compare_blast_parsed_reports}
+        # blast_merge_path:   {Vars.paths.compare_blast_parsed_reports}
         scope:  sample
         redirects:
             --dbtable:      {Vars.databases.gene_list.table}
@@ -155,3 +155,50 @@ Step_params:
             --min_bitscore: 100
             --names:        '"qseqid sallseqid qlen slen qstart qend sstart send length evalue 
                             bitscore score pident qframe"'
+
+############# Trying project scope blast and parse
+    merge_fasta:
+        module:     merge_table
+        base:       merge_nucl
+        script_path:
+        scope:          project
+        type:           fasta.nucl
+        header:         0
+        
+    mkblst_nucl_project:
+        module:             makeblastdb
+        base:               merge_fasta
+        script_path:        {Vars.paths.makeblastdb}
+        scope:              project
+        qsub_params:
+            -pe:            shared 20
+        redirects:
+            -dbtype:        nucl
+            
+    blst_genes_project:
+        module:             blast_new
+        base:               mkblst_nucl_project
+        script_path:        '{Vars.paths.blast}/blastn'
+        redirects:
+            -evalue:        0.0001
+        db:                 project
+        query:              project
+        querytype:          nucl   # Use the 'nucl' output from prokka
+        dbtype:             nucl   # Use the 'nucl' output from prokka
+
+    parse_tbl_blst_project:
+        module:             parse_blast
+        base:               blst_genes_project
+        script_path:        {Vars.paths.parse_blast}
+        blast_merge_path:   {Vars.paths.compare_blast_parsed_reports}
+        scope:              project
+        extract_fasta:
+        redirects:
+            --dbtable:      {Vars.databases.gene_list.table}
+            --max_evalue:   1e-7
+            --min_bitscore: 100
+            --names:        '"qseqid sallseqid qlen slen qstart qend sstart send length evalue 
+                            bitscore score pident qframe"'
+
+        
+        
