@@ -201,7 +201,7 @@ class Step_parse_blast(Step):
             self.script += "--output %s\n\n" % os.sep.join([use_dir,output_filename])
 
             # Store BLAST result file:
-            self.sample_data[sample]["blast.parsed"] = "".join([self.base_dir, output_filename])
+            self.sample_data[sample]["blast.parsed"] = "".join([sample_dir, output_filename])
             self.sample_data[sample]["blast.parsed." + fasta2use] = self.sample_data[sample]["blast.parsed"]
             self.stamp_file(self.sample_data[sample]["blast.parsed"])
 
