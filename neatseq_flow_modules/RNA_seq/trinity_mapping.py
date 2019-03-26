@@ -208,7 +208,7 @@ class Step_trinity_mapping(Step):
 # The purpose is that the reference will not be built in the original location
 {setenv} 
 mkdir -p {dir}
-cp -rs \\
+cp -rsf \\
     {ref} \\
     {dir}
 

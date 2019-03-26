@@ -104,8 +104,8 @@ Step_params:
             --force: 
             --threads:  10
         conda:
-            path:
-            env:    jsalklkjl
+            path:   JKJLJLJL
+            env:    
 
     fqc_merge1:
         module:         fastqc_html

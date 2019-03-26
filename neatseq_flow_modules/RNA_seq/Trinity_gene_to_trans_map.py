@@ -14,7 +14,7 @@ Requires
     * ``fasta`` files in at least one of the following slots:
         
         * ``sample_data[<sample>]["fasta.nucl"]``  (if ``scope = sample``)
-        * ``sample_data["fasta.nucl"]``  (if ``scope = project``)
+        * ``sample_data["project_data"]["fasta.nucl"]``  (if ``scope = project``)
     
 Output:
 ~~~~~~~~~~~~~
@@ -22,7 +22,7 @@ Output:
     * puts gene to trans map in:
         
         * ``sample_data[<sample>]["gene_trans_map"]``  (if ``scope = sample``)
-        * ``sample_data["gene_trans_map"]``  (if ``scope = project``)
+        * ``sample_data["project_data"]["gene_trans_map"]``  (if ``scope = project``)
             
                 
 Parameters that can be set        
