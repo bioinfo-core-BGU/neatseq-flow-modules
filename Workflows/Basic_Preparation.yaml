@@ -72,7 +72,6 @@ Step_params:
             - ..guess..
         intermediate:
         tag:            basic
-        # stop_and_show:
 
     fastq_screen_alt1:
         module:         fastq_screen

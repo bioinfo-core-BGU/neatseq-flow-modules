@@ -330,8 +330,9 @@ class Step_merge(Step):
                         elif len(self.params[param]) == len(self.params["src"]):
                             pass
                         else:
-                            raise AssertionExcept("Parameter '%s' must be a single value or a list the length of "
-                                                  "'src'. Set null in places to be determined automatically.")
+                            raise AssertionExcept("Parameter '{param}' must be a single value or a list the length of "
+                                                  "'src'. Put '..guess..' in places to be determined automatically."
+                                                  .format(param=param))
                     else: # param is not a string or a list. What is it???
                         raise AssertionExcept("Unrecognized format in '%s'" % param)
                 else:

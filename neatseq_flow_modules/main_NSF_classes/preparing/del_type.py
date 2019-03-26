@@ -36,9 +36,6 @@ import sys
 import re
 from neatseq_flow.PLC_step import Step,AssertionExcept
 
-from  modules.global_defs import ZIPPED_EXTENSIONS, ARCHIVE_EXTENSIONS, KNOWN_FILE_EXTENSIONS
-
-
 
 __author__ = "Menachem Sklarz"
 __version__ = "1.6.0"
