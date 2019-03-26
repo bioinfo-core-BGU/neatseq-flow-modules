@@ -207,7 +207,7 @@ class Step_trinity_mapping(Step):
 # Creating a local sost link to the reference
 # The purpose is that the reference will not be built in the original location
 {setenv} 
-mkdir {dir}
+mkdir -p {dir}
 cp -rs \\
     {ref} \\
     {dir}

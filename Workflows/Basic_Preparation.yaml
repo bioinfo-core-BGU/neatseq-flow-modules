@@ -103,6 +103,9 @@ Step_params:
             --tag:
             --force: 
             --threads:  10
+        conda:
+            path:
+            env:    jsalklkjl
 
     fqc_merge1:
         module:         fastqc_html
