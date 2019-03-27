@@ -20,28 +20,28 @@ Requires
 * For each Sample, GFF file location in:
     * ``sample_data[<sample>]["GFF"]``
 * If there is a GFF directory in the following slot, no new GFF directory will be created and ONLY the GFF files in this directory will be analysed.
-    * ``sample_data["GFF_dir"]``
+    * ``sample_data["project_data"]["GFF_dir"]``
 * If the search_GFF flag is on GFF files will be searched in the last base name directory
 
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     
 * puts output GFF directory location in the following slots:
-    * ``sample_data["GFF"]``
+    * ``sample_data["project_data"]["GFF"]``
 * puts output pan_genome results directory location in the following slots:
-    * ``sample_data["pan_genome_results_dir"]``
+    * ``sample_data["project_data"]["pan_genome_results_dir"]``
 * puts output pan_genome presence_absence_matrix file location in the following slots:
-    * ``sample_data["presence_absence_matrix"]``
+    * ``sample_data["project_data"]["presence_absence_matrix"]``
 * puts output pan_genome clustered_proteins file location in the following slots:
-    * ``sample_data["clustered_proteins"]``
+    * ``sample_data["project_data"]["clustered_proteins"]``
 * puts output GWAS directory location in the following slot:
-    * ``sample_data["GWAS_results_dir"]``
+    * ``sample_data["project_data"]["GWAS_results_dir"]``
 * puts output Biclustering directory location in the following slot:
-    * ``sample_data["Bicluster_results_dir"]``
+    * ``sample_data["project_data"]["Bicluster_results_dir"]``
 * puts output Biclustering cluster file location in the following slot:
-    * ``sample_data["Bicluster_clusters"]``
+    * ``sample_data["project_data"]["Bicluster_clusters"]``
 * puts output Gecko directory location in the following slot:
-    * ``sample_data["Gecko_results_dir"]``
+    * ``sample_data["project_data"]["Gecko_results_dir"]``
 * puts Accessory genes or virulence/resistance hierarchical-clustering tree file in the following slot:
     * ``self.sample_data["project_data"]["newick"]``
 
@@ -174,9 +174,9 @@ class Step_Roary(Step):
         if "search_GFF" not in list(self.params.keys()):                
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
                 # Testing for existance of GFF data
-                assert ("GFF" in list(self.sample_data[sample].keys()))or ("GFF_dir" in list(self.sample_data.keys())), \
-                    "In %s:\tThere are no GFF Annotation files to use in this step.\n" % self.get_step_name()
-        pass
+                if "GFF" not in self.sample_data[sample] and "GFF_dir" not in self.sample_data["project_data"]:
+                    raise AssertionExcept("There are no GFF Annotation files to use.\n")
+
         
     def create_spec_preliminary_script(self):
         """ Add script to run BEFORE all other steps
@@ -195,7 +195,7 @@ class Step_Roary(Step):
             self.script +="find %s -name '*.gff' -exec cp -s {} %%s \; \n\n" % look_in % GFF_dir
             
         else:
-            if "GFF_dir" in list(self.sample_data.keys()):
+            if "GFF_dir" in self.sample_data["project_data"]:
                 GFF_dir = self.sample_data["project_data"]["GFF_dir"]
             if len(GFF_dir)==0:
                 #Make a dir for the GFF files:
