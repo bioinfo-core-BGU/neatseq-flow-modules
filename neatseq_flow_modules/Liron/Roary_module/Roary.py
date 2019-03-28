@@ -166,7 +166,12 @@ class Step_Roary(Step):
         self.file_tag = ""
         import inspect
         self.module_location=os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))
-        
+
+        if "plot" in self.params and \
+                "format" in self.params["plot"] and \
+                self.params["plot"]["format"] not in ['png', 'tiff', 'pdf', 'svg']:
+                raise AssertionExcept("plot/format must be 'png', 'tiff', 'pdf' or 'svg'")
+
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
