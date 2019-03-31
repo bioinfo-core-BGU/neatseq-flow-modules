@@ -12,7 +12,7 @@ Sequence-Searching Related Tasks
 
 .. automodule:: neatseq_flow_modules.main_NSF_classes.searching.makeblastdb
 
-.. automodule:: neatseq_flow_modules.main_NSF_classes.searching.blast
+.. .. automodule:: neatseq_flow_modules.main_NSF_classes.searching.blast
 
 .. automodule:: neatseq_flow_modules.main_NSF_classes.searching.blast_new
 
