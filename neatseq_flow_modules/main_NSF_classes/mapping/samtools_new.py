@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """
-``samtools`` :sup:`*`
+``samtools_new`` :sup:`*`
 -----------------------------------------------------------------
 
 :Authors: Menachem Sklarz
@@ -121,13 +121,13 @@ import os
 import sys
 import re
 from neatseq_flow.PLC_step import Step,AssertionExcept
-
+import yaml
 
 __author__ = "Menachem Sklarz"
 __version__ = "1.6.0"
 
 
-class Step_samtools(Step):
+class Step_samtools_new(Step):
        
 
     def step_specific_init(self):
@@ -144,6 +144,19 @@ class Step_samtools(Step):
         for prog in "view sort index flagstat stats idxstats fastq fasta merge".split(" "):
             if prog in self.params and self.params[prog] is None:
                 self.params[prog] = ""
+
+        # Load YAML of file type stored in merge_file_types.yml
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "samtools_params.yml"), "r") as fileh:
+            try:
+                self.samtools_params = yaml.load("".join(fileh.readlines()), Loader=yaml.SafeLoader)
+            except yaml.YAMLError as exc:
+                if hasattr(exc, 'problem_mark'):
+                    mark = exc.problem_mark
+                    print("Error position: (%s:%s)" % (mark.line + 1, mark.column + 1))
+                    print(mark.get_snippet())
+                raise AssertionExcept("Error loading samtools params index 'samtools_params.yml'")
+            except:
+                raise AssertionExcept("Unknown error loading samtools params index 'samtools_params.yml")
 
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
@@ -186,36 +199,37 @@ class Step_samtools(Step):
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
-        # -------------- samtools merge ------------------
-        if "merge" in list(self.params.keys()):
-            sample_dir = self.make_folder_for_sample()
-
-            # Name of specific script:
-            self.spec_script_name = self.set_spec_script_name()
-            self.script = ""
-
-            # This line should be left before every new script. It sees to local issues.
-            # Use the dir it returns as the base_dir for this step.
-            use_dir = self.local_start(sample_dir)
-
-            outfile = self.sample_data["Title"] + ".merged.bam"
-
-            self.script += """\
-###########
-# Running samtools merge
-#----------------
-
-{env_path} merge \\{params}
-\t{outfile} \\
-\t{infiles} 
-
-""".format(env_path=self.get_script_env_path(),
-           infiles=" \\\n\t".join([self.sample_data[sample]["bam"] for sample in self.sample_data["samples"]]),
-           params="" if not self.params["merge"] else "\n\t" + self.params["merge"] + " \\",
-           outfile=use_dir + outfile)
-
-            self.sample_data["project_data"]["bam"] = sample_dir + outfile
-            self.stamp_file(self.sample_data["project_data"]["bam"])
+        pass
+#         # -------------- samtools merge ------------------
+#         if "merge" in list(self.params.keys()):
+#             sample_dir = self.make_folder_for_sample()
+#
+#             # Name of specific script:
+#             self.spec_script_name = self.set_spec_script_name()
+#             self.script = ""
+#
+#             # This line should be left before every new script. It sees to local issues.
+#             # Use the dir it returns as the base_dir for this step.
+#             use_dir = self.local_start(sample_dir)
+#
+#             outfile = self.sample_data["Title"] + ".merged.bam"
+#
+#             self.script += """\
+# ###########
+# # Running samtools merge
+# #----------------
+#
+# {env_path} merge \\{params}
+# \t{outfile} \\
+# \t{infiles}
+#
+# """.format(env_path=self.get_script_env_path(),
+#            infiles=" \\\n\t".join([self.sample_data[sample]["bam"] for sample in self.sample_data["samples"]]),
+#            params="" if not self.params["merge"] else "\n\t" + self.params["merge"] + " \\",
+#            outfile=use_dir + outfile)
+#
+#             self.sample_data["project_data"]["bam"] = sample_dir + outfile
+#             self.stamp_file(self.sample_data["project_data"]["bam"])
 
     def build_scripts(self):
         """ This is the actual script building function
@@ -248,25 +262,34 @@ class Step_samtools(Step):
             sort_suffix = ".srt"
             index_suffix = ".bai"
 
-            if "view" in self.params:
+            for action in self.params:
+                if action not in self.samtools_params:
+                    continue
+
+                if action in "flags split targetcut".split(" "):
+                    raise AssertionExcept("Tool {action} is not supported by the module".format(action=action))
+
+
+            # if "view" in self.params:
 
                 output_type = "bam" if re.search("\-\w*b", self.params["view"]) else "sam"
                 outfile = ".".join([os.path.basename(active_file), output_type])
 
                 self.script += """\
 ###########
-# Running samtools view
+# Running samtools {action}
 #----------------
 
-{env_path} view \\{params}
+{env_path} {action} \\{params}
 \t-o {outfile} \\
 \t{active_file} {region} 
 
-""".format(env_path=self.get_script_env_path(),
-                   active_file=active_file,
-                   params="" if not self.params["view"] else "\n\t" + self.params["view"] + " \\",
-                   region="" if not "region" in self.params else "\\\n\t" + self.params["region"],
-                   outfile=use_dir + outfile)
+""".format(action=action,
+           env_path=self.get_script_env_path(),
+           active_file=active_file,
+           params="" if not self.params["view"] else "\n\t" + self.params["view"] + " \\",
+           region="" if not "region" in self.params else "\\\n\t" + self.params["region"],
+           outfile=use_dir + outfile)
 
                 active_file = use_dir + outfile
                 self.sample_data[sample][output_type] = sample_dir + outfile
