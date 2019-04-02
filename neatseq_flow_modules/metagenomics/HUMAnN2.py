@@ -223,12 +223,17 @@ class Step_HUMAnN2(Step):
            pw=pw_filename,
            redirs=redirects)
 
+            self.script += """
+# HERE YOU CAN ADD NEW THINGS
+            """.format()
+
             ## Storing in dict and stamping
             self.sample_data["project_data"]["HUMAnN2." + gene_filename] = "%smerged.%s.tsv" % (self.base_dir,  gene_filename)
             self.stamp_file(self.sample_data["project_data"]["HUMAnN2." + gene_filename])
 
             ## Storing in dict and stamping
-            self.sample_data["project_data"]["HUMAnN2." + pw_filename] = "%smerged.%s.tsv" % (self.base_dir,  pw_filename)
+            self.sample_data["project_data"]["HUMAnN2." + pw_filename] = "{dir}merged.{pw}.tsv".format(dir=self.base_dir,
+                                                                                                       pw=pw_filename)
             self.stamp_file(self.sample_data["project_data"]["HUMAnN2." + pw_filename])
 
             ## Storing in dict and stamping

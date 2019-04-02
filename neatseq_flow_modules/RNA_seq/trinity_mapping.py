@@ -235,8 +235,8 @@ cp -rsf \\
         
         file_suffix_ind = {
             "rsem": {
-                "isoforms": "RSEM.isoforms.results",
-                "genes":    "RSEM.genes.results"},
+                "isoforms": "isoforms.results",
+                "genes":    "genes.results"},
             "salmon": {
                 "isoforms": "quant.sf",
                 "genes":    "quant.sf.genes"},

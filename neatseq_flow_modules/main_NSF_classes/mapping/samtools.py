@@ -45,7 +45,7 @@ Output
 * Depending on the parameters, will put files in the following locations:
 
     * ``sample_data[<sample>]["bam"]``
-    * ``sample_data[<sample>]["bam.index"]``
+    * ``sample_data[<sample>]["bai"]``
     * ``sample_data[<sample>]["unfiltered_bam"]``
     * ``sample_data[<sample>]["unsorted_bam"]``
     * ``sample_data[<sample>]["bam.flagstat"]``
@@ -373,8 +373,8 @@ cp -fs {active_file} {here}
            params="" if not self.params["index"] else "\n\t" + self.params["index"] + " \\",
            active_file=active_file)
 
-                self.sample_data[sample]["bam.index"] = sample_dir + os.path.basename(active_file) + index_suffix
-                self.stamp_file(self.sample_data[sample]["bam.index"])
+                self.sample_data[sample]["bai"] = sample_dir + os.path.basename(active_file) + index_suffix
+                self.stamp_file(self.sample_data[sample]["bai"])
 
 
             for comm in ["flagstat","stats","idxstats"]:

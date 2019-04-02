@@ -45,7 +45,7 @@ Output
 * Depending on the parameters, will put files in the following locations:
 
     * ``sample_data[<sample>]["bam"]``
-    * ``sample_data[<sample>]["bam.index"]``
+    * ``sample_data[<sample>]["bai"]``
     * ``sample_data[<sample>]["unfiltered_bam"]``
     * ``sample_data[<sample>]["unsorted_bam"]``
     * ``sample_data[<sample>]["bam.flagstat"]``
@@ -141,9 +141,9 @@ class Step_samtools_new(Step):
         if "scope" not in self.params:
             self.params["scope"] = "sample"
 
-        for prog in "view sort index flagstat stats idxstats fastq fasta merge".split(" "):
-            if prog in self.params and self.params[prog] is None:
-                self.params[prog] = ""
+        # for prog in "view sort index flagstat stats idxstats fastq fasta merge".split(" "):
+        #     if prog in self.params and self.params[prog] is None:
+        #         self.params[prog] = ""
 
         # Load YAML of file type stored in merge_file_types.yml
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "samtools_params.yml"), "r") as fileh:
@@ -257,10 +257,25 @@ class Step_samtools_new(Step):
             use_dir = self.local_start(sample_dir)
 
             active_file = self.sample_data[sample][self.file2use]
+            active_files = dict(zip((self.file2use,),(self.sample_data[sample][self.file2use],)))
+            active_type = self.file2use
 
             filter_suffix = ".filt"
             sort_suffix = ".srt"
             index_suffix = ".bai"
+
+            # Starting off with local link to active file:
+            self.script += """\
+##########
+# Making local link to original bam file: (-f to force)
+#----------
+cp -fs {active_file} {here}
+
+""".format(active_file=active_files[active_type],
+           here=use_dir)
+
+            active_files[active_type] = use_dir + os.path.basename(active_files[active_type])
+            self.sample_data[sample][active_type] = sample_dir + os.path.basename(active_files[active_type])
 
             for action in self.params:
                 if action not in self.samtools_params:
@@ -270,12 +285,18 @@ class Step_samtools_new(Step):
                     raise AssertionExcept("Tool {action} is not supported by the module".format(action=action))
 
 
-            # if "view" in self.params:
+                if action == "view":
 
-                output_type = "bam" if re.search("\-\w*b", self.params["view"]) else "sam"
-                outfile = ".".join([os.path.basename(active_file), output_type])
+                    if re.search("\-\w*b", self.params[action]):
+                        output_type = "bam"
+                    elif re.search("\-\w*C", self.params[action]):
+                        output_type = "cram"
+                    else:
+                        output_type = "sam"
+                    # outfile = ".".join([os.path.basename(active_files[active_type]), output_type])
+                    outfile = ("."+action+".").join([os.path.splitext(os.path.basename(active_files[active_type]))[0],active_type])
 
-                self.script += """\
+                    self.script += """\
 ###########
 # Running samtools {action}
 #----------------
@@ -286,106 +307,111 @@ class Step_samtools_new(Step):
 
 """.format(action=action,
            env_path=self.get_script_env_path(),
-           active_file=active_file,
+           active_file=active_files[active_type],
            params="" if not self.params["view"] else "\n\t" + self.params["view"] + " \\",
            region="" if not "region" in self.params else "\\\n\t" + self.params["region"],
            outfile=use_dir + outfile)
 
-                active_file = use_dir + outfile
-                self.sample_data[sample][output_type] = sample_dir + outfile
-                self.stamp_file(self.sample_data[sample][output_type])
+                    active_type = output_type
+                    active_files[active_type] = use_dir + outfile
+                    self.sample_data[sample][output_type] = sample_dir + outfile
+                    self.stamp_file(self.sample_data[sample][output_type])
 
-            # If target of view is sam, terminating script. All others work on bam only.
-                if output_type == "sam":
-                    self.write_warning("""
-                    Output from samtools view is SAM. Not proceeding further.
-                    To produce a BAM, make sure to include the -b flag in the samtools view parameters.""")
-                    # If sam output, can't proceed with rest of commands which require bam input_file:
-                    # Move all files from temporary local dir to permanent base_dir
-                    self.local_finish(use_dir, sample_dir)
-                    self.create_low_level_script()
-                    continue
-            else:
-                # view not passed
-                # If source is SAM, terminate with error
-                if self.file2use == "sam":
-                    raise AssertionExcept("Source file is 'sam', you must include 'view' in your oprations")
-                # else, create local link to BAM and set active file accordingly
-                self.script += """\
-##########
-# Making local link to original bam file: (-f to force)
-#----------
-cp -fs {active_file} {here}
 
-""".format(active_file=active_file,
-               here=use_dir)
+# TODO: incorporate filtering in this version of samtools
+#             # The following can be merged into the main 'view' section
+#             if "filter_by_tag" in list(self.params.keys()):
+#                 # outfile = os.path.basename(active_file) + filter_suffix
+#                 outfile = filter_suffix.join(os.path.splitext(os.path.basename(active_file)))
+#
+#                 self.script += """\
+# ###########
+# # Filtering BAM
+# #----------------
+#
+# {env_path} view \\
+# \t-h \\
+# \t{active_file} | \\
+# \tawk '$0 ~\"(^@)|({query})\"' | \\
+# \t{env_path} view \\
+# \t-bh \\
+# \t-o {outfile} \\
+# \t-
+#
+# {rm_unfilt}
+# """.format(env_path=self.get_script_env_path(),
+#            active_file=active_file,
+#            query=self.params["filter_by_tag"],
+#            outfile=use_dir+outfile,
+#            rm_unfilt="# Removing unfiltered BAM\nrm -rf "+active_file if "del_unfiltered" in list(self.params.keys()) else "")
+#
+#                 # Storing filtered and unfiltered bams:
+#                 self.sample_data[sample]["unfiltered_bam"] = active_file
+#                 self.sample_data[sample]["bam"] = sample_dir + outfile
+#                 self.stamp_file(self.sample_data[sample]["bam"])
+#                 active_file = use_dir + outfile
 
-                active_file = use_dir + os.path.basename(active_file)
-                self.sample_data[sample]["bam"] = sample_dir + os.path.basename(active_file)
+            # if "sort" in list(self.params.keys()):
 
-            # The following can be merged into the main 'view' section
-            if "filter_by_tag" in list(self.params.keys()):
-                # outfile = os.path.basename(active_file) + filter_suffix
-                outfile = filter_suffix.join(os.path.splitext(os.path.basename(active_file)))
+                if action == "sort":
 
-                self.script += """\
-###########
-# Filtering BAM
-#----------------
+                    if re.search("\-\w*O", self.params[action]):
+                        # TODO: get type from -O value
+                        pass
+                        # output_type = "bam"
+                    else:
+                        output_type = "bam"
+                    # outfile = ".".join([os.path.basename(active_files[active_type]), output_type])
+                    # outfile = ("."+action).join(os.path.splitext(os.path.basename(active_files[active_type])))
+                    outfile = ("."+action+".").join([os.path.splitext(os.path.basename(active_files[active_type]))[0],active_type])
 
-{env_path} view \\
-\t-h \\
-\t{active_file} | \\
-\tawk '$0 ~\"(^@)|({query})\"' | \\
-\t{env_path} view \\
-\t-bh \\
-\t-o {outfile} \\
-\t- 
-
-{rm_unfilt}
-""".format(env_path=self.get_script_env_path(),
-           active_file=active_file,
-           query=self.params["filter_by_tag"],
-           outfile=use_dir+outfile,
-           rm_unfilt="# Removing unfiltered BAM\nrm -rf "+active_file if "del_unfiltered" in list(self.params.keys()) else "")
-
-                # Storing filtered and unfiltered bams:
-                self.sample_data[sample]["unfiltered_bam"] = active_file
-                self.sample_data[sample]["bam"] = sample_dir + outfile
-                self.stamp_file(self.sample_data[sample]["bam"])
-                active_file = use_dir + outfile
-
-            if "sort" in list(self.params.keys()):
-                if "bam" not in self.sample_data[sample]:
-                    raise AssertionExcept("Can't run 'sort', as no BAM is defined", sample)
+                    # if "bam" not in self.sample_data[sample]:
+                #     raise AssertionExcept("Can't run 'sort', as no BAM is defined", sample)
                 # outfile = os.path.basename(active_file) + sort_suffix
-                outfile = sort_suffix.join(os.path.splitext(os.path.basename(active_file)))
 
-                self.script += """\
+
+                    self.script += """\
 ###########
-# Sorting BAM
+# Running samtools {action}
 #----------------
-{env_path}sort \\{params}
+{env_path} {action} \\{params}
 \t-o {outf} \\
 \t{active_file}    
             
 {rm_unsort}
 
-""".format(env_path=self.get_script_env_path(),
-           params="" if not self.params["sort"] else "\n\t"+self.params["sort"]+" \\",
+""".format(action=action,
+           env_path=self.get_script_env_path(),
+           params="" if not self.params[action] else "\n\t"+self.params[action]+" \\",
            outf=(use_dir + outfile),
-           active_file=active_file,
-           rm_unsort="# Removing unsorted BAM\nrm -rf "+active_file if "del_unsorted" in list(self.params.keys()) else "")
+           active_file=active_files[active_type],
+           rm_unsort="# Removing unsorted BAM\nrm -rf " + active_files[active_type] if "del_unsorted" in list(self.params.keys()) else "")
 
-                # Storing sorted bam in 'bam' slot and unsorted bam in unsorted_bam slot
-                self.sample_data[sample]["unsorted_bam"] = active_file
-                self.sample_data[sample]["bam"] = sample_dir + outfile
-                self.stamp_file(self.sample_data[sample]["bam"])
-                active_file = use_dir + outfile
+                    # # Storing sorted bam in 'bam' slot and unsorted bam in unsorted_bam slot
+                    # self.sample_data[sample]["unsorted_bam"] = active_file
+                    # self.sample_data[sample]["bam"] = sample_dir + outfile
+                    # self.stamp_file(self.sample_data[sample]["bam"])
+                    # active_file = use_dir + outfile
+                    #
+                    #
 
-            if "index" in list(self.params.keys()):
+                    active_type = output_type
+                    active_files[active_type] = use_dir + outfile
+                    self.sample_data[sample][output_type] = sample_dir + outfile
+                    self.stamp_file(self.sample_data[sample][output_type])
 
-                self.script += """\
+
+                if action == "index":
+
+                    if active_type=="bam":
+                        output_type = "bai"
+                    elif active_type == "cram":
+                        output_type = "crai"
+                    else:
+                        raise AssertionExcept("No 'bam' or 'cram' for 'samtools index'", sample)
+                    outfile = ".".join([os.path.basename(active_files[active_type]), output_type])
+
+                    self.script += """\
 ###########
 # Indexing BAM
 #----------------
@@ -393,33 +419,50 @@ cp -fs {active_file} {here}
 \t{active_file}    
 
 """.format(env_path=self.get_script_env_path(),
-           params="" if not self.params["index"] else "\n\t" + self.params["index"] + " \\",
-           active_file=active_file)
+           params="" if not self.params[action] else "\n\t" + self.params[action] + " \\",
+           active_file=active_files[active_type])
 
-                self.sample_data[sample]["bam.index"] = sample_dir + os.path.basename(active_file) + index_suffix
-                self.stamp_file(self.sample_data[sample]["bam.index"])
+                    # active_files[active_type] = use_dir + outfile  - index does not change active type!
+                    self.sample_data[sample][output_type] = sample_dir + outfile
+                    self.stamp_file(self.sample_data[sample][output_type])
+
+                    self.sample_data[sample]["bai"] = sample_dir + os.path.basename(active_file) + index_suffix
+                    self.stamp_file(self.sample_data[sample]["bai"])
 
 
-            for comm in ["flagstat","stats","idxstats"]:
-                if comm in list(self.params.keys()):
-                    outfile = ".".join([os.path.basename(active_file), comm])
+            # self.local_finish(use_dir,sample_dir)
+            # self.create_low_level_script()
+            #
+            # continue
+                if action in ["flagstat","stats","idxstats","depth"]:
+                    output_type = action
+                    outfile = ".".join([os.path.basename(active_files[active_type]), output_type, "txt"])
+
 
                     self.script += """\
 ###########
-# Calculating {comm}
+# Calculating {action}
 #----------------
-{env_path}{comm} \\{params}
+{env_path}{action} \\{params}
 \t{active_file}  \\
 \t> {outfile}
 
 """.format(env_path=self.get_script_env_path(),
-           params="" if not self.params[comm] else "\n\t" + self.params[comm] + " \\",
+           params="" if not self.params[action] else "\n\t" + self.params[action] + " \\",
            active_file=active_file,
-           comm=comm,
+           action=action,
            outfile=use_dir+outfile)
 
                     self.sample_data[sample]["bam."+comm] = sample_dir + outfile
                     self.stamp_file(self.sample_data[sample]["bam."+comm])
+
+
+
+            self.local_finish(use_dir,sample_dir)
+            self.create_low_level_script()
+
+            continue
+
 
             # Adding code for fastq or fasta extraction from bam:
             for type in (set(self.params.keys()) & set(["fasta","fastq"])):
