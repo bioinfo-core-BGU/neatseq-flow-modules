@@ -235,8 +235,8 @@ cp -rsf \\
         
         file_suffix_ind = {
             "rsem": {
-                "isoforms": "isoforms.results",
-                "genes":    "genes.results"},
+                "isoforms": "RSEM.isoforms.results",
+                "genes":    "RSEM.genes.results"},
             "salmon": {
                 "isoforms": "quant.sf",
                 "genes":    "quant.sf.genes"},
@@ -326,7 +326,7 @@ cp -rsf \\
                 
             self.script = self.script.rstrip("\\\n\t") + "\n\n"
 
-            # Stroing files:
+            # Storing files:
             mv_data = {"dir" : use_dir, 
                        "src" : file_suffix_ind[self.est_method.lower()]["isoforms"],
                        "trg" : ".".join([sample,file_suffix_ind[self.est_method.lower()]["isoforms"]])}
