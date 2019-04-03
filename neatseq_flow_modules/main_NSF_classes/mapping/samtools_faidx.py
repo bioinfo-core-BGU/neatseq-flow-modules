@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """
-``samtools_new`` :sup:`*`
+``samtools_faidx`` :sup:`*`
 -----------------------------------------------------------------
 
 :Authors: Menachem Sklarz
@@ -127,7 +127,7 @@ __author__ = "Menachem Sklarz"
 __version__ = "1.6.0"
 
 
-class Step_samtools_new(Step):
+class Step_samtools_faidx(Step):
        
 
     def step_specific_init(self):
@@ -198,6 +198,33 @@ class Step_samtools_new(Step):
                     self.file2use = "sam"
                 else:
                     raise AssertionExcept("Neither BAM nor SAM file exist for actions {actions}.\n".format(actions=", ".join(sambam_actions)), sample)
+
+            if "faidx" in self.params:
+
+                fastatypes = list({"fasta.nucl", "fasta.prot"} & set(self.sample_data[sample]))
+                if len(fastatypes) > 1:
+                    if "fasta2use" not in self.params or self.params["fasta2use"] not in ["nucl", "prot"]:
+                        raise AssertionExcept("You have both fasta.nucl and fasta.prot defined. Please select "
+                                              "which to use by setting 'fasta2use' to 'nucl' or 'prot' ")
+                    else:
+                        try:
+                            self.fasta2use = "fasta." + self.params["fasta2use"]
+                        except KeyError:
+                            raise AssertionExcept("You set fasta2use={f2use} but it does not "
+                                                  "exist!".format(f2use=self.fasta2use), sample)
+                elif len(fastatypes) == 0:
+                    raise AssertionExcept("No fasta files exist!", sample)
+                else:
+                    print(fastatypes)
+                    self.fasta2use = fastatypes[0]
+
+            try:
+                self.file2use
+            except AttributeError:
+                # If no sam/bam requiring actions exist, use fasta a file2use
+                self.file2use = self.fasta2use
+
+
 
 
         if "type2use" in self.params:
@@ -541,8 +568,55 @@ cp -fs \\
                     self.stamp_file(self.sample_data[sample][action+".R"])
                     self.stamp_file(self.sample_data[sample][action+".S"])
 
-                # --------------------------------------- faidx - NOT SUPPORTED. Has it's own module
-                # --------------------------------------- Copying final files to dir and removing temp
+                # --------------------------------------- faidx
+                if action == "faidx":
+
+                    fastatypes = list({"fasta.nucl", "fasta.prot"} & set(self.sample_data[sample]))
+                    if len(fastatypes)>1:
+                        if "fasta2use" not in self.params or self.params["fasta2use"] not in ["nucl","prot"]:
+                            raise AssertionExcept("You have both fasta.nucl and fasta.prot defined. Please select "
+                                                  "which to use by setting 'fasta2use' to 'nucl' or 'prot' ")
+                        else:
+                            try:
+                                fasta2use = "fasta." + self.params["fasta2use"]
+                                active_files[fasta2use] = self.sample_data[sample][fasta2use]
+                            except KeyError:
+                                raise AssertionExcept("You set fasta2use={f2use} but it does not "
+                                                      "exist!".format(f2use=fasta2use),sample)
+                    elif len(fastatypes) ==0:
+                        raise AssertionExcept("No fasta files exist!", sample)
+                    else:
+                        print(fastatypes)
+                        fasta2use = fastatypes[0]
+                        active_files[fasta2use] = self.sample_data[sample][fasta2use]
+
+                    output_type = "fai"
+                    outfile = "{fn}.{ext}".format(ext=output_type, fn=active_files[active_type])
+
+                    self.script += """\
+###########
+# Indexing fasta
+#----------------
+cp -sf {src} {trg}
+{env_path}{action} \\{params}
+\t{active_file}    
+
+""".format(src=active_files[active_type],
+           trg=temp_use_dir,
+           action=action,
+           env_path=self.get_script_env_path(),
+           params="" if not self.params[action] else "\n\t" + self.params[action] + " \\",
+           active_file= temp_use_dir + os.path.basename(active_files[active_type]))
+
+                    # active_files[active_type] = temp_use_dir + outfile  - index does not change active type!
+                    active_files[output_type] = outfile
+                    self.sample_data[sample][output_type] = sample_dir + os.path.basename(outfile)
+                    self.stamp_file(self.sample_data[sample][output_type])
+
+                    # self.sample_data[sample]["bai"] = "{dir}{fn}.bai".format(dir=sample_dir,
+                    #                                                          fn=os.path.basename(active_file))
+                    # self.stamp_file(self.sample_data[sample]["bai"])
+
             self.script += """\
 ###########
 # Copying final files to final location
@@ -558,4 +632,22 @@ rm -rf {tempdir}
 
             self.local_finish(use_dir,sample_dir)
             self.create_low_level_script()
+
+            continue
+#
+#             if "del_sam" in list(self.params.keys()) and "sam" in self.sample_data[sample]:
+#                 self.script += """\
+# ###########
+# # Removing SAM
+# #----------------
+#
+# rm -rf {sam}
+#
+# """.format(sam=self.sample_data[sample]["sam"])
+#
+#             self.local_finish(use_dir,sample_dir)
+#             self.create_low_level_script()
+
+
+
 

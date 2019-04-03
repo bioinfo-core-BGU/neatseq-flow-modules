@@ -93,11 +93,11 @@ class Step_trinity_mapping(Step):
     
     def step_specific_init(self):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
-        self.file_tag = "trin_mapping"
+        self.file_tag = "trinity_mapping"
         
 
         if "--est_method" not in self.params["redir_params"]:
-            raise AssertionExcept("You must pass an --est_method to trin_mapping.\n")
+            raise AssertionExcept("You must pass an --est_method to trinity_mapping.\n")
 
         # Is used below... 
         self.est_method = self.params["redir_params"]["--est_method"]
@@ -106,7 +106,7 @@ class Step_trinity_mapping(Step):
             # To define, find out what the per isoform and per gene output files are named and fill the names in the dictionary called file_suffix_ind, below.
         
         if "--aln_method" in self.params["redir_params"]:
-            # raise AssertionExcept("You must pass an --aln_method to trin_mapping\n")
+            # raise AssertionExcept("You must pass an --aln_method to trinity_mapping\n")
             self.params["aln_method"] = self.params["redir_params"]["--aln_method"]
             del self.params["redir_params"]["--aln_method"]
         else:
@@ -163,7 +163,6 @@ class Step_trinity_mapping(Step):
                         raise AssertionExcept("Expecting 'gene_trans_map' in project but none found.\n")
 
             elif "--trinity_mode" in self.params["redir_params"]:
-                self.sample_data["project_data"]["gene_trans_map"] = "%s.gene_trans_map" % self.sample_data["project_data"]["fasta.nucl"]
                 self.use_gene_trans_map = True
             else:
                 self.use_gene_trans_map = False
@@ -216,6 +215,8 @@ cp -rsf \\
            ref=self.sample_data["project_data"]["fasta.nucl"],
                              dir=self.base_dir+"Reference")
             self.sample_data["project_data"]["fasta.nucl"] = self.base_dir+"Reference/"+os.path.basename(self.sample_data["project_data"]["fasta.nucl"])
+            self.sample_data["project_data"]["gene_trans_map"] = "%s.gene_trans_map" % self.sample_data["project_data"]["fasta.nucl"]
+
             # Create script and write to SCRPT
             # First: transcript preparation (with --pre_reference arg)
             self.script += self.get_script_const()
