@@ -309,7 +309,7 @@ class Step_quast(Step):
             # Input file:
             if multiple_bases and "compare_mode" in list(self.params.keys()):   # More than one base
                 self.script += "--labels %s \\\n\t" % ",".join(self.params["base"])
-                pp( self.params["base"])
+                # pp( self.params["base"])
                 for base in self.params["base"]:
                     # print base
                     # pp(self.get_base_sample_data()[base].keys())

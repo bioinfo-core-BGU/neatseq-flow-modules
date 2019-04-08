@@ -63,6 +63,7 @@ Step_params:
     merge1:
         module:         merge
         script_path:    {Vars.paths.merge}
+        # stop_and_show:
     fqc_merge1:
         module:         fastqc_html
         base:           merge1
@@ -252,3 +253,17 @@ Step_params:
             -n:             20
             -x:             1
 
+
+
+            
+    megahit1:
+        module: megahit_assembl
+        base: trim1
+        script_path: /path/to/megahit
+        qsub_params:
+            -pe: shared 30
+            node: sge37
+        scope: project
+        redirects:
+            --continue: 
+            --num-cpu-threads: 30

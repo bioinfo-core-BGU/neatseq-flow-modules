@@ -118,13 +118,30 @@ class Step_kaiju(Step):
                 self.params["kaiju2krona"] = "%s%s%s" % (os.path.basename(self.params["script_path"]), \
                                                             os.sep, \
                                                             "kaiju2krona")
-        
+
+
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
-        
- 
-        
+
+        # if self.params["scope"] == "project":
+        #     sample_list = ["project_data"]
+        # elif self.params["scope"] == "sample":
+        #     sample_list = self.sample_data["samples"]
+        # else:
+        #     raise AssertionExcept("'scope' must be either 'sample' or 'project'")
+        sample_list = self.sample_data["samples"]
+        for sample in sample_list:  # Getting list of samples out of samples_hash
+
+            if len({"fastq.F", "fastq.R"} & set(self.sample_data[sample].keys())) == 1:
+                raise AssertionExcept(
+                    "Sample has only forward or reverse reads. It must have either pairs or single reads\n", sample)
+
+            if len({"fastq.F", "fastq.R", "fastq.S"} & set(self.sample_data[sample].keys())) ==3:
+                raise AssertionExcept("Kaiju is not defined for mixed paired and single reads\n", sample)
+
+
+
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
@@ -184,15 +201,13 @@ class Step_kaiju(Step):
             self.script += self.get_script_const()
             
             # Adding reads
-            if "PE" in self.sample_data[sample]["type"]:
+            if "fastq.F" in self.sample_data[sample]:
                 self.script += "-i %s \\\n\t" % self.sample_data[sample]["fastq.F"]
                 self.script += "-j %s \\\n\t" % self.sample_data[sample]["fastq.R"]
-            elif "SE" in self.sample_data[sample]["type"]:
+            elif "fastq.S" in self.sample_data[sample]:
                 self.script += "-i %s \\\n\t" % self.sample_data[sample]["fastq.S"]
             else:
-                self.write_warning("kaiju is not defined on mixed PE/SE samples. Using only PE data!\n")
-                self.script += "-i %s \\\n\t" % self.sample_data[sample]["fastq.F"]
-                self.script += "-j %s \\\n\t" % self.sample_data[sample]["fastq.R"]
+                raise AssertionExcept("Weird cmobination of reads!\n")
 
             self.script += "-o %s\n\n" % output_filename
 

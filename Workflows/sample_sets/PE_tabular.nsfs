@@ -18,4 +18,4 @@ Sample3	Forward	/path/to/Sample3_F2.fastq.gz
 Sample3	Reverse	/path/to/Sample3_R2.fastq.gz
 Sample4	Single	/path/to/Sample4_R2.fastq
 Sample4	Single	/path/to/Sample4_R2.fastq
-#Sample 5	Single	/path/to/Sample4_R2.fastq
+# Sample5	Forward	/path/to/Sample4_R2.fastq

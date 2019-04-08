@@ -227,13 +227,21 @@ class Step_metaphlan2(Step):
             self.script += "--sample_id %s \\\n\t" % sample
             
             # Adding reads
-            if "PE" in self.sample_data[sample]["type"]:
+
+            if "fastq.F" in self.sample_data[sample]:
                 self.script += "%s,%s\\\n\t" % (self.sample_data[sample]["fastq.F"],self.sample_data[sample]["fastq.R"])
-            elif "SE" in self.sample_data[sample]["type"]:
+            elif "fastq.S" in self.sample_data[sample]:
                 self.script += "%s \n\n" % self.sample_data[sample]["fastq.S"]
             else:
-                self.write_warning("metaphlan2 on mixed PE/SE samples is not defined. Using only PE data!\n")
-                self.script += "%s,%s\\\n\t" % (self.sample_data[sample]["fastq.F"],self.sample_data[sample]["fastq.R"])
+                raise AssertionExcept("Weird cmobination of reads!\n")
+
+            # if "PE" in self.sample_data[sample]["type"]:
+            #     self.script += "%s,%s\\\n\t" % (self.sample_data[sample]["fastq.F"],self.sample_data[sample]["fastq.R"])
+            # elif "SE" in self.sample_data[sample]["type"]:
+            #     self.script += "%s \n\n" % self.sample_data[sample]["fastq.S"]
+            # else:
+            #     self.write_warning("metaphlan2 on mixed PE/SE samples is not defined. Using only PE data!\n")
+            #     self.script += "%s,%s\\\n\t" % (self.sample_data[sample]["fastq.F"],self.sample_data[sample]["fastq.R"])
 
             self.script += "%s\n\n" % output_filename
 
