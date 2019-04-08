@@ -44,7 +44,7 @@ Parameters that can be set
     :widths: 15, 10, 10
 
     "scope", "project | sample", "Indicates whether to use a project or sample contigs file."
-    "compare_mode", "", "If 'scope' is 'sample', specifies wether to analyse each sample separately or to create a single comparison report for all samples."
+    "compare_mode", "", "If 'scope' is 'sample', specifies whether to analyse each sample separately or to create a single comparison report for all samples."
 
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -314,7 +314,7 @@ class Step_quast(Step):
                     # print base
                     # pp(self.get_base_sample_data()[base].keys())
                     try:
-                        self.script += "%s \\\n\t" % self.get_base_sample_data()[base]["fasta.nucl"]
+                        self.script += "%s \\\n\t" % self.get_base_sample_data()[base]["project_data"]["fasta.nucl"]
                     except:
                         raise AssertionExcept("'fasta.nucl' file not found in base %s" % base)
             else:
