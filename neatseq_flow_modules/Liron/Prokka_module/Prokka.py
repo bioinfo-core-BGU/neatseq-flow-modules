@@ -153,8 +153,23 @@ class Step_Prokka(Step):
             # Store Prokka result files:
             #set_Sample_data(self,sample,["GFF"],os.path.join(sample_dir,sample+".gff"))
             self.sample_data[sample]["GFF"]=os.path.join(sample_dir,sample+".gff")
-            self.sample_data[sample]["fasta.nucl"]=os.path.join(sample_dir,sample+".ffn")
+            self.sample_data[sample]["fasta.nucl"]=os.path.join(sample_dir,sample+".fna")
             self.sample_data[sample]["fasta.prot"]=os.path.join(sample_dir,sample+".faa")
+
+            self.sample_data[sample]["prokka.err"] = os.path.join(sample_dir, sample + ".err")
+            self.sample_data[sample]["prokka.faa"] = os.path.join(sample_dir, sample + ".faa")
+            self.sample_data[sample]["prokka.ffn"] = os.path.join(sample_dir, sample + ".ffn")
+            self.sample_data[sample]["prokka.fna"] = os.path.join(sample_dir, sample + ".fna")
+            self.sample_data[sample]["prokka.fsa"] = os.path.join(sample_dir, sample + ".fsa")
+            self.sample_data[sample]["prokka.gbk"] = os.path.join(sample_dir, sample + ".gbk")
+            self.sample_data[sample]["prokka.gff"] = os.path.join(sample_dir, sample + ".gff")
+            self.sample_data[sample]["prokka.log"] = os.path.join(sample_dir, sample + ".log")
+            self.sample_data[sample]["prokka.sqn"] = os.path.join(sample_dir, sample + ".sqn")
+            self.sample_data[sample]["prokka.tbl"] = os.path.join(sample_dir, sample + ".tbl")
+            self.sample_data[sample]["prokka.tsv"] = os.path.join(sample_dir, sample + ".tsv")
+            self.sample_data[sample]["prokka.txt"] = os.path.join(sample_dir, sample + ".txt")
+
+
             # Wrapping up function. Leave these lines at the end of every iteration:
             self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)
             

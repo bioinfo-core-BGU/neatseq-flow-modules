@@ -98,6 +98,7 @@ References
 
 import os
 import sys
+import re
 from neatseq_flow.PLC_step import Step,AssertionExcept
 
 
@@ -144,25 +145,57 @@ class Step_HUMAnN2(Step):
                 pass
 
         # For backwards compatibility
-        if "humann2_renorm_table" not in self.params:
-            if "renorm_table" in self.params:
-                self.params["humann2_renorm_table"] = dict()
-                if "humann2_renorm_table_path" in self.params:
-                    self.params["humann2_renorm_table"]["path"] = self.params["humann2_renorm_table_path"]
-                else:
-                    humann2_dir, main_script = os.path.split(self.params["script_path"])
-                    self.params["humann2_renorm_table"]["path"] = humann2_dir + "humann2_renorm_table"
-                self.params["humann2_renorm_table"]["redirects"] = self.params["renorm_table"]
+        if "renorm_table" in self.params:
+            raise AssertionExcept("Please use the new 'humann2_renorm_table' method of requesting normalized tables. See docs")
+        if "join_tables" in self.params:
+            raise AssertionExcept("Please use the new 'humann2_join_tables' method. See docs")
 
-        if "humann2_join_tables" not in self.params:
-            if "join_tables" in self.params:
-                self.params["humann2_join_tables"] = dict()
-                if "humann2_join_tables_path" in self.params:
-                    self.params["humann2_join_tables"]["path"] = self.params["humann2_join_tables_path"]
-                else:
-                    humann2_dir, main_script = os.path.split(self.params["script_path"])
-                    self.params["humann2_join_tables"]["path"] = humann2_dir + "humann2_join_tables"
-                self.params["humann2_join_tables"]["redirects"] = self.params["join_tables"]
+        # # For backwards compatibility
+        # if "humann2_renorm_table" not in self.params:
+        #     # For backwards compatibility, converting 'renorm_table' string into 'humann2_renorm_table' dict
+        #     if "renorm_table" in self.params:
+        #         self.params["humann2_renorm_table"] = dict()
+        #         # If path explicit. Use. Otherwise, extract from script_path
+        #         if "humann2_renorm_table_path" in self.params:
+        #             self.params["humann2_renorm_table"]["path"] = self.params["humann2_renorm_table_path"]
+        #         else:
+        #             humann2_dir, main_script = os.path.split(self.params["script_path"])
+        #             self.params["humann2_renorm_table"]["path"] = humann2_dir + "humann2_renorm_table"
+        #         # redirects can be either string or dict. Here, using string version
+        #         self.params["humann2_renorm_table"]["redirects"] = self.params["renorm_table"]
+
+        # Check renorm_table contains --units
+        if "humann2_renorm_table" in self.params:
+            if "redirects" not in self.params["humann2_renorm_table"]:
+                raise AssertionExcept("Please pass --units parameter in humann2_renorm_table redirects!")
+            if not isinstance(self.params["humann2_renorm_table"]["redirects"], dict):
+                raise AssertionExcept("humann2_renorm_table redirects must be a dict including the --units parameter !")
+            if "--input" in self.params["humann2_renorm_table"]["redirects"] or \
+                    "--output" in self.params["humann2_renorm_table"]["redirects"]:
+                raise AssertionExcept("Please do not pass --input and --output in humann2_renorm_table redirects!")
+            if "--units" not in self.params["humann2_renorm_table"]["redirects"]:
+                raise AssertionExcept("Please pass --units parameter in humann2_renorm_table redirects!")
+
+            self.units = self.params["humann2_renorm_table"]["redirects"]["--units"]
+
+
+        # if "humann2_join_tables" not in self.params:
+        #     if "join_tables" in self.params:
+        #         self.params["humann2_join_tables"] = dict()
+        #         if "humann2_join_tables_path" in self.params:
+        #             self.params["humann2_join_tables"]["path"] = self.params["humann2_join_tables_path"]
+        #         else:
+        #             humann2_dir, main_script = os.path.split(self.params["script_path"])
+        #             self.params["humann2_join_tables"]["path"] = humann2_dir + "humann2_join_tables"
+        #         self.params["humann2_join_tables"]["redirects"] = self.params["join_tables"]
+
+        if "humann2_join_tables" in self.params:
+            if "redirects" in self.params["humann2_join_tables"]:
+                if not isinstance(self.params["humann2_join_tables"]["redirects"], dict):
+                    raise AssertionExcept("humann2_join_tables redirects must be a dict!")
+                if "--input" in self.params["humann2_join_tables"]["redirects"] or \
+                        "--output" in self.params["humann2_join_tables"]["redirects"]:
+                    raise AssertionExcept("Please do not pass --input and --output in humann2_join_tables redirects!")
 
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
@@ -177,21 +210,18 @@ class Step_HUMAnN2(Step):
         if "humann2_join_tables" in self.params:
 
             if "redirects" in self.params["humann2_join_tables"]:
-                if isinstance(self.params["humann2_join_tables"]["redirects"], dict):
-                    redirects = " \\\n\t" + " \\\n\t".join(
-                        [key + " " + (val if val else "")
-                         for key, val
-                         in self.params["humann2_join_tables"]["redirects"].items()])
-                else:
-                    redirects = " \\\n\t" + self.params["humann2_join_tables"]["redirects"]
+                redirects = " \\\n\t" + " \\\n\t".join(
+                    [key + " " + (val if val else "")
+                     for key, val
+                     in self.params["humann2_join_tables"]["redirects"].items()])
             else:
                 redirects = ""
 
             # Get location of humann2 scripts:
             # humann2_dir,main_script = os.path.split(self.params["script_path"])
-            if "renorm_table" in list(self.params.keys()):
-                gene_filename = "genefamilies.norm"
-                pw_filename = "pathabundance.norm"
+            if "humann2_renorm_table" in self.params:
+                gene_filename = "genefamilies."+self.units
+                pw_filename = "pathabundance."+self.units
             else:
                 gene_filename = "genefamilies"
                 pw_filename = "pathabundance"
@@ -228,17 +258,29 @@ class Step_HUMAnN2(Step):
             """.format()
 
             ## Storing in dict and stamping
-            self.sample_data["project_data"]["HUMAnN2." + gene_filename] = "%smerged.%s.tsv" % (self.base_dir,  gene_filename)
-            self.stamp_file(self.sample_data["project_data"]["HUMAnN2." + gene_filename])
-
-            ## Storing in dict and stamping
-            self.sample_data["project_data"]["HUMAnN2." + pw_filename] = "{dir}merged.{pw}.tsv".format(dir=self.base_dir,
+            self.sample_data["project_data"]["HUMAnN2.genefamilies"] = "{dir}merged.{pw}.tsv".format(dir=self.base_dir,
+                                                                                                       pw=gene_filename)
+            self.sample_data["project_data"]["HUMAnN2.pathabundance"] = "{dir}merged.{pw}.tsv".format(dir=self.base_dir,
                                                                                                        pw=pw_filename)
-            self.stamp_file(self.sample_data["project_data"]["HUMAnN2." + pw_filename])
+            self.sample_data["project_data"]["HUMAnN2.pathcoverage"] = "{dir}merged.pathcoverage.tsv".format(dir=self.base_dir)
 
-            ## Storing in dict and stamping
-            self.sample_data["project_data"]["HUMAnN2.pathcoverage"] = "%smerged.pathcoverage.tsv" % (self.base_dir)
+            self.stamp_file(self.sample_data["project_data"]["HUMAnN2.genefamilies"])
+            self.stamp_file(self.sample_data["project_data"]["HUMAnN2.pathabundance"])
             self.stamp_file(self.sample_data["project_data"]["HUMAnN2.pathcoverage"])
+
+            #
+            #
+            # # self.sample_data["project_data"]["HUMAnN2." + gene_filename] = "%smerged.%s.tsv" % (self.base_dir,  gene_filename)
+            # self.stamp_file(self.sample_data["project_data"]["HUMAnN2." + gene_filename])
+            #
+            # ## Storing in dict and stamping
+            # self.sample_data["project_data"]["HUMAnN2." + pw_filename] = "{dir}merged.{pw}.tsv".format(dir=self.base_dir,
+            #                                                                                            pw=pw_filename)
+            # self.stamp_file(self.sample_data["project_data"]["HUMAnN2." + pw_filename])
+            #
+            # ## Storing in dict and stamping
+            # self.sample_data["project_data"]["HUMAnN2.pathcoverage"] = "%smerged.pathcoverage.tsv" % (self.base_dir)
+            # self.stamp_file(self.sample_data["project_data"]["HUMAnN2.pathcoverage"])
 
     def build_scripts(self):
         """ This is the actual script building function
@@ -298,23 +340,24 @@ class Step_HUMAnN2(Step):
             self.sample_data[sample]["HUMAnN2.genefamilies"] = "%s_genefamilies.tsv" % (sample_dir + output_filename)
             self.sample_data[sample]["HUMAnN2.pathabundance"] = "%s_pathabundance.tsv" % (sample_dir + output_filename)
             self.sample_data[sample]["HUMAnN2.pathcoverage"] = "%s_pathcoverage.tsv" % (sample_dir + output_filename)
-            
+
+            # Storing also as RPK, because default may be overwritten with norm below
+            self.sample_data[sample]["HUMAnN2.genefamilies.RPK"] = self.sample_data[sample]["HUMAnN2.genefamilies"]
+            self.sample_data[sample]["HUMAnN2.pathabundance.RPK"] = self.sample_data[sample]["HUMAnN2.pathabundance"]
+
             self.stamp_file(self.sample_data[sample]["HUMAnN2.genefamilies"])
             self.stamp_file(self.sample_data[sample]["HUMAnN2.pathabundance"])
             self.stamp_file(self.sample_data[sample]["HUMAnN2.pathcoverage"])
 
 
             if "humann2_renorm_table" in self.params:
-
                 # Adding code for normalization if required
+                # Checking redirects exists although in init this was checked already
                 if "redirects" in self.params["humann2_renorm_table"]:
-                    if isinstance(self.params["humann2_renorm_table"]["redirects"], dict):
-                        redirects = " \\\n\t".join(
-                            [key + " " + (val if val else "")
-                             for key, val
-                             in self.params["humann2_renorm_table"]["redirects"].items()])
-                    else:
-                        redirects = self.params["humann2_renorm_table"]["redirects"]
+                    redirects = " \\\n\t".join(
+                        [key + " " + (val if val else "")
+                         for key, val
+                         in self.params["humann2_renorm_table"]["redirects"].items()])
                 else:
                     redirects = ""
 
@@ -331,16 +374,27 @@ class Step_HUMAnN2(Step):
 \t{redirs}
 
 """.format(path=self.params["humann2_renorm_table"]["path"],
-           in_gene="%s_genefamilies.tsv" % (use_dir + output_filename),
-           out_gene="%s_genefamilies.norm.tsv" % (use_dir + output_filename),
-           in_pw="%s_pathabundance.tsv" % (use_dir + output_filename),
-           out_pw="%s_pathabundance.norm.tsv" % (use_dir + output_filename),
+           in_gene="{basefn}_genefamilies.tsv".format(basefn=use_dir + output_filename),
+           out_gene="{basefn}_genefamilies.{norm}.tsv".format(basefn=use_dir + output_filename,norm=self.units),
+           in_pw="{basefn}_pathabundance.tsv".format(basefn=use_dir + output_filename),
+           out_pw="{basefn}_pathabundance.{norm}.tsv".format(basefn=use_dir + output_filename,norm=self.units),
            redirs=redirects)
 
-                self.sample_data[sample]["HUMAnN2.genefamilies.norm"] = "%s_genefamilies.norm.tsv" % (sample_dir + output_filename)
-                self.sample_data[sample]["HUMAnN2.pathabundance.norm"] = "%s_pathabundance.norm.tsv" % (sample_dir + output_filename)
-                self.stamp_file(self.sample_data[sample]["HUMAnN2.genefamilies.norm"])
-                self.stamp_file(self.sample_data[sample]["HUMAnN2.pathabundance.norm"])
+                self.sample_data[sample]["HUMAnN2.genefamilies"] = "%s_genefamilies.norm.tsv" % (sample_dir + output_filename)
+                self.sample_data[sample]["HUMAnN2.pathabundance"] = "%s_pathabundance.norm.tsv" % (sample_dir + output_filename)
+
+                self.sample_data[sample]["HUMAnN2.genefamilies"] = \
+                    "{basefn}_genefamilies.{norm}.tsv".format(basefn=sample_dir + output_filename,
+                                                              norm=self.units)
+                self.sample_data[sample]["HUMAnN2.pathabundance"] = \
+                    "{basefn}_pathabundance.{norm}.tsv".format(basefn=sample_dir + output_filename,
+                                                               norm=self.units)
+
+                self.sample_data[sample]["HUMAnN2.genefamilies."+self.units] = self.sample_data[sample]["HUMAnN2.genefamilies"]
+                self.sample_data[sample]["HUMAnN2.pathabundance."+self.units] = self.sample_data[sample]["HUMAnN2.pathabundance"]
+
+                self.stamp_file(self.sample_data[sample]["HUMAnN2.genefamilies"])
+                self.stamp_file(self.sample_data[sample]["HUMAnN2.pathabundance"])
 
             # Move all files from temporary local dir to permanent base_dir
             self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
