@@ -196,7 +196,7 @@ class Step_HUMAnN2(Step):
         if "protein-database" in self.params:
             if self.params["protein-database"] not in ["uniref50","uniref90"]:
                 raise AssertionExcept("'protein-database' should be either uniref50 or uniref90")
-            self.sample_data["HUMAnN2.prot.db"] = self.params["protein-database"]
+            self.sample_data["project_data"]["HUMAnN2.prot.db"] = self.params["protein-database"]
 
 
 

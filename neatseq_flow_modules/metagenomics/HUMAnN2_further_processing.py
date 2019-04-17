@@ -204,7 +204,7 @@ rxn:       ["RXN",     "metacyc-rxn"]
         """
         pass
 
-        if "HUMAnN2.prot.db" not in self.sample_data:
+        if "HUMAnN2.prot.db" not in self.sample_data["project_data"]:
             raise AssertionExcept("To use further processing of HUMAnN2 results, you need to have defined "
                                   "'protein-database' in the HUMAnN2 instance!")
 
@@ -249,7 +249,7 @@ rxn:       ["RXN",     "metacyc-rxn"]
             humanntype = "genefamilies"
             for grouping_ty in self.grouptype:
                 # Name of specific script:
-                full_grouping_ty = "_".join([self.sample_data["HUMAnN2.prot.db"],grouping_ty])
+                full_grouping_ty = "_".join([self.sample_data["project_data"]["HUMAnN2.prot.db"],grouping_ty])
 
                 self.spec_script_name = self.set_spec_script_name(".".join([sample if not sample=="project_data"
                                                                                     else self.sample_data["Title"],
