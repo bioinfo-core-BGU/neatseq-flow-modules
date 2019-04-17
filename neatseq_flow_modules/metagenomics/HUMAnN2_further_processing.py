@@ -126,21 +126,31 @@ class Step_HUMAnN2_further_processing(Step):
         if "scope" not in self.params:
             self.params["scope"] = "sample"
 
+#         type_index = """
+# uniref50_eggnog:    ["EggNog",  "eggnog"]
+# uniref50_go:        ["GO",      "go"]
+# uniref50_infogo1000: ["GOinfo",  "infogo1000"]
+# uniref50_ko:        ["KO",      "kegg-orthology"]
+# uniref50_level4ec:  ["level4EC","ec"]
+# uniref50_pfam:      ["PFAM",    "pfam"]
+# uniref50_rxn:       ["RXN",     "metacyc-rxn"]
+# uniref90_eggnog:    ["EggNog",  "eggnog"]
+# uniref90_go:        ["GO",      "go"]
+# uniref90_infogo1000: ["GOinfo",  "infogo1000"]
+# uniref90_ko:        ["KO",      "kegg-orthology"]
+# uniref90_level4ec:  ["level4EC","ec"]
+# uniref90_pfam:      ["PFAM",    "pfam"]
+# uniref90_rxn:       ["RXN",     "metacyc-rxn"]
+# """
+
         type_index = """
-uniref50_eggnog:    ["EggNog",  "eggnog"]
-uniref50_go:        ["GO",      "go"]
-uniref50_infogo1000: ["GOinfo",  "infogo1000"]
-uniref50_ko:        ["KO",      "kegg-orthology"]
-uniref50_level4ec:  ["level4EC","ec"]
-uniref50_pfam:      ["PFAM",    "pfam"]
-uniref50_rxn:       ["RXN",     "metacyc-rxn"]
-uniref90_eggnog:    ["EggNog",  "eggnog"]
-uniref90_go:        ["GO",      "go"]
-uniref90_infogo1000: ["GOinfo",  "infogo1000"]
-uniref90_ko:        ["KO",      "kegg-orthology"]
-uniref90_level4ec:  ["level4EC","ec"]
-uniref90_pfam:      ["PFAM",    "pfam"]
-uniref90_rxn:       ["RXN",     "metacyc-rxn"]
+eggnog:    ["EggNog",  "eggnog"]
+go:        ["GO",      "go"]
+infogo1000: ["GOinfo",  "infogo1000"]
+ko:        ["KO",      "kegg-orthology"]
+level4ec:  ["level4EC","ec"]
+pfam:      ["PFAM",    "pfam"]
+rxn:       ["RXN",     "metacyc-rxn"]
 """
 
 
@@ -193,8 +203,12 @@ uniref90_rxn:       ["RXN",     "metacyc-rxn"]
         """ A place to do initiation stages following setting of sample_data
         """
         pass
- 
-        
+
+        if "HUMAnN2.prot.db" not in self.sample_data:
+            raise AssertionExcept("To use further processing of HUMAnN2 results, you need to have defined "
+                                  "'protein-database' in the HUMAnN2 instance!")
+
+
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
@@ -218,6 +232,8 @@ uniref90_rxn:       ["RXN",     "metacyc-rxn"]
             # Make a dir for the current sample:
             sample_dir = self.make_folder_for_sample(sample)
 
+
+
             # This line should be left before every new script. It sees to local issues.
             # Use the dir it returns as the base_dir for this step.
             use_dir = self.local_start(sample_dir)
@@ -233,7 +249,12 @@ uniref90_rxn:       ["RXN",     "metacyc-rxn"]
             humanntype = "genefamilies"
             for grouping_ty in self.grouptype:
                 # Name of specific script:
-                self.spec_script_name = self.set_spec_script_name(".".join([sample,humanntype,grouping_ty]))
+                full_grouping_ty = "_".join([self.sample_data["HUMAnN2.prot.db"],grouping_ty])
+
+                self.spec_script_name = self.set_spec_script_name(".".join([sample if not sample=="project_data"
+                                                                                    else self.sample_data["Title"],
+                                                                            humanntype,
+                                                                            grouping_ty]))
                 self.script = ""
                 inputfn = self.sample_data[sample]["HUMAnN2."+humanntype]
                 outfn = ("."+self.type_index[grouping_ty][0]).join(os.path.splitext(os.path.basename(inputfn)))
@@ -251,12 +272,12 @@ uniref90_rxn:       ["RXN",     "metacyc-rxn"]
            dir=use_dir,
            outfn=outfn,
            inputfn=inputfn,
-           group=grouping_ty,
+           group=full_grouping_ty,
            redirs=redirects)
 
 
-                self.sample_data[sample][".".join(["HUMAnN2",humanntype,grouping_ty])] = (sample_dir + outfn)
-                self.stamp_file(self.sample_data[sample][".".join(["HUMAnN2",humanntype,grouping_ty])])
+                self.sample_data[sample][".".join(["HUMAnN2",humanntype,full_grouping_ty])] = (sample_dir + outfn)
+                self.stamp_file(self.sample_data[sample][".".join(["HUMAnN2",humanntype,full_grouping_ty])])
 
 
 
@@ -287,9 +308,9 @@ uniref90_rxn:       ["RXN",     "metacyc-rxn"]
                outfn=use_dir + "_names".join(os.path.splitext(outfn)),
                redirs=redirects)
 
-                    self.sample_data[sample][".".join(["HUMAnN2",humanntype,grouping_ty,"names"])] = sample_dir + "_names".join(os.path.splitext(outfn))
+                    self.sample_data[sample][".".join(["HUMAnN2",humanntype,full_grouping_ty,"names"])] = sample_dir + "_names".join(os.path.splitext(outfn))
 
-                    self.stamp_file(self.sample_data[sample][".".join(["HUMAnN2",humanntype,grouping_ty,"names"])])
+                    self.stamp_file(self.sample_data[sample][".".join(["HUMAnN2",humanntype,full_grouping_ty,"names"])])
 
 
                 # Move all files from temporary local dir to permanent base_dir

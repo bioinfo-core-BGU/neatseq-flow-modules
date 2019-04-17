@@ -25,34 +25,26 @@ Requires
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-self.sample_data[sample]["HUMAnN2.genefamilies.norm"]
-self.sample_data[sample]["HUMAnN2.pathabundance.norm"]
-
-
 * Puts the ``HUMAnN2`` output files in:  
 
-    * ``self.sample_data[sample]["HUMAnN2.genefamilies"]``
-    * ``self.sample_data[sample]["HUMAnN2.pathabundance"]``
+    * ``self.sample_data[sample]["HUMAnN2.genefamilies"]`` (Also in ``HUMAnN2.genefamilies.RPK``)
+    * ``self.sample_data[sample]["HUMAnN2.pathabundance"]`` (Also in ``HUMAnN2.pathabundance.RPK``)
     * ``self.sample_data[sample]["HUMAnN2.pathcoverage"]``
 
-* If "renorm_table" is set in params:
 
-    * ``self.sample_data[sample]["HUMAnN2.genefamilies.norm"]``
-    * ``self.sample_data[sample]["HUMAnN2.pathabundance.norm"]``
-    
-* If "join_tables" is set in params:
+* If ``humann2_renorm_table`` block is set in params, puts the normalized tables in:
+
+    * ``self.sample_data[sample]["HUMAnN2.genefamilies"]`` (Also in ``HUMAnN2.genefamilies.<units>``, where ``<units>`` is the value passed to ``--units``)
+    * ``self.sample_data[sample]["HUMAnN2.pathabundance"]`` (Also in ``HUMAnN2.pathabundance.<units>``, where ``<units>`` is the value passed to ``--units``)
+
+* If ``humann2_join_tables`` block is set in params, puts the joined tables in:
     
     * ``self.sample_data["project_data"]["HUMAnN2.genefamilies"]``
     * ``self.sample_data["project_data"]["HUMAnN2.pathabundance"]``
     * ``self.sample_data["project_data"]["HUMAnN2.pathcoverage"]``
 
-* If "join_tables" and "renorm_table" are set in params:
-    
-    * ``self.sample_data["project_data"]["HUMAnN2.genefamilies.norm"]``
-    * ``self.sample_data["project_data"]["HUMAnN2.pathabundance.norm"]``
-    * ``self.sample_data["project_data"]["HUMAnN2.pathcoverage"]``
-    
+.. Note:: If both ``humann2_renorm_table`` and ``humann2_join_tables`` blocks exist in params, ``humann2_join_tables`` will work on the normalized tables produced by ``humann2_renorm_table``! To join the non-normalized tables, do not normalize the tables by not including a ``humann2_renorm_table`` block.
+
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -197,11 +189,17 @@ class Step_HUMAnN2(Step):
                         "--output" in self.params["humann2_join_tables"]["redirects"]:
                     raise AssertionExcept("Please do not pass --input and --output in humann2_join_tables redirects!")
 
+
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
-        
- 
+        if "protein-database" in self.params:
+            if self.params["protein-database"] not in ["uniref50","uniref90"]:
+                raise AssertionExcept("'protein-database' should be either uniref50 or uniref90")
+            self.sample_data["HUMAnN2.prot.db"] = self.params["protein-database"]
+
+
+
         
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
@@ -231,19 +229,19 @@ class Step_HUMAnN2(Step):
 {path} \\
 \t-i {dir} \\
 \t--search-subdirectories \\
-\t--file_name {gene} \\
+\t--file_name {gene}.tsv \\
 \t-o {dir}merged.{gene}.tsv {redirs}
 
 {path} \\
 \t-i {dir} \\
 \t--search-subdirectories \\
-\t--file_name {pw} \\
+\t--file_name {pw}.tsv \\
 \t-o {dir}merged.{pw}.tsv {redirs}
 
 {path} \\
 \t-i {dir} \\
 \t--search-subdirectories \\
-\t--file_name pathcoverage \\
+\t--file_name pathcoverage.tsv \\
 \t-o {dir}merged.pathcoverage.tsv {redirs}
 
 
@@ -380,8 +378,8 @@ class Step_HUMAnN2(Step):
            out_pw="{basefn}_pathabundance.{norm}.tsv".format(basefn=use_dir + output_filename,norm=self.units),
            redirs=redirects)
 
-                self.sample_data[sample]["HUMAnN2.genefamilies"] = "%s_genefamilies.norm.tsv" % (sample_dir + output_filename)
-                self.sample_data[sample]["HUMAnN2.pathabundance"] = "%s_pathabundance.norm.tsv" % (sample_dir + output_filename)
+                # self.sample_data[sample]["HUMAnN2.genefamilies"] = "%s_genefamilies.norm.tsv" % (sample_dir + output_filename)
+                # self.sample_data[sample]["HUMAnN2.pathabundance"] = "%s_pathabundance.norm.tsv" % (sample_dir + output_filename)
 
                 self.sample_data[sample]["HUMAnN2.genefamilies"] = \
                     "{basefn}_genefamilies.{norm}.tsv".format(basefn=sample_dir + output_filename,
