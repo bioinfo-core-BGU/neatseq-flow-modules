@@ -52,10 +52,8 @@ Parameters that can be set
     :header: "Parameter", "Values", "Comments"
     :widths: 15, 10, 10
 
-    "renorm_table",      "Empty or parameters to pass to ``humann2_renorm_table``", "Runs ``humann2_renorm_table`` on HUMAnN2 outputs with the specified parameters"
-    "join_tables", "", "Runs ``humann2_join_tables`` to gather all sample tables."
-    "humann2_join_tables_path", "", "Path to ``humann2_join_tables``. If not passed, will try guessing"
-    "humann2_renorm_table_path", "", "Path to ``humann2_renorm_table``. If not passed, will try guessing"
+    "humann2_join_tables", "", "Block containing ``path`` to ``humann2_join_tables``, and a ``redirects`` block if necessary."
+    "humann2_renorm_table", "", "Block containing ``path`` to ``humann2_renorm_table``, and a ``redirects`` block if necessary."
 
     
 Lines for parameter file
@@ -64,21 +62,27 @@ Lines for parameter file
 ::
 
 
-    HUMAnN2_1:
+    HUMAnN2_uniref50_hardtrimmed_reads:
         module: HUMAnN2
-        base: trim1
-        script_path: {Vars.paths.humann2}
-        join_tables: 
-        renorm_table: --units cpm -p
+        base: Trim_Galore
+        script_path: '{Vars.Programs_path.humann2}'
+        setenv: PERL5LIB="" mpa_dir=$CONDA_PREFIX/bin
+        qsub_params:
+            -pe: shared 30
+        protein-database:   uniref50
         redirects:
-            --bowtie2: /path/to/bowtie2
-            --gap-fill: on
+            --gap-fill: 'on'
             --input-format: fastq
-            --metaphlan: {Vars.paths.metaphlan2}
-            --minpath: on
-            --nucleotide-database: {Vars.databases.chocophlan}
-            --protein-database: {Vars.databases.uniref}
-            --threads: 30
+            --minpath: 'on'
+            --nucleotide-database: '{Vars.databases.humann2.chocophlan}'
+            --protein-database: '{Vars.databases.humann2.uniref50}'
+            --threads: '30'
+        humann2_join_tables:
+            path: humann2_join_tables
+        humann2_renorm_table:
+            path: humann2_renorm_table
+            redirects:
+                --units: cpm
             
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

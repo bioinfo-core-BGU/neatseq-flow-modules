@@ -7,52 +7,42 @@
 :Affiliation: Bioinformatics core facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
-.. Note:: This module was developed as part of a study led by Dr. Jacob Moran Gilad
-
-A module for running ``HUMAnN2``:
+A module for running ``HUMAnN2`` utilities ``humann2_regroup_table`` and ``humann2_rename_table``.
 
 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* fastq files, either forward or single:
+* HUMAnN2 results:
 
-    * ``sample_data[<sample>]["fastq.F"]``
-    * ``sample_data[<sample>]["fastq.S"]``
-    
+    * ``sample_data[<sample>]["HUMAnN2.genefamilies"]``
+
     
 
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+* Puts the ``humann2_regroup_table`` output files in:
 
-self.sample_data[sample]["HUMAnN2.genefamilies.norm"]
-self.sample_data[sample]["HUMAnN2.pathabundance.norm"]
+    * ``self.sample_data[sample]["HUMAnN2.genefamilies.uniref50_eggnog"]``
+    * ``self.sample_data[sample]["HUMAnN2.genefamilies.uniref50_go"]``
+    * ``self.sample_data[sample]["HUMAnN2.genefamilies.uniref50_infogo1000"]``
+    * ``self.sample_data[sample]["HUMAnN2.genefamilies.uniref50_ko"]``
+    * ``self.sample_data[sample]["HUMAnN2.genefamilies.uniref50_level4ec"]``
+    * ``self.sample_data[sample]["HUMAnN2.genefamilies.uniref50_pfam"]``
+    * ``self.sample_data[sample]["HUMAnN2.genefamilies.uniref50_rxn"]``
+
+* Puts the ``humann2_rename_table`` output files in:
+
+    * ``self.sample_data[sample]["HUMAnN2.genefamilies.uniref50_eggnog_names"]``
+    * ``self.sample_data[sample]["HUMAnN2.genefamilies.uniref50_go_names"]``
+    * ``self.sample_data[sample]["HUMAnN2.genefamilies.uniref50_infogo1000_names"]``
+    * ``self.sample_data[sample]["HUMAnN2.genefamilies.uniref50_ko_names"]``
+    * ``self.sample_data[sample]["HUMAnN2.genefamilies.uniref50_level4ec_names"]``
+    * ``self.sample_data[sample]["HUMAnN2.genefamilies.uniref50_pfam_names"]``
+    * ``self.sample_data[sample]["HUMAnN2.genefamilies.uniref50_rxn_names"]``
 
 
-* Puts the ``HUMAnN2`` output files in:  
-
-    * ``self.sample_data[sample]["HUMAnN2.genefamilies"]``
-    * ``self.sample_data[sample]["HUMAnN2.pathabundance"]``
-    * ``self.sample_data[sample]["HUMAnN2.pathcoverage"]``
-
-* If "renorm_table" is set in params:
-
-    * ``self.sample_data[sample]["HUMAnN2.genefamilies.norm"]``
-    * ``self.sample_data[sample]["HUMAnN2.pathabundance.norm"]``
-    
-* If "join_tables" is set in params:
-    
-    * ``self.sample_data["project_data"]["HUMAnN2.genefamilies"]``
-    * ``self.sample_data["project_data"]["HUMAnN2.pathabundance"]``
-    * ``self.sample_data["project_data"]["HUMAnN2.pathcoverage"]``
-
-* If "join_tables" and "renorm_table" are set in params:
-    
-    * ``self.sample_data["project_data"]["HUMAnN2.genefamilies.norm"]``
-    * ``self.sample_data["project_data"]["HUMAnN2.pathabundance.norm"]``
-    * ``self.sample_data["project_data"]["HUMAnN2.pathcoverage"]``
-    
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -60,34 +50,46 @@ Parameters that can be set
     :header: "Parameter", "Values", "Comments"
     :widths: 15, 10, 10
 
-    "renorm_table",      "Empty or parameters to pass to ``humann2_renorm_table``", "Runs ``humann2_renorm_table`` on HUMAnN2 outputs with the specified parameters"
-    "join_tables", "", "Runs ``humann2_join_tables`` to gather all sample tables."
-    "humann2_join_tables_path", "", "Path to ``humann2_join_tables``. If not passed, will try guessing"
-    "humann2_renorm_table_path", "", "Path to ``humann2_renorm_table``. If not passed, will try guessing"
+    "humann2_regroup_table", "", "Block containing ``path`` to ``humann2_regroup_table``, and a ``redirects`` block if necessary."
+    "humann2_rename_table", "", "Block containing ``path`` to ``humann2_rename_table``, and a ``redirects`` block if necessary."
 
     
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-::
+For regrouping by all grouping options::
+
+    HUMAnN2_uniref50_further_analysis:
+        module: HUMAnN2_further_processing
+        base: HUMAnN2_uniref50_hardtrimmed_reads
+        script_path:
+        scope: project
+        qsub_params:
+            -pe: shared 30
+        humann2_regroup_table:
+            path: humann2_regroup_table
+          # redirects:
+            # --groups:   uniref90_go
+        humann2_rename_table:
+            path: humann2_rename_table
+
+For regrouping by a specific grouping option::
+
+    HUMAnN2_uniref50_further_analysis:
+        module: HUMAnN2_further_processing
+        base: HUMAnN2_uniref50_hardtrimmed_reads
+        script_path:
+        scope: project
+        qsub_params:
+            -pe: shared 30
+        humann2_regroup_table:
+            path: humann2_regroup_table
+            redirects:
+                --groups:   go      # Note: NOT `uniref90_go`. The protein database name is taken from the base HUMAnN2 instance!
+        humann2_rename_table:
+            path: humann2_rename_table
 
 
-    HUMAnN2_1:
-        module: HUMAnN2
-        base: trim1
-        script_path: {Vars.paths.humann2}
-        join_tables: 
-        renorm_table: --units cpm -p
-        redirects:
-            --bowtie2: /path/to/bowtie2
-            --gap-fill: on
-            --input-format: fastq
-            --metaphlan: {Vars.paths.metaphlan2}
-            --minpath: on
-            --nucleotide-database: {Vars.databases.chocophlan}
-            --protein-database: {Vars.databases.uniref}
-            --threads: 30
-            
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -125,23 +127,6 @@ class Step_HUMAnN2_further_processing(Step):
         # Setting default scope to sample
         if "scope" not in self.params:
             self.params["scope"] = "sample"
-
-#         type_index = """
-# uniref50_eggnog:    ["EggNog",  "eggnog"]
-# uniref50_go:        ["GO",      "go"]
-# uniref50_infogo1000: ["GOinfo",  "infogo1000"]
-# uniref50_ko:        ["KO",      "kegg-orthology"]
-# uniref50_level4ec:  ["level4EC","ec"]
-# uniref50_pfam:      ["PFAM",    "pfam"]
-# uniref50_rxn:       ["RXN",     "metacyc-rxn"]
-# uniref90_eggnog:    ["EggNog",  "eggnog"]
-# uniref90_go:        ["GO",      "go"]
-# uniref90_infogo1000: ["GOinfo",  "infogo1000"]
-# uniref90_ko:        ["KO",      "kegg-orthology"]
-# uniref90_level4ec:  ["level4EC","ec"]
-# uniref90_pfam:      ["PFAM",    "pfam"]
-# uniref90_rxn:       ["RXN",     "metacyc-rxn"]
-# """
 
         type_index = """
 eggnog:    ["EggNog",  "eggnog"]
@@ -207,6 +192,17 @@ rxn:       ["RXN",     "metacyc-rxn"]
         if "HUMAnN2.prot.db" not in self.sample_data["project_data"]:
             raise AssertionExcept("To use further processing of HUMAnN2 results, you need to have defined "
                                   "'protein-database' in the HUMAnN2 instance!")
+
+        if self.params["scope"] == "project":
+            sample_list = ["project_data"]
+        elif self.params["scope"] == "sample":
+            sample_list = self.sample_data["samples"]
+        else:
+            raise AssertionExcept("'scope' must be either 'sample' or 'project'")
+
+        for sample in sample_list:  # Getting list of samples out of samples_hash
+            if "HUMAnN2.genefamilies" not in self.sample_data[sample]:
+                raise AssertionExcept("Please include a HUMAnN2 instance before this instance!")
 
 
     def create_spec_wrapping_up_script(self):
