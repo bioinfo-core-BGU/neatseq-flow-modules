@@ -148,7 +148,7 @@ class Step_kaiju2table(Step):
 
                 self.script += """
             
-perl {path} \\
+{path} \\
 \t{samples} \\
 \t{files} \\
 \t{outfn}
