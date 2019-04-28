@@ -139,13 +139,10 @@ class Step_kaiju2table(Step):
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
-
         if "join_script" in self.params:
             self.script = ""
-            print(self.levels)
             for tax_level in self.levels:
                 # Define output filename
-                print(tax_level)
                 output_filename = "{project}.kaiju.summary.{level}.tsv".format(project=self.sample_data["Title"],
                                                                                level=tax_level)
 
@@ -157,11 +154,11 @@ perl {path} \\
 \t{outfn}
 
             """.format(path=self.params["join_script"],
-                       samples=",".join(self.samples_data["samples"]),
-                       files=",".join([self.sample_data[sample]["kaiju.report."+tax_level] for sample in self.samples_data["samples"]]),
+                       samples=",".join(self.sample_data["samples"]),
+                       files=",".join([self.sample_data[sample]["kaiju.report."+tax_level] for sample in self.sample_data["samples"]]),
                        outfn=self.base_dir+output_filename)
+
                 self.sample_data["project_data"]["kaiju.report."+tax_level] = self.base_dir+output_filename
-                # self.stamp_file(self.sample_data["project_data"]["kaiju.report."+tax_level])
 
     def build_scripts(self):
         """
@@ -207,6 +204,8 @@ perl {path} \\
 
                 self.sample_data[sample]["kaiju.report."+tax_level] = sample_dir+output_filename
                 self.stamp_file(self.sample_data[sample]["kaiju.report."+tax_level])
+
+
 
             # Move all files from temporary local dir to permanent base_dir
             self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)

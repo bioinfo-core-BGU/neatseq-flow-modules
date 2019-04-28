@@ -202,7 +202,7 @@ rxn:       ["RXN",     "metacyc-rxn"]
 
         for sample in sample_list:  # Getting list of samples out of samples_hash
             if "HUMAnN2.genefamilies" not in self.sample_data[sample]:
-                raise AssertionExcept("Please include a HUMAnN2 instance before this instance!")
+                raise AssertionExcept("Please include a HUMAnN2 instance before this instance!", sample)
 
 
     def create_spec_wrapping_up_script(self):

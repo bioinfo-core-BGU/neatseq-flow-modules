@@ -163,6 +163,9 @@ class Step_samtools_new(Step):
             except:
                 raise AssertionExcept("Unknown error loading samtools params index 'samtools_params.yml")
 
+        if "keep_output" not in self.params:
+            self.params["keep_output"] = list(set(self.params.keys()) & set(self.samtools_params.keys()))
+
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
@@ -278,6 +281,7 @@ class Step_samtools_new(Step):
             active_files = dict(zip((self.file2use,),(self.sample_data[sample][self.file2use],)))
             active_type = self.file2use
 
+            files2keep = list()
 
             # Starting off with local link to active file:
             self.script += """\
@@ -316,27 +320,31 @@ cp -fs \\
                     # outfile = ".".join([os.path.basename(active_files[active_type]), output_type])
                     outfile = ("."+action+".").join([os.path.splitext(os.path.basename(active_files[active_type]))[0],output_type])
 
+                    cmd = self.samtools_params[action]["script"].format(action=action,
+                                                                        env_path=self.get_script_env_path(),
+                                                                        active_file=active_files[active_type],
+                                                                        params="" if not self.params[action]
+                                                                                  else "\n\t" + self.params[action] + " \\",
+                                                                        region="" if not "region" in self.params
+                                                                                  else "\\\n\t" + self.params["region"],
+                                                                        outfile=temp_use_dir + outfile)
+
+
                     self.script += """\
 ###########
 # Running samtools {action}
 #----------------
 
-{env_path} {action} \\{params}
-\t-o {outfile} \\
-\t{active_file} {region} 
+{cmd}
 
-""".format(action=action,
-           env_path=self.get_script_env_path(),
-           active_file=active_files[active_type],
-           params="" if not self.params[action] else "\n\t" + self.params[action] + " \\",
-           region="" if not "region" in self.params else "\\\n\t" + self.params["region"],
-           outfile=temp_use_dir + outfile)
+""".format(action=action, cmd=cmd)
 
                     active_type = output_type
                     active_files[active_type] = temp_use_dir + outfile
                     self.sample_data[sample][output_type] = sample_dir + outfile
-                    self.stamp_file(self.sample_data[sample][output_type])
-
+                    if action in self.params["keep_output"]:
+                        files2keep.append(temp_use_dir + outfile)
+                        self.stamp_file(self.sample_data[sample][output_type])
 
 # TODO: incorporate filtering in this version of samtools
 #             # The following can be merged into the main 'view' section
@@ -381,45 +389,35 @@ cp -fs \\
                         # output_type = "bam"
                     else:
                         output_type = "bam"
-                    # outfile = ".".join([os.path.basename(active_files[active_type]), output_type])
-                    # outfile = ("."+action).join(os.path.splitext(os.path.basename(active_files[active_type])))
                     outfile = ("."+action+".").join([os.path.splitext(os.path.basename(active_files[active_type]))[0],output_type])
 
-                    # if "bam" not in self.sample_data[sample]:
-                #     raise AssertionExcept("Can't run 'sort', as no BAM is defined", sample)
-                # outfile = os.path.basename(active_file) + sort_suffix
-
+                    cmd = self.samtools_params[action]["script"].format(action=action,
+                                                                        env_path=self.get_script_env_path(),
+                                                                        active_file=active_files[active_type],
+                                                                        params="" if not self.params[action]
+                                                                                  else "\n\t" + self.params[action] + " \\",
+                                                                        region="" if not "region" in self.params
+                                                                                  else "\\\n\t" + self.params["region"],
+                                                                        outfile=temp_use_dir + outfile)
 
                     self.script += """\
 ###########
 # Running samtools {action}
 #----------------
-{env_path} {action} \\{params}
-\t-o {outf} \\
-\t{active_file}    
-            
-{rm_unsort}
+
+{cmd}
 
 """.format(action=action,
-           env_path=self.get_script_env_path(),
-           params="" if not self.params[action] else "\n\t"+self.params[action]+" \\",
-           outf=(temp_use_dir + outfile),
-           active_file=active_files[active_type],
-           rm_unsort="# Removing unsorted BAM\nrm -rf " + active_files[active_type] if "del_unsorted" in list(self.params.keys()) else "")
+           cmd=cmd)
 
-                    # # Storing sorted bam in 'bam' slot and unsorted bam in unsorted_bam slot
-                    # self.sample_data[sample]["unsorted_bam"] = active_file
-                    # self.sample_data[sample]["bam"] = sample_dir + outfile
-                    # self.stamp_file(self.sample_data[sample]["bam"])
-                    # active_file = temp_use_dir + outfile
-                    #
-                    #
+
 
                     active_type = output_type
                     active_files[active_type] = temp_use_dir + outfile
                     self.sample_data[sample][output_type] = sample_dir + outfile
-                    self.stamp_file(self.sample_data[sample][output_type])
-
+                    if action in self.params["keep_output"]:
+                        files2keep.append(temp_use_dir + outfile)
+                        self.stamp_file(self.sample_data[sample][output_type])
 
                 if action == "index":
 
@@ -543,6 +541,9 @@ cp -fs \\
 
                 # --------------------------------------- faidx - NOT SUPPORTED. Has it's own module
                 # --------------------------------------- Copying final files to dir and removing temp
+
+            # files2keep = " \\\n\t".join(list(active_files.values()))
+            files2keep = " \\\n\t".join(list(files2keep))
             self.script += """\
 ###########
 # Copying final files to final location
@@ -551,7 +552,7 @@ mv {files} \\
 \t{dir}
 
 rm -rf {tempdir}
-""".format(files=" \\\n\t".join(list(active_files.values())),
+""".format(files=files2keep,
            dir=use_dir,
            tempdir=temp_use_dir)
 

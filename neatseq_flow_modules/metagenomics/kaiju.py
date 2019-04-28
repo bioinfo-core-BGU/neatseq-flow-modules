@@ -216,7 +216,20 @@ class Step_kaiju(Step):
             self.stamp_file(self.sample_data[sample]["raw_classification"])
 
             if "kaiju2krona" in list(self.params.keys()):
+
+                self.script += """
+
+# Creating text report for krona
+{path} \\
+-t {t} \\
+-n {names} \\
+-i {input} \\
+-o {input}.4krona.txt                
                 
+                """.format(path=self.params["kaiju2krona"],
+                           t=self.params["redir_params"]["-t"],
+                           names=self.params["names_dmp"],
+                           input=self.sample_data[sample]["raw_classification"])
                 self.script += "# Creating text report for krona\n"
                 self.script += "%s \\\n\t" % self.params["kaiju2krona"]
                 self.script += "-t %s \\\n\t" % self.params["redir_params"]["-t"]
