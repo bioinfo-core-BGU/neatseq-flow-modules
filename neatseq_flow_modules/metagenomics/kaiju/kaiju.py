@@ -31,11 +31,11 @@ Output
 
     * ``self.sample_data[<sample>]["raw_classification"]``
     
-* If  'kaiju2krona' is set:
+* If  'kaiju2krona' is set, puts the editted classification files in:
 
     * ``self.sample_data[<sample>]["classification"]``
 
-* If ``ktImportText_path`` parameter was passed, puts the krona reports in 
+* If ``ktImportText`` parameter was passed, puts the krona reports in
 
     * ``self.sample_data["project_data"]["krona"]``
 
@@ -47,29 +47,36 @@ Parameters that can be set
     :header: "Parameter", "Values", "Comments"
     :widths: 15, 10, 10
 
-    "ktImportText_path",      "", "Path to ktImportText."
-    "kaiju2krona", "", "Path to kaiju2krona. If not specified, will derive it from the ``script_path``"
+    "ktImportText", "", "A block with a ``path:`` element containing the path to ``ktImportText``, and a optionally a ``redirects`` element. If the path is left empty, will assume ``ktImportText`` is in the same dir as ``kaiju``"
+    "kaiju2krona",  "", "A block with a ``path:`` element containing the path to ``kaiju2krona``, and a ``redirects`` element with ``-t`` and ``-n`` defined. If the path is left empty, will assume ``kaiju2krona`` is in the same dir as ``kaiju``"
 
+.. Attention::
+   Make sure to provide ``-t`` (nodes file) to kaiju via the (main) redirects block.
 
-    
+   Also, you must provide ``-n`` (names file) and ``-t`` (nodes file) to ``kaiju2krona`` via its redirects block. See example.
+
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ::
 
-
     kaiju1:
         module: kaiju
         base: trim1
         script_path: {Vars.paths.kaiju}
-        kaiju2krona: 
-        ktImportText_path: {Vars.paths.ktImportText}
         names_dmp: /path/to/kaijudb/names.dmp
         redirects:
             -f: /path/to/kaijudb/kaiju_db.fmi
             -t: /path/to/kaijudb/nodes.dmp
             -z: 40            
-            
+        kaiju2krona:
+            path:       '{Vars.Programs_path.kaiju.kaiju2krona}'
+            redirects:
+                -n:     '{Vars.databases.kaiju}/names.dmp'
+                -t:     '{Vars.databases.kaiju}/nodes.dmp'
+        ktImportText:
+            path:       '{Vars.Programs_path.ktImportText}'
+
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Menzel, P., Ng, K.L. and Krogh, A., 2016. **Fast and sensitive taxonomic classification for metagenomics with Kaiju**. Nature communications, 7.
@@ -115,9 +122,29 @@ class Step_kaiju(Step):
 
         if "kaiju2krona" in list(self.params.keys()):
             if self.params["kaiju2krona"] == None:
-                self.params["kaiju2krona"] = "%s%s%s" % (os.path.basename(self.params["script_path"]), \
-                                                            os.sep, \
-                                                            "kaiju2krona")
+                raise AssertionExcept("Please provide -t and -n via the 'redirects' to 'kaiju2krona'")
+            elif isinstance(self.params["kaiju2krona"], str):
+                raise AssertionExcept("You must supply -t and -n via the 'redirects' to 'kaiju2krona'")
+            else:
+                if "-n" not in self.params["kaiju2krona"]["redirects"] or "-t" not in self.params["kaiju2krona"]["redirects"]:
+                    raise AssertionExcept("Please provide -t and -n via the 'redirects' to 'kaiju2krona'")
+                if self.params["kaiju2krona"]["path"] is None:
+                    self.params["kaiju2krona"]["path"] = os.sep.join([os.path.basename(self.params["script_path"]),
+                                                                        "kaiju2krona"])
+
+        if "ktImportText" in list(self.params.keys()):
+            if self.params["ktImportText"] == None:
+
+                self.params["ktImportText"] = {"path": os.sep.join([os.path.basename(self.params["script_path"]),
+                                                                       "ktImportText"])}
+            elif isinstance(self.params["ktImportText"], str):
+                self.params["ktImportText"] = {"path":self.params["ktImportText"]}
+            else:
+                if self.params["ktImportText"]["path"] is None:
+                    self.params["ktImportText"]["path"] = os.sep.join([os.path.basename(self.params["script_path"]),
+                                                                        "ktImportText"])
+
+
 
 
     def step_sample_initiation(self):
@@ -145,21 +172,24 @@ class Step_kaiju(Step):
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
-        
-        self.make_sample_file_index()   # see definition below
-        
-        try:
-            self.params["ktImportText_path"]
-        except KeyError:
-            self.write_warning("You did not supply a ktImportText_path. Will not create krona reports...\n")
-            self.script = ""
-        else:
+
+        if "ktImportText" in self.params:
+            if "redirects" in self.params["ktImportText"]:
+                redirects = " \\\n\t".join(
+                    [key + " " + (val if val else "")
+                     for key, val
+                     in self.params["ktImportText"]["redirects"].items()])
+            else:
+                redirects = ""
+
             krona_report_fn = self.base_dir + self.sample_data["Title"] + "_krona_report.html"
             self.script = "# Creating krona html reports\n"
             # Adding env and setenv lines to script
             self.script += self.get_setenv_part()
             # Main part of script:
-            self.script += "%s \\\n\t" % self.params["ktImportText_path"]
+            self.script += "%s \\\n\t" % self.params["ktImportText"]["path"]
+            if redirects:
+                self.script += "%s \\\n\t" % redirects
             self.script += "-o %s \\\n\t" % krona_report_fn
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
                 self.script += "%s,%s \\\n\t" % (self.sample_data[sample]["classification"],sample)
@@ -169,17 +199,17 @@ class Step_kaiju(Step):
             # Storing and stamping results:
             self.sample_data["project_data"]["krona"] = krona_report_fn
             self.stamp_file(self.sample_data["project_data"]["krona"])
-            
+
+        else:
+            self.write_warning("You did not supply 'ktImportText'. Will not create krona reports...\n")
+            self.script = ""
+
     def build_scripts(self):
         """ This is the actual script building function
             Most, if not all, editing should be done here 
             HOWEVER, DON'T FORGET TO CHANGE THE CLASS NAME AND THE FILENAME!
         """
-        
-        
-        # Each iteration must define the following class variables:
-            # spec_script_name
-            # script
+
         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
             
             # Name of specific script:
@@ -193,9 +223,7 @@ class Step_kaiju(Step):
             # Use the dir it returns as the base_dir for this step.
             use_dir = self.local_start(sample_dir)
                 
- 
-         
-            # Define output filename 
+            # Define output filename
             output_filename = "".join([use_dir , sample , self.file_tag])
 
             self.script += self.get_script_const()
@@ -215,48 +243,35 @@ class Step_kaiju(Step):
             self.sample_data[sample]["raw_classification"]        = "%s" % (sample_dir + os.path.basename(output_filename))
             self.stamp_file(self.sample_data[sample]["raw_classification"])
 
-            if "kaiju2krona" in list(self.params.keys()):
+            if "kaiju2krona" in self.params:
 
+                if "redirects" in self.params["kaiju2krona"]:
+                    redirects = " \\\n\t".join(
+                        [key + " " + (val if val else "")
+                         for key, val
+                         in self.params["kaiju2krona"]["redirects"].items()])
+                    redirects = "\n\t{redirs}\\".format(redirs=redirects)
+                else:
+                    redirects = ""
                 self.script += """
 
 # Creating text report for krona
-{path} \\
--t {t} \\
--n {names} \\
--i {input} \\
--o {input}.4krona.txt                
+{path} \\{redirects}
+\t-i {input} \\
+\t-o {input}.4krona.txt                 
                 
-                """.format(path=self.params["kaiju2krona"],
-                           t=self.params["redir_params"]["-t"],
-                           names=self.params["names_dmp"],
+                """.format(path=self.params["kaiju2krona"]["path"],
+                           redirects=redirects,
                            input=self.sample_data[sample]["raw_classification"])
-                self.script += "# Creating text report for krona\n"
-                self.script += "%s \\\n\t" % self.params["kaiju2krona"]
-                self.script += "-t %s \\\n\t" % self.params["redir_params"]["-t"]
-                self.script += "-n %s \\\n\t" % self.params["names_dmp"]
-                self.script += "-i %s \\\n\t" % self.sample_data[sample]["raw_classification"]
-                self.script += "-o %s.4krona.txt \n\n" % self.sample_data[sample]["raw_classification"]
-                
 
                 self.sample_data[sample]["classification"] = "%s.4krona.txt" % self.sample_data[sample]["raw_classification"]
                 self.stamp_file(self.sample_data[sample]["classification"])
 
             # Move all files from temporary local dir to permanent base_dir
-            self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
-                        
-            
+            self.local_finish(use_dir,self.base_dir)
             self.create_low_level_script()
-                    
 
-                    
     def make_sample_file_index(self):
         """ Make file containing samples and target file names for use by kraken analysis R script
         """
-        
-        with open(self.base_dir + "kaiju_files_index.txt", "w") as index_fh:
-            index_fh.write("Sample\tkaiju_report\n")
-            for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-                index_fh.write("%s\t%s\n" % (sample,self.sample_data[sample]["raw_classification"]))
-                
-        self.sample_data["project_data"]["kaiju_file_index"] = self.base_dir + "kaiju_files_index.txt"
-        
+        pass

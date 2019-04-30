@@ -122,6 +122,8 @@ import sys
 import re
 from neatseq_flow.PLC_step import Step,AssertionExcept
 import yaml
+from pprint import pprint as pp
+
 
 __author__ = "Menachem Sklarz"
 __version__ = "1.6.0"
@@ -162,6 +164,8 @@ class Step_samtools_new(Step):
                 raise AssertionExcept("Error loading samtools params index 'samtools_params.yml'")
             except:
                 raise AssertionExcept("Unknown error loading samtools params index 'samtools_params.yml")
+
+        import json
 
         if "keep_output" not in self.params:
             self.params["keep_output"] = list(set(self.params.keys()) & set(self.samtools_params.keys()))
@@ -248,7 +252,6 @@ class Step_samtools_new(Step):
         """ This is the actual script building function
 
         """
-
         if self.params["scope"] == "project":
             sample_list = ["project_data"]
         elif self.params["scope"] == "sample":
@@ -308,43 +311,39 @@ cp -fs \\
                 if action in "flags split targetcut rmdup".split(" "):
                     raise AssertionExcept("Tool {action} is not supported by the module".format(action=action))
 
+                if action in ["view","sort", "index", "flagstat","stats","idxstats","depth","fasta","fastq"]:
+                    output_type = self.get_action_output_type(action, active_type)
+                    outfile_cmd = self.samtools_params_dict[action]["outfile"]
+                    if re.search("system", outfile_cmd):
+                        raise Exception("WARNING: os.system call in outfile definition! BEWARE")
+                    outfile = eval(outfile_cmd, globals(), locals())
+                    print(outfile)
 
-                if action == "view":
-
-                    if re.search("\-\w*b", self.params[action]):
-                        output_type = "bam"
-                    elif re.search("\-\w*C", self.params[action]):
-                        output_type = "cram"
-                    else:
-                        output_type = "sam"
-                    # outfile = ".".join([os.path.basename(active_files[active_type]), output_type])
-                    outfile = ("."+action+".").join([os.path.splitext(os.path.basename(active_files[active_type]))[0],output_type])
-
-                    cmd = self.samtools_params[action]["script"].format(action=action,
-                                                                        env_path=self.get_script_env_path(),
-                                                                        active_file=active_files[active_type],
-                                                                        params="" if not self.params[action]
-                                                                                  else "\n\t" + self.params[action] + " \\",
-                                                                        region="" if not "region" in self.params
-                                                                                  else "\\\n\t" + self.params["region"],
-                                                                        outfile=temp_use_dir + outfile)
-
-
+                    cmd = self.samtools_params_dict[action]["script"].format(action=action,
+                                                                             env_path=self.get_script_env_path(),
+                                                                             active_file=active_files[active_type],
+                                                                             params="" if not self.params[action]
+                                                                             else "\n\t" + self.params[action] + " \\",
+                                                                             region="" if not "region" in self.params
+                                                                             else "\\\n\t" + self.params["region"],
+                                                                             outfile=temp_use_dir + outfile)
                     self.script += """\
 ###########
 # Running samtools {action}
 #----------------
-
 {cmd}
+""".format(cmd=cmd,
+           action=action)
 
-""".format(action=action, cmd=cmd)
+                    _locals = dict()
 
-                    active_type = output_type
-                    active_files[active_type] = temp_use_dir + outfile
-                    self.sample_data[sample][output_type] = sample_dir + outfile
-                    if action in self.params["keep_output"]:
-                        files2keep.append(temp_use_dir + outfile)
-                        self.stamp_file(self.sample_data[sample][output_type])
+                    for k in "action,active_type,output_type,active_files,files2keep,temp_use_dir,sample_dir," \
+                             "outfile,sample".split(","):
+                        _locals[k] = locals()[k]
+                    active_type, active_files, files2keep = self.file_management(**_locals)
+
+                else:
+                    raise AssertionExcept("Action '{action}' not defined yet".format(action=action))
 
 # TODO: incorporate filtering in this version of samtools
 #             # The following can be merged into the main 'view' section
@@ -381,163 +380,43 @@ cp -fs \\
 
             # if "sort" in list(self.params.keys()):
 
-                if action == "sort":
 
-                    if re.search("\-\w*O", self.params[action]):
-                        # TODO: get type from -O value
-                        pass
-                        # output_type = "bam"
-                    else:
-                        output_type = "bam"
-                    outfile = ("."+action+".").join([os.path.splitext(os.path.basename(active_files[active_type]))[0],output_type])
-
-                    cmd = self.samtools_params[action]["script"].format(action=action,
-                                                                        env_path=self.get_script_env_path(),
-                                                                        active_file=active_files[active_type],
-                                                                        params="" if not self.params[action]
-                                                                                  else "\n\t" + self.params[action] + " \\",
-                                                                        region="" if not "region" in self.params
-                                                                                  else "\\\n\t" + self.params["region"],
-                                                                        outfile=temp_use_dir + outfile)
-
-                    self.script += """\
-###########
-# Running samtools {action}
-#----------------
-
-{cmd}
-
-""".format(action=action,
-           cmd=cmd)
-
-
-
-                    active_type = output_type
-                    active_files[active_type] = temp_use_dir + outfile
-                    self.sample_data[sample][output_type] = sample_dir + outfile
-                    if action in self.params["keep_output"]:
-                        files2keep.append(temp_use_dir + outfile)
-                        self.stamp_file(self.sample_data[sample][output_type])
-
-                if action == "index":
-
-                    if active_type=="bam":
-                        output_type = "bai"
-                    elif active_type == "cram":
-                        output_type = "crai"
-                    else:
-                        raise AssertionExcept("No 'bam' or 'cram' for 'samtools index'", sample)
-                    outfile = "{fn}.{ext}".format(ext=output_type, fn=active_files[active_type])
-
-
-                    self.script += """\
-###########
-# Indexing BAM
-#----------------
-{env_path}{action} \\{params}
-\t{active_file}    
-
-""".format(action=action,
-           env_path=self.get_script_env_path(),
-           params="" if not self.params[action] else "\n\t" + self.params[action] + " \\",
-           active_file=active_files[active_type])
-
-                    # active_files[active_type] = temp_use_dir + outfile  - index does not change active type!
-                    active_files[output_type] = outfile
-                    self.sample_data[sample][output_type] = sample_dir + os.path.basename(outfile)
-                    self.stamp_file(self.sample_data[sample][output_type])
-
-                    # self.sample_data[sample]["bai"] = "{dir}{fn}.bai".format(dir=sample_dir,
-                    #                                                          fn=os.path.basename(active_file))
-                    # self.stamp_file(self.sample_data[sample]["bai"])
-
-
-            # self.local_finish(temp_use_dir,sample_dir)
-            # self.create_low_level_script()
-            #
-            # continue
-                if action in ["flagstat","stats","idxstats","depth"]:
-                    output_type = action
-                    outfile = ".".join([os.path.basename(active_files[active_type]), output_type, "txt"])
-
-
-                    self.script += """\
-###########
-# Calculating {action}
-#----------------
-{env_path}{action} \\{params}
-\t{active_file}  \\
-\t> {outfile}
-
-""".format(env_path=self.get_script_env_path(),
-           params="" if not self.params[action] else "\n\t" + self.params[action] + " \\",
-           active_file=active_files[active_type],
-           action=action,
-           outfile=temp_use_dir+outfile)
-
-                    active_files[output_type] = temp_use_dir + outfile
-                    self.sample_data[sample][active_type+"."+action] = sample_dir + outfile
-                    self.stamp_file(self.sample_data[sample][active_type+"."+action])
-
-
-
-
-                if action in ["fasta","fastq"]:
-
-                    if active_type == "bam":
-                        output_type = "bai"
-                    elif active_type == "cram":
-                        output_type = "crai"
-                    else:
-                        raise AssertionExcept("No 'bam' or 'cram' for 'samtools index'", sample)
-                    outfile = ".".join([os.path.basename(active_files[active_type]), output_type])
-
-            # # Adding code for fastq or fasta extraction from bam:
-            # for type in (set(self.params.keys()) & set(["fasta","fastq"])):
-
-#                     if "fastq.F" in self.sample_data[sample]:
-#                         readspart = """\
-# -1  {readsF} \\
-# \t-2  {readsR} \
-# """.format(readsF=(active_files[active_type] + ".F." + type),
-#            readsR=(active_files[active_type] + ".R." + type))
-#                     else:
-#                         readspart = """\
-# -s  {readsS} \
-# """.format(readsS=(active_files[active_type] + ".S." + type))
-                    readspart = """\
--1  {readsF} \\
-\t-2  {readsR} \\
-\t-s  {readsS} \
-""".format(readsS=(active_files[active_type] + ".S." + action),
-           readsF=(active_files[active_type] + ".F." + action),
-           readsR=(active_files[active_type] + ".R." + action))
-
-
-                    self.script += """\
-###########
-# Extracting fastq files from BAM:
-#----------------
-{env_path}{action} \\{params}
-\t{readspart} \\
-\t{active_file}
-
-""".format(env_path=self.get_script_env_path(),
-           params="" if not self.params[action] else "\n\t" + self.params[action] + " \\",
-           readspart=readspart,
-           action=action,
-           active_file=active_files[active_type])
-
-                    active_files[action+".F"] = "%s%s.F.%s" % (temp_use_dir, os.path.basename(active_files[active_type]), action)
-                    active_files[action+".R"] = "%s%s.R.%s" % (temp_use_dir, os.path.basename(active_files[active_type]), action)
-                    active_files[action+".S"] = "%s%s.S.%s" % (temp_use_dir, os.path.basename(active_files[active_type]), action)
-                    # Storing and Stamping files
-                    self.sample_data[sample][action+".F"] = "%s%s.F.%s" % (sample_dir, os.path.basename(active_files[active_type]), action)
-                    self.sample_data[sample][action+".R"] = "%s%s.R.%s" % (sample_dir, os.path.basename(active_files[active_type]), action)
-                    self.sample_data[sample][action+".S"] = "%s%s.S.%s" % (sample_dir, os.path.basename(active_files[active_type]), action)
-                    self.stamp_file(self.sample_data[sample][action+".F"])
-                    self.stamp_file(self.sample_data[sample][action+".R"])
-                    self.stamp_file(self.sample_data[sample][action+".S"])
+#                 if action in ["fasta","fastq"]:
+#
+#                     outfile_cmd = self.samtools_params[action]["outfile"]
+#                     if re.search("system", outfile_cmd):
+#                         raise Exception("WARNING: os.system call in outfile definition! BEWARE")
+#                     outfile = eval(outfile_cmd, globals(),locals())
+#                     print(action + ":" + outfile)
+#
+#                     cmd = self.samtools_params[action]["script"].format(action=action,
+#                                                                         env_path=self.get_script_env_path(),
+#                                                                         active_file=active_files[active_type],
+#                                                                         params="" if not self.params[action]
+#                                                                                   else "\n\t" + self.params[action] + " \\",
+#                                                                         region="" if not "region" in self.params
+#                                                                                   else "\\\n\t" + self.params["region"],
+#                                                                         outfile=temp_use_dir + outfile)
+#
+#
+#                     self.script += """\
+# ###########
+# # Running samtools {action}
+# #----------------
+# {cmd}
+# """.format(cmd=cmd,
+#            action=action)
+#
+#                     active_files[action+".F"] = "%s%s.F.%s" % (temp_use_dir, os.path.basename(active_files[active_type]), action)
+#                     active_files[action+".R"] = "%s%s.R.%s" % (temp_use_dir, os.path.basename(active_files[active_type]), action)
+#                     active_files[action+".S"] = "%s%s.S.%s" % (temp_use_dir, os.path.basename(active_files[active_type]), action)
+#                     # Storing and Stamping files
+#                     self.sample_data[sample][action+".F"] = "%s%s.F.%s" % (sample_dir, os.path.basename(active_files[active_type]), action)
+#                     self.sample_data[sample][action+".R"] = "%s%s.R.%s" % (sample_dir, os.path.basename(active_files[active_type]), action)
+#                     self.sample_data[sample][action+".S"] = "%s%s.S.%s" % (sample_dir, os.path.basename(active_files[active_type]), action)
+#                     self.stamp_file(self.sample_data[sample][action+".F"])
+#                     self.stamp_file(self.sample_data[sample][action+".R"])
+#                     self.stamp_file(self.sample_data[sample][action+".S"])
 
                 # --------------------------------------- faidx - NOT SUPPORTED. Has it's own module
                 # --------------------------------------- Copying final files to dir and removing temp
@@ -560,3 +439,159 @@ rm -rf {tempdir}
             self.local_finish(use_dir,sample_dir)
             self.create_low_level_script()
 
+
+
+    def get_action_output_type(self, action, active_type):
+        if action == "view":
+            if re.search("\-\w*b", self.params[action]):
+                return "bam"
+            elif re.search("\-\w*C", self.params[action]):
+                return "cram"
+            else:
+                return "sam"
+        elif action == "sort":
+            if re.search("\-\w*O", self.params[action]):
+                # TODO: get type from -O value
+                pass
+                # output_type = "bam"
+            else:
+                return "bam"
+        elif action == "index":
+            if active_type == "bam":
+                return "bai"
+            elif active_type == "cram":
+                return "crai"
+            else:
+                raise AssertionExcept("No 'bam' or 'cram' for 'samtools index'", sample)
+        elif action in ["flagstat", "stats", "idxstats", "depth"]:
+            return action
+        elif action in ["fasta","fastq"]:
+            return active_type
+
+    def file_management(self,action,active_type,output_type,active_files,files2keep,temp_use_dir,sample_dir,outfile,sample):
+
+        if action in ["view", "sort", "index"]:
+            active_files[output_type] = temp_use_dir + outfile
+            self.sample_data[sample][output_type] = sample_dir + outfile
+            if action in self.params["keep_output"]:
+                files2keep.append(temp_use_dir + outfile)
+            self.stamp_file(self.sample_data[sample][output_type])
+            if action != "index":
+                active_type = output_type
+
+        elif action in ["flagstat", "stats", "idxstats", "depth"]:
+            active_files[output_type] = temp_use_dir + outfile
+            self.sample_data[sample][active_type + "." + action] = sample_dir + outfile
+            self.stamp_file(self.sample_data[sample][active_type + "." + action])
+            if action in self.params["keep_output"]:
+                files2keep.append(temp_use_dir + outfile)
+
+        elif action in ["fasta","fastq"]:
+
+            active_files[action + ".F"] = "%s%s.F.%s" % (temp_use_dir, os.path.basename(active_files[active_type]), action)
+            active_files[action + ".R"] = "%s%s.R.%s" % (temp_use_dir, os.path.basename(active_files[active_type]), action)
+            active_files[action + ".S"] = "%s%s.S.%s" % (temp_use_dir, os.path.basename(active_files[active_type]), action)
+            # Storing and Stamping files
+            self.sample_data[sample][action + ".F"] = "%s%s.F.%s" % (sample_dir, os.path.basename(active_files[active_type]), action)
+            self.sample_data[sample][action + ".R"] = "%s%s.R.%s" % (sample_dir, os.path.basename(active_files[active_type]), action)
+            self.sample_data[sample][action + ".S"] = "%s%s.S.%s" % (sample_dir, os.path.basename(active_files[active_type]), action)
+            self.stamp_file(self.sample_data[sample][action + ".F"])
+            self.stamp_file(self.sample_data[sample][action + ".R"])
+            self.stamp_file(self.sample_data[sample][action + ".S"])
+            if action in self.params["keep_output"]:
+                files2keep.append(temp_use_dir + outfile)
+
+        return active_type,active_files,files2keep
+
+
+
+
+
+
+    samtools_params_dict = \
+        {
+            "addreplacerg": None,
+            "bedcov": None,
+            "calmd": None,
+            "cat": None,
+            "collate": None,
+            "depad": None,
+            "depth": {
+                "outfile": "\".\".join([os.path.basename(active_files[active_type]), output_type, \"txt\"])",
+                "script": "{env_path}{action} \\{params}\n\t{active_file}  \\\n\t> {outfile}\n"
+            },
+            "dict": None,
+            "faidx": None,
+            "fasta": {
+                "outfile": "os.path.basename(active_files[active_type])",
+                "script": """\
+{env_path}{action} \\{params}
+\t-1  {outfile}.F.{action} \\
+\t-2  {outfile}.R.{action} \\
+\t-s  {outfile}.S.{action} \\
+\t{active_file}\n"""
+            },
+            "fastq": {
+                "outfile": "os.path.basename(active_files[active_type])",
+                "script": """\
+{env_path}{action} \\{params}
+\t-1  {outfile}.F.{action} \\
+\t-2  {outfile}.R.{action} \\
+\t-s  {outfile}.S.{action} \\
+\t{active_file}\n"""
+            },
+            "fixmate": None,
+            "flags": None,
+            "flagstat": {
+                "outfile": "\".\".join([os.path.basename(active_files[active_type]), output_type, \"txt\"])",
+                "script": "{env_path}{action} \\{params}\n\t{active_file}  \\\n\t> {outfile}\n"
+            },
+            "fqidx": None,
+            "idxstats": {
+                "outfile": "\".\".join([os.path.basename(active_files[active_type]), output_type, \"txt\"])",
+                "script": "{env_path}{action} \\{params}\n\t{active_file}  \\\n\t> {outfile}\n"
+            },
+            "index": {
+                "outfile": "'{fn}.{ext}'.format(ext=output_type, fn=active_files[active_type])",
+                "script": """\
+{env_path}{action} \\{params}
+\t{active_file}\n"""
+            },
+            "markdup": None,
+            "merge": None,
+            "mpileup": None,
+            "paired-end": None,
+            "phase": None,
+            "quickcheck": None,
+            "reheader": None,
+            "rmdup": None,
+            "sort": {
+                "outfile": "os.path.splitext(os.path.basename(active_files[active_type]))[0] + \".sort.\" + output_type",
+                "script": "{env_path}{action} \\{params}\n\t-o {outfile} \\\n\t{active_file}\n"
+            },
+            "split": None,
+            "stats": {
+                "outfile": "\".\".join([os.path.basename(active_files[active_type]), output_type, \"txt\"])",
+                "script": """\
+{env_path}{action} \\{params}
+\t{active_file}  \\
+\t> {outfile}"""
+            },
+            "targetcut": None,
+            "tview": None,
+            "view": {
+                "input": {
+                    "flag": "stdin",
+                    "type": [
+                        "sam",
+                        "bam",
+                        "cram"
+                    ]
+                },
+                "outfile": "os.path.splitext(os.path.basename(active_files[active_type]))[0] + '.view.' + output_type",
+                "script": """/
+{env_path}{action} \\{params}
+\t-o {outfile} \\
+\t{active_file} {region} """
+            }
+        }

@@ -54,8 +54,10 @@ Parameters that can be set
 
     "humann2_join_tables", "", "Block containing ``path`` to ``humann2_join_tables``, and a ``redirects`` block if necessary."
     "humann2_renorm_table", "", "Block containing ``path`` to ``humann2_renorm_table``, and a ``redirects`` block if necessary."
+    "protein-database", "uniref50|uniref90", "Protein database used for analysis."
 
-    
+.. Warning:: The ``protein-database`` parameter records the protein database being used: *uniref50* or *uniref90*. It is not used by this module but is required by the downstream module, ``HUMAnN2_further_processing``. If you do not include it, you will not be able to add a ``HUMAnN2_further_processing`` instance for downstream analysis.
+
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

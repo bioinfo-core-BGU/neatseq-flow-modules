@@ -7,39 +7,35 @@
 :Affiliation: Bioinformatics core facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
-.. Note:: This module was developed as part of a study led by Dr. Jacob Moran Gilad
 
+A module for running the ``kaiju2table`` script on the ``kaiju`` output.
 
-A module for running ``kaiju``:
+It is enables merging the resulting sample-wise tables into a single table.
 
+.. Attention:: This module is intended to be executed after an instance of ``kaiju`` module!
 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* fastq files, either paired end or single:
+* ``raw_classification`` created by files, either paired end or single:
 
-    * ``sample_data[<sample>]["fastq.F"]``
-    * ``sample_data[<sample>]["fastq.R"]``
-    * ``sample_data[<sample>]["fastq.S"]``
-    
+    * ``sample_data[<sample>]["raw_classification"]``
+
     
 
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* Puts the ``kaiju`` output files in:  
+* Puts the ``kaiju.report`` files in:
 
-    * ``self.sample_data[<sample>]["raw_classification"]``
+    * ``self.sample_data[<sample>]["kaiju.report.phylum"]``
+    * ``self.sample_data[<sample>]["kaiju.report.class"]``
+    * ``self.sample_data[<sample>]["kaiju.report.order"]``
+    * ``self.sample_data[<sample>]["kaiju.report.family"]``
+    * ``self.sample_data[<sample>]["kaiju.report.genus"]``
+    * ``self.sample_data[<sample>]["kaiju.report.species"]``
     
-* If  'kaiju2krona' is set:
 
-    * ``self.sample_data[<sample>]["classification"]``
-
-* If ``ktImportText_path`` parameter was passed, puts the krona reports in 
-
-    * ``self.sample_data["project_data"]["krona"]``
-
-    
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -47,9 +43,10 @@ Parameters that can be set
     :header: "Parameter", "Values", "Comments"
     :widths: 15, 10, 10
 
-    "ktImportText_path",      "", "Path to ktImportText."
-    "kaiju2krona", "", "Path to kaiju2krona. If not specified, will derive it from the ``script_path``"
+    "script_path", "", "Path to kaiju2table."
+    "merge_count_tables", "", "Should the sample-wise tables be merged?"
 
+.. Attention:: You must provide ``-n`` (names file) and ``-t`` (nodes file) via the redirects. See example
 
     
 Lines for parameter file
@@ -58,18 +55,17 @@ Lines for parameter file
 ::
 
 
-    kaiju1:
-        module: kaiju
-        base: trim1
-        script_path: {Vars.paths.kaiju}
-        kaiju2krona: 
-        ktImportText_path: {Vars.paths.ktImportText}
-        names_dmp: /path/to/kaijudb/names.dmp
+    kaiju2table:
+        module: kaiju2table
+        base:   kaiju
+        script_path:  '{Vars.Programs_path.kaiju.kaiju2table}'
+        scope:  sample
         redirects:
-            -f: /path/to/kaijudb/kaiju_db.fmi
-            -t: /path/to/kaijudb/nodes.dmp
-            -z: 40            
-            
+            -t: {Vars.databases/kaiju}/nodes.dmp
+            -n: {Vars.databases/kaiju}/names.dmp
+            -p:
+        merge_count_tables:
+
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Menzel, P., Ng, K.L. and Krogh, A., 2016. **Fast and sensitive taxonomic classification for metagenomics with Kaiju**. Nature communications, 7.
@@ -118,6 +114,8 @@ class Step_kaiju2table(Step):
         else:
             self.levels = ["phylum", "class", "order", "family", "genus", "species"]
 
+        if "scope" not in self.params:
+            self.params["scope"] = "sample"
 
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
@@ -139,7 +137,10 @@ class Step_kaiju2table(Step):
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
-        if "join_script" in self.params:
+        if "merge_count_tables" in self.params:
+            if not self.params["merge_count_tables"]:
+                self.params["merge_count_tables"] = os.path.join(os.path.dirname(os.path.realpath(__file__)), "merge_count_tables.pl")
+
             self.script = ""
             for tax_level in self.levels:
                 # Define output filename
@@ -153,7 +154,7 @@ class Step_kaiju2table(Step):
 \t{files} \\
 \t{outfn}
 
-            """.format(path=self.params["join_script"],
+            """.format(path=self.params["merge_count_tables"],
                        samples=",".join(self.sample_data["samples"]),
                        files=",".join([self.sample_data[sample]["kaiju.report."+tax_level] for sample in self.sample_data["samples"]]),
                        outfn=self.base_dir+output_filename)

@@ -52,6 +52,7 @@ Parameters that can be set
 
     "humann2_regroup_table", "", "Block containing ``path`` to ``humann2_regroup_table``, and a ``redirects`` block if necessary."
     "humann2_rename_table", "", "Block containing ``path`` to ``humann2_rename_table``, and a ``redirects`` block if necessary."
+    "scope", "sample|project", "Decides whether the scripts should operate on sample or project-wise reports"
 
     
 Lines for parameter file
@@ -68,8 +69,6 @@ For regrouping by all grouping options::
             -pe: shared 30
         humann2_regroup_table:
             path: humann2_regroup_table
-          # redirects:
-            # --groups:   uniref90_go
         humann2_rename_table:
             path: humann2_rename_table
 
