@@ -226,7 +226,8 @@ class Step_kraken2(Step):
 # Create file for ktImportTaxonomy
 if [ -e {krak_out} ]
 then
-    cut -f 2,3 {krak_out} \\
+    awk 'BEGIN{{FS="\\t"}}{{printf("%s\\t%s\\n",$2,gensub(/.*taxid ([0-9]+).*/, "\\\\1", "g", $3))}}' \\
+        {krak_out} \\
         > {krak_out}.forKrona
 fi
 

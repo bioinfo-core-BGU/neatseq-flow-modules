@@ -24,9 +24,8 @@ both ``query`` and ``db`` parameters must be passed. They should be set to one o
 
 The type of fasta and database to use are set with the ``querytype`` and ``dbtype`` parameters, respectively.
 
-``dbtype`` must be set if ``db`` is set to ``sample`` or ``project``.
-
-``querytype`` **must be set regardless.** It will determine the type of blast report (*i.e.* whether it will be stored in ``blast.nucl`` or ``blast.prot``)
+* ``dbtype`` must be set if ``db`` is set to ``sample`` or ``project``.
+* ``querytype`` **must be set regardless.** It will determine the type of blast report (*i.e.* whether it will be stored in ``blast.nucl`` or ``blast.prot``)
 
     
 Requires:
