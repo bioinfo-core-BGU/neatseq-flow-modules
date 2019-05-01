@@ -49,7 +49,7 @@ Step_params:
             -dbtype:        nucl
 ############################ 2. BLAST external fasta against genomic sequences
     blst_asmbl:
-        module:             blast
+        module:             blast_old
         base:               mkblst_nucl
         script_path:        '{Vars.paths.blast}/tblastn'
         qsub_params:
@@ -94,7 +94,7 @@ Step_params:
             --strain:
 ############################ 6. BLAST predicted genes against swissprot
     blst_genes:
-        module:             blast
+        module:             blast_old
         base:               prokka_asmbl
         script_path:        '{Vars.paths.blast}/blastx'
         qsub_params:
@@ -112,8 +112,11 @@ Step_params:
     parse_blst_genes:
         module:             parse_blast
         base:               blst_genes
-        script_path:        {Vars.paths.parse_blast}
-        blast_merge_path:   {Vars.paths.compare_blast_parsed_reports}
+        # script_path:        {Vars.paths.parse_blast}
+        script_path:        Rscript /path/to/parse_blast.R
+        blast_merge:
+            path:           #{Vars.paths.compare_blast_parsed_reports}
+            redirects:      --variable evalue --full_txt_output --name qseqid
         scope:              sample
         redirects:
             --dbtable:      {Vars.databases.uniprot_sprot.table}
@@ -123,7 +126,7 @@ Step_params:
                             bitscore score pident qframe"'
 ############################ 7. BLAST predicted genes against swissprot - Alternative module 
     blst_genes_alt:
-        module:             blast_new
+        module:             blast
         base:               prokka_asmbl
         script_path:        '{Vars.paths.blast}/blastx'
         redirects:
@@ -133,7 +136,7 @@ Step_params:
         querytype:          nucl   # Use the 'nucl' output from prokka
 ############################ BONUS. BLAST predicted genes against assembly 
     blst_genes_asmbl:
-        module:             blast_new
+        module:             blast
         base:               [prokka_asmbl,mkblst_nucl]
         script_path:        '{Vars.paths.blast}/blastn'
         redirects:
@@ -147,7 +150,13 @@ Step_params:
         module:             parse_blast
         base:               blst_genes_asmbl
         script_path:        {Vars.paths.parse_blast}
-        blast_merge_path:   {Vars.paths.compare_blast_parsed_reports}
+        blast_merge:
+            path:           {Vars.paths.compare_blast_parsed_reports}
+            redirects:      
+                --variable: evalue 
+                --full_txt_output: 
+                --name: qseqid
+
         scope:              sample
         redirects:
             --dbtable:      {Vars.databases.gene_list.table}
@@ -176,7 +185,7 @@ Step_params:
             -dbtype:        nucl
             
     blst_genes_project:
-        module:             blast_new
+        module:             blast
         base:               mkblst_nucl_project
         script_path:        '{Vars.paths.blast}/blastn'
         redirects:
@@ -190,7 +199,6 @@ Step_params:
         module:             parse_blast
         base:               blst_genes_project
         script_path:        {Vars.paths.parse_blast}
-        blast_merge_path:   {Vars.paths.compare_blast_parsed_reports}
         scope:              project
         extract_fasta:
         redirects:

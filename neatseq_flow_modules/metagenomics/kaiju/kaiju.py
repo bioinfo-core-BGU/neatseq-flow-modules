@@ -64,7 +64,6 @@ Lines for parameter file
         module: kaiju
         base: trim1
         script_path: {Vars.paths.kaiju}
-        names_dmp: /path/to/kaijudb/names.dmp
         redirects:
             -f: /path/to/kaijudb/kaiju_db.fmi
             -t: /path/to/kaijudb/nodes.dmp

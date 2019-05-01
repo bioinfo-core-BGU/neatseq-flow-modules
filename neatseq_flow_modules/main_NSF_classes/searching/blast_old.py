@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """ 
-``blast_old`` :sup:`*`
+``blast_old`` :sup:`*` - Old module. Use ``blast`` instead
 -----------------------------------------------------------------
 
 :Authors: Menachem Sklarz
