@@ -1,0 +1,95 @@
+addreplacerg:
+bedcov:
+calmd:
+cat:
+collate:
+depad:
+depth:
+    script: |
+        {env_path}{action} \{params}
+        	{active_file}  \
+        	> {outfile}
+    outfile: '".".join([os.path.basename(active_files[active_type]), output_type, "txt"])'
+    region: -r
+dict:
+faidx:
+fasta:
+    outfile:   'os.path.basename(active_files[active_type])'
+    script: |
+        {env_path}{action} \{params}
+        	-1  {outfile}.F.{action} \
+        	-2  {outfile}.R.{action} \
+        	-s  {outfile}.S.{action} \
+        	{active_file}
+fastq:
+    outfile:   'os.path.basename(active_files[active_type])'
+    script: |
+        {env_path}{action} \{params}
+        	-1  {outfile}.F.{action} \
+        	-2  {outfile}.R.{action} \
+        	-s  {outfile}.S.{action} \
+        	{active_file}
+fixmate:
+flags:
+flagstat:
+    script: |
+        {env_path}{action} \{params}
+        	{active_file}  \
+        	> {outfile}
+    outfile: '".".join([os.path.basename(active_files[active_type]), output_type, "txt"])'
+fqidx:
+idxstats:
+    script: |
+        {env_path}{action} \{params}
+        	{active_file}  \
+        	> {outfile}
+    outfile: '".".join([os.path.basename(active_files[active_type]), output_type, "txt"])'
+index:
+    outfile: '"{fn}.{ext}".format(ext=output_type, fn=active_files[active_type])'
+    script: |
+        {env_path}{action} \{params}
+        	{active_file}
+
+markdup:
+merge:
+    region: -R
+mpileup:
+    outfile:   'os.path.splitext(os.path.basename(active_files[active_type]))[0] + ".view." + output_type'
+    script: |
+        {env_path}{action} \{params}
+        	--output {outfile} \
+        	{active_file}
+    region: -r
+paired-end:
+phase:
+quickcheck:
+reheader:
+rmdup:
+sort:
+    script: |
+        {env_path}{action} \{params}
+        	-o {outfile} \
+        	{active_file}
+    outfile:  'os.path.splitext(os.path.basename(active_files[active_type]))[0] + ".sort." + output_type'
+
+split:
+stats:
+    script: |
+        {env_path}{action} \{params}
+        	{active_file}  \
+        	> {outfile}
+    outfile: '".".join([os.path.basename(active_files[active_type]), output_type, "txt"])'
+    region: END
+
+targetcut:
+tview:
+view:
+    input:  
+        flag:   stdin
+        type:   [sam, bam, cram]
+    outfile:   'os.path.splitext(os.path.basename(active_files[active_type]))[0] + ".view." + output_type'
+    script: |
+        {env_path}{action} \{params}
+        	-o {outfile} \
+        	{active_file} {region}
+    region: END

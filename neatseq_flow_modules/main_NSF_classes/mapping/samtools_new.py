@@ -302,30 +302,68 @@ cp -fs \\
             self.sample_data[sample][active_type] = sample_dir + os.path.basename(active_files[active_type])
 
             for action in self.params:
+                # This is to enable passing each tool more than once:
+                # Repeated actions have digits appended to them
+                action_numbered = action
+                action = re.sub("\d+$","",action)
+
                 if action not in self.samtools_params:
                     continue
-                # print("------------------")
-                # print(action)
-                # print(active_files)
+
+                # Get action redirects (if exist)
+                redirects = ""
+                region = ""
+                if isinstance(self.params[action_numbered],dict):
+                    if "region" in self.params[action_numbered]:
+                        region = self.params[action_numbered]["region"]
+                    if "redirects" in self.params[action_numbered]:
+                        if isinstance(self.params[action_numbered]["redirects"], dict):
+                            redirects = " \\\n\t".join(
+                                [key + " " + (str(val) if val else "")
+                                 for key, val
+                                 in self.params[action_numbered]["redirects"].items()])
+                        else:
+                            redirects = self.params[action_numbered]["redirects"]
+                else:
+                    redirects = self.params[action_numbered]
+                # Get action region
+                if region:
+                    if "region" in self.samtools_params[action]:
+                        if self.samtools_params[action]["region"] is None:
+                            self.write_warning(
+                                "Region passed to tool '{action}' that does not accept regions. Removing!!".format(
+                                    action=action))
+                            region = ""
+
+                        elif self.samtools_params[action]["region"] == "END":
+                            pass
+                        else:   # self.samtools_params[action]["region"] == "-r". for eaxmple
+                            redirects = " \\\n\t".join([redirects,
+                                                  "{arg} {region}".format(
+                                                      arg=self.samtools_params[action]["region"],
+                                                      region=region)])
+                            region = ""
+
+                    else:
+                        self.write_warning("Region passed to tool '{action}' that does not accept regions. Removing!!".format(action=action))
+                        region = ""
 
                 if action in "flags split targetcut rmdup".split(" "):
                     raise AssertionExcept("Tool {action} is not supported by the module".format(action=action))
 
-                if action in ["view","sort", "index", "flagstat","stats","idxstats","depth","fasta","fastq"]:
-                    output_type = self.get_action_output_type(action, active_type)
-                    outfile_cmd = self.samtools_params_dict[action]["outfile"]
+                if action in ["view","sort", "index", "flagstat","stats","idxstats","depth","fasta","fastq", "mpileup"]:
+                    output_type = self.get_action_output_type(action, active_type, redirects)
+                    # outfile_cmd = self.samtools_params_dict[action]["outfile"]
+                    outfile_cmd = self.samtools_params[action]["outfile"]
                     if re.search("system", outfile_cmd):
                         raise Exception("WARNING: os.system call in outfile definition! BEWARE")
                     outfile = eval(outfile_cmd, globals(), locals())
-                    print(outfile)
 
-                    cmd = self.samtools_params_dict[action]["script"].format(action=action,
+                    cmd = self.samtools_params[action]["script"].format(action=action,
                                                                              env_path=self.get_script_env_path(),
                                                                              active_file=active_files[active_type],
-                                                                             params="" if not self.params[action]
-                                                                             else "\n\t" + self.params[action] + " \\",
-                                                                             region="" if not "region" in self.params
-                                                                             else "\\\n\t" + self.params["region"],
+                                                                             params="" if not redirects else "\n\t" + redirects + " \\",
+                                                                             region="" if not region else "\\\n\t" + region,
                                                                              outfile=temp_use_dir + outfile)
                     self.script += """\
 ###########
@@ -337,6 +375,7 @@ cp -fs \\
 
                     _locals = dict()
 
+                    # Get relevant local variables into _locals
                     for k in "action,active_type,output_type,active_files,files2keep,temp_use_dir,sample_dir," \
                              "outfile,sample".split(","):
                         _locals[k] = locals()[k]
@@ -378,48 +417,6 @@ cp -fs \\
 #                 self.stamp_file(self.sample_data[sample]["bam"])
 #                 active_file = temp_use_dir + outfile
 
-            # if "sort" in list(self.params.keys()):
-
-
-#                 if action in ["fasta","fastq"]:
-#
-#                     outfile_cmd = self.samtools_params[action]["outfile"]
-#                     if re.search("system", outfile_cmd):
-#                         raise Exception("WARNING: os.system call in outfile definition! BEWARE")
-#                     outfile = eval(outfile_cmd, globals(),locals())
-#                     print(action + ":" + outfile)
-#
-#                     cmd = self.samtools_params[action]["script"].format(action=action,
-#                                                                         env_path=self.get_script_env_path(),
-#                                                                         active_file=active_files[active_type],
-#                                                                         params="" if not self.params[action]
-#                                                                                   else "\n\t" + self.params[action] + " \\",
-#                                                                         region="" if not "region" in self.params
-#                                                                                   else "\\\n\t" + self.params["region"],
-#                                                                         outfile=temp_use_dir + outfile)
-#
-#
-#                     self.script += """\
-# ###########
-# # Running samtools {action}
-# #----------------
-# {cmd}
-# """.format(cmd=cmd,
-#            action=action)
-#
-#                     active_files[action+".F"] = "%s%s.F.%s" % (temp_use_dir, os.path.basename(active_files[active_type]), action)
-#                     active_files[action+".R"] = "%s%s.R.%s" % (temp_use_dir, os.path.basename(active_files[active_type]), action)
-#                     active_files[action+".S"] = "%s%s.S.%s" % (temp_use_dir, os.path.basename(active_files[active_type]), action)
-#                     # Storing and Stamping files
-#                     self.sample_data[sample][action+".F"] = "%s%s.F.%s" % (sample_dir, os.path.basename(active_files[active_type]), action)
-#                     self.sample_data[sample][action+".R"] = "%s%s.R.%s" % (sample_dir, os.path.basename(active_files[active_type]), action)
-#                     self.sample_data[sample][action+".S"] = "%s%s.S.%s" % (sample_dir, os.path.basename(active_files[active_type]), action)
-#                     self.stamp_file(self.sample_data[sample][action+".F"])
-#                     self.stamp_file(self.sample_data[sample][action+".R"])
-#                     self.stamp_file(self.sample_data[sample][action+".S"])
-
-                # --------------------------------------- faidx - NOT SUPPORTED. Has it's own module
-                # --------------------------------------- Copying final files to dir and removing temp
 
             # files2keep = " \\\n\t".join(list(active_files.values()))
             files2keep = " \\\n\t".join(list(files2keep))
@@ -441,16 +438,16 @@ rm -rf {tempdir}
 
 
 
-    def get_action_output_type(self, action, active_type):
+    def get_action_output_type(self, action, active_type, redirects):
         if action == "view":
-            if re.search("\-\w*b", self.params[action]):
+            if re.search("\-\w*b", redirects):
                 return "bam"
-            elif re.search("\-\w*C", self.params[action]):
+            elif re.search("\-\w*C", redirects):
                 return "cram"
             else:
                 return "sam"
         elif action == "sort":
-            if re.search("\-\w*O", self.params[action]):
+            if re.search("\-\w*O", redirects):
                 # TODO: get type from -O value
                 pass
                 # output_type = "bam"
@@ -465,18 +462,26 @@ rm -rf {tempdir}
                 raise AssertionExcept("No 'bam' or 'cram' for 'samtools index'", sample)
         elif action in ["flagstat", "stats", "idxstats", "depth"]:
             return action
-        elif action in ["fasta","fastq"]:
+        elif action in ["fasta", "fastq"]:
             return active_type
+        elif action in ["mpileup"]:
+            if re.search("\-\w*v", redirects) or re.search("\-\-VCF", redirects):
+                return "vcf"
+            elif re.search("\-\w*g", redirects) or re.search("\-\-BCF", redirects):
+                return "bcf"
+            else:
+                return "mpileup"
+
 
     def file_management(self,action,active_type,output_type,active_files,files2keep,temp_use_dir,sample_dir,outfile,sample):
 
-        if action in ["view", "sort", "index"]:
+        if action in ["view", "sort", "index", "mpileup"]:
             active_files[output_type] = temp_use_dir + outfile
             self.sample_data[sample][output_type] = sample_dir + outfile
             if action in self.params["keep_output"]:
                 files2keep.append(temp_use_dir + outfile)
             self.stamp_file(self.sample_data[sample][output_type])
-            if action != "index":
+            if action in ["view", "sort"]:
                 active_type = output_type
 
         elif action in ["flagstat", "stats", "idxstats", "depth"]:
@@ -506,92 +511,92 @@ rm -rf {tempdir}
 
 
 
-
-
-    samtools_params_dict = \
-        {
-            "addreplacerg": None,
-            "bedcov": None,
-            "calmd": None,
-            "cat": None,
-            "collate": None,
-            "depad": None,
-            "depth": {
-                "outfile": "\".\".join([os.path.basename(active_files[active_type]), output_type, \"txt\"])",
-                "script": "{env_path}{action} \\{params}\n\t{active_file}  \\\n\t> {outfile}\n"
-            },
-            "dict": None,
-            "faidx": None,
-            "fasta": {
-                "outfile": "os.path.basename(active_files[active_type])",
-                "script": """\
-{env_path}{action} \\{params}
-\t-1  {outfile}.F.{action} \\
-\t-2  {outfile}.R.{action} \\
-\t-s  {outfile}.S.{action} \\
-\t{active_file}\n"""
-            },
-            "fastq": {
-                "outfile": "os.path.basename(active_files[active_type])",
-                "script": """\
-{env_path}{action} \\{params}
-\t-1  {outfile}.F.{action} \\
-\t-2  {outfile}.R.{action} \\
-\t-s  {outfile}.S.{action} \\
-\t{active_file}\n"""
-            },
-            "fixmate": None,
-            "flags": None,
-            "flagstat": {
-                "outfile": "\".\".join([os.path.basename(active_files[active_type]), output_type, \"txt\"])",
-                "script": "{env_path}{action} \\{params}\n\t{active_file}  \\\n\t> {outfile}\n"
-            },
-            "fqidx": None,
-            "idxstats": {
-                "outfile": "\".\".join([os.path.basename(active_files[active_type]), output_type, \"txt\"])",
-                "script": "{env_path}{action} \\{params}\n\t{active_file}  \\\n\t> {outfile}\n"
-            },
-            "index": {
-                "outfile": "'{fn}.{ext}'.format(ext=output_type, fn=active_files[active_type])",
-                "script": """\
-{env_path}{action} \\{params}
-\t{active_file}\n"""
-            },
-            "markdup": None,
-            "merge": None,
-            "mpileup": None,
-            "paired-end": None,
-            "phase": None,
-            "quickcheck": None,
-            "reheader": None,
-            "rmdup": None,
-            "sort": {
-                "outfile": "os.path.splitext(os.path.basename(active_files[active_type]))[0] + \".sort.\" + output_type",
-                "script": "{env_path}{action} \\{params}\n\t-o {outfile} \\\n\t{active_file}\n"
-            },
-            "split": None,
-            "stats": {
-                "outfile": "\".\".join([os.path.basename(active_files[active_type]), output_type, \"txt\"])",
-                "script": """\
-{env_path}{action} \\{params}
-\t{active_file}  \\
-\t> {outfile}"""
-            },
-            "targetcut": None,
-            "tview": None,
-            "view": {
-                "input": {
-                    "flag": "stdin",
-                    "type": [
-                        "sam",
-                        "bam",
-                        "cram"
-                    ]
-                },
-                "outfile": "os.path.splitext(os.path.basename(active_files[active_type]))[0] + '.view.' + output_type",
-                "script": """/
-{env_path}{action} \\{params}
-\t-o {outfile} \\
-\t{active_file} {region} """
-            }
-        }
+#
+#
+#     samtools_params_dict = \
+#         {
+#             "addreplacerg": None,
+#             "bedcov": None,
+#             "calmd": None,
+#             "cat": None,
+#             "collate": None,
+#             "depad": None,
+#             "depth": {
+#                 "outfile": "\".\".join([os.path.basename(active_files[active_type]), output_type, \"txt\"])",
+#                 "script": "{env_path}{action} \\{params}\n\t{active_file}  \\\n\t> {outfile}\n"
+#             },
+#             "dict": None,
+#             "faidx": None,
+#             "fasta": {
+#                 "outfile": "os.path.basename(active_files[active_type])",
+#                 "script": """\
+# {env_path}{action} \\{params}
+# \t-1  {outfile}.F.{action} \\
+# \t-2  {outfile}.R.{action} \\
+# \t-s  {outfile}.S.{action} \\
+# \t{active_file}\n"""
+#             },
+#             "fastq": {
+#                 "outfile": "os.path.basename(active_files[active_type])",
+#                 "script": """\
+# {env_path}{action} \\{params}
+# \t-1  {outfile}.F.{action} \\
+# \t-2  {outfile}.R.{action} \\
+# \t-s  {outfile}.S.{action} \\
+# \t{active_file}\n"""
+#             },
+#             "fixmate": None,
+#             "flags": None,
+#             "flagstat": {
+#                 "outfile": "\".\".join([os.path.basename(active_files[active_type]), output_type, \"txt\"])",
+#                 "script": "{env_path}{action} \\{params}\n\t{active_file}  \\\n\t> {outfile}\n"
+#             },
+#             "fqidx": None,
+#             "idxstats": {
+#                 "outfile": "\".\".join([os.path.basename(active_files[active_type]), output_type, \"txt\"])",
+#                 "script": "{env_path}{action} \\{params}\n\t{active_file}  \\\n\t> {outfile}\n"
+#             },
+#             "index": {
+#                 "outfile": "'{fn}.{ext}'.format(ext=output_type, fn=active_files[active_type])",
+#                 "script": """\
+# {env_path}{action} \\{params}
+# \t{active_file}\n"""
+#             },
+#             "markdup": None,
+#             "merge": None,
+#             "mpileup": None,
+#             "paired-end": None,
+#             "phase": None,
+#             "quickcheck": None,
+#             "reheader": None,
+#             "rmdup": None,
+#             "sort": {
+#                 "outfile": "os.path.splitext(os.path.basename(active_files[active_type]))[0] + \".sort.\" + output_type",
+#                 "script": "{env_path}{action} \\{params}\n\t-o {outfile} \\\n\t{active_file}\n"
+#             },
+#             "split": None,
+#             "stats": {
+#                 "outfile": "\".\".join([os.path.basename(active_files[active_type]), output_type, \"txt\"])",
+#                 "script": """\
+# {env_path}{action} \\{params}
+# \t{active_file}  \\
+# \t> {outfile}"""
+#             },
+#             "targetcut": None,
+#             "tview": None,
+#             "view": {
+#                 "input": {
+#                     "flag": "stdin",
+#                     "type": [
+#                         "sam",
+#                         "bam",
+#                         "cram"
+#                     ]
+#                 },
+#                 "outfile": "os.path.splitext(os.path.basename(active_files[active_type]))[0] + '.view.' + output_type",
+#                 "script": """/
+# {env_path}{action} \\{params}
+# \t-o {outfile} \\
+# \t{active_file} {region} """
+#             }
+#         }
