@@ -39,7 +39,8 @@ Parameters that can be set
     :widths: 15, 10, 10
 
     "skip_tsv", "", "Set if you do not want to convert the report into tsv format."
-    "biom_path", "/path/to/biom", "The path to biom. This is required for conversion to tsv"
+    "skip_summary", "", "Set if you do not want to create a summary of the report."
+    "biom_path", "/path/to/biom", "The path to biom. This is required for conversion to tsv and for producing the summary"
 
     
 Lines for parameter file

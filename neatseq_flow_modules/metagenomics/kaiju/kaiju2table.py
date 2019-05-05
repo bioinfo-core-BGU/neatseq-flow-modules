@@ -139,7 +139,7 @@ class Step_kaiju2table(Step):
         """
         if "merge_count_tables" in self.params:
             if not self.params["merge_count_tables"]:
-                self.params["merge_count_tables"] = os.path.join(os.path.dirname(os.path.realpath(__file__)), "merge_count_tables.pl")
+                self.params["merge_count_tables"] = "perl " + os.path.join(os.path.dirname(os.path.realpath(__file__)), "merge_count_tables.pl")
 
             self.script = ""
             for tax_level in self.levels:
