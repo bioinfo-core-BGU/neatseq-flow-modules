@@ -128,13 +128,13 @@ class Step_HUMAnN2_further_processing(Step):
             self.params["scope"] = "sample"
 
         type_index = """
-eggnog:    ["EggNog",  "eggnog"]
-go:        ["GO",      "go"]
-infogo1000: ["GOinfo",  "infogo1000"]
-ko:        ["KO",      "kegg-orthology"]
-level4ec:  ["level4EC","ec"]
-pfam:      ["PFAM",    "pfam"]
-rxn:       ["RXN",     "metacyc-rxn"]
+eggnog:    ["EggNog",       "eggnog"]
+go:        ["GO",           "GO"]
+infogo1000: ["GOinfo1000",  "GOinfo1000"]
+ko:        ["KO",           "kegg-orthology"]
+level4ec:  ["level4EC",     "ec"]
+pfam:      ["PFAM",         "pfam"]
+rxn:       ["RXN",          "metacyc-rxn"]
 """
 
 
