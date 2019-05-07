@@ -504,7 +504,9 @@ rm -rf {tempdir}
             self.stamp_file(self.sample_data[sample][action + ".R"])
             self.stamp_file(self.sample_data[sample][action + ".S"])
             if action in self.params["keep_output"]:
-                files2keep.append(temp_use_dir + outfile)
+                files2keep.append(active_files[action + ".F"])
+                files2keep.append(active_files[action + ".R"])
+                files2keep.append(active_files[action + ".S"])
 
         return active_type,active_files,files2keep
 
