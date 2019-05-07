@@ -127,18 +127,22 @@ class Step_HUMAnN2_further_processing(Step):
         if "scope" not in self.params:
             self.params["scope"] = "sample"
 
-        type_index = """
-eggnog:    ["EggNog",       "eggnog"]
-go:        ["GO",           "GO"]
-infogo1000: ["GOinfo1000",  "GOinfo1000"]
-ko:        ["KO",           "kegg-orthology"]
-level4ec:  ["level4EC",     "ec"]
-pfam:      ["PFAM",         "pfam"]
-rxn:       ["RXN",          "metacyc-rxn"]
-"""
 
+        # Strcuture:
+        # Key: grouping type (--groups in humann2_regroup_table)
+        # Value[0]: Filename suffix
+        # Value[1]: Equivalent value of --names in humann2_rename_table
+        self.type_index = {
+            "eggnog":     ["EggNog",        "eggnog"],
+            "go":         ["GO",            "GO"],
+            "infogo1000": ["GOinfo1000",    "infogo1000"],
+            "ko":         ["KO",            "kegg-orthology"],
+            "level4ec":   ["level4EC",      "ec"],
+            "pfam":       ["PFAM",          "pfam"],
+            "rxn":        ["RXN",           "metacyc-rxn"]
+        }
 
-        self.type_index = yaml.load(type_index,  Loader=yaml.Loader)
+        # self.type_index = yaml.load(type_index,  Loader=yaml.Loader)
 
         grouptype = None
 
@@ -249,7 +253,7 @@ rxn:       ["RXN",          "metacyc-rxn"]
                 self.spec_script_name = self.set_spec_script_name(".".join([sample if not sample=="project_data"
                                                                                     else self.sample_data["Title"],
                                                                             humanntype,
-                                                                            grouping_ty]))
+                                                                            self.type_index[grouping_ty][0]]))
                 self.script = ""
                 inputfn = self.sample_data[sample]["HUMAnN2."+humanntype]
                 outfn = ("."+self.type_index[grouping_ty][0]).join(os.path.splitext(os.path.basename(inputfn)))
