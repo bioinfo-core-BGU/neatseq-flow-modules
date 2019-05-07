@@ -275,10 +275,6 @@ class Step_samtools_new(Step):
             # Will create all files in temp, and move only final version of each type to final location
             # Then, will remove temp
             temp_use_dir = use_dir+"temp"+os.sep
-            try:
-                os.makedirs(temp_use_dir)
-            except FileExistsError:
-                pass
 
             # active_file = self.sample_data[sample][self.file2use]
             active_files = dict(zip((self.file2use,),(self.sample_data[sample][self.file2use],)))
@@ -291,12 +287,13 @@ class Step_samtools_new(Step):
 ##########
 # Making local link to original bam file: (-f to force)
 #----------
+mkdir -p {temp_dir}
 cp -fs \\
 \t{active_file} \\
-\t{here}
+\t{temp_dir}
 
 """.format(active_file=active_files[active_type],
-           here=temp_use_dir)
+           temp_dir=temp_use_dir)
 
             active_files[active_type] = temp_use_dir + os.path.basename(active_files[active_type])
             self.sample_data[sample][active_type] = sample_dir + os.path.basename(active_files[active_type])

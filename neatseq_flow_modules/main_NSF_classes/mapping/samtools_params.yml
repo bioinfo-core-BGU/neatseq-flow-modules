@@ -19,7 +19,7 @@ fasta:
         {env_path}{action} \{params}
         	-1  {outfile}.F.{action} \
         	-2  {outfile}.R.{action} \
-        	-s  {outfile}.S.{action} \
+        	-0  {outfile}.S.{action} \
         	{active_file}
 fastq:
     outfile:   'os.path.basename(active_files[active_type])'
@@ -27,7 +27,7 @@ fastq:
         {env_path}{action} \{params}
         	-1  {outfile}.F.{action} \
         	-2  {outfile}.R.{action} \
-        	-s  {outfile}.S.{action} \
+        	-0  {outfile}.S.{action} \
         	{active_file}
 fixmate:
 flags:
