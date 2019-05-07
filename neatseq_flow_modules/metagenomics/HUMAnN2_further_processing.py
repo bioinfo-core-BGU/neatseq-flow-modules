@@ -134,7 +134,7 @@ class Step_HUMAnN2_further_processing(Step):
         # Value[1]: Equivalent value of --names in humann2_rename_table
         self.type_index = {
             "eggnog":     ["EggNog",        "eggnog"],
-            "go":         ["GO",            "GO"],
+            "go":         ["GO",            "go"],
             "infogo1000": ["GOinfo1000",    "infogo1000"],
             "ko":         ["KO",            "kegg-orthology"],
             "level4ec":   ["level4EC",      "ec"],
