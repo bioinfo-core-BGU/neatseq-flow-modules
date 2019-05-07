@@ -45,7 +45,7 @@ idxstats:
         	> {outfile}
     outfile: '".".join([os.path.basename(active_files[active_type]), output_type, "txt"])'
 index:
-    outfile: '"{fn}.{ext}".format(ext=output_type, fn=active_files[active_type])'
+    outfile: '"{fn}.{ext}".format(ext=output_type, fn=os.path.basename(active_files[active_type]))'
     script: |
         {env_path}{action} \{params}
         	{active_file}
