@@ -167,8 +167,10 @@ class Step_samtools_new(Step):
 
         import json
 
-        if "keep_output" not in self.params:
-            self.params["keep_output"] = list(set(self.params.keys()) & set(self.samtools_params.keys()))
+        # if "keep_output" not in self.params:
+        #     self.params["keep_output"] = list(set(self.params.keys()) & set(self.samtools_params.keys()))
+        if "del_output" not in self.params:
+            self.params["del_output"] = list()
 
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
@@ -287,13 +289,13 @@ class Step_samtools_new(Step):
 ##########
 # Making local link to original bam file: (-f to force)
 #----------
-mkdir -p {temp_dir}
+mkdir -p {use_dir}
 cp -fs \\
 \t{active_file} \\
-\t{temp_dir}
+\t{use_dir}
 
 """.format(active_file=active_files[active_type],
-           temp_dir=temp_use_dir)
+           use_dir=use_dir)
 
             active_files[active_type] = temp_use_dir + os.path.basename(active_files[active_type])
             self.sample_data[sample][active_type] = sample_dir + os.path.basename(active_files[active_type])
@@ -361,7 +363,7 @@ cp -fs \\
                                                                              active_file=active_files[active_type],
                                                                              params="" if not redirects else "\n\t" + redirects + " \\",
                                                                              region="" if not region else "\\\n\t" + region,
-                                                                             outfile=temp_use_dir + outfile)
+                                                                             outfile=use_dir + outfile)
                     self.script += """\
 ###########
 # Running samtools {action}
@@ -373,7 +375,7 @@ cp -fs \\
                     _locals = dict()
 
                     # Get relevant local variables into _locals
-                    for k in "action,active_type,output_type,active_files,files2keep,temp_use_dir,sample_dir," \
+                    for k in "action,active_type,output_type,active_files,files2keep,use_dir,sample_dir," \
                              "outfile,sample".split(","):
                         _locals[k] = locals()[k]
                     active_type, active_files, files2keep = self.file_management(**_locals)
@@ -421,13 +423,20 @@ cp -fs \\
 ###########
 # Copying final files to final location
 #----------------
+mkdir {temp}
 mv {files} \\
-\t{dir}
+\t{temp}
 
-rm -rf {tempdir}
+find {usedir} -maxdepth 1 -not -name "temp" -exec rm -rf {{}} \;
+
+mv {temp}/* \\
+\t{usedir}
+
+rmdir {temp}
 """.format(files=files2keep,
            dir=use_dir,
-           tempdir=temp_use_dir)
+           usedir=use_dir,
+           temp=temp_use_dir)
 
 
             self.local_finish(use_dir,sample_dir)
@@ -470,29 +479,29 @@ rm -rf {tempdir}
                 return "mpileup"
 
 
-    def file_management(self,action,active_type,output_type,active_files,files2keep,temp_use_dir,sample_dir,outfile,sample):
+    def file_management(self,action,active_type,output_type,active_files,files2keep,use_dir,sample_dir,outfile,sample):
 
         if action in ["view", "sort", "index", "mpileup"]:
-            active_files[output_type] = temp_use_dir + outfile
+            active_files[output_type] = use_dir + outfile
             self.sample_data[sample][output_type] = sample_dir + outfile
             if action in self.params["keep_output"]:
-                files2keep.append(temp_use_dir + outfile)
+                files2keep.append(use_dir + outfile)
             self.stamp_file(self.sample_data[sample][output_type])
             if action in ["view", "sort"]:
                 active_type = output_type
 
         elif action in ["flagstat", "stats", "idxstats", "depth"]:
-            active_files[output_type] = temp_use_dir + outfile
+            active_files[output_type] = use_dir + outfile
             self.sample_data[sample][active_type + "." + action] = sample_dir + outfile
             self.stamp_file(self.sample_data[sample][active_type + "." + action])
             if action in self.params["keep_output"]:
-                files2keep.append(temp_use_dir + outfile)
+                files2keep.append(use_dir + outfile)
 
         elif action in ["fasta","fastq"]:
 
-            active_files[action + ".F"] = "%s%s.F.%s" % (temp_use_dir, os.path.basename(active_files[active_type]), action)
-            active_files[action + ".R"] = "%s%s.R.%s" % (temp_use_dir, os.path.basename(active_files[active_type]), action)
-            active_files[action + ".S"] = "%s%s.S.%s" % (temp_use_dir, os.path.basename(active_files[active_type]), action)
+            active_files[action + ".F"] = "%s%s.F.%s" % (use_dir, os.path.basename(active_files[active_type]), action)
+            active_files[action + ".R"] = "%s%s.R.%s" % (use_dir, os.path.basename(active_files[active_type]), action)
+            active_files[action + ".S"] = "%s%s.S.%s" % (use_dir, os.path.basename(active_files[active_type]), action)
             # Storing and Stamping files
             self.sample_data[sample][action + ".F"] = "%s%s.F.%s" % (sample_dir, os.path.basename(active_files[active_type]), action)
             self.sample_data[sample][action + ".R"] = "%s%s.R.%s" % (sample_dir, os.path.basename(active_files[active_type]), action)
