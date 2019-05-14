@@ -167,10 +167,10 @@ class Step_samtools_new(Step):
 
         import json
 
-        # if "keep_output" not in self.params:
-        #     self.params["keep_output"] = list(set(self.params.keys()) & set(self.samtools_params.keys()))
-        if "del_output" not in self.params:
-            self.params["del_output"] = list()
+        if "keep_output" not in self.params:
+            self.params["keep_output"] = list(set(self.params.keys()) & set(self.samtools_params.keys()))
+        # if "del_output" not in self.params:
+        #     self.params["del_output"] = list()
 
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
@@ -375,10 +375,12 @@ cp -fs \\
                     _locals = dict()
 
                     # Get relevant local variables into _locals
-                    for k in "action,active_type,output_type,active_files,files2keep,use_dir,sample_dir," \
-                             "outfile,sample".split(","):
+                    for k in "action,action_numbered,active_type,output_type,active_files,files2keep,use_dir," \
+                             "sample_dir,outfile,sample".split(","):
                         _locals[k] = locals()[k]
                     active_type, active_files, files2keep = self.file_management(**_locals)
+                    if action == "sort":
+                        pp(files2keep)
 
                 else:
                     raise AssertionExcept("Action '{action}' not defined yet".format(action=action))
@@ -479,22 +481,24 @@ rmdir {temp}
                 return "mpileup"
 
 
-    def file_management(self,action,active_type,output_type,active_files,files2keep,use_dir,sample_dir,outfile,sample):
+    def file_management(self,action,action_numbered,active_type,output_type,active_files,files2keep,use_dir,sample_dir,outfile,sample):
 
         if action in ["view", "sort", "index", "mpileup"]:
             active_files[output_type] = use_dir + outfile
             self.sample_data[sample][output_type] = sample_dir + outfile
-            if action in self.params["keep_output"]:
+            if action_numbered in self.params["keep_output"]:
+                print(action_numbered)
                 files2keep.append(use_dir + outfile)
-            self.stamp_file(self.sample_data[sample][output_type])
+                self.stamp_file(self.sample_data[sample][output_type])
             if action in ["view", "sort"]:
                 active_type = output_type
 
         elif action in ["flagstat", "stats", "idxstats", "depth"]:
             active_files[output_type] = use_dir + outfile
             self.sample_data[sample][active_type + "." + action] = sample_dir + outfile
-            self.stamp_file(self.sample_data[sample][active_type + "." + action])
-            if action in self.params["keep_output"]:
+            if action_numbered in self.params["keep_output"]:
+                print(action_numbered)
+                self.stamp_file(self.sample_data[sample][active_type + "." + action])
                 files2keep.append(use_dir + outfile)
 
         elif action in ["fasta","fastq"]:
@@ -509,7 +513,8 @@ rmdir {temp}
             self.stamp_file(self.sample_data[sample][action + ".F"])
             self.stamp_file(self.sample_data[sample][action + ".R"])
             self.stamp_file(self.sample_data[sample][action + ".S"])
-            if action in self.params["keep_output"]:
+            if action_numbered in self.params["keep_output"]:
+                print(action_numbered)
                 files2keep.append(active_files[action + ".F"])
                 files2keep.append(active_files[action + ".R"])
                 files2keep.append(active_files[action + ".S"])
