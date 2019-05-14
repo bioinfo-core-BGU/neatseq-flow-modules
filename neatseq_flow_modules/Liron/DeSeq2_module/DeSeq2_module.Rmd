@@ -698,13 +698,24 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                                                             fixed = '+'))
                         New_DESIGN =paste0('~',paste(DESIGN_list[DESIGN_list!=BatchEffects[1]],collapse ='+'))
                         
+                        
+                        
                         modcombat = model.matrix( as.formula(New_DESIGN) , data=Original_colData)
-                        combat_edata = ComBat(dat = assay(Normalized_counts),
+                        combat_edata<-try(ComBat(dat = assay(Normalized_counts),
                                               batch = Original_colData[,BatchEffects[1]],
                                               mod = modcombat,
                                               par.prior = T,
-                                              mean.only=F)
-                        assay(Normalized_counts) = combat_edata
+                                              mean.only=F),
+                                          silent = T)
+                        if (inherits(combat_edata,"try-error")){
+                            cat(sprintf("%s","Failed to correct batch effect using parametric adjustment will try using limma instead!!\n"))
+                           
+                            assay(Normalized_counts) = limma::removeBatchEffect(assay(Normalized_counts),
+                                                                                batch = Normalized_counts@colData[,BatchEffects[1]])
+                            
+                        }else{
+                            assay(Normalized_counts) = combat_edata
+                        }   
                         
                 }else{
                 
