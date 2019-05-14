@@ -409,7 +409,7 @@ cp -fs {active_file} {here}
            readsR=(active_file + ".R." + type))
                 else:
                     readspart = """\
--s  {readsS} \
+-0  {readsS} \
 """.format(readsS=(active_file + ".S." + type))
 
                 # -0 and mixed paired-single not supported yet
