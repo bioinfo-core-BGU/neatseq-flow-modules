@@ -1332,7 +1332,7 @@ if (opt$only_clustering==FALSE){
         if (!is.na(opt$collapseReplicates)){
             if (opt$collapseReplicates %in% colnames(colData)){
                 collapsed_DESeqDataSet <- try( collapseReplicates(DESeqDataSet_base,DESeqDataSet_base[[opt$collapseReplicates]] ) ,silent = T)
-                if (inherits(combat_edata,"try-error")){
+                if (inherits(collapsed_DESeqDataSet,"try-error")){
                     print('Failed to collapse Replicates !!!')
                 }else{
                     collapsed_DESeqDataSet$Library_sizes=apply(X = as.data.frame(counts(collapsed_DESeqDataSet)),MARGIN = 2,FUN = sum)
