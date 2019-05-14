@@ -379,8 +379,6 @@ cp -fs \\
                              "sample_dir,outfile,sample".split(","):
                         _locals[k] = locals()[k]
                     active_type, active_files, files2keep = self.file_management(**_locals)
-                    if action == "sort":
-                        pp(files2keep)
 
                 else:
                     raise AssertionExcept("Action '{action}' not defined yet".format(action=action))
@@ -487,7 +485,6 @@ rmdir {temp}
             active_files[output_type] = use_dir + outfile
             self.sample_data[sample][output_type] = sample_dir + outfile
             if action_numbered in self.params["keep_output"]:
-                print(action_numbered)
                 files2keep.append(use_dir + outfile)
                 self.stamp_file(self.sample_data[sample][output_type])
             if action in ["view", "sort"]:
@@ -497,7 +494,6 @@ rmdir {temp}
             active_files[output_type] = use_dir + outfile
             self.sample_data[sample][active_type + "." + action] = sample_dir + outfile
             if action_numbered in self.params["keep_output"]:
-                print(action_numbered)
                 self.stamp_file(self.sample_data[sample][active_type + "." + action])
                 files2keep.append(use_dir + outfile)
 
@@ -514,7 +510,6 @@ rmdir {temp}
             self.stamp_file(self.sample_data[sample][action + ".R"])
             self.stamp_file(self.sample_data[sample][action + ".S"])
             if action_numbered in self.params["keep_output"]:
-                print(action_numbered)
                 files2keep.append(active_files[action + ".F"])
                 files2keep.append(active_files[action + ".R"])
                 files2keep.append(active_files[action + ".S"])
