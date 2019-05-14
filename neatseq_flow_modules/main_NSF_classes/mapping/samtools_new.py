@@ -289,7 +289,6 @@ class Step_samtools_new(Step):
 ##########
 # Making local link to original bam file: (-f to force)
 #----------
-mkdir -p {use_dir}
 cp -fs \\
 \t{active_file} \\
 \t{use_dir}
@@ -297,7 +296,7 @@ cp -fs \\
 """.format(active_file=active_files[active_type],
            use_dir=use_dir)
 
-            active_files[active_type] = temp_use_dir + os.path.basename(active_files[active_type])
+            active_files[active_type] = use_dir + os.path.basename(active_files[active_type])
             self.sample_data[sample][active_type] = sample_dir + os.path.basename(active_files[active_type])
 
             for action in self.params:
@@ -427,7 +426,7 @@ mkdir {temp}
 mv {files} \\
 \t{temp}
 
-find {usedir} -maxdepth 1 -not -name "temp" -exec rm -rf {{}} \;
+find {usedir} -maxdepth 1 -mindepth 1 -not -name "temp" -exec rm -rf {{}} \;
 
 mv {temp}/* \\
 \t{usedir}
