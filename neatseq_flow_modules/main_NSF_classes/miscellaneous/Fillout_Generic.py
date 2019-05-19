@@ -279,7 +279,6 @@ output:
                                                   use_dir=use_dir,
                                                   sample=sample)
             # # Try using function to include export (setenv) etc...
-
             # if "output" in self.params:
             for outp in self.params_output:
                 # If script and output scopes are identical:
@@ -448,7 +447,8 @@ output:
                     rawstring = re.sub(pattern=re.escape(variable),
                                          repl=("{!r}".format(self.params_output[var_def[1]]["string"])).strip("'"),
                                          string=rawstring)
-                except KeyError:
+
+                except KeyError as exc:
                     raise AssertionExcept("Error embedding output '{var}'".format(var=variable), sample)
                 continue
             # ------------------------------

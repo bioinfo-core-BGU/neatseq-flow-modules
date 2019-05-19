@@ -9,7 +9,9 @@
 
 A class that defines a module for executing samtools on a SAM or BAM file.
 
-.. attention:: The module was tested on samtools 1.3
+.. Warning:: This module is in beta stage. Please report issues and we'll try solving them
+
+.. attention:: The module was tested on samtools 1.9
 
 The samtools programs included in the module are the following:
 
@@ -19,57 +21,59 @@ The samtools programs included in the module are the following:
 * ``flagstat`` Runs flagstat on the BAM file
 * ``stats`` Runs stats on the BAM file
 * ``idxstats`` Runs idxstats on the BAM file
+* ``depth``
 * ``fastq/a`` Converts a BAM or CRAM into either FASTQ or FASTA format depending on the command invoked.
 * ``merge`` Merges sample bam files into single project bam file.
+* ``mpileup``
 
 .. Note:: Order of samtools subprogram execution:
 
-    The ``samtools`` programs are executed in the order above. It is up to you to have a sensible combination...
+    The ``samtools`` programs are executed in the order given in the parameter file!
 
+    File types are passed from one program to the next based on the output type of the program.
+
+    In order to execute one program more than once, append digits to the program name, *e.g.* ``sort2``, ``index3`` etc.
+
+Arguments can be passed to the tools following the program name in the parameter file, *e.g.*::
+
+    sort: -n -@ 10
+
+Please do NOT pass input and output arguments - they are set by the module.
+
+If you want to limit the program to a specific region, pass the program name a block with a 'region' section. If you want to set the region and pass some redirects, add a 'redirect' section as well. For example::
+
+    mpileup:
+        redirects:      --max-depth INT -v
+        region:         chr2:212121-32323232
+
+Some of the tools are defined only when the ``scope`` is ``sample``, namely ``merge`` and ``mpileup``. ``merge`` merges
+the sample-wise BAM files into a project BAM file. ``mpileup`` creates a project VCF/BCF/mpileup file from the sample BAM files.
 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * A SAM file in the following location:
 
     * ``sample_data[<sample>]["sam"]`` (for ``scope=sample``)
-    * ``sample_data["sam"]`` (for ``scope=project``)
+    * ``sample_data["project_data"]["sam"]`` (for ``scope=project``)
 
 * Or a BAM file in:
 
     * ``sample_data[<sample>]["bam"]`` (for ``scope=sample``)
-    * ``sample_data["bam"]`` (for ``scope=project``)
+    * ``sample_data["project_data"]["bam"]`` (for ``scope=project``)
+
+.. Note:: If both ``BAM`` and ``SAM`` files exist, select the one to use with ``type2use`` (see section *Parameters that can be set*).
 
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* Depending on the parameters, will put files in the following locations:
+* Depending on the parameters, will put files in different types (*e.g.* ``bam``, ``cram``, ``sam``, ``bam``, ``bai``, ``crai``, ``vcf``, ``bcf``, ``mpileup``, ``fasta.{F,R,S}``, ``fastq.{F,R,S}``)
+Please use ``stop_and_show`` to see the types produced by your instance of ``samtools_new``.
 
-    * ``sample_data[<sample>]["bam"]``
-    * ``sample_data[<sample>]["bai"]``
-    * ``sample_data[<sample>]["unfiltered_bam"]``
-    * ``sample_data[<sample>]["unsorted_bam"]``
-    * ``sample_data[<sample>]["bam.flagstat"]``
-    * ``sample_data[<sample>]["bam.stats"]``
-    * ``sample_data[<sample>]["bam.idxstats"]``
+.. Note:: If ``scope`` is set to ``project``, the above mentioned output files will be created in the project scope.
 
-* If ``fastq`` was called, will also create the following files:
+.. Note:: ``merge`` and ``mpileup`` are only defined when ``scope`` is ``sample``. See above
 
-    * ``self.sample_data[<sample>]["fastq.F"]``
-    * ``self.sample_data[<sample>]["fastq.R"]``
-    * ``self.sample_data[<sample>]["fastq.S"]``
-
-* If ``fasta`` was called, will also create the following files:
-
-    * ``self.sample_data[<sample>]["fasta.F"]``
-    * ``self.sample_data[<sample>]["fasta.R"]``
-    * ``self.sample_data[<sample>]["fasta.S"]``
-
-
-.. Note:: If ``scope`` is set to ``project``, the above mentioned output files will be created in the project
-    scope, e.g. ``sample_data["project_data"]["stats"]``..
-
-.. Note:: If ``merge`` is included, ``scope`` must be ``sample`` and the merged *bam* is located in ``sample_data["project_data"]["stats"]``..
-
+By default, all files are saved. To keep only the output from specific programs, add a ``keep_output`` section containing a list of programs for which the output should be saved. **All other files will be discarded**.
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -85,11 +89,10 @@ Parameters that can be set
     "idxstats", "", "Adds code for ``samtools idxstats``"
     "fastq/a", "``samtools fastq/a`` parameters", "Adds code for ``samtools fastq/a``"
     "merge", "``*e.g.*: -R region``", "Adds code for ``samtools merge``, using the parameters supplied"
-    "region", "", "A region to limit the ``view`` script to."
-    "filter_by_tag", "*e.g.*: NM:i:[01]", "Filter BAM by one of the tags. Use an awk-compliant regular expression. In this example, keep only lines where the edit distance is 0 or 1. This is an experimental feature and should be used with caution..."
-    "del_sam", "", "Remove SAM file"
-    "del_unsorted", "", "Remove unsorted bam file."
+    "region", "", "A region to limit the region-limitable programs, such as ``view``, ``merge``, ``mpileup``, etc.."
     "type2use","sam|bam","Type of file to use. Must exist in scope"
+    "keep_output", "[sort, view, sort2]", "A list of programs for which to store the output files. By deafult, all files are saved.
+..    "filter_by_tag", "*e.g.*: NM:i:[01]", "Filter BAM by one of the tags. Use an awk-compliant regular expression. In this example, keep only lines where the edit distance is 0 or 1. This is an experimental feature and should be used with caution..."
 
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -97,18 +100,38 @@ Lines for parameter file
 ::
 
     sam_bwt1:
-        module: samtools
-        base: bwt1
-        script_path: /path/to/samtools/bin/samtools
+        module:             samtools_new
+        base:               bwt1
+        script_path:        {Vars.paths.samtools}
         qsub_params:
-            -pe: shared 20
-        view: -buh  -q 30 -@ 20 -F 4
-        sort: -@ 20
-        flagstat:
+            -pe:            shared 20
+        region:             chr2:212121-32323232
+        scope:              sample
+        # First 'view'. Use FLAG to filter alignments:
+        view:               -uh  -q 30 -@ 20 -F 4 -O bam
+        # First 'sort'. Sort by coordinates:
+        sort:               -@ 20
+        # Second 'view'. Use region to filter alignments:
+        view2:
+            redirects:      -buh  -q 30 -@ 20
+            region:         chr2:212121-32323232
         index:
-        stats: --remove-dups
-        del_sam:
-        del_unsorted:
+        flagstat:
+        stats:              --remove-dups
+        idxstats:
+        # Second 'sort'. Sort by name:
+        sort2:               -n -@ 20
+        # Get sequences from name-sorted BAM file:
+        fastq:
+        # Merge BAM name sorted BAM files
+        merge:
+            region:         chr2:212121-32323232
+        # Create VCF from Merge BAM name sorted BAM files
+        mpileup:
+            redirects:      --max-depth INT -v
+            region:         chr2:212121-32323232
+        keep_output:        [sort, view, index, flagstat, stats, fastq, mpileup, merge]
+        # stop_and_show:
 
 
 References
@@ -135,10 +158,14 @@ class Step_samtools_new(Step):
     def step_specific_init(self):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
 
-        fastaq_actions = "dict faidx fqidx".split(" ")
-        fastaq_actions = list(set(self.params) & set(fastaq_actions))
-        if len(fastaq_actions) > 0:
-            raise AssertionExcept("These tools are not supported by this module: {tools}".format(tools=", ".join(fastaq_actions)))
+        not_supported_actions = "dict faidx fqidx flags split targetcut rmdup".split(" ")
+        not_supported_actions = list(set(self.params) & set(not_supported_actions))
+        if len(not_supported_actions) > 0:
+            raise AssertionExcept("These tools are not supported by this module: {tools}".format(tools=", ".join(not_supported_actions)))
+
+        self.supported_actions = "view sort index flagstat stats idxstats depth fasta fastq".split(" ")
+        self.project_actions = "merge mpileup".split(" ")
+
 
         if "type2use" in self.params:
             if not isinstance(self.params["type2use"],str) or self.params["type2use"] not in ["sam","bam"]:
@@ -165,7 +192,9 @@ class Step_samtools_new(Step):
             except:
                 raise AssertionExcept("Unknown error loading samtools params index 'samtools_params.yml")
 
-        import json
+        if any([action in self.project_actions for action in self.params]) and self.params["scope"] != "sample":
+            raise AssertionExcept("{tools} are defined only for sample-scope instances.".
+                                  format(tools=", ".join([action in self.project_actions for action in self.params])))
 
         if "keep_output" not in self.params:
             self.params["keep_output"] = list(set(self.params.keys()) & set(self.samtools_params.keys()))
@@ -219,36 +248,89 @@ class Step_samtools_new(Step):
         """ Add stuff to check and agglomerate the output data
         """
         pass
-#         # -------------- samtools merge ------------------
-#         if "merge" in list(self.params.keys()):
-#             sample_dir = self.make_folder_for_sample()
-#
-#             # Name of specific script:
-#             self.spec_script_name = self.set_spec_script_name()
-#             self.script = ""
-#
-#             # This line should be left before every new script. It sees to local issues.
-#             # Use the dir it returns as the base_dir for this step.
-#             use_dir = self.local_start(sample_dir)
-#
-#             outfile = self.sample_data["Title"] + ".merged.bam"
-#
-#             self.script += """\
-# ###########
-# # Running samtools merge
-# #----------------
-#
-# {env_path} merge \\{params}
-# \t{outfile} \\
-# \t{infiles}
-#
-# """.format(env_path=self.get_script_env_path(),
-#            infiles=" \\\n\t".join([self.sample_data[sample]["bam"] for sample in self.sample_data["samples"]]),
-#            params="" if not self.params["merge"] else "\n\t" + self.params["merge"] + " \\",
-#            outfile=use_dir + outfile)
-#
-#             self.sample_data["project_data"]["bam"] = sample_dir + outfile
-#             self.stamp_file(self.sample_data["project_data"]["bam"])
+        # print(self.active_type)
+        # sys.exit()
+        # -------------- samtools merge ------------------
+        sample = "project_data"
+        self.script = ""
+
+        files2keep = list()
+
+        for action in self.params:
+            # This is to enable passing each tool more than once:
+            # Repeated actions have digits appended to them
+            action_numbered = action
+            action = re.sub("\d+$", "", action)
+
+            if action not in self.samtools_params:
+                continue
+
+            if action in self.project_actions:
+                # Get action redirects (if exist)
+                redirects, region = self.region_and_redirects(action, action_numbered)
+                # print("{name} --- {redirs}".format(name=action, redirs=redirects))
+
+                if not self.active_type == "bam":
+                    raise AssertionExcept("samtools {action} requires a bam file, but the active file type is "
+                                          "{active_type}. Please check the arguments to previous samtools commands!".
+                                          format(active_type=self.active_type,
+                                                 action=action))
+                redirects, region = self.region_and_redirects(action, action_numbered)
+
+                active_files = dict(zip((self.active_type,),
+                                        (" ".join([self.sample_data[sample][self.active_type] for sample in
+                                                  self.sample_data["samples"]]),)))
+
+                # This line should be left before every new script. It sees to local issues.
+                # Use the dir it returns as the base_dir for this step.
+                sample_dir = self.make_folder_for_sample(sample)
+                use_dir = self.local_start(self.base_dir)
+                # outfile = self.sample_data["Title"] + ".merged.bam"
+                output_type = self.get_action_output_type(action, redirects)
+                outfile_cmd = self.samtools_params[action]["outfile"]
+                outfile = eval(outfile_cmd, globals(), locals())
+
+
+                cmd = self.samtools_params[action]["script"].format(action=action,
+                                                                    env_path=self.get_script_env_path(),
+                                                                    active_file=active_files[self.active_type],
+                                                                    params="" if not redirects else "\n\t" + redirects + " \\",
+                                                                    region="" if not region else "\\\n\t" + region,
+                                                                    outfile=use_dir + outfile)
+                self.script += """\
+###########
+# Running samtools {action}
+#----------------
+{cmd}
+""".format(cmd=cmd,
+           action=action)
+
+                _locals = dict()
+
+                # Get relevant local variables into _locals
+                for k in "action,action_numbered,output_type,active_files,files2keep,use_dir," \
+                         "sample_dir,outfile,sample".split(","):
+                    _locals[k] = locals()[k]
+                self.active_type, active_files, files2keep = self.file_management(**_locals)
+
+                print("{name} --- {redirs}".format(name=action, redirs=files2keep))
+
+    #             self.script += """\
+    # ###########
+    # # Running samtools merge
+    # #----------------
+    #
+    # {env_path} merge \\{params}
+    # \t{outfile} \\
+    # \t{infiles}
+    #
+    # """.format(env_path=self.get_script_env_path(),
+    #            infiles=" \\\n\t".join([self.sample_data[sample]["bam"] for sample in self.sample_data["samples"]]),
+    #            params="" if not self.params["merge"] else "\n\t" + self.params["merge"] + " \\",
+    #            outfile=use_dir + outfile)
+    #
+    #             self.sample_data["project_data"]["bam"] = sample_dir + outfile
+    #             self.stamp_file(self.sample_data["project_data"]["bam"])
 
     def build_scripts(self):
         """ This is the actual script building function
@@ -280,7 +362,7 @@ class Step_samtools_new(Step):
 
             # active_file = self.sample_data[sample][self.file2use]
             active_files = dict(zip((self.file2use,),(self.sample_data[sample][self.file2use],)))
-            active_type = self.file2use
+            self.active_type = self.file2use
 
             files2keep = list()
 
@@ -293,11 +375,11 @@ cp -fs \\
 \t{active_file} \\
 \t{use_dir}
 
-""".format(active_file=active_files[active_type],
+""".format(active_file=active_files[self.active_type],
            use_dir=use_dir)
 
-            active_files[active_type] = use_dir + os.path.basename(active_files[active_type])
-            self.sample_data[sample][active_type] = sample_dir + os.path.basename(active_files[active_type])
+            active_files[self.active_type] = use_dir + os.path.basename(active_files[self.active_type])
+            self.sample_data[sample][self.active_type] = sample_dir + os.path.basename(active_files[self.active_type])
 
             for action in self.params:
                 # This is to enable passing each tool more than once:
@@ -309,48 +391,11 @@ cp -fs \\
                     continue
 
                 # Get action redirects (if exist)
-                redirects = ""
-                region = ""
-                if isinstance(self.params[action_numbered],dict):
-                    if "region" in self.params[action_numbered]:
-                        region = self.params[action_numbered]["region"]
-                    if "redirects" in self.params[action_numbered]:
-                        if isinstance(self.params[action_numbered]["redirects"], dict):
-                            redirects = " \\\n\t".join(
-                                [key + " " + (str(val) if val else "")
-                                 for key, val
-                                 in self.params[action_numbered]["redirects"].items()])
-                        else:
-                            redirects = self.params[action_numbered]["redirects"]
-                else:
-                    redirects = self.params[action_numbered]
-                # Get action region
-                if region:
-                    if "region" in self.samtools_params[action]:
-                        if self.samtools_params[action]["region"] is None:
-                            self.write_warning(
-                                "Region passed to tool '{action}' that does not accept regions. Removing!!".format(
-                                    action=action))
-                            region = ""
+                redirects, region = self.region_and_redirects(action, action_numbered)
 
-                        elif self.samtools_params[action]["region"] == "END":
-                            pass
-                        else:   # self.samtools_params[action]["region"] == "-r". for eaxmple
-                            redirects = " \\\n\t".join([redirects,
-                                                  "{arg} {region}".format(
-                                                      arg=self.samtools_params[action]["region"],
-                                                      region=region)])
-                            region = ""
 
-                    else:
-                        self.write_warning("Region passed to tool '{action}' that does not accept regions. Removing!!".format(action=action))
-                        region = ""
-
-                if action in "flags split targetcut rmdup".split(" "):
-                    raise AssertionExcept("Tool {action} is not supported by the module".format(action=action))
-
-                if action in ["view","sort", "index", "flagstat","stats","idxstats","depth","fasta","fastq", "mpileup"]:
-                    output_type = self.get_action_output_type(action, active_type, redirects)
+                if action in self.supported_actions:
+                    output_type = self.get_action_output_type(action, redirects)
                     # outfile_cmd = self.samtools_params_dict[action]["outfile"]
                     outfile_cmd = self.samtools_params[action]["outfile"]
                     if re.search("system", outfile_cmd):
@@ -359,7 +404,7 @@ cp -fs \\
 
                     cmd = self.samtools_params[action]["script"].format(action=action,
                                                                              env_path=self.get_script_env_path(),
-                                                                             active_file=active_files[active_type],
+                                                                             active_file=active_files[self.active_type],
                                                                              params="" if not redirects else "\n\t" + redirects + " \\",
                                                                              region="" if not region else "\\\n\t" + region,
                                                                              outfile=use_dir + outfile)
@@ -374,11 +419,13 @@ cp -fs \\
                     _locals = dict()
 
                     # Get relevant local variables into _locals
-                    for k in "action,action_numbered,active_type,output_type,active_files,files2keep,use_dir," \
+                    for k in "action,action_numbered,output_type,active_files,files2keep,use_dir," \
                              "sample_dir,outfile,sample".split(","):
                         _locals[k] = locals()[k]
-                    active_type, active_files, files2keep = self.file_management(**_locals)
+                    self.active_type, active_files, files2keep = self.file_management(**_locals)
 
+                elif action in self.project_actions:
+                    pass
                 else:
                     raise AssertionExcept("Action '{action}' not defined yet".format(action=action))
 
@@ -441,9 +488,63 @@ rmdir {temp}
             self.local_finish(use_dir,sample_dir)
             self.create_low_level_script()
 
+    def region_and_redirects(self, action, action_numbered):
+        redirects = ""
+        region = self.params["region"] if "region" in self.params else ""  # Enable globally defined region
+        if isinstance(self.params[action_numbered], dict):
+            if "region" in self.params[action_numbered]:
+                region = self.params[action_numbered]["region"]
+            if "redirects" in self.params[action_numbered]:
+                if isinstance(self.params[action_numbered]["redirects"], dict):
+                    redirects = " \\\n\t".join(
+                        [key + " " + (str(val) if val else "")
+                         for key, val
+                         in self.params[action_numbered]["redirects"].items()])
+                else:
+                    redirects = self.params[action_numbered]["redirects"]
+        else:
+            redirects = self.params[action_numbered]
+        # Get action region
+        if region:
+            if "region" in self.samtools_params[action]:
+                if self.samtools_params[action]["region"] is None:
+                    self.write_warning(
+                        "Region passed to tool '{action}' that does not accept regions. Removing!!".format(
+                            action=action))
+                    region = ""
 
+                elif self.samtools_params[action]["region"] == "END":
+                    pass  # Region is dealt with later
+                else:  # self.samtools_params[action]["region"] == "-r". for eaxmple
+                    if redirects:
+                        redirects = " \\\n\t".join([redirects,
+                                                    "{arg} {region}".format(
+                                                        arg=self.samtools_params[action]["region"],
+                                                        region=region)])
+                    else:
+                        redirects = "{arg} {region}".format(
+                                                        arg=self.samtools_params[action]["region"],
+                                                        region=region)
+                    region = ""  # Region is added to redirects and emptied
 
-    def get_action_output_type(self, action, active_type, redirects):
+            else:
+                if "region" not in self.params:  # Issue the comment only if region is set per this action
+                    self.write_warning(
+                        "Region passed to tool '{action}' that does not accept regions. Removing!!".format(
+                            action=action))
+                region = ""
+        return redirects, region
+
+    def get_action_output_type(self, action, redirects):
+
+        if redirects is not None:
+            if re.search("\-\w*O\s", redirects):
+                type = re.search("\-\w*O\s+(\w+)", redirects)
+                if type.group(1).lower() not in ["bam", "sam", "cram"]:
+                    raise AssertionExcept("Bad value for output format ({type})".format(type=type.group(1)))
+                else:
+                    return type.group(1).lower()
+
         if action == "view":
             if re.search("\-\w*b", redirects):
                 return "bam"
@@ -452,23 +553,18 @@ rmdir {temp}
             else:
                 return "sam"
         elif action == "sort":
-            if re.search("\-\w*O", redirects):
-                # TODO: get type from -O value
-                pass
-                # output_type = "bam"
-            else:
-                return "bam"
+            return "bam"
         elif action == "index":
-            if active_type == "bam":
+            if self.active_type == "bam":
                 return "bai"
-            elif active_type == "cram":
+            elif self.active_type == "cram":
                 return "crai"
             else:
                 raise AssertionExcept("No 'bam' or 'cram' for 'samtools index'", sample)
         elif action in ["flagstat", "stats", "idxstats", "depth"]:
             return action
         elif action in ["fasta", "fastq"]:
-            return active_type
+            return self.active_type
         elif action in ["mpileup"]:
             if re.search("\-\w*v", redirects) or re.search("\-\-VCF", redirects):
                 return "vcf"
@@ -476,35 +572,36 @@ rmdir {temp}
                 return "bcf"
             else:
                 return "mpileup"
+        elif action in ["merge"]:
+            return "bam"
 
+    def file_management(self,action,action_numbered,output_type,active_files,files2keep,use_dir,sample_dir,outfile,sample):
 
-    def file_management(self,action,action_numbered,active_type,output_type,active_files,files2keep,use_dir,sample_dir,outfile,sample):
-
-        if action in ["view", "sort", "index", "mpileup"]:
+        if action in ["view", "sort", "index", "mpileup", "merge"]:
             active_files[output_type] = use_dir + outfile
             self.sample_data[sample][output_type] = sample_dir + outfile
             if action_numbered in self.params["keep_output"]:
                 files2keep.append(use_dir + outfile)
                 self.stamp_file(self.sample_data[sample][output_type])
             if action in ["view", "sort"]:
-                active_type = output_type
+                self.active_type = output_type
 
         elif action in ["flagstat", "stats", "idxstats", "depth"]:
             active_files[output_type] = use_dir + outfile
-            self.sample_data[sample][active_type + "." + action] = sample_dir + outfile
+            self.sample_data[sample][self.active_type + "." + action] = sample_dir + outfile
             if action_numbered in self.params["keep_output"]:
-                self.stamp_file(self.sample_data[sample][active_type + "." + action])
+                self.stamp_file(self.sample_data[sample][self.active_type + "." + action])
                 files2keep.append(use_dir + outfile)
 
         elif action in ["fasta","fastq"]:
 
-            active_files[action + ".F"] = "%s%s.F.%s" % (use_dir, os.path.basename(active_files[active_type]), action)
-            active_files[action + ".R"] = "%s%s.R.%s" % (use_dir, os.path.basename(active_files[active_type]), action)
-            active_files[action + ".S"] = "%s%s.S.%s" % (use_dir, os.path.basename(active_files[active_type]), action)
+            active_files[action + ".F"] = "%s%s.F.%s" % (use_dir, os.path.basename(active_files[self.active_type]), action)
+            active_files[action + ".R"] = "%s%s.R.%s" % (use_dir, os.path.basename(active_files[self.active_type]), action)
+            active_files[action + ".S"] = "%s%s.S.%s" % (use_dir, os.path.basename(active_files[self.active_type]), action)
             # Storing and Stamping files
-            self.sample_data[sample][action + ".F"] = "%s%s.F.%s" % (sample_dir, os.path.basename(active_files[active_type]), action)
-            self.sample_data[sample][action + ".R"] = "%s%s.R.%s" % (sample_dir, os.path.basename(active_files[active_type]), action)
-            self.sample_data[sample][action + ".S"] = "%s%s.S.%s" % (sample_dir, os.path.basename(active_files[active_type]), action)
+            self.sample_data[sample][action + ".F"] = "%s%s.F.%s" % (sample_dir, os.path.basename(active_files[self.active_type]), action)
+            self.sample_data[sample][action + ".R"] = "%s%s.R.%s" % (sample_dir, os.path.basename(active_files[self.active_type]), action)
+            self.sample_data[sample][action + ".S"] = "%s%s.S.%s" % (sample_dir, os.path.basename(active_files[self.active_type]), action)
             self.stamp_file(self.sample_data[sample][action + ".F"])
             self.stamp_file(self.sample_data[sample][action + ".R"])
             self.stamp_file(self.sample_data[sample][action + ".S"])
@@ -513,6 +610,9 @@ rmdir {temp}
                 files2keep.append(active_files[action + ".R"])
                 files2keep.append(active_files[action + ".S"])
 
-        return active_type,active_files,files2keep
+        else:
+            print("Unrecognised action '{action}'. Check!!!".formar(action=action))
+
+        return self.active_type,active_files,files2keep
 
 

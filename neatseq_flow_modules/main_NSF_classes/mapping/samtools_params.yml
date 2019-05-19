@@ -9,12 +9,12 @@ depth:
         {env_path}{action} \{params}
         	{active_file}  \
         	> {outfile}
-    outfile: '".".join([os.path.basename(active_files[active_type]), output_type, "txt"])'
+    outfile: '".".join([os.path.basename(active_files[self.active_type]), output_type, "txt"])'
     region: -r
 dict:
 faidx:
 fasta:
-    outfile:   'os.path.basename(active_files[active_type])'
+    outfile:   'os.path.basename(active_files[self.active_type])'
     script: |
         {env_path}{action} \{params}
         	-1  {outfile}.F.{action} \
@@ -22,7 +22,7 @@ fasta:
         	-0  {outfile}.S.{action} \
         	{active_file}
 fastq:
-    outfile:   'os.path.basename(active_files[active_type])'
+    outfile:   'os.path.basename(active_files[self.active_type])'
     script: |
         {env_path}{action} \{params}
         	-1  {outfile}.F.{action} \
@@ -36,25 +36,30 @@ flagstat:
         {env_path}{action} \{params}
         	{active_file}  \
         	> {outfile}
-    outfile: '".".join([os.path.basename(active_files[active_type]), output_type, "txt"])'
+    outfile: '".".join([os.path.basename(active_files[self.active_type]), output_type, "txt"])'
 fqidx:
 idxstats:
     script: |
         {env_path}{action} \{params}
         	{active_file}  \
         	> {outfile}
-    outfile: '".".join([os.path.basename(active_files[active_type]), output_type, "txt"])'
+    outfile: '".".join([os.path.basename(active_files[self.active_type]), output_type, "txt"])'
 index:
-    outfile: '"{fn}.{ext}".format(ext=output_type, fn=os.path.basename(active_files[active_type]))'
+    outfile: '"{fn}.{ext}".format(ext=output_type, fn=os.path.basename(active_files[self.active_type]))'
     script: |
         {env_path}{action} \{params}
         	{active_file}
 
 markdup:
 merge:
+    outfile:   'self.sample_data["Title"] + ".merge." + output_type'
+    script: |
+        {env_path}{action} \{params}
+        	{outfile} \
+        	{active_file}
     region: -R
 mpileup:
-    outfile:   'os.path.splitext(os.path.basename(active_files[active_type]))[0] + ".view." + output_type'
+    outfile:   'os.path.splitext(os.path.basename(active_files[self.active_type]))[0] + ".view." + output_type'
     script: |
         {env_path}{action} \{params}
         	--output {outfile} \
@@ -70,7 +75,7 @@ sort:
         {env_path}{action} \{params}
         	-o {outfile} \
         	{active_file}
-    outfile:  'os.path.splitext(os.path.basename(active_files[active_type]))[0] + ".sort." + output_type'
+    outfile:  'os.path.splitext(os.path.basename(active_files[self.active_type]))[0] + ".sort." + output_type'
 
 split:
 stats:
@@ -78,7 +83,7 @@ stats:
         {env_path}{action} \{params}
         	{active_file}  \
         	> {outfile}
-    outfile: '".".join([os.path.basename(active_files[active_type]), output_type, "txt"])'
+    outfile: '".".join([os.path.basename(active_files[self.active_type]), output_type, "txt"])'
     region: END
 
 targetcut:
@@ -87,7 +92,7 @@ view:
     input:  
         flag:   stdin
         type:   [sam, bam, cram]
-    outfile:   'os.path.splitext(os.path.basename(active_files[active_type]))[0] + ".view." + output_type'
+    outfile:   'os.path.splitext(os.path.basename(active_files[self.active_type]))[0] + ".view." + output_type'
     script: |
         {env_path}{action} \{params}
         	-o {outfile} \
