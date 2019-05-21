@@ -13,17 +13,17 @@ A class that defines a module for executing samtools on a SAM or BAM file.
 
 .. attention:: The module was tested on samtools 1.9
 
-The samtools programs included in the module are the following:
+Currently, the samtools programs included in the module are the following:
 
-* ``view`` to convert the SAM file to a BAM file
-* ``sort`` to sort the BAM file
-* ``index`` creates an index for the BAM file
-* ``flagstat`` Runs flagstat on the BAM file
-* ``stats`` Runs stats on the BAM file
-* ``idxstats`` Runs idxstats on the BAM file
+* ``view``
+* ``sort``
+* ``index``
+* ``flagstat``
+* ``stats``
+* ``idxstats``
 * ``depth``
-* ``fastq/a`` Converts a BAM or CRAM into either FASTQ or FASTA format depending on the command invoked.
-* ``merge`` Merges sample bam files into single project bam file.
+* ``fastq/a``
+* ``merge``
 * ``mpileup``
 
 .. Note:: Order of samtools subprogram execution:
@@ -313,7 +313,6 @@ class Step_samtools_new(Step):
                     _locals[k] = locals()[k]
                 self.active_type, active_files, files2keep = self.file_management(**_locals)
 
-                print("{name} --- {redirs}".format(name=action, redirs=files2keep))
 
     #             self.script += """\
     # ###########
@@ -465,7 +464,8 @@ cp -fs \\
 
             # files2keep = " \\\n\t".join(list(active_files.values()))
             files2keep = " \\\n\t".join(list(files2keep))
-            self.script += """\
+            if files2keep:
+                self.script += """\
 ###########
 # Copying final files to final location
 #----------------
