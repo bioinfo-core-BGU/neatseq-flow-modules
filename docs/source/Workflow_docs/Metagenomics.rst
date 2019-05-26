@@ -25,9 +25,9 @@ a. Analysis of the raw reads with:
 
     The output from the former three programs is also plotted with krona (to disable plotting with krona, comment out the lines referring to krona in the instance definition.)  
 b. Assembly and analysis of the assembled reads:
-    1. Assembly is done with two tools: ``spades`` and ``megahit``.
-    2. Each assembly is quality tested with ``quast``.
-    3. assemblies are annotated with ``Prokka``.
+    1. Assembly is done per-sample with ``spades``.
+    2. The assemblies are quality-tested with ``quast``.
+    3. Assemblies are annotated with ``Prokka``.
     4. Antibiotic resistance is determined with ``CARD_RGI``.
     5. **Not included**. Resistance and virulence can also be determined by BLASTing AR and virulence databases against the assemblies. See module BLAST.
 
@@ -60,6 +60,7 @@ Programs required
 * `RGI          <https://card.mcmaster.ca/analyze/rgi>`_
 * `KronaTools   <https://github.com/marbl/Krona/wiki/KronaTools>`_
 
+All the programs used in this workflow can be installed with conda. See section :ref:`_quick-conda-start` below.
 
 Example of Sample File
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -84,6 +85,8 @@ Download
 
 The workflow file is available :download:`here <../../../Workflows/Metagenomics.yaml>`
 
+
+.. _quick-conda-start:
 
 Quick start with conda
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -113,7 +116,7 @@ For easy setup of the workflow, including a sample dataset, use the following in
 #. Install required databases:
 
     metaphlan:
-        `The following instrauctions are based on this website <https://groups.google.com/forum/#!topic/metaphlan-users/7TfY_h-SELQ>`_:
+        `The instructions below are based on this website <https://groups.google.com/forum/#!topic/metaphlan-users/7TfY_h-SELQ>`_:
 
       .. code-block:: bash
 

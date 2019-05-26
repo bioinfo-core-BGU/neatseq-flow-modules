@@ -31,13 +31,15 @@ Requires
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* Puts the ``kraken`` output files in:  
+* Puts the ``kraken2`` output files in:
 
     * ``self.sample_data[<sample>]["raw_classification"]``
-    * ``self.sample_data[<sample>]["classification"]``
     * ``self.sample_data[<sample>]["kraken.report"]``
-    
-    * If ``ktImportTaxonomy_path`` parameter was passed, puts the krona reports in 
+    * ``self.sample_data[<sample>]["unclassified"]``
+    * ``self.sample_data[<sample>]["classified"]``
+
+
+* If ``ktImportTaxonomy`` parameter was passed, puts the krona reports in
 
     * ``self.sample_data["project_data"]["krona"]``
 

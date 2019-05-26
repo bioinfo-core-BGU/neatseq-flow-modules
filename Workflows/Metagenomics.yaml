@@ -97,14 +97,11 @@ Step_params:
 # ------------------------------- a. Metagenomic analysis of raw reads:
     metph1:
         module:             metaphlan2
-        base:               trim1
+        base:               Trim_Galore
         script_path:        '{Vars.paths.metaphlan2}/metaphlan2.py'
         qsub_params:
             -V: 
         export:             'PERL5LIB="{Vars.paths.KronaTools}/lib:$PERL5LIB"'
-        ktImportText_path: '{Vars.paths.KronaTools}/bin/ktImportText'
-        merge_metaphlan_tables: '{Vars.paths.metaphlan2}/utils/merge_metaphlan_tables.py'
-        metaphlan2krona_path:   '{Vars.paths.metaphlan2}/utils/metaphlan2krona.py'
         redirects:
             --biom: 
             --bowtie2_exe:  {Vars.paths.bowtie2}
@@ -114,6 +111,14 @@ Step_params:
             --mdelim:       ';'
             --mpa_pkl:      '{Vars.paths.metaphlan2}/db_v20/mpa_v20_m200.pkl'
             --nproc:        30
+        ktImportText:
+            path:           '{Vars.Programs_path.ktImportText}'
+        merge_metaphlan_tables:
+            path:           '{Vars.paths.metaphlan2}/utils/merge_metaphlan_tables.py'
+        metaphlan2krona:
+            path:           '{Vars.paths.metaphlan2}/utils/metaphlan2krona.py'
+
+
     HUMAnN2_1:
         module:             HUMAnN2
         base:               trim1
