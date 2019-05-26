@@ -122,7 +122,7 @@ view:
         type:   [sam, bam, cram]
     outfile:   'os.path.splitext(os.path.basename(active_files[self.active_type]))[0] + ".view." + output_type'
     script: |
-        {env_path}{action} \{params} {bed}
+        {env_path}{action} \{params}{bed}
         	-o {outfile} \
         	{active_file} {region}
     region: END
