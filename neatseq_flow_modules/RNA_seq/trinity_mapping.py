@@ -201,29 +201,44 @@ class Step_trinity_mapping(Step):
             
             self.script = ""
 
-
+            # 1. Create link to fasta file in Reference dir
+            # 2. Create link to gene_trans_map file as well, if it exists
             self.script += """\
 # Creating a local sost link to the reference
 # The purpose is that the reference will not be built in the original location
 {setenv} 
 mkdir -p {dir}
 cp -rsf \\
-    {ref} \\
+    {ref} \\{map}
     {dir}
 
 """.format(setenv=self.get_setenv_part(),
            ref=self.sample_data["project_data"]["fasta.nucl"],
-                             dir=self.base_dir+"Reference")
-            self.sample_data["project_data"]["fasta.nucl"] = self.base_dir+"Reference/"+os.path.basename(self.sample_data["project_data"]["fasta.nucl"])
-            self.sample_data["project_data"]["gene_trans_map"] = "%s.gene_trans_map" % self.sample_data["project_data"]["fasta.nucl"]
+           map=("\n\t"+self.sample_data["project_data"]["gene_trans_map"]+" \\")
+                    if "gene_trans_map" in self.sample_data["project_data"]
+                    else "",
+           dir=self.base_dir+"Reference")
+
+            # Set fasta.nucl to new link to original fasta nucl
+            self.sample_data["project_data"]["fasta.nucl"] = "{dir}Reference/{fn}".\
+                                            format(dir=self.base_dir,
+                                                   fn=os.path.basename(self.sample_data["project_data"]["fasta.nucl"]))
+            # If it exists, and therefore linked, set gene_trans_map to new link to original file:
+            if "gene_trans_map" in self.sample_data["project_data"]:
+                self.sample_data["project_data"]["gene_trans_map"] = "{dir}Reference/{fn}".\
+                                            format(dir=self.base_dir,
+                                                   fn=os.path.basename(self.sample_data["project_data"]["gene_trans_map"]))
+                # "%s.gene_trans_map" % self.sample_data["project_data"]["fasta.nucl"]
 
             # Create script and write to SCRPT
             # First: transcript preparation (with --pre_reference arg)
-            self.script += self.get_script_const()
-            self.script += "--aln_method %s \\\n\t"   % self.params["aln_method"]
-            self.script += "--transcripts %s \\\n\t"   % self.sample_data["project_data"]["fasta.nucl"]
-            self.script += "--prep_reference \n\n"
-            
+            self.script += """
+{const}--aln_method {aln} \\  
+\t--transcripts {fasta} \\
+\t--prep_reference
+""".format(const=self.get_script_const(),
+           aln=self.params["aln_method"],
+           fasta=self.sample_data["project_data"]["fasta.nucl"])
 
             
         else:
