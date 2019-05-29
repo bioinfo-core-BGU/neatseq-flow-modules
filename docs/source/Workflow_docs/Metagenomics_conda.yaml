@@ -28,3 +28,4 @@ dependencies:
   - blast>=2.7.0
   - trim-galore 
   - cutadapt
+  - rgi

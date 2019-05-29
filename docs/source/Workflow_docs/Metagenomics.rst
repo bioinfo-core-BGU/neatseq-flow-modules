@@ -53,7 +53,6 @@ Programs required
 * `bowtie2      <http://bowtie-bio.sourceforge.net/bowtie2/index.shtml>`_
 * `diamond      <https://ab.inf.uni-tuebingen.de/software/diamond>`_
 * `HUMAnN2      <http://huttenhower.sph.harvard.edu/humann2>`_
-* `megahit      <https://github.com/voutcn/megahit>`_
 * `prokka       <http://www.vicbioinformatics.com/software.prokka.shtml>`_
 * `quast        <http://bioinf.spbau.ru/quast>`_
 * `spades       <http://bioinf.spbau.ru/spades>`_
@@ -181,14 +180,15 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
             ktUpdateTaxonomy.sh $DBDIR/krona/taxonomy
 
-    kaiju:
+    #. kaiju:
 
        .. code-block:: bash
-
             mkdir -p $DBDIR/kaiju
             cd $DBDIR/kaiju
-            makeDB.sh -r
+            kaiju-makedb -s progenomes -t 10
+            kaiju-makedb -s nr_euk -t 10
             cd -
+
 
     HUMAnN2:
 
@@ -198,10 +198,15 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
        .. code-block:: bash
 
-            humann2_databases --download chocophlan full $DBDIR/HUMAnN2
-            humann2_databases --download uniref uniref90_diamond $DBDIR/HUMAnN2
+            mkdir -p databases/HUMAnN2
+            humann2_databases --download chocophlan full  $DBDIR/HUMAnN2
+            humann2_databases --download uniref uniref90_diamond  $DBDIR/HUMAnN2/uniref90
+            humann2_databases --download uniref uniref50_diamond  $DBDIR/HUMAnN2/uniref50
 
-        .. Attention:: The last comand downloads the recommended translated databases. For other options, see
+            humann2_config --update database_folders nucleotide $DBDIR/HUMAnN2/chocophlan
+            humann2_config --update database_folders protein $DBDIR/HUMAnN2/uniref90
+
+       .. Attention:: The commands download the recommended translated databases. For other options, see
             the `Download a translated search database <https://bitbucket.org/biobakery/humann2/wiki/Home#markdown-header-download-a-translated-search-database>`_ section of the tutorial.
 
 #. Get the parameter file with::
@@ -215,27 +220,5 @@ For easy setup of the workflow, including a sample dataset, use the following in
         echo $CONDA_EXE | sed -e 's/\/bin\/conda$//g'
 
 
-#. If you want to use Trinotate, create a directory for the required databases (this step takes some time to complete)::
-
-    mkdir Trinotate_dbs;
-    Build_Trinotate_Boilerplate_SQLite_db.pl  Trinotate_dbs/Trinotate
-
-    mv uniprot_sprot.* Trinotate_dbs/
-    mv Pfam-A.hmm.gz Trinotate_dbs/
-    cd Trinotate_dbs/
-    makeblastdb -in uniprot_sprot.pep -dbtype prot
-    gunzip Pfam-A.hmm.gz
-    hmmpress Pfam-A.hmm
-    cd -
-
-.. Attention:: If you already have the Trinotate databases downloaded and setup, you do not have to do the last steps. You can set the paths to the databases in the ``databases`` subsection of the ``Vars`` section in the parameter file.
-
-#. If you want to use BUSCO:
-
-    #. Download a template config file with the following command and edit is as necessary::
-
-        wget -O config.ini https://gitlab.com/ezlab/busco/raw/master/config/config.ini.default
-
-    #. Set the Vars.databases.BUSCO variable to the URL or the BUSCO dataset to use. Choose a URL from this list: `<https://busco.ezlab.org/frame_wget.html>`_.
 
 #. `Execute NeatSeq-Flow  <https://neatseq-flow.readthedocs.io/en/latest/02b.execution.html#executing-neatseq-flow>`_.
