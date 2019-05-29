@@ -50,25 +50,27 @@ See also the `main NeatSeq-Flow website <https://neatseq-flow.readthedocs.io/en/
    :maxdepth: 2
    :caption: Modules
 
-   Module_docs/PreparationAndQC
-   Module_docs/Mapping
-   Module_docs/BAMConversion
-   Module_docs/ChIPseq
-   Module_docs/GenomeAssembly
-   Module_docs/TranscriptomeAssembly
-   Module_docs/TranscriptomeAnnotation
-   Module_docs/SequenceAnnotation
-   Module_docs/SequenceSearching
-   Module_docs/Variants
-   Module_docs/Metagenomics
-   Module_docs/Microbiology
-   Module_docs/QIIME
-   Module_docs/QIIME2
-   Module_docs/GATK
-   Module_docs/SequenceClustering
-   Module_docs/VariousReportingPrograms
-   Module_docs/Miscellaneous
-   Module_docs/GenericModules
+   Module_docs/AllModules
+..   Module_docs/PreparationAndQC
+..   Module_docs/Mapping
+..   Module_docs/BAMConversion
+..   Module_docs/ChIPseq
+..   Module_docs/GenomeAssembly
+..   Module_docs/TranscriptomeAssembly
+..   Module_docs/TranscriptomeAnnotation
+..   Module_docs/SequenceAnnotation
+..   Module_docs/SequenceSearching
+..   Module_docs/Variants
+..   Module_docs/Metagenomics
+..   Module_docs/Microbiology
+..   Module_docs/QIIME
+..   Module_docs/QIIME2
+..   Module_docs/GATK
+..   Module_docs/SequenceClustering
+..   Module_docs/VariousReportingPrograms
+..   Module_docs/Miscellaneous
+..   Module_docs/GenericModules
+
 
 ..   all_modules
    
