@@ -115,72 +115,78 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
 #. Install required databases:
 
-    metaphlan:
-        `The instructions below are based on this website <https://groups.google.com/forum/#!topic/metaphlan-users/7TfY_h-SELQ>`_:
+    #. Create a directory for your databases. Save the location of the directory in $DBDIR.
 
       .. code-block:: bash
 
-            mkdir -p $CONDA_PREFIX/bin/db_v20
-            cd $CONDA_PREFIX/bin/db_v20
-            # Get the file from the repo
-            wget https://bitbucket.org/biobakery/metaphlan2/downloads/mpa_v20_m200.tar
-            # Untar and unzip
-            tar -xvf mpa_v20_m200.tar
-            bzip -dk mpa_v20_m200.fna.bz2
-            # Build the bowtie2 index:
-            bowtie2-build --threads 4 mpa_v20_m200.fna mpa_v20_m200
-            cd -
+         export DBDIR=/path/to/databases_dir
+         mkdir -p $DBDIR
 
-    kraken2:
+    #. metaphlan:
 
-       Installing kraken2 database takes a long time and requires a consideral amount of disk space.
+       Running metaphlan will download the database for you:
+
+      .. code-block:: bash
+
+            metaphlan2.py \
+                --input_type fastq \
+                --bowtie2_exe bowtie2 \
+                --bowtie2db $DBDIR/MetaPhlAn_temp
+
+
+    #. kraken2:
+
+       Installing kraken2 database takes a long time and requires a considerable amount of disk space.
 
        .. code-block:: bash
 
-            mkdir -p $CONDA_PREFIX/databases/kraken2
+            mkdir -p $DBDIR/kraken2
             kraken2-build \
                 --standard \
                 --threads 10 \
-                --db $CONDA_PREFIX/databases/kraken2
+                --db $DBDIR/kraken2
 
        .. Attention::  If ``rsync`` dosen't work for you, you can try adding the ``--use-ftp`` to the ``kraken2-build`` command to use ``wget`` instead.
 
-    centrifuge:
+    #. centrifuge:
 
        .. code-block:: bash
 
-            mkdir -p $CONDA_PREFIX/databases/centrifuge
+            mkdir -p $DBDIR/centrifuge
             centrifuge-download \
-                -o $CONDA_PREFIX/databases/centrifuge/taxonomy \
+                -o $DBDIR/centrifuge/taxonomy \
                 taxonomy
 
             centrifuge-download \
-                -o $CONDA_PREFIX/databases/centrifuge \
+                -o $DBDIR/centrifuge \
                 -m -d "archaea,bacteria,viral" refseq \
-                > $CONDA_PREFIX/databases/centrifuge/seqid2taxid.map
+                > $DBDIR/centrifuge/seqid2taxid.map
 
-            cat $CONDA_PREFIX/databases/centrifuge/library/*/*.fna > input-sequences.fna
+            cat $DBDIR/centrifuge/*/*.fna > $DBDIR/centrifuge/input-sequences.fna
 
+            mkdir $DBDIR/centrifuge/index
             centrifuge-build -p 4 \
-                --conversion-table $CONDA_PREFIX/databases/centrifuge/seqid2taxid.map \
-                --taxonomy-tree $CONDA_PREFIX/databases/centrifuge/taxonomy/nodes.dmp \
-                --name-table $CONDA_PREFIX/databases/centrifuge/taxonomy/names.dmp \
-                input-sequences.fna
+                --conversion-table $DBDIR/centrifuge/seqid2taxid.map \
+                --taxonomy-tree $DBDIR/centrifuge/taxonomy/nodes.dmp \
+                --name-table $DBDIR/centrifuge/taxonomy/names.dmp \
+                $DBDIR/centrifuge/input-sequences.fna \
+                $DBDIR/centrifuge/index/arch_bac_vir
+
 
         .. Attention:: The download commands may fail because of the libssl version.
 
-    krona:
+    #. krona:
 
        .. code-block:: bash
 
-            ktUpdateTaxonomy.sh $CONDA_PREFIX/databases/krona/taxonomy
+            ktUpdateTaxonomy.sh $DBDIR/krona/taxonomy
 
     kaiju:
 
        .. code-block:: bash
 
-            mkdir -p $CONDA_PREFIX/databases/kaiju
-            cd $CONDA_PREFIX/databases/kaiju
+            mkdir -p $DBDIR/kaiju
+            cd $DBDIR/kaiju
             makeDB.sh -r
             cd -
 
@@ -192,8 +198,8 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
        .. code-block:: bash
 
-            humann2_databases --download chocophlan full $CONDA_PREFIX/databases/HUMAnN2
-            humann2_databases --download uniref uniref90_diamond $CONDA_PREFIX/databases/HUMAnN2
+            humann2_databases --download chocophlan full $DBDIR/HUMAnN2
+            humann2_databases --download uniref uniref90_diamond $DBDIR/HUMAnN2
 
         .. Attention:: The last comand downloads the recommended translated databases. For other options, see
             the `Download a translated search database <https://bitbucket.org/biobakery/humann2/wiki/Home#markdown-header-download-a-translated-search-database>`_ section of the tutorial.

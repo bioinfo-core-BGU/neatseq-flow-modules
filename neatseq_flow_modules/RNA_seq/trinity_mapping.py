@@ -206,14 +206,12 @@ class Step_trinity_mapping(Step):
             self.script += """\
 # Creating a local sost link to the reference
 # The purpose is that the reference will not be built in the original location
-{setenv} 
 mkdir -p {dir}
 cp -rsf \\
     {ref} \\{map}
     {dir}
 
-""".format(setenv=self.get_setenv_part(),
-           ref=self.sample_data["project_data"]["fasta.nucl"],
+""".format(ref=self.sample_data["project_data"]["fasta.nucl"],
            map=("\n\t"+self.sample_data["project_data"]["gene_trans_map"]+" \\")
                     if "gene_trans_map" in self.sample_data["project_data"]
                     else "",
@@ -233,7 +231,7 @@ cp -rsf \\
             # Create script and write to SCRPT
             # First: transcript preparation (with --pre_reference arg)
             self.script += """
-{const}--aln_method {aln} \\  
+{const}--aln_method {aln} \\
 \t--transcripts {fasta} \\
 \t--prep_reference
 """.format(const=self.get_script_const(),

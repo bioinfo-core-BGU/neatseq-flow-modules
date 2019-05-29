@@ -205,7 +205,6 @@ class Step_samtools(Step):
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
-
         # Set list of samples to go over. Either self.sample_data["samples"] for sample scope
         # or ["project_data"] for project scope
         if self.params["scope"] == "project":
