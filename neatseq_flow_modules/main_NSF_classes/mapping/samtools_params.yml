@@ -8,7 +8,7 @@ addreplacerg:
 bedcov:
 #samtools bedcov [options] region.bed in1.sam|in1.bam|in1.cram[...]
     script: |
-        {env_path}{action} \{params} {bed}
+        {env_path}{action} \{params}{bed}
         	{active_file}  \
         	> {outfile}
     outfile: '".".join([os.path.basename(active_files[self.active_type]), output_type, "txt"])'
@@ -25,6 +25,7 @@ depth:
         	> {outfile}
     outfile: '".".join([os.path.basename(active_files[self.active_type]), output_type, "txt"])'
     region: -r
+    bed:    -b
 dict:
 faidx:
 fasta:
@@ -87,7 +88,7 @@ merge:
 mpileup:
     outfile:   'self.sample_data["Title"] + ".merge." + output_type'
     script: |
-        {env_path}{action} \{params} {bed}
+        {env_path}{action} \{params}{bed}
         	--output {outfile} \
         	{active_file}
     region: -r

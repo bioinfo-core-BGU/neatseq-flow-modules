@@ -26,28 +26,55 @@ Currently, the samtools programs included in the module are the following:
 * ``merge``
 * ``mpileup``
 
-.. Note:: Order of samtools subprogram execution:
+.. Note:: **Order of samtools subprogram execution**
 
-    The ``samtools`` programs are executed in the order given in the parameter file!
-
-    File types are passed from one program to the next based on the output type of the program.
-
-    In order to execute one program more than once, append digits to the program name, *e.g.* ``sort2``, ``index3`` etc.
+    * The ``samtools`` programs are executed in the order given in the parameter file
+    * File types are passed from one program to the next
+    * In order to execute one program more than once, append digits to the program name, *e.g.* ``sort2``, ``index3`` etc.
 
 Arguments can be passed to the tools following the program name in the parameter file, *e.g.*::
 
     sort: -n -@ 10
 
-Please do NOT pass input and output arguments - they are set by the module.
+Alternatively, they can be passed in a ``redirects`` block::
 
-If you want to limit the program to a specific region, pass the program name a block with a 'region' section. If you want to set the region and pass some redirects, add a 'redirect' section as well. For example::
+    sort:
+        redirects: -n -@ 10
+
+**Please do NOT pass input and output arguments** - they are set by the module.
+
+Some of the tools are defined only when the ``scope`` is ``sample``:
+
+* ``merge`` merges the sample-wise BAM files into a project BAM file.
+* ``mpileup`` creates a project VCF/BCF/mpileup file from the sample BAM files.
+
+.. Attention::
+   **Treatment of regions**
+
+   If you want to limit the program to a specific region, pass the program name a block with a 'region' section.
+   If you want to set the region *and* pass some redirects, add a 'redirects' section as well. For example::
 
     mpileup:
         redirects:      --max-depth INT -v
         region:         chr2:212121-32323232
 
-Some of the tools are defined only when the ``scope`` is ``sample``, namely ``merge`` and ``mpileup``. ``merge`` merges
-the sample-wise BAM files into a project BAM file. ``mpileup`` creates a project VCF/BCF/mpileup file from the sample BAM files.
+
+.. Attention::
+
+   **Treatment of BED files**
+
+   In samtools ``view``, ``bedcov``, ``depth`` and ``mpileup``, you can pass a BED file by adding a ``bed`` field in the tool block, with one of the following values:
+
+   * ``sample`` - use a sample-scope BED file
+   * ``project`` - use a project-scope BED file
+   * A full path to a BED file.
+
+   Example::
+
+       view:
+            redirects:      -uh  -q 30 -@ 20 -F 4
+            bed:            /path/to/external/bed
+
 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -74,6 +101,7 @@ Please use ``stop_and_show`` to see the types produced by your instance of ``sam
 .. Note:: ``merge`` and ``mpileup`` are only defined when ``scope`` is ``sample``. See above
 
 By default, all files are saved. To keep only the output from specific programs, add a ``keep_output`` section containing a list of programs for which the output should be saved. **All other files will be discarded**.
+
 Parameters that can be set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -300,7 +328,7 @@ class Step_samtools(Step):
 
                 cmd = self.samtools_params[action]["script"].format(action=action,
                                                                     env_path=self.get_script_env_path(),
-                                                                    bed="" if not bed else "\n\t" + bed + " \\",
+                                                                    bed="" if not bed else "\n\t" + " ".join([self.samtools_params[action]["bed"], bed, "\\"]),
                                                                     active_file=active_files[self.active_type],
                                                                     params="" if not redirects else "\n\t" + redirects + " \\",
                                                                     region="" if not region else "\\\n\t" + region,
@@ -418,7 +446,10 @@ cp -fs \\
                                                                         env_path=self.get_script_env_path(),
                                                                         active_file=active_files[self.active_type],
                                                                         params="" if not redirects else "\n\t" + redirects + " \\",
-                                                                        bed="" if not bed else "\n\t" + bed + " \\",
+                                                                        bed="" if not bed else "\n\t" + " ".join(
+                                                                            [self.samtools_params[action]["bed"], bed,
+                                                                             "\\"]),
+
                                                                         region="" if not region else "\\\n\t" + region,
                                                                         outfile=use_dir + outfile)
                     self.script += """\
@@ -640,10 +671,26 @@ rmdir {temp}
         return self.active_type,active_files,files2keep
 
     def set_bed(self, action_numbered, sample):
-        bed = ""
-        if "bed" in self.sample_data[sample]:
-            bed = self.sample_data[sample]["bed"]
-        if self.params[action_numbered] and "bed" in self.params[action_numbered]:
-            bed = self.params[action_numbered]["bed"]
+
+        if self.params[action_numbered] and \
+                isinstance(self.params[action_numbered],dict) and \
+                "bed" in self.params[action_numbered]:
+            # If 1. params exist, 2. it is a dictionary and 3. it has a 'bed' defined
+            if self.params[action_numbered]["bed"] == "sample":
+                if "bed" in self.sample_data[sample]:
+                    bed = self.sample_data[sample]["bed"]
+                else:
+                    raise AssertionExcept("No 'bed' defined for sample in '{action}'".format(action=action_numbered),sample)
+            elif self.params[action_numbered]["bed"] == "project":
+                if "bed" in self.sample_data["project_data"]:
+                    bed = self.sample_data["project_data"]["bed"]
+                else:
+                    raise AssertionExcept("No 'bed' defined for project in '{action}'".format(action=action_numbered))
+            elif not self.params[action_numbered]["bed"]:
+                raise AssertionExcept("Value for 'bed' in {action} must be 'sample', 'project' or a path".format(action=action_numbered))
+            else:
+                bed = self.params[action_numbered]["bed"]
+        else:
+            bed = ""
         return bed
 

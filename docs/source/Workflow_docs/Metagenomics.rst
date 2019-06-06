@@ -59,7 +59,7 @@ Programs required
 * `RGI          <https://card.mcmaster.ca/analyze/rgi>`_
 * `KronaTools   <https://github.com/marbl/Krona/wiki/KronaTools>`_
 
-All the programs used in this workflow can be installed with conda. See section :ref:`_quick-conda-start` below.
+All the programs used in this workflow can be installed with conda. See section :ref:`quick-conda-start`_ below.
 
 Example of Sample File
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -116,7 +116,7 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
     #. Create a directory for your databases. Save the location of the directory in $DBDIR.
 
-      .. code-block:: bash
+       .. code-block:: bash
 
          export DBDIR=/path/to/databases_dir
          mkdir -p $DBDIR
@@ -125,7 +125,7 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
        Running metaphlan will download the database for you:
 
-      .. code-block:: bash
+       .. code-block:: bash
 
             metaphlan2.py \
                 --input_type fastq \
@@ -182,19 +182,21 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
     #. kaiju:
 
+       Kaiju provides different databases which can be downloaded. To get a list of options, just execute ``kaiju-makedb`` with no arguments:
+
+       The following commands demonstrate how to get the ``nr`` database including eukaryotes (``nr_euk``) and the ``progenomes`` database.
+
        .. code-block:: bash
+
             mkdir -p $DBDIR/kaiju
             cd $DBDIR/kaiju
             kaiju-makedb -s progenomes -t 10
             kaiju-makedb -s nr_euk -t 10
             cd -
 
-
-    HUMAnN2:
+    #. HUMAnN2:
 
        `Online help on downloading databases <https://bitbucket.org/biobakery/humann2/wiki/Home#markdown-header-5-download-the-databases>`_.
-
-.. http://evomicsorg.wpengine.netdna-cdn.com/wp-content/uploads/2015/07/cfar_lab_09182015.pdf
 
        .. code-block:: bash
 
@@ -213,12 +215,26 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
     wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Menagenomics.yaml
 
+#. Settings to set in the parameter file
+
+   You will have to make some changes to the parameter file to suit your needs:
+
+   #. Set the parameters in the ``Global_params`` section to suit your cluster. Alternatively, set ``Executor`` to ``Local`` for running on a single machine.
+   #. In the ``Vars`` section, set ``database_prefix`` to the location of your databases dir, which is the value of ``$DBDIR`` set above.
+   #. In ``Vars.databases.kaiju``, you will have to make sure the value of ``fmi`` fits the database you decide to use. In the provided parameter file, the ``nr_euk`` is set. The equivalent ``fmi`` value for the ``progenomes`` database is commented out.
+   #. Go over the ``redirects`` sections in the parameter file and make sure they are set according to your requirements.
+   #. If you have a fasta file with sequences to search for within your metagenome assemblies, set the ``proteins_of_interest`` variable to the full path to that file. If not, you can delete or uncomment the ``SKIP`` line in steps ``make_blast_db_per_assembly``, ``blast_proteins_vs_assemblies`` and ``parse_blast``.
+
+
 #. In the conda definitions (line 46), set ``base:`` to the path to the conda installation which you used to install the environment.
 
     You can get the path by executing the following command::
 
         echo $CONDA_EXE | sed -e 's/\/bin\/conda$//g'
 
-
-
 #. `Execute NeatSeq-Flow  <https://neatseq-flow.readthedocs.io/en/latest/02b.execution.html#executing-neatseq-flow>`_.
+
+
+.. Tip:: See also `this nice presentation <http://evomicsorg.wpengine.netdna-cdn.com/wp-content/uploads/2015/07/cfar_lab_09182015.pdf>`_ by Galeb Abu-Ali, Eric Franzosa and Curtis Huttenhower
+
+
