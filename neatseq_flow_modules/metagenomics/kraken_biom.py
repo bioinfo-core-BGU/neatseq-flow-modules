@@ -17,7 +17,7 @@ Requires
 
 * Kraken reports:
 
-    * ``sample_data[<sample>]["classification_report"]``
+    * ``sample_data[<sample>]["kraken.report"]``
 
 
 Output
@@ -25,7 +25,7 @@ Output
 
 * Puts the resulting *biom* output files in:  
 
-    * ``self.sample_data["project_data"]["kraken_biom"]``
+    * ``self.sample_data["project_data"]["kraken.biom"]``
     * ``self.sample_data["project_data"]["biom_table"]``
     * ``self.sample_data["project_data"]["biom_table_tsv"]`` (if ``skip_tsv`` is not set)
     
@@ -39,7 +39,8 @@ Parameters that can be set
     :widths: 15, 10, 10
 
     "skip_tsv", "", "Set if you do not want to convert the report into tsv format."
-    "biom_path", "/path/to/biom", "The path to biom. This is required for conversion to tsv"
+    "skip_summary", "", "Set if you do not want to create a summary of the report."
+    "biom_path", "/path/to/biom", "The path to biom. This is required for conversion to tsv and for producing the summary"
 
     
 Lines for parameter file
@@ -102,15 +103,13 @@ class Step_kraken_biom(Step):
         """
         
         for sample in self.sample_data["samples"]:
-            if not "classification_report" in self.sample_data[sample]:
-                raise AssertionExcept("Sample does not own a 'classification_report'", sample)
+            if not "kraken.report" in self.sample_data[sample]:
+                raise AssertionExcept("Sample does not contain a 'kraken.report'", sample)
         
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
-        
 
-    
     def build_scripts(self):
         """ This is the actual script building function
             Most, if not all, editing should be done here 
@@ -124,7 +123,6 @@ class Step_kraken_biom(Step):
         # Use the dir it returns as the base_dir for this step.
         use_dir = self.local_start(self.base_dir)
 
-        
         prefix = self.sample_data["Title"]
         # Decide on ".gz" suffix by whether --gzip is in redirects:
         dotgz = ".gz" if "--gzip" in self.params["redir_params"] else ""
@@ -136,18 +134,18 @@ class Step_kraken_biom(Step):
         self.script += self.get_script_const()
         self.script += "--output_fp {use_biom_path} \\\n\t".format(use_biom_path = use_biom_path)
         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-            self.script += "{kraken_report} \\\n\t".format(kraken_report = self.sample_data[sample]["classification_report"])
+            self.script += "{kraken_report} \\\n\t".format(kraken_report = self.sample_data[sample]["kraken.report"])
 
         self.script.rstrip("\\\n\t")
 
-        
         # Storing the output file in $samples_hash
-        self.sample_data["project_data"]["kraken_biom"]        = "{base_dir}{prefix}.kraken.biom{suffix}".format(base_dir = self.base_dir,
-                                                                                                 prefix = prefix,
-                                                                                                 suffix = dotgz)
-        self.sample_data["project_data"]["biom_table"]        = self.sample_data["project_data"]["kraken_biom"]
+        self.sample_data["project_data"]["kraken.biom"] = "{base_dir}{prefix}.kraken.biom{suffix}".\
+                                                                format(base_dir = self.base_dir,
+                                                                       prefix = prefix,
+                                                                       suffix = dotgz)
+        self.sample_data["project_data"]["biom_table"] = self.sample_data["project_data"]["kraken.biom"]
             
-        self.stamp_file(self.sample_data["project_data"]["kraken_biom"])
+        self.stamp_file(self.sample_data["project_data"]["kraken.biom"])
 
 
 

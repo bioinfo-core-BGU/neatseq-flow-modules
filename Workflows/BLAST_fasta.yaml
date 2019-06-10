@@ -102,7 +102,7 @@ Step_params:
             -dbtype:        nucl
 ############################ 4. BLAST external fasta against assembly
     blst_asmbl:
-        module:             blast
+        module:             blast_old
         base:               mkblst_asmbl
         script_path:        '{Vars.paths.blast}/tblastn'
         qsub_params:
@@ -129,7 +129,12 @@ Step_params:
         module:             parse_blast
         base:               blst_asmbl
         script_path:        {Vars.paths.parse_blast}
-        blast_merge_path:   {Vars.paths.compare_blast_parsed_reports}
+        blast_merge:
+            path:           {Vars.paths.compare_blast_parsed_reports}
+            redirects:
+                --variable: evalue 
+                --full_txt_output: 
+                --name:     qseqid
         scope:              sample
         redirects:
             --dbtable:      {Vars.databases.VFDB.table}
@@ -155,7 +160,7 @@ Step_params:
             --strain:
 ############################ 6. BLAST predicted genes against swissprot
     blst_genes:
-        module:             blast
+        module:             blast_old
         base:               prokka_asmbl
         script_path:        '{Vars.paths.blast}/blastx'
         qsub_params:
@@ -174,7 +179,6 @@ Step_params:
         module:             parse_blast
         base:               blst_genes
         script_path:        {Vars.paths.parse_blast}
-        blast_merge_path:   {Vars.paths.compare_blast_parsed_reports}
         scope:              sample
         redirects:
             --dbtable:      {Vars.databases.uniprot_sprot.table}
@@ -182,9 +186,15 @@ Step_params:
             --min_bitscore: 100
             --names:        '"qseqid sallseqid qlen slen qstart qend sstart send length evalue
                             bitscore score pident qframe"'
+        blast_merge:    
+            path:           {Vars.paths.compare_blast_parsed_reports}
+            redirects:
+                --variable: evalue 
+                --full_txt_output: 
+                --name: qseqid
 ############################ 7. BLAST predicted genes against swissprot - Alternative module 
     blst_genes_alt:
-        module:             blast_new
+        module:             blast
         base:               prokka_asmbl
         script_path:        '{Vars.paths.blast}/blastx'
         db:                 {Vars.databases.uniprot_sprot.blastdb}
@@ -194,7 +204,7 @@ Step_params:
             -evalue:        0.0001
 ############################ BONUS. BLAST predicted genes against assembly 
     blst_genes_asmbl:
-        module:             blast_new
+        module:             blast
         base:               [prokka_asmbl,mkblst_asmbl]
         script_path:        '{Vars.paths.blast}/blastn'
         db:                 sample

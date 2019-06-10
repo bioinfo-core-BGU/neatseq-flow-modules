@@ -115,6 +115,8 @@ class Step_megahit_assembl(Step):
         for sample in self.sample_data["samples"]:    
             if not {"fastq.F", "fastq.R", "fastq.S"} & set(self.sample_data[sample].keys()):
                 raise AssertionExcept("No read files\n",sample)
+            if len({"fastq.F", "fastq.R"} & set(self.sample_data[sample].keys())) ==1:
+                raise AssertionExcept("Sample has only forward or reverse reads. It must have either pairs or single reads\n", sample)
 
         
         if "scope" in self.params:
@@ -166,15 +168,18 @@ class Step_megahit_assembl(Step):
             f_reads_csl = ""
             r_reads_csl = ""
             s_reads_csl = ""
-            
-            for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-                if "PE" in self.sample_data[sample]["type"]:
-                    f_reads_csl += "%s,\\\n\t\t" % self.sample_data[sample]["fastq.F"]
-                    r_reads_csl += "%s,\\\n\t\t" % self.sample_data[sample]["fastq.R"]
-                if "SE" in self.sample_data[sample]["type"]:
-                    s_reads_csl += "%s,\\\n\t\t" % self.sample_data[sample]["fastq.S"]
-                if "PE" not in self.sample_data[sample]["type"] and "SE" not in self.sample_data[sample]["type"]:       
-                    raise AssertionExcept("Strange type configuration for sample\n" ,sample)
+
+            f_reads_csl = ",".join([self.sample_data[sample]["fastq.F"] for sample in self.sample_data["samples"] if "fastq.F" in self.sample_data[sample]])
+            r_reads_csl = ",".join([self.sample_data[sample]["fastq.R"] for sample in self.sample_data["samples"] if "fastq.R" in self.sample_data[sample]])
+            s_reads_csl = ",".join([self.sample_data[sample]["fastq.S"] for sample in self.sample_data["samples"] if "fastq.S" in self.sample_data[sample]])
+            # for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
+            #     if "PE" in self.sample_data[sample]["type"]:
+            #         f_reads_csl += "%s,\\\n\t\t" % self.sample_data[sample]["fastq.F"]
+            #         r_reads_csl += "%s,\\\n\t\t" % self.sample_data[sample]["fastq.R"]
+            #     if "SE" in self.sample_data[sample]["type"]:
+            #         s_reads_csl += "%s,\\\n\t\t" % self.sample_data[sample]["fastq.S"]
+            #     if "PE" not in self.sample_data[sample]["type"] and "SE" not in self.sample_data[sample]["type"]:
+            #         raise AssertionExcept("Strange type configuration for sample\n" ,sample)
 
             # Interlaced reads to treated here. Maybe one day...
             if f_reads_csl:

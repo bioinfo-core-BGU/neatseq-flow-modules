@@ -168,7 +168,7 @@ class Step_Fillout_Generic(Step):
                     raise AssertionExcept("Make sure you have a 'string' and 'scope' defined "
                                           "for output {output}!".format(output=outp))
                 if not re.search(pattern="dir",string=self.params["output"][outp]["string"]):
-                    raise AssertionExcept("Please include {{{{dir}}}} or {{{{base_dir}}}} in output '{output}'".
+                    self.write_warning("Are you sure you didn't mean to include {{{{dir}}}} or {{{{base_dir}}}} in output '{output}'?".
                                           format(output=outp))
 
                 variables.extend(result)
@@ -279,7 +279,6 @@ output:
                                                   use_dir=use_dir,
                                                   sample=sample)
             # # Try using function to include export (setenv) etc...
-
             # if "output" in self.params:
             for outp in self.params_output:
                 # If script and output scopes are identical:
@@ -448,7 +447,8 @@ output:
                     rawstring = re.sub(pattern=re.escape(variable),
                                          repl=("{!r}".format(self.params_output[var_def[1]]["string"])).strip("'"),
                                          string=rawstring)
-                except KeyError:
+
+                except KeyError as exc:
                     raise AssertionExcept("Error embedding output '{var}'".format(var=variable), sample)
                 continue
             # ------------------------------

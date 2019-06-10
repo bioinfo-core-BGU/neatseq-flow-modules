@@ -93,11 +93,11 @@ class Step_trinity_mapping(Step):
     
     def step_specific_init(self):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
-        self.file_tag = "trin_mapping"
+        self.file_tag = "trinity_mapping"
         
 
         if "--est_method" not in self.params["redir_params"]:
-            raise AssertionExcept("You must pass an --est_method to trin_mapping.\n")
+            raise AssertionExcept("You must pass an --est_method to trinity_mapping.\n")
 
         # Is used below... 
         self.est_method = self.params["redir_params"]["--est_method"]
@@ -106,7 +106,7 @@ class Step_trinity_mapping(Step):
             # To define, find out what the per isoform and per gene output files are named and fill the names in the dictionary called file_suffix_ind, below.
         
         if "--aln_method" in self.params["redir_params"]:
-            # raise AssertionExcept("You must pass an --aln_method to trin_mapping\n")
+            # raise AssertionExcept("You must pass an --aln_method to trinity_mapping\n")
             self.params["aln_method"] = self.params["redir_params"]["--aln_method"]
             del self.params["redir_params"]["--aln_method"]
         else:
@@ -163,7 +163,6 @@ class Step_trinity_mapping(Step):
                         raise AssertionExcept("Expecting 'gene_trans_map' in project but none found.\n")
 
             elif "--trinity_mode" in self.params["redir_params"]:
-                self.sample_data["project_data"]["gene_trans_map"] = "%s.gene_trans_map" % self.sample_data["project_data"]["fasta.nucl"]
                 self.use_gene_trans_map = True
             else:
                 self.use_gene_trans_map = False
@@ -202,27 +201,42 @@ class Step_trinity_mapping(Step):
             
             self.script = ""
 
-
+            # 1. Create link to fasta file in Reference dir
+            # 2. Create link to gene_trans_map file as well, if it exists
             self.script += """\
 # Creating a local sost link to the reference
 # The purpose is that the reference will not be built in the original location
-{setenv} 
-mkdir {dir}
-cp -rs \\
-    {ref} \\
+mkdir -p {dir}
+cp -rsf \\
+    {ref} \\{map}
     {dir}
 
-""".format(setenv=self.get_setenv_part(),
-           ref=self.sample_data["project_data"]["fasta.nucl"],
-                             dir=self.base_dir+"Reference")
-            self.sample_data["project_data"]["fasta.nucl"] = self.base_dir+"Reference/"+os.path.basename(self.sample_data["project_data"]["fasta.nucl"])
+""".format(ref=self.sample_data["project_data"]["fasta.nucl"],
+           map=("\n\t"+self.sample_data["project_data"]["gene_trans_map"]+" \\")
+                    if "gene_trans_map" in self.sample_data["project_data"]
+                    else "",
+           dir=self.base_dir+"Reference")
+
+            # Set fasta.nucl to new link to original fasta nucl
+            self.sample_data["project_data"]["fasta.nucl"] = "{dir}Reference/{fn}".\
+                                            format(dir=self.base_dir,
+                                                   fn=os.path.basename(self.sample_data["project_data"]["fasta.nucl"]))
+            # If it exists, and therefore linked, set gene_trans_map to new link to original file:
+            if "gene_trans_map" in self.sample_data["project_data"]:
+                self.sample_data["project_data"]["gene_trans_map"] = "{dir}Reference/{fn}".\
+                                            format(dir=self.base_dir,
+                                                   fn=os.path.basename(self.sample_data["project_data"]["gene_trans_map"]))
+                # "%s.gene_trans_map" % self.sample_data["project_data"]["fasta.nucl"]
+
             # Create script and write to SCRPT
             # First: transcript preparation (with --pre_reference arg)
-            self.script += self.get_script_const()
-            self.script += "--aln_method %s \\\n\t"   % self.params["aln_method"]
-            self.script += "--transcripts %s \\\n\t"   % self.sample_data["project_data"]["fasta.nucl"]
-            self.script += "--prep_reference \n\n"
-            
+            self.script += """
+{const}--aln_method {aln} \\
+\t--transcripts {fasta} \\
+\t--prep_reference
+""".format(const=self.get_script_const(),
+           aln=self.params["aln_method"],
+           fasta=self.sample_data["project_data"]["fasta.nucl"])
 
             
         else:
@@ -326,7 +340,7 @@ cp -rs \\
                 
             self.script = self.script.rstrip("\\\n\t") + "\n\n"
 
-            # Stroing files:
+            # Storing files:
             mv_data = {"dir" : use_dir, 
                        "src" : file_suffix_ind[self.est_method.lower()]["isoforms"],
                        "trg" : ".".join([sample,file_suffix_ind[self.est_method.lower()]["isoforms"]])}

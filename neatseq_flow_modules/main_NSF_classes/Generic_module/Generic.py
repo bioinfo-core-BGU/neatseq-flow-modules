@@ -585,13 +585,16 @@ class Step_Generic(Step):
                         if len(File_Type)>0:
                             File_Type+=sep
                         
-                        File_Type+=os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  , ( prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).lstrip(os.sep) )
+
+                        File_Type+=    os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  , ( prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).lstrip(os.sep) )
                 else:
                     for sample in self.sample_data["samples"]:
-                        if len(File_Type)>0:
-                            File_Type+=sep
-                        File_Type+=os.path.join(os.path.dirname(     inputs_sample_data[sample][get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])]     )  , ( prefix + os.path.basename(    inputs_sample_data[sample][get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])]     ) + suffix).lstrip(os.sep) )
-                
+                        for File_Type_slot in str(get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])).replace("'",'').replace(" ",'').replace('[','').replace(']','').split(','):
+                            if len(File_Type)>0:
+                                File_Type+=sep
+                            
+                            File_Type+=os.path.join(os.path.dirname(        inputs_sample_data[sample][File_Type_slot])  , ( prefix + os.path.basename(        inputs_sample_data[sample][File_Type_slot]) + suffix).lstrip(os.sep) )
+
                 if inputs.startswith("Empty".lower()):
                     inputs_script +="%s   \\\n\t"    % File_Type
                 else:

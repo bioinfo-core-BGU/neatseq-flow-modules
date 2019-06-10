@@ -1,220 +1,420 @@
-Global_params:
-    Default_wait: 10
-    Qsub_opts: -V -cwd
-    Qsub_path: /path/to/qsub/bin
-    Qsub_q: myqueue.q
-    module_path:      ../neatseq_flow_modules
-    conda:
-        path:   /gpfs0/bioinfo/apps/Miniconda2/Miniconda_v4.3.21/bin
-        env:    NeatSeq_Flow
-Description: |
-    A pipeline for executing various analyses on metagenomics data
-    --------------------------------------------------------------
+Documentation: |-
+    Workflow for shotgun metagenomics
+    ==================================
+    by Menachem Sklarz and Vered Chalifa-Caspi, Bioinformatics Core Facility, Ben-Gurion University
     
-    Developed as part of a study led by Prof. Jacob Moran-Gilad
-    
+    Description
+    ------------
     Includes two approaches:
     a. Analysis of the raw reads with:
-        - kraken
+        - kraken2
             - Combining the kraken reports into a biom table. Requires having biom installed as well as kraken-biom (https://github.com/smdabdoub/kraken-biom)
         - metaphlan2
         - kaiju
         - HUMAnN2
        The output from the former three programs is also plotted with krona (to disable plotting with krona, comment out the lines referring to krona in the instance definition.)  
     b. Assembly and analysis of the assembled reads:
-        1. Assembly below is done with two tools: spades and megahit
-        2. Each assembly is quality tested with quast
-        3. assemblies are annotated with prokka 
-        4. Antibiotic resistance is determined with CARD RGI
-        5. Not included. Resistance and virulence can also be determined by BLASTing AR and virulence databases against the assemblies. See module BLAST.
-    ----------------------------------------------------------------
+        1. Assembly below is done with two tools: spades 
+        2. The assembly is quality tested with quast
+        3. assemblies are annotated with Prokka 
+        
+        
+                 
+                 
+Global_params:
+    Default_wait: '10'
+    Qsub_opts: -cwd -notify
+    Qsub_path: /storage/SGE6U8/bin/lx24-amd64
+    Qsub_q: fairshare.q
+    conda:
+        env:    Metagenomics
+        path: 
+    module_path:      ../neatseq_flow_modules
+    
 Vars:
-    paths:
-        merge:          gzip -cd    
-        fastqc:         /path/to/fastqc
-        trimmo:         /path/to/java -jar /path/to/trimmomatic-0.32.jar
-        kraken:         /path/to/kraken
-        kraken_biom:    /path/to/kraken-biom    
-        centrifuge:     /path/to/centrifuge
-        biom:           /path/to/biom
-        kaiju:          /path/to/kaiju_dir/
-        metaphlan2:     /path/to/metaphlan2
-        bowtie2:        /path/to/bowtie2
-        diamond:        /path/to/diamond
-        humann2:        /path/to/humann2
-        megahit:        /path/to/megahit
-        prokka:         /path/to/prokka
-        quast:          /path/to/quast
-        spades:         /path/to/spades
-        RGI:            /path/to/CARD-RGI/RGI_v3.1.1/   # Path to RGI installation dir. Must include rgi.py and convertJsonToTSV.py
-        KronaTools:     /path/to/KronaTools-2.6.1/
-    dirs:
-        trimmo:         /path/to/trimmomatic
+    Programs_path:
+        Multiqc:        multiqc
+        Trim_Galore:    trim_galore
+        biom:           biom
+        bowtie2:        bowtie2
+        centrifuge:     centrifuge
+        cutadapt:       cutadapt
+        fastqc:         fastqc
+        humann2:        humann2
+        kaiju: 
+            kaiju:          kaiju
+            kaiju2krona:    kaiju2krona
+            kaiju2table:    kaiju2table
+        kraken:         kraken2
+        kraken_biom:    kraken-biom
+        ktImportTaxonomy: ktImportTaxonomy
+        ktImportText:   ktImportText
+        metaphlan:
+            merge_metaphlan_tables: merge_metaphlan_tables.py
+            metaphlan2:             metaphlan2.py
+            metaphlan2krona:        metaphlan2krona.py
+        prokka:         prokka
+        quast:          quast
+        spades:         spades.py
+        trimmo:         trimmomatic
+        makeblastdb:    makeblastdb
+        tblastn:        tblastn
+        parse_blast:
+            main:       parse_blast.R
+            compare_blast_parsed_reports:  compare_blast_parsed_reports.R
+        RGI:            # Path to RGI installation dir. Must include rgi.py and convertJsonToTSV.py. DO NOT FORGET A FINAL '/'!!
+
+    database_prefix:    $DBDIR
     databases:
         humann2:
-            chocophlan: /path/to/HUMAnN2_v0.11.1/databases/chocophlan
-            uniref:     /path/to/HUMAnN2_v0.11.1/databases/uniref
-        kraken:         /path/to/kraken_std_db
-        centrifuge:     /path/to/centrifuge_db
+            chocophlan: '{Vars.database_prefix}/HUMAnN2/chocophlan'
+            uniref50:   '{Vars.database_prefix}/HUMAnN2/uniref50/uniref'
+            uniref90:   '{Vars.database_prefix}/HUMAnN2/uniref90/uniref'
+        metaphlan:      '{Vars.database_prefix}/MetaPhlAn'
+        kaiju:
+            # path:       '{Vars.database_prefix}/kaijudb/'
+            # fmi:        progenomes/kaiju_db_progenomes.fmi
+            path:       '{Vars.database_prefix}/kaijudb/'  
+            fmi:        'nr_euk/kaiju_db_nr_euk.fmi'
+                # Avilable kaiju databases:
+                # refseq: bacterial, Archaeal and viral genomes in the NCBI RefSeq database with assembly status complete
+                # progenomes: proteins in the set of representative genomes from the proGenomes database and viral genomes from NCBI RefSeq
+                # nr: NCBI BLAST non-redundant protein database "nr", only Archaea, bacteria, and viruses
+                # nr_euk: nr and additionally including fungi and microbial eukaryotes
+                # mar_ref, mar_db, mar_mag: individual marine reference databases or assembled genomes from the Marine Metagenomics Portal
+                # mar: combination of all three MAR databases
+                # viruses: Viral genomes from NCBI RefSeqs.
+                # plasmids: Plasmid genomes from NCBI RefSeq
+                # rvdb: Viral proteins from RVDB-prot
+
+
+        kraken2:        '{Vars.database_prefix}/kraken2'
+        krona:          '{Vars.database_prefix}/krona/taxonomy'
+        proteins_of_interest: /path/to/proteins_of_interest_demo.fasta
+
+    
 Step_params:
-# ---------------------------- Merge, QC and trimming
-    merge1:
+
+    ##Preprocessing
+
+    Merge:        
         module:         merge
-        script_path:    {Vars.paths.merge}
-    fqc_merge1:
+        script_path:
+        
+    Trim_Galore:
+        base:           Merge
+        module:         Trim_Galore
+        script_path:    '{Vars.Programs_path.Trim_Galore}'
+        cutadapt_path:  '{Vars.Programs_path.cutadapt}'
+        conda:
+            env:        QC
+            path:       null
+        redirects:
+            --clip_R1: '15'
+            --clip_R2: '15'
+            --length:  '36'
+            -q:        '25'
+        
+    FastQC_pre_trim:
+        base:           Merge
         module:         fastqc_html
-        base:           merge1
-        script_path:    {Vars.paths.fastqc}
+        script_path:    '{Vars.Programs_path.fastqc}'
         qsub_params:
             -pe:        shared 15
         redirects:
-            --threads:  15
-    trim1:
-        module:         trimmo
-        base:           merge1
-        script_path:    {Vars.paths.trimmo}
+            --threads:  '15'
+        #SKIP:
+
+    FastQC_post_trim:
+        base:           Trim_Galore
+        module:         fastqc_html
+        script_path:    '{Vars.Programs_path.fastqc}'
         qsub_params:
             -pe:        shared 20
-        spec_dir:       /path/to/Trimmomatic_dir/
-        todo:           LEADING:20 TRAILING:20
         redirects:
-            -threads:   20
-        conda:
-            # path: 
-            # env:        ENV_NAME
+            --threads:  '20'
+        #SKIP:
 
-    fqc_trim1:
-        module:         fastqc_html
-        base:           trim1
-        script_path:    {Vars.paths.fastqc}
+    MultiQC_pre_trim:
+        base:           FastQC_pre_trim
+        module:         Multiqc
+        modules:        fastqc,cutadapt,trimmomatic,bowtie2,bowtie1,star,htseq,prokka,samtools,quast
+        script_path:    '{Vars.Programs_path.Multiqc}'
         qsub_params:
-            -pe:        shared 15
+            -pe:        shared 5
         redirects:
-            --threads:  15
-# ------------------------------- a. Metagenomic analysis of raw reads:
-    metph1:
+            --template: default
+        #SKIP:
+
+    MultiQC_post_trim:
+        base:           FastQC_post_trim
+        module: Multiqc
+        modules: fastqc,cutadapt,trimmomatic,bowtie2,bowtie1,star,htseq,prokka,samtools,quast
+        script_path: '{Vars.Programs_path.Multiqc}'
+        qsub_params:
+            -pe: shared 5
+        redirects:
+            --template: default
+        #SKIP:
+
+    ##Functional classification
+    MetaPhlan2:
         module:             metaphlan2
-        base:               trim1
-        script_path:        '{Vars.paths.metaphlan2}/metaphlan2.py'
+        base:               Trim_Galore
+        script_path:        '{Vars.Programs_path.metaphlan.metaphlan2}'
         qsub_params:
             -V: 
-        export:             'PERL5LIB="{Vars.paths.KronaTools}/lib:$PERL5LIB"'
-        ktImportText_path: '{Vars.paths.KronaTools}/bin/ktImportText'
-        merge_metaphlan_tables: '{Vars.paths.metaphlan2}/utils/merge_metaphlan_tables.py'
-        metaphlan2krona_path:   '{Vars.paths.metaphlan2}/utils/metaphlan2krona.py'
+        # export:             'PERL5LIB="{Vars.Programs_path.KronaTools}/lib:$PERL5LIB"'
         redirects:
             --biom: 
-            --bowtie2_exe:  {Vars.paths.bowtie2}
-            --bowtie2db:    '{Vars.paths.metaphlan2}/db_v20/mpa_v20_m200'
+            --bowtie2_exe:  {Vars.Programs_path.bowtie2}
+            --bowtie2db:    '{Vars.databases.metaphlan}/mpa_v20_m200'
             --bowtie2out:
             --input_type:   fastq
             --mdelim:       ';'
-            --mpa_pkl:      '{Vars.paths.metaphlan2}/db_v20/mpa_v20_m200.pkl'
+            --mpa_pkl:      '{Vars.databases.metaphlan}/mpa_v20_m200.pkl'
             --nproc:        30
-    HUMAnN2_1:
-        module:             HUMAnN2
-        base:               trim1
-        script_path:        {Vars.paths.humann2}
-        join_tables: 
-        renorm_table:       --units cpm -p
+        ktImportText:
+            path:           '{Vars.Programs_path.ktImportText}'
+        merge_metaphlan_tables:
+            path:           '{Vars.Programs_path.metaphlan.merge_metaphlan_tables}'
+        metaphlan2krona:
+            path:           '{Vars.Programs_path.metaphlan.metaphlan2krona}'
+            
+    HUMAnN2_uniref50:
+        base: Trim_Galore
+        module: HUMAnN2
+        script_path: '{Vars.Programs_path.humann2}'
+        setenv: PERL5LIB="" mpa_dir=$CONDA_PREFIX/bin
+        protein-database:   uniref50
+        qsub_params:
+            -pe: shared 10
         redirects:
-            --bowtie2:      {Vars.paths.bowtie2}
-            --diamond:      {Vars.paths.diamond}
-            --gap-fill:     'on'
+            --gap-fill: 'on'
             --input-format: fastq
-            --metaphlan:    {Vars.paths.metaphlan2}
-            --minpath:      'on'
-            --nucleotide-database: {Vars.databases.humann2.chocophlan}
-            --protein-database: {Vars.databases.humann2.uniref}
-            --threads:      30
-    kaiju1:
-        module:             kaiju
-        base:               trim1
-        script_path:        '{Vars.paths.kaiju}/bin/kaiju'
-        setenv:             'PERL5LIB={Vars.paths.KronaTools}/lib:$PERL5LIB'
-        kaiju2krona:        '{Vars.paths.kaiju}/bin/kaiju2krona'
-        ktImportText_path:  '{Vars.paths.KronaTools}/bin/ktImportText'
-        names_dmp:          '{Vars.paths.kaiju}/kaijudb/names.dmp'
-        redirects:
-            -f:             '{Vars.paths.kaiju}/kaijudb/kaiju_db.fmi'
-            -t:             '{Vars.paths.kaiju}/kaijudb/nodes.dmp'
-            -z:             40
-    kraken1:
-        module:             kraken
-        base:               trim1
-        script_path:        '{Vars.paths.kraken}'
+            --minpath: 'on'
+            --nucleotide-database:  '{Vars.databases.humann2.chocophlan}'
+            --protein-database:     '{Vars.databases.humann2.uniref50}'
+            --metaphlan-options:    "'-t rel_ab --bowtie2db {Vars.databases.metaphlan}'"
+            --threads: '10'
+        humann2_join_tables: 
+            path: humann2_join_tables
+        humann2_renorm_table:
+            path: humann2_renorm_table
+            redirects:
+                --units: cpm
+                --update-snames: null
+        #SKIP:
+    
+    HUMAnN2_uniref50_further_analysis:
+        base:       HUMAnN2_uniref50
+        module:     HUMAnN2_further_processing
+        script_path:
+        setenv:     PERL5LIB="" mpa_dir=$CONDA_PREFIX/bin
+        scope:      project
+        humann2_regroup_table:
+            path:     humann2_regroup_table
+          # redirects:
+            # --groups:   uniref50_go
+        humann2_rename_table:
+            path:     humann2_rename_table
+        #SKIP:
+    
+    HUMAnN2_uniref90:
+        base: Trim_Galore
+        module: HUMAnN2
+        script_path: '{Vars.Programs_path.humann2}'
+        setenv: PERL5LIB="" mpa_dir=$CONDA_PREFIX/bin
+        protein-database:   uniref90
         qsub_params:
-            -pe:            shared 20
-        ktImportTaxonomy_path: '{Vars.paths.KronaTools}/bin/ktImportTaxonomy -u  http://krona.sourceforge.net'
+            -pe: shared 10
         redirects:
-            --db:           {Vars.databases.kraken}
-            --preload: 
+            --gap-fill: 'on'
+            --input-format: fastq
+            --minpath: 'on'
+            --nucleotide-database:  '{Vars.databases.humann2.chocophlan}'
+            --protein-database:     '{Vars.databases.humann2.uniref90}'
+            --metaphlan-options:    "'-t rel_ab --bowtie2db {Vars.databases.metaphlan}'"
+            --threads: '10'
+        humann2_join_tables:
+            path: humann2_join_tables
+        humann2_renorm_table:
+            path: humann2_renorm_table
+            redirects:
+                --units: cpm
+                --update-snames: null
+        #SKIP:
+    
+    HUMAnN2_uniref90_further_analysis:
+        base: HUMAnN2_uniref90
+        module: HUMAnN2_further_processing
+        script_path:
+        scope: project
+        setenv: PERL5LIB="" mpa_dir=$CONDA_PREFIX/bin
+        humann2_regroup_table:
+            path: humann2_regroup_table
+            # redirects:
+                # --groups:   uniref90_go
+        humann2_rename_table:
+            path: humann2_rename_table
+            # redirects: 
+              # --units: cpm
+              # -p: null
+        #SKIP:
+
+    ##Taxonomic classification
+
+    kaiju:
+        base: Trim_Galore
+        module: kaiju
+        script_path: '{Vars.Programs_path.kaiju.kaiju}'
+        setenv: PERL5LIB=""
+        qsub_params:
+            -pe: shared 40
+        redirects:
+            -f: '{Vars.databases.kaiju.path}/{Vars.databases.kaiju.fmi}'
+            -t: '{Vars.databases.kaiju.path}/nodes.dmp'
+            -z: '40'
+        kaiju2krona:
+            path:   '{Vars.Programs_path.kaiju.kaiju2krona}'
+            redirects:
+                -n: '{Vars.databases.kaiju.path}/names.dmp'
+                -t: '{Vars.databases.kaiju.path}/nodes.dmp'
+        ktImportText:
+            path:   '{Vars.Programs_path.ktImportText}'
+        # SKIP:
+
+    kaiju2table:
+        base:   kaiju
+        module: kaiju2table
+        script_path:  '{Vars.Programs_path.kaiju.kaiju2table}'
+        scope:  sample
+        redirects:
+            -t: '{Vars.databases.kaiju.path}/nodes.dmp'
+            -n: '{Vars.databases.kaiju.path}/names.dmp'
+            -p: 
+        merge_count_tables:
+        # SKIP:
+
+    Kraken:
+        base: Trim_Galore
+        module: kraken2
+        script_path: '{Vars.Programs_path.kraken}'
+        setenv: PERL5LIB=""     
+        qsub_params:
+            -pe: shared 20
+        redirects:
+            --db: '{Vars.databases.kraken2}'
             --quick: 
-            --threads:      20
-    kraken_biom1:
-        module:             kraken_biom
-        base:               kraken1
-        script_path:        '{Vars.paths.kraken_biom}'
-        # skip_tsv:
-        biom_path:          '{Vars.paths.biom}'
+            --threads: '20'
+            --use-names: 
+        ktImportTaxonomy:
+            path: ktImportTaxonomy
+            redirects:
+                -tax: '{Vars.databases.krona}'
+                -u: http://krona.sourceforge.net
+        #SKIP:
+
+    Kraken_biom:
+        base: Kraken
+        module: kraken_biom
+        script_path: '{Vars.Programs_path.kraken_biom}'
+        setenv: PERL5LIB=""
         redirects:
-            --max:          D 
-            --min:          S 
-            --gzip:
-    Centrifuge:
-        module:             centrifuge
-        base:               trim1
-        script_path:        '{Vars.paths.centrifuge}'
+            --gzip: 
+            --max: D
+            --min: S
+        biom_path: '{Vars.Programs_path.biom}'
+        #SKIP:
+
+    ##Assembly and annotation
+
+    spades:
+        base: Trim_Galore
+        module: spades_assembl
+        script_path: '{Vars.Programs_path.spades}'
+        tag: assembly
+        redirects:
+            --meta: null
+        scope: sample
+        #SKIP:
+    
+    prokka:
+        base: spades
+        module: Prokka
+        script_path: '{Vars.Programs_path.prokka}'
+        scope: sample
+        generate_GFF_dir: null
         qsub_params:
-            -pe:            shared 20
-        ktImportTaxonomy_path: '{Vars.paths.KronaTools}/bin/ktImportTaxonomy -u  http://krona.sourceforge.net'
+            -pe: shared 20
         redirects:
-            -x:           {Vars.databases.centrifuge}
-            --threads:      20
-            -q:
-            -t:
-            --met-stderr:
+            --cpus: '20'
+            --fast: null
+            --force: null
+            --genus: Genus
+            --metagenome: null
+            --centre: X
+            --compliant: null  #this parameter together with --centre changes the format of the contig seq title and throws out contigs < 200 bp
+        #setenv: PERL5LIB=''
+        #stop_and_show:
+        #SKIP:
 
-# ------------------------------- b. Assembly and analysis of the assembly
-
-    spades1:
-        module:             spades_assembl
-        base:               trim1
-        script_path:        {Vars.paths.spades}
-        scope:              sample
+    ##Blast proteins of interest        
+    
+    make_blast_db_per_assembly:
+        base: prokka
+        module: makeblastdb
+        script_path: '{Vars.Programs_path.makeblastdb}'
+        scope: sample
         redirects:
-            --meta:
+            -dbtype: nucl
+        #SKIP:
 
-    quast_spades:
-        module:             quast
-        base:               spades1
-        script_path:        {Vars.paths.quast}
-        level:              project
+    blast_proteins_vs_assemblies:
+        base: make_blast_db_per_assembly
+        module: blast
+        script_path: '{Vars.Programs_path.tblastn}'
+        dbtype: nucl
+        querytype: prot
+        query: '{Vars.databases.proteins_of_interest}'
+        db: sample
         redirects:
-            --min-contig:   100
-    prokka1:
-        module:             Prokka
-        base:               spades1
-        scope:              sample
-        script_path:        {Vars.paths.prokka}
-        qsub_params:
-            -pe:            shared 20
-        generate_GFF_dir:
+            -evalue: 0.00001
+            -outfmt: '"6 qseqid sallseqid qlen slen qstart qend sstart send length sframe evalue bitscore pident qcovs"'
+            -max_target_seqs: 5
+            -num_threads: 20
+        #SKIP:
+
+    parse_blast:
+        base: blast_proteins_vs_assemblies
+        module: parse_blast
+        script_path: {Vars.Programs_path.parse_blast.main}
+        scope: sample
         redirects:
-            --cpus:         20
-            --fast:
-            --force:
-            --genus:        Staphylococcus
-            --metagenome:
-            --strain:
-
-
+          # --columns2keep: '"group name accession qseqid sallseqid evalue bitscore pident coverage align_len"'
+          # --dbtable: {Vars.databases.gene_list.table}
+            --group_dif_name: qseqid  # See parse_blast.R documentation for how this is to be specified
+            --max_evalue: 1e-5
+          # --merge_blast: qseqid
+          # --merge_metadata: # See parse_blast.R documentation for how this is to be specified
+            --min_align_len: 30
+            --min_coverage: 60
+            --names: '"qseqid sallseqid qlen slen qstart qend sstart send length sframe evalue bitscore pident qcovs"'
+            --num_hits: 1
+        blast_merge:
+            path:       {Vars.Programs_path.parse_blast.compare_blast_parsed_reports} 
+            redirects:
+                --variable:  pident
+                --full_txt_output:
+                --name:      qseqid
+        #SKIP:
+    
     rgi_spades:
         module:             CARD_RGI
-        base:               spades1
+        base:               spades
         scope:              sample
-        script_path:        'python {Vars.paths.RGI}/rgi.py'
-        JSON2tsv_script:    'python {Vars.paths.RGI}/convertJsonToTSV.py'
+        script_path:        'python {Vars.Programs_path.RGI}rgi.py'
+        JSON2tsv_script:    'python {Vars.Programs_path.RGI}convertJsonToTSV.py'
         qsub_params:
             -pe:            shared 15
         orf_to_use:         -x

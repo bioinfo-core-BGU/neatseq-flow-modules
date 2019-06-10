@@ -1,0 +1,130 @@
+addreplacerg:
+    outfile:  'os.path.splitext(os.path.basename(active_files[self.active_type]))[0] + ".addreplacerg." + output_type'
+    script: |
+        {env_path}{action} \{params}
+        	-o {outfile} \
+        	{active_file}
+
+bedcov:
+#samtools bedcov [options] region.bed in1.sam|in1.bam|in1.cram[...]
+    script: |
+        {env_path}{action} \{params}{bed}
+        	{active_file}  \
+        	> {outfile}
+    outfile: '".".join([os.path.basename(active_files[self.active_type]), output_type, "txt"])'
+    bed:
+    # If a BED file exists, use it before active file
+calmd:
+cat:
+collate:
+depad:
+depth:
+    script: |
+        {env_path}{action} \{params}
+        	{active_file}  \
+        	> {outfile}
+    outfile: '".".join([os.path.basename(active_files[self.active_type]), output_type, "txt"])'
+    region: -r
+    bed:    -b
+dict:
+faidx:
+fasta:
+    outfile:   'os.path.basename(active_files[self.active_type])'
+    script: |
+        {env_path}{action} \{params}
+        	-1  {outfile}.F.{action} \
+        	-2  {outfile}.R.{action} \
+        	-0  {outfile}.S.{action} \
+        	{active_file}
+fastq:
+    outfile:   'os.path.basename(active_files[self.active_type])'
+    script: |
+        {env_path}{action} \{params}
+        	-1  {outfile}.F.{action} \
+        	-2  {outfile}.R.{action} \
+        	-0  {outfile}.S.{action} \
+        	{active_file}
+fixmate:
+    script: |
+        {env_path}{action} \{params}
+        	{active_file}  \
+        	> {outfile}
+    outfile:  'os.path.splitext(os.path.basename(active_files[self.active_type]))[0] + ".fixmate." + output_type'
+
+flags:
+flagstat:
+    script: |
+        {env_path}{action} \{params}
+        	{active_file}  \
+        	> {outfile}
+    outfile: '".".join([os.path.basename(active_files[self.active_type]), output_type, "txt"])'
+fqidx:
+idxstats:
+    script: |
+        {env_path}{action} \{params}
+        	{active_file}  \
+        	> {outfile}
+    outfile: '".".join([os.path.basename(active_files[self.active_type]), output_type, "txt"])'
+index:
+    outfile: '"{fn}.{ext}".format(ext=output_type, fn=os.path.basename(active_files[self.active_type]))'
+    script: |
+        {env_path}{action} \{params}
+        	{active_file}
+
+markdup:
+    script: |
+        {env_path}{action} \{params}
+        	{active_file}  \
+        	> {outfile}
+    outfile:  'os.path.splitext(os.path.basename(active_files[self.active_type]))[0] + ".markdup." + output_type'
+
+merge:
+    outfile:   'self.sample_data["Title"] + ".merge." + output_type'
+    script: |
+        {env_path}{action} \{params}
+        	{outfile} \
+        	{active_file}
+    region: -R
+mpileup:
+    outfile:   'self.sample_data["Title"] + ".merge." + output_type'
+    script: |
+        {env_path}{action} \{params}{bed}
+        	--output {outfile} \
+        	{active_file}
+    region: -r
+    bed:    -l
+paired-end:
+phase:
+quickcheck:
+reheader:
+rmdup:
+sort:
+    script: |
+        {env_path}{action} \{params}
+        	-o {outfile} \
+        	{active_file}
+    outfile:  'os.path.splitext(os.path.basename(active_files[self.active_type]))[0] + ".sort." + output_type'
+
+split:
+stats:
+    script: |
+        {env_path}{action} \{params}
+        	{active_file}  \
+        	> {outfile}
+    outfile: '".".join([os.path.basename(active_files[self.active_type]), output_type, "txt"])'
+    region: END
+
+targetcut:
+tview:
+view:
+    outtype:    sam
+    input:
+        flag:   stdin
+        type:   [sam, bam, cram]
+    outfile:   'os.path.splitext(os.path.basename(active_files[self.active_type]))[0] + ".view." + output_type'
+    script: |
+        {env_path}{action} \{params}{bed}
+        	-o {outfile} \
+        	{active_file} {region}
+    region: END
+    bed:    -L

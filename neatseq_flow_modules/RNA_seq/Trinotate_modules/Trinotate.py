@@ -253,7 +253,7 @@ class Step_Trinotate(Step):
             # Use the dir it returns as the base_dir for this step.
             use_dir = self.local_start(sample_dir)
             
-            output_basename = "{title}.trino_anno_rep.xls".format(title = sample)
+            output_basename = "{title}.{step}.xls".format(title = sample, step=self.get_step_name())
 
             # Setting the sqlitedb to use:
             self.sqlitedb = self.params["sqlitedb"]

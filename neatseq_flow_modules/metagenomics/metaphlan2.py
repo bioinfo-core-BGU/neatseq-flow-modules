@@ -120,26 +120,36 @@ class Step_metaphlan2(Step):
 
         # self.auto_redirs = "--input_type".split(" ")
 
-        if "--input_type" in list(self.params["redir_params"].keys()):
+        if "--input_type" in self.params["redir_params"]:
             self.write_warning("At the moment metaphlan supports only --input_type fastq. Ignoring the value you passed\n")
         
         self.params["redir_params"]["--input_type"] = "fastq"
         
-        if "--bowtie2out" in list(self.params["redir_params"].keys()):
+        if "--bowtie2out" in self.params["redir_params"] and self.params["redir_params"]["--bowtie2out"]:
             self.write_warning("Ignoring the value you passed for --bowtie2out.\nWill store data in sample specific location\n")
 
-        if "--biom" in list(self.params["redir_params"].keys()):
+        if "--biom" in self.params["redir_params"] and self.params["redir_params"]["--biom"]:
             self.write_warning("Ignoring the value you passed for --biom.\nWill store data in sample specific location\n")
-           
 
-        if "merge_metaphlan_tables" in list(self.params.keys()):
-            if self.params["merge_metaphlan_tables"] == None:
-                self.params["merge_metaphlan_tables"] = "%s%s%s" % (os.path.basename(self.params["script_path"]), \
-                                                            os.sep, \
-                                                            "utils/merge_metaphlan_tables.py")
-        
-            
-        
+        if "merge_metaphlan_tables" in self.params:
+            if not isinstance(self.params["merge_metaphlan_tables"], dict):
+                if self.params["merge_metaphlan_tables"]:
+                    raise AssertionExcept("'merge_metaphlan_tables' must be empty or a block with 'path' and optionally 'redirects'")
+                else:
+                    self.params["merge_metaphlan_tables"] = dict()
+            if "path" not in self.params["merge_metaphlan_tables"]:
+                self.params["merge_metaphlan_tables"]["path"] = os.sep.join([os.path.basename(self.params["script_path"]),
+                                                                             "utils/merge_metaphlan_tables.py"])
+                self.write_warning("You did not provided a path in 'merge_metaphlan_tables'. Using '{path}'".
+                                   format(path=self.params["merge_metaphlan_tables"]["path"]))
+
+        if "ktImportText" in self.params:
+            if not isinstance(self.params["ktImportText"], dict) or "path" not in self.params["ktImportText"]:
+                raise AssertionExcept("Please include a 'path' in the 'ktImportText' block.")
+        else:
+            self.write_warning("You did not supply a 'ktImportText' block. Will not create krona reports...\n")
+
+
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
@@ -150,14 +160,23 @@ class Step_metaphlan2(Step):
         """ Add stuff to check and agglomerate the output data
         """
         
-        self.make_sample_file_index()   # see definition below
-        
+
         try:
-            self.params["ktImportText_path"]
+            self.params["ktImportText"]
         except KeyError:
-            self.write_warning("You did not supply a ktImportText_path. Will not create krona reports...\n")
+            self.write_warning("You did not supply a 'ktImportText' block. Will not create krona reports...\n")
             self.script = ""
         else:
+            if "redirects" in self.params["ktImportText"]:
+                redirects = " \\\n\t" + " \\\n\t".join(
+                    [key + " " + (val if val else "")
+                     for key, val
+                     in self.params["ktImportText"]["redirects"].items()])
+            else:
+                redirects = ""
+
+            self.make_sample_file_index()  # see definition below
+
             krona_report_fn = self.base_dir + self.sample_data["Title"] + "_krona_report.html"
 
             # Adding env to script
@@ -166,8 +185,14 @@ class Step_metaphlan2(Step):
             # if "env" in self.params:
             #     self.script += "env %s \\\n\t" % self.params["env"]
             # Main part of script:
-            self.script += "%s \\\n\t" % self.params["ktImportText_path"]
-            self.script += "-o %s \\\n\t" %  krona_report_fn
+            self.script += """
+# Executing ktImportText on metaphlan2 results:
+{path} \\{redirs}
+\t-o {output}
+""".format(path=self.params["ktImportText"]["path"],
+           redirs=redirects,
+           output=krona_report_fn)
+
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
                 self.script += "%s,%s \\\n\t" % (self.sample_data[sample]["classification"], sample)
             self.script = self.script.rstrip("\\\n\t") 
@@ -177,11 +202,29 @@ class Step_metaphlan2(Step):
             self.stamp_file(self.sample_data["project_data"]["krona"])
             
         if "merge_metaphlan_tables" in self.params:
-            self.script += "# Merging all metaphlan2 reports into single table\n\n"
-            self.script += "%s \\\n\t" % self.params["merge_metaphlan_tables"]
-            for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-                self.script += "%s \\\n\t" % self.sample_data[sample]["raw_classification"]
-            self.script += "> %s%s \n\n" % (self.base_dir, self.sample_data["Title"]+"_merged_table.txt")
+
+            if "redirects" in self.params["merge_metaphlan_tables"]:
+                redirects = " \\\n\t" + " \\\n\t".join(
+                    [key + " " + (val if val else "")
+                     for key, val
+                     in self.params["merge_metaphlan_tables"]["redirects"].items()])
+            else:
+                redirects = ""
+
+            self.script += """# Merging all metaphlan2 reports into single table
+{path} \\{redirs}
+\t{files} \\
+\t> {dir}{outfn}""".format(path=self.params["merge_metaphlan_tables"]["path"],
+                           redirs=redirects,
+                           files="\\\n\t".join([self.sample_data[sample]["raw_classification"]
+                                                for sample
+                                                in self.sample_data["samples"]]),
+                           outfn=self.sample_data["Title"] + "_merged_table.txt",
+                           dir= self.base_dir)
+
+            # for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
+            #     self.script += "%s \\\n\t" % self.sample_data[sample]["raw_classification"]
+            # self.script += "> %s%s \n\n" %
 
             self.sample_data["project_data"]["merged_metaphlan2"] = (self.base_dir, self.sample_data["Title"]+"_merged_table.txt")
         
@@ -210,9 +253,7 @@ class Step_metaphlan2(Step):
             # Use the dir it returns as the base_dir for this step.
             use_dir = self.local_start(sample_dir)
                 
- 
-         
-            # Define output filename 
+            # Define output filename
             output_filename = "".join([use_dir , sample , self.file_tag])
 
             # If user passed bowtie2out or biom, change the value to sample specific values:
@@ -227,13 +268,13 @@ class Step_metaphlan2(Step):
             self.script += "--sample_id %s \\\n\t" % sample
             
             # Adding reads
-            if "PE" in self.sample_data[sample]["type"]:
+
+            if "fastq.F" in self.sample_data[sample]:
                 self.script += "%s,%s\\\n\t" % (self.sample_data[sample]["fastq.F"],self.sample_data[sample]["fastq.R"])
-            elif "SE" in self.sample_data[sample]["type"]:
+            elif "fastq.S" in self.sample_data[sample]:
                 self.script += "%s \n\n" % self.sample_data[sample]["fastq.S"]
             else:
-                self.write_warning("metaphlan2 on mixed PE/SE samples is not defined. Using only PE data!\n")
-                self.script += "%s,%s\\\n\t" % (self.sample_data[sample]["fastq.F"],self.sample_data[sample]["fastq.R"])
+                raise AssertionExcept("Weird cmobination of reads!\n")
 
             self.script += "%s\n\n" % output_filename
 
@@ -253,10 +294,10 @@ class Step_metaphlan2(Step):
                 self.sample_data[sample]["sam"] = "%s.sam" % (sample_dir + os.path.basename(output_filename))
                 self.stamp_file(self.sample_data[sample]["sam"])
 
-            if "metaphlan2krona_path" in list(self.params.keys()):
+            if "metaphlan2krona" in self.params:
                 
                 self.script += "# Creating text report for krona\n"
-                self.script += "%s \\\n\t" % self.params["metaphlan2krona_path"]
+                self.script += "%s \\\n\t" % self.params["metaphlan2krona"]["path"]
                 self.script += "-p %s \\\n\t" % self.sample_data[sample]["raw_classification"]
                 self.script += "-k %s.4krona.txt\n\n" % self.sample_data[sample]["raw_classification"]
 
@@ -264,9 +305,7 @@ class Step_metaphlan2(Step):
                 self.stamp_file(self.sample_data[sample]["classification"])
 
             # Move all files from temporary local dir to permanent base_dir
-            self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
-                        
-            
+            self.local_finish(use_dir,self.base_dir)
             self.create_low_level_script()
                     
 
@@ -281,4 +320,3 @@ class Step_metaphlan2(Step):
                 index_fh.write("%s\t%s\n" % (sample,self.sample_data[sample]["classification"]))
                 
         self.sample_data["project_data"]["metaphlan2_files_index"] = self.base_dir + "metaphlan2_files_index.txt"
-        

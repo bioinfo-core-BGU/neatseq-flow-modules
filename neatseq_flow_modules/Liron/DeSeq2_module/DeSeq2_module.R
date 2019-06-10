@@ -62,7 +62,10 @@ option_list = list(
               help="Will Remove Batch Effect from the Normalized counts data up to 2 [using the limma package and only one using the sva package] Batch Effect fields [from the Sample Data ] separated by , ", metavar="character"),
   make_option(c("--removeBatchEffect_method"), type="character", default="sva",
               help="The method to Remove Remove Batch Effect from the Normalized counts data using the limma or sva packages [sva is the default] ", metavar="character"),
-  
+
+  make_option(c("--collapseReplicates"), type="character", default=NA,
+              help="Will collapse technical replicates using a Sample Data field indicating which samples are technical replicates", metavar="character"),
+
   
   make_option(c("--GENES_PLOT"), type="character", default=NA,
               help="Genes Id To Plot count Data [separated by ,] ", metavar="character"),
@@ -1326,7 +1329,23 @@ if (opt$only_clustering==FALSE){
         if (!is.na(opt$LRT)){
             test_count=c('LTR',test_count)
         }
-
+        
+        if (!is.na(opt$collapseReplicates)){
+            if (opt$collapseReplicates %in% colnames(colData)){
+                collapsed_DESeqDataSet <- try( collapseReplicates(DESeqDataSet_base,DESeqDataSet_base[[opt$collapseReplicates]] ) ,silent = T)
+                if (inherits(collapsed_DESeqDataSet,"try-error")){
+                    print('Failed to collapse Replicates !!!')
+                }else{
+                    collapsed_DESeqDataSet$Library_sizes=apply(X = as.data.frame(counts(collapsed_DESeqDataSet)),MARGIN = 2,FUN = sum)
+                    DESeqDataSet_base = collapsed_DESeqDataSet
+                    colData = as.data.frame(colData(collapsed_DESeqDataSet))
+                    countData = as.data.frame(counts(collapsed_DESeqDataSet))
+                }
+            }else{
+                 print('The field to be used for Replicates collapse is not found in the Sample Data !!!')
+            }
+        }
+        
 }else{
     DESeqDataSet_base=NA
     test_count=c('only_clustering')
@@ -1477,13 +1496,23 @@ for (test2do in test_count){
                         New_DESIGN =paste0('~',paste(DESIGN_list[DESIGN_list!=BatchEffects[1]],collapse ='+'))
                         
                         modcombat = model.matrix( as.formula(New_DESIGN) , data=Original_colData)
-                        combat_edata = ComBat(dat = assay(Normalized_counts),
+
+                        combat_edata<-try(ComBat(dat = assay(Normalized_counts),
                                               batch = Original_colData[,BatchEffects[1]],
                                               mod = modcombat,
                                               par.prior = T,
-                                              mean.only=F)
-                        assay(Normalized_counts) = combat_edata
-                        
+                                              mean.only=F),
+                                          silent = T)
+                        if (inherits(combat_edata,"try-error")){
+                            cat(sprintf("%s","Failed to correct batch effect using parametric adjustment will try using limma instead!!\n"))
+                           
+                            assay(Normalized_counts) = limma::removeBatchEffect(assay(Normalized_counts),
+                                                                                batch = Normalized_counts@colData[,BatchEffects[1]])
+                            
+                        }else{
+                            assay(Normalized_counts) = combat_edata
+                        }   
+
                 }else{
                 
                     if (length(BatchEffects)>1){

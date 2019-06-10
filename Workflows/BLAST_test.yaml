@@ -18,7 +18,7 @@ Description: |
     4. Searching the assembly using a fasta query file.
     5. Annotation of the assemblies using prokka
     6. Using the resulting predicted gene sequences to search a BLAST database.
-    7. Using the alternative BLAST module ('blast_new') to search the assembly for the predicted genes.
+    7. Using the BLAST module ('blast') to search the assembly for the predicted genes.
     
     Note. Module 'parse_blast' uses a program for parsing tabular BLAST tables. The code is freelly accessible at https://github.com/bioinfo-core-BGU/parse_blast
 
@@ -84,7 +84,7 @@ Step_params:
     
 
     Blast_1a:
-        module:             blast_new
+        module:             blast
         base:               [Mkblst_prj, Mkblst_smp]
         script_path:        '{Vars.paths.blast}/blastx'
         db:                 sample
@@ -95,7 +95,7 @@ Step_params:
             -evalue:        0.0001
 
     Blast_1b:
-        module:             blast_new
+        module:             blast
         base:               [Mkblst_prj, Mkblst_smp]
         script_path:        '{Vars.paths.blast}/blastx'
         db:                 sample
@@ -107,7 +107,7 @@ Step_params:
         # stop_and_show_input:
 
     Blast_1c:
-        module:             blast_new
+        module:             blast
         base:               [Mkblst_prj, Mkblst_smp]
         script_path:        '{Vars.paths.blast}/blastx'
         db:                 project
@@ -118,7 +118,7 @@ Step_params:
             -evalue:        0.0001
 
     Blast_1d:
-        module:             blast_new
+        module:             blast
         base:               [Mkblst_prj, Mkblst_smp]
         script_path:        '{Vars.paths.blast}/blastx'
         db:                 project
@@ -130,7 +130,7 @@ Step_params:
 
 
     Blast_2a:
-        module:             blast_new
+        module:             blast
         base:               [Mkblst_prj, Mkblst_smp]
         script_path:        '{Vars.paths.blast}/blastx'
         db:                 sample
@@ -141,7 +141,7 @@ Step_params:
             -evalue:        0.0001
 
     Blast_2b:
-        module:             blast_new
+        module:             blast
         base:               [Mkblst_prj, Mkblst_smp]
         script_path:        '{Vars.paths.blast}/blastx'
         db:                 project
@@ -152,7 +152,7 @@ Step_params:
             -evalue:        0.0001
 
     Blast_3a:
-        module:             blast_new
+        module:             blast
         base:               [Mkblst_prj, Mkblst_smp]
         script_path:        '{Vars.paths.blast}/blastx'
         db:                 /path/to/blastdb
@@ -163,7 +163,7 @@ Step_params:
             -evalue:        0.0001
 
     Blast_3b:
-        module:             blast_new
+        module:             blast
         base:               [Mkblst_prj, Mkblst_smp]
         script_path:        '{Vars.paths.blast}/blastx'
         db:                 /path/to/blastdb

@@ -155,7 +155,7 @@ class Step_makeblastdb(Step):
             self.script += "-out {dir}{fn} \\\n\t".format(dir= use_dir, fn=output_filename)
             self.script += "-in %s \\\n\t" % self.sample_data[sample]["fasta." + self.dbtype]
             self.script += "-title %s \\\n\t" % blastdb_title
-            self.script += "-logfile %s \n\n" % "%s.log" % output_filename
+            self.script += "-logfile {dir}{outname}.log \n\n".format(dir=use_dir,outname=output_filename)
 
             self.sample_data[sample]["blastdb." + self.dbtype] = (sample_dir + output_filename)
             self.sample_data[sample]["blastdb." + self.dbtype + ".log"] = "{dir}{fn}.log".format(dir= sample_dir,

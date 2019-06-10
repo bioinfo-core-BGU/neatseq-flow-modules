@@ -1,4 +1,5 @@
 Global_params:
+    # Executor:   Local
     Default_wait:           10
     Qsub_opts:              -V -cwd
     Qsub_path:              /path/to/qsub/bin
@@ -71,7 +72,6 @@ Step_params:
             - ..guess..
         intermediate:
         tag:            basic
-        # stop_and_show:
 
     fastq_screen_alt1:
         module:         fastq_screen
@@ -103,6 +103,9 @@ Step_params:
             --tag:
             --force: 
             --threads:  10
+        # conda:
+            # path:   JKJLJLJL
+            # env:    
 
     fqc_merge1:
         module:         fastqc_html
@@ -168,7 +171,7 @@ Step_params:
         base:           fqc_trimgal
         script_path:    {Vars.paths.multiqc}        
         tag:
-        SKIP:   False
+        SKIP:   #False
         redirects:
             --interactive:
         # stop_and_show:

@@ -50,7 +50,7 @@ Global_params:
         path:   {Vars.conda.base}
         env:    {Vars.conda.env}
     # # If executing from within a NeatSeq-Flow conda environment, you do not need to set the following. If you installed NeatSeq-Flow and it's module repo yourself, set the following to the module repo location:
-    module_path:            
+    module_path:
         - /path/to/neatseq_flow_modules
         - ../neatseq_flow_modules
 
@@ -243,7 +243,7 @@ Step_params:
         subsample_num:      {Vars.split_fasta_n}
 
     Trino_blastx_sprot:
-        module:             blast_new
+        module:             blast
         base:               Split_Fasta
         script_path:        '{Vars.paths.blastx}'
         query:              sample
@@ -260,7 +260,7 @@ Step_params:
         setenv:         'PERL5LIB=""'
         scope:              sample
     Trino_blastp_sprot:
-        module:             blast_new
+        module:             blast
         base:               Trino_Transdecode
         script_path:        {Vars.paths.blastp}
         query:              sample

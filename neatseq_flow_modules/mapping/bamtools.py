@@ -23,7 +23,7 @@ Output
     * ``sample_data[<sample>]["bam"]``
     * ``sample_data[<sample>]["fastq.I"]``  (Interleaved fastq file)
     * ``sample_data[<sample>]["bed|fasta.nucl|json|pileup|sam|yaml"]``
-    * ``sample_data[<sample>]["bam.index"]``
+    * ``sample_data[<sample>]["bai"]``
     * ``sample_data[<sample>]["bam.count"]``
     * ``sample_data[<sample>]["bam.coverage"]``
     * ``sample_data[<sample>]["bam.stats"]``
@@ -208,7 +208,7 @@ cp -fs {active_file} {here}
                                                                    cmd,
                                                                    "-in " + active_file,
                                                                    self.params[cmd]] if x is not None])
-                    self.sample_data[sample]["bam.index"] = sample_dir + ".".join([active_file,cmd,"txt"])
+                    self.sample_data[sample]["bai"] = sample_dir + ".".join([active_file,cmd,"txt"])
                     self.stamp_file(self.sample_data[sample]["bam."+cmd])
                 else:
                     pass
