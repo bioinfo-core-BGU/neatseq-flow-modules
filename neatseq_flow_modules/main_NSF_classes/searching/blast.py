@@ -16,7 +16,7 @@ both ``query`` and ``db`` parameters must be passed. They should be set to one o
 
 .. csv-table::
     :header: "Value", "Description"
-    :widths: 15, 10, 10
+    :widths: 7, 15
 
     "``sample``", "The ``query`` or ``db`` should be taken from the sample scope"
     "``project``", "The ``query`` or ``db`` should be taken from the project scope"

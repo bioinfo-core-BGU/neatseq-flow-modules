@@ -27,7 +27,7 @@ Global_params:
     Qsub_path: /storage/SGE6U8/bin/lx24-amd64
     Qsub_q: fairshare.q
     conda:
-        env:    /gpfs0/biores/apps/Miniconda2/Miniconda_v4.3.21/envs/Metagenomics/
+        env:    Metagenomics
         path: 
     module_path:      ../neatseq_flow_modules
     
@@ -44,7 +44,7 @@ Vars:
         kaiju: 
             kaiju:          kaiju
             kaiju2krona:    kaiju2krona
-            kaiju2table:    /gpfs0/biores/apps/kaiju/kaiju_master_20190404/bin/kaiju2table
+            kaiju2table:    kaiju2table
         kraken:         kraken2
         kraken_biom:    kraken-biom
         ktImportTaxonomy: ktImportTaxonomy
@@ -64,7 +64,7 @@ Vars:
             compare_blast_parsed_reports:  compare_blast_parsed_reports.R
         RGI:            # Path to RGI installation dir. Must include rgi.py and convertJsonToTSV.py. DO NOT FORGET A FINAL '/'!!
 
-    database_prefix:    /gpfs0/biores/projects/aklab/00.databases/
+    database_prefix:    $DBDIR
     databases:
         humann2:
             chocophlan: '{Vars.database_prefix}/HUMAnN2/chocophlan'
@@ -90,7 +90,8 @@ Vars:
 
         kraken2:        '{Vars.database_prefix}/kraken2'
         krona:          '{Vars.database_prefix}/krona/taxonomy'
-        proteins_of_interest: /gpfs0/biores/projects/aklab/01.NeatSeq_Flow_Workshop/proteins_of_interest_demo.fasta
+        proteins_of_interest: /path/to/proteins_of_interest_demo.fasta
+
     
 Step_params:
 

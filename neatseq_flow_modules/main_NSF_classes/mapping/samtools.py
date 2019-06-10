@@ -93,7 +93,7 @@ Requires
 Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* Depending on the parameters, will put files in different types (*e.g.* ``bam``, ``cram``, ``sam``, ``bam``, ``bai``, ``crai``, ``vcf``, ``bcf``, ``mpileup``, ``fasta.{F,R,S}``, ``fastq.{F,R,S}``)
+Depending on the parameters, will put files in different types (*e.g.* ``bam``, ``cram``, ``sam``, ``bam``, ``bai``, ``crai``, ``vcf``, ``bcf``, ``mpileup``, ``fasta.{F,R,S}``, ``fastq.{F,R,S}``)
 Please use ``stop_and_show`` to see the types produced by your instance of ``samtools_new``.
 
 .. Note:: If ``scope`` is set to ``project``, the above mentioned output files will be created in the project scope.
@@ -108,19 +108,22 @@ Parameters that can be set
 .. csv-table:: Parameters that can be set:
     :header: "Parameter", "Values", "Comments"
 
-    "project", "sample|project", "Scope of SAM/BAM top operate on. Defaults to ``sample``."
-    "view", "*e.g.*: -buh  -q 30", "``samtools view`` parameters."
-    "sort", "*e.g.*: -@ 20", "``samtools sort`` parameters."
-    "index", "", "``samtools index`` parameters."
-    "flagstat", "", "Leave empty. flagstat takes no parameters"
-    "stats", "``samtools stats`` parameters", "Adds code for ``samtools stats``"
-    "idxstats", "", "Adds code for ``samtools idxstats``"
-    "fastq/a", "``samtools fastq/a`` parameters", "Adds code for ``samtools fastq/a``"
-    "merge", "``*e.g.*: -R region``", "Adds code for ``samtools merge``, using the parameters supplied"
-    "region", "", "A region to limit the region-limitable programs, such as ``view``, ``merge``, ``mpileup``, etc.."
-    "type2use","sam|bam","Type of file to use. Must exist in scope"
-    "keep_output", "[sort, view, sort2]", "A list of programs for which to store the output files. By deafult, all files are saved.
+    "project",      "sample|project",                       "Scope of SAM/BAM top operate on. Defaults to ``sample``."
+    "view",         "*e.g.*: -buh  -q 30",                  "``samtools view`` parameters."
+    "sort",         "*e.g.*: -@ 20",                        "``samtools sort`` parameters."
+    "index",        "",                                     "``samtools index`` parameters."
+    "flagstat",     "",                                     "Leave empty. flagstat takes no parameters"
+    "stats",        "",                                     "``samtools stats`` parameters"
+    "idxstats",     "",                                     "``samtools idxstats`` parameters"
+    "fastq/a",      "",                                     "``samtools fastq/a`` parameters"
+    "merge",        "",                                     "``samtools merge`` parameters"
+    "region",       "",                                     "A region to limit the region-limitable programs, such as ``view``, ``merge``, ``mpileup``, etc.."
+    "type2use",     "sam|bam",                              "Type of file to use. Must exist in scope"
+    "keep_output",  "[sort, view, sort2]",                  "A list of programs for which to store the output files. By deafult, all files are saved."
+
+
 ..    "filter_by_tag", "*e.g.*: NM:i:[01]", "Filter BAM by one of the tags. Use an awk-compliant regular expression. In this example, keep only lines where the edit distance is 0 or 1. This is an experimental feature and should be used with caution..."
+
 
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

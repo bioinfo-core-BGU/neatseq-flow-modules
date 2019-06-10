@@ -112,14 +112,23 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
          readlink -f 00.Raw_reads/reads.left.fq.gz
 
-#. Install required databases:
+#. Create a directory for your databases. Save the location of the directory in $DBDIR.
 
-    #. Create a directory for your databases. Save the location of the directory in $DBDIR.
+   .. code-block:: bash
+
+     export DBDIR=/path/to/databases_dir
+     mkdir -p $DBDIR
+
+#. **Install required databases**
+
+    .. Tip:: File ``Metagenomics_DBinstall_cmds.sh`` contains a script for installing all the databases described below.
+
+       Execution might take a while due to the large datasetb being downloaded, therefore it is recommended to execute as follows (**After setting $DBDIR!!!**):
 
        .. code-block:: bash
 
-         export DBDIR=/path/to/databases_dir
-         mkdir -p $DBDIR
+          wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/Workflow_docs/Metagenomics_DBinstall_cmds.sh
+          nohup bash Metagenomics_DBinstall_cmds.sh &
 
     #. metaphlan:
 
@@ -215,12 +224,17 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
     wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Menagenomics.yaml
 
-#. Settings to set in the parameter file
+#. **Settings to set in the parameter file**
 
    You will have to make some changes to the parameter file to suit your needs:
 
    #. Set the parameters in the ``Global_params`` section to suit your cluster. Alternatively, set ``Executor`` to ``Local`` for running on a single machine.
-   #. In the ``Vars`` section, set ``database_prefix`` to the location of your databases dir, which is the value of ``$DBDIR`` set above.
+   #. In the ``Vars`` section, set ``database_prefix`` to the location of your databases dir, which is the value of ``$DBDIR`` set above. If $DBDIR is set, you can use the following ``sed`` command to set the ``database_prefix`` correctly:
+
+      .. code-block:: bash
+
+         sed -i s+\$DBdir+$DBDIR+ Metagenomics12.yaml
+
    #. In ``Vars.databases.kaiju``, you will have to make sure the value of ``fmi`` fits the database you decide to use. In the provided parameter file, the ``nr_euk`` is set. The equivalent ``fmi`` value for the ``progenomes`` database is commented out.
    #. Go over the ``redirects`` sections in the parameter file and make sure they are set according to your requirements.
    #. If you have a fasta file with sequences to search for within your metagenome assemblies, set the ``proteins_of_interest`` variable to the full path to that file. If not, you can delete or uncomment the ``SKIP`` line in steps ``make_blast_db_per_assembly``, ``blast_proteins_vs_assemblies`` and ``parse_blast``.
@@ -228,7 +242,9 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
 #. In the conda definitions (line 46), set ``base:`` to the path to the conda installation which you used to install the environment.
 
-    You can get the path by executing the following command::
+    You can get the path by executing the following command, **when inside the Metagenomics conda environment**:
+
+    .. code-block:: bash
 
         echo $CONDA_EXE | sed -e 's/\/bin\/conda$//g'
 
