@@ -1,5 +1,5 @@
-Shotgun metagenomics using kraken, MetaPhlAn2, Kaiju and HUMAnN2
-----------------------------------------------------------------
+Shotgun Metagenomics
+---------------------
 
 :Author: Menachem Sklarz
 :Affiliation: Bioinformatics Core Facility
@@ -9,8 +9,8 @@ A workflow for executing various analyses on metagenomics data.
 
 The workflow uses two approaches:
 
-1. Analysis of the raw reads.
-2. Assembly of the reads and analysis of the assembled contigs
+1. Analysis of the raw reads and
+2. assembly of the reads and analysis of the assembled contigs.
 
 **Developed as part of a study led by Prof. Jacob Moran-Gilad.**
  
@@ -18,12 +18,12 @@ Steps:
 ~~~~~~~
 
 a. Analysis of the raw reads with:
-    * ``kraken``
+    * ``kraken2``
     * ``metaphlan2``
     * ``kaiju``
     * ``HUMAnN2``
 
-    The output from the former three programs is also plotted with krona (to disable plotting with krona, comment out the lines referring to krona in the instance definition.)  
+    The output from the former three programs is also plotted with ``krona``.
 b. Assembly and analysis of the assembled reads:
     1. Assembly is done per-sample with ``spades``.
     2. The assemblies are quality-tested with ``quast``.
@@ -59,7 +59,7 @@ Programs required
 * `RGI          <https://card.mcmaster.ca/analyze/rgi>`_
 * `KronaTools   <https://github.com/marbl/Krona/wiki/KronaTools>`_
 
-All the programs used in this workflow can be installed with conda. See section :ref:`quick-conda-start`_ below.
+All the programs used in this workflow can be installed with conda. See section :ref:`quick-conda-start`.
 
 Example of Sample File
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -112,7 +112,7 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
          readlink -f 00.Raw_reads/reads.left.fq.gz
 
-#. Create a directory for your databases. Save the location of the directory in $DBDIR.
+#. Create a directory for your databases. Save the location of the directory in ``$DBDIR``.
 
    .. code-block:: bash
 
@@ -120,6 +120,8 @@ For easy setup of the workflow, including a sample dataset, use the following in
      mkdir -p $DBDIR
 
 #. **Install required databases**
+
+    .. Warning:: Installing the databases requires **about 220 GB** of disk space!
 
     .. Tip:: File ``Metagenomics_DBinstall_cmds.sh`` contains a script for installing all the databases described below.
 
@@ -130,9 +132,9 @@ For easy setup of the workflow, including a sample dataset, use the following in
           wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/Workflow_docs/Metagenomics_DBinstall_cmds.sh
           nohup bash Metagenomics_DBinstall_cmds.sh &
 
-    #. metaphlan:
+    #. MetaPhlAn2:
 
-       Running metaphlan will download the database for you:
+       Running MetaPhlAn2 will download the database for you:
 
        .. code-block:: bash
 
@@ -142,9 +144,9 @@ For easy setup of the workflow, including a sample dataset, use the following in
                 --bowtie2db $DBDIR/MetaPhlAn_temp
 
 
-    #. kraken2:
+    #. Kraken2:
 
-       Installing kraken2 database takes a long time and requires a considerable amount of disk space.
+       Installing Kraken2 database takes a long time and requires about 100 GB of disk space.
 
        .. code-block:: bash
 
@@ -156,32 +158,32 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
        .. Attention::  If ``rsync`` dosen't work for you, you can try adding the ``--use-ftp`` to the ``kraken2-build`` command to use ``wget`` instead.
 
-    #. centrifuge:
+..    #. centrifuge:
+..
+..       .. code-block:: bash
+..
+..            mkdir -p $DBDIR/centrifuge
+..            centrifuge-download \
+..                -o $DBDIR/centrifuge/taxonomy \
+..                taxonomy
+..
+..            centrifuge-download \
+..                -o $DBDIR/centrifuge \
+..                -m -d "archaea,bacteria,viral" refseq \
+..                > $DBDIR/centrifuge/seqid2taxid.map
+..
+..            cat $DBDIR/centrifuge/*/*.fna > $DBDIR/centrifuge/input-sequences.fna
+..
+..            mkdir $DBDIR/centrifuge/index
+..            centrifuge-build -p 4 \
+..                --conversion-table $DBDIR/centrifuge/seqid2taxid.map \
+..                --taxonomy-tree $DBDIR/centrifuge/taxonomy/nodes.dmp \
+..                --name-table $DBDIR/centrifuge/taxonomy/names.dmp \
+..                $DBDIR/centrifuge/input-sequences.fna \
+..                $DBDIR/centrifuge/index/arch_bac_vir
 
-       .. code-block:: bash
 
-            mkdir -p $DBDIR/centrifuge
-            centrifuge-download \
-                -o $DBDIR/centrifuge/taxonomy \
-                taxonomy
-
-            centrifuge-download \
-                -o $DBDIR/centrifuge \
-                -m -d "archaea,bacteria,viral" refseq \
-                > $DBDIR/centrifuge/seqid2taxid.map
-
-            cat $DBDIR/centrifuge/*/*.fna > $DBDIR/centrifuge/input-sequences.fna
-
-            mkdir $DBDIR/centrifuge/index
-            centrifuge-build -p 4 \
-                --conversion-table $DBDIR/centrifuge/seqid2taxid.map \
-                --taxonomy-tree $DBDIR/centrifuge/taxonomy/nodes.dmp \
-                --name-table $DBDIR/centrifuge/taxonomy/names.dmp \
-                $DBDIR/centrifuge/input-sequences.fna \
-                $DBDIR/centrifuge/index/arch_bac_vir
-
-
-        .. Attention:: The download commands may fail because of the libssl version.
+..        .. Attention:: The download commands may fail because of the libssl version.
 
     #. krona:
 
@@ -189,9 +191,9 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
             ktUpdateTaxonomy.sh $DBDIR/krona/taxonomy
 
-    #. kaiju:
+    #. Kaiju:
 
-       Kaiju provides different databases which can be downloaded. To get a list of options, just execute ``kaiju-makedb`` with no arguments:
+       Kaiju provides different databases for downloading. To get a list of options, just execute ``kaiju-makedb`` with no arguments:
 
        The following commands demonstrate how to get the ``nr`` database including eukaryotes (``nr_euk``) and the ``progenomes`` database.
 
@@ -218,7 +220,7 @@ For easy setup of the workflow, including a sample dataset, use the following in
             humann2_config --update database_folders protein $DBDIR/HUMAnN2/uniref90
 
        .. Attention:: The commands download the recommended translated databases. For other options, see
-            the `Download a translated search database <https://bitbucket.org/biobakery/humann2/wiki/Home#markdown-header-download-a-translated-search-database>`_ section of the tutorial.
+            the `Download a translated search database <https://bitbucket.org/biobakery/humann2/wiki/Home#markdown-header-download-a-translated-search-database>`_ section of the HUMAnN2 tutorial.
 
 #. Get the parameter file with::
 
@@ -228,16 +230,16 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
    You will have to make some changes to the parameter file to suit your needs:
 
-   #. Set the parameters in the ``Global_params`` section to suit your cluster. Alternatively, set ``Executor`` to ``Local`` for running on a single machine.
-   #. In the ``Vars`` section, set ``database_prefix`` to the location of your databases dir, which is the value of ``$DBDIR`` set above. If $DBDIR is set, you can use the following ``sed`` command to set the ``database_prefix`` correctly:
+   * Set the parameters in the ``Global_params`` section to suit your cluster. Alternatively, set ``Executor`` to ``Local`` for running on a single machine.
+   * In the ``Vars`` section, set ``database_prefix`` to the location of your databases dir, which is the value of ``$DBDIR`` set above. If ``$DBDIR`` is set, you can use the following ``sed`` command to set the ``database_prefix`` correctly:
 
       .. code-block:: bash
 
-         sed -i s+\$DBdir+$DBDIR+ Metagenomics12.yaml
+         sed -i s+\$DBdir+$DBDIR+ Metagenomics.yaml
 
-   #. In ``Vars.databases.kaiju``, you will have to make sure the value of ``fmi`` fits the database you decide to use. In the provided parameter file, the ``nr_euk`` is set. The equivalent ``fmi`` value for the ``progenomes`` database is commented out.
-   #. Go over the ``redirects`` sections in the parameter file and make sure they are set according to your requirements.
-   #. If you have a fasta file with sequences to search for within your metagenome assemblies, set the ``proteins_of_interest`` variable to the full path to that file. If not, you can delete or uncomment the ``SKIP`` line in steps ``make_blast_db_per_assembly``, ``blast_proteins_vs_assemblies`` and ``parse_blast``.
+   * In ``Vars.databases.kaiju``, you will have to make sure the value of ``fmi`` fits the database you decide to use. In the provided parameter file, the ``nr_euk`` is set. The equivalent ``fmi`` value for the ``progenomes`` database is commented out.
+   * Go over the ``redirects`` sections in the parameter file and make sure they are set according to your requirements.
+   * If you have a fasta file with sequences to search for within your metagenome assemblies, set the ``proteins_of_interest`` variable to the full path to that file. If not, you can delete or uncomment the ``SKIP`` line in steps ``make_blast_db_per_assembly``, ``blast_proteins_vs_assemblies`` and ``parse_blast``.
 
 
 #. In the conda definitions (line 46), set ``base:`` to the path to the conda installation which you used to install the environment.
