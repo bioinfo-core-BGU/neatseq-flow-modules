@@ -132,8 +132,7 @@ For easy setup of the workflow, including a sample dataset, use the following in
           wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/Workflow_docs/Metagenomics_DBinstall_cmds.sh
           nohup bash Metagenomics_DBinstall_cmds.sh &
 
-    #. MetaPhlAn2:
-
+    MetaPhlAn2
        Running MetaPhlAn2 will download the database for you:
 
        .. code-block:: bash
@@ -144,8 +143,7 @@ For easy setup of the workflow, including a sample dataset, use the following in
                 --bowtie2db $DBDIR/MetaPhlAn_temp
 
 
-    #. Kraken2:
-
+    Kraken2
        Installing Kraken2 database takes a long time and requires about 100 GB of disk space.
 
        .. code-block:: bash
@@ -158,41 +156,12 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
        .. Attention::  If ``rsync`` dosen't work for you, you can try adding the ``--use-ftp`` to the ``kraken2-build`` command to use ``wget`` instead.
 
-..    #. centrifuge:
-..
-..       .. code-block:: bash
-..
-..            mkdir -p $DBDIR/centrifuge
-..            centrifuge-download \
-..                -o $DBDIR/centrifuge/taxonomy \
-..                taxonomy
-..
-..            centrifuge-download \
-..                -o $DBDIR/centrifuge \
-..                -m -d "archaea,bacteria,viral" refseq \
-..                > $DBDIR/centrifuge/seqid2taxid.map
-..
-..            cat $DBDIR/centrifuge/*/*.fna > $DBDIR/centrifuge/input-sequences.fna
-..
-..            mkdir $DBDIR/centrifuge/index
-..            centrifuge-build -p 4 \
-..                --conversion-table $DBDIR/centrifuge/seqid2taxid.map \
-..                --taxonomy-tree $DBDIR/centrifuge/taxonomy/nodes.dmp \
-..                --name-table $DBDIR/centrifuge/taxonomy/names.dmp \
-..                $DBDIR/centrifuge/input-sequences.fna \
-..                $DBDIR/centrifuge/index/arch_bac_vir
-
-
-..        .. Attention:: The download commands may fail because of the libssl version.
-
-    #. krona:
-
+    krona
        .. code-block:: bash
 
             ktUpdateTaxonomy.sh $DBDIR/krona/taxonomy
 
-    #. Kaiju:
-
+    Kaiju
        Kaiju provides different databases for downloading. To get a list of options, just execute ``kaiju-makedb`` with no arguments:
 
        The following commands demonstrate how to get the ``nr`` database including eukaryotes (``nr_euk``) and the ``progenomes`` database.
@@ -205,8 +174,7 @@ For easy setup of the workflow, including a sample dataset, use the following in
             kaiju-makedb -s nr_euk -t 10
             cd -
 
-    #. HUMAnN2:
-
+    HUMAnN2
        `Online help on downloading databases <https://bitbucket.org/biobakery/humann2/wiki/Home#markdown-header-5-download-the-databases>`_.
 
        .. code-block:: bash
@@ -221,6 +189,31 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
        .. Attention:: The commands download the recommended translated databases. For other options, see
             the `Download a translated search database <https://bitbucket.org/biobakery/humann2/wiki/Home#markdown-header-download-a-translated-search-database>`_ section of the HUMAnN2 tutorial.
+
+    ..
+        centrifuge
+           .. code-block:: bash
+
+                mkdir -p $DBDIR/centrifuge
+                centrifuge-download \
+                    -o $DBDIR/centrifuge/taxonomy \
+                    taxonomy
+
+                centrifuge-download \
+                    -o $DBDIR/centrifuge \
+                    -m -d "archaea,bacteria,viral" refseq \
+                    > $DBDIR/centrifuge/seqid2taxid.map
+
+                cat $DBDIR/centrifuge/*/*.fna > $DBDIR/centrifuge/input-sequences.fna
+
+                mkdir $DBDIR/centrifuge/index
+                centrifuge-build -p 4 \
+                    --conversion-table $DBDIR/centrifuge/seqid2taxid.map \
+                    --taxonomy-tree $DBDIR/centrifuge/taxonomy/nodes.dmp \
+                    --name-table $DBDIR/centrifuge/taxonomy/names.dmp \
+                    $DBDIR/centrifuge/input-sequences.fna \
+                    $DBDIR/centrifuge/index/arch_bac_vir
+            .. Attention:: The download commands may fail because of the libssl version.
 
 #. Get the parameter file with::
 
