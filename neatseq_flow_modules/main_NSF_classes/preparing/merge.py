@@ -259,7 +259,6 @@ class Step_merge(Step):
                 src = src + project_src
                 scope = scope + project_scope
 
-
         # Getting unique pairs of src and scope:
         uniq_src_scope = list(set(zip(src,scope)))
         src, scope = list(zip(*uniq_src_scope))
