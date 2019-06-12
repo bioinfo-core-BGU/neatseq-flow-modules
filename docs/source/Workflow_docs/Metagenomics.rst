@@ -94,7 +94,7 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
 #. Create and activate a conda environment with all the required programs::
 
-    wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/Workflow_docs/Metagenomics_conda.yaml
+    curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/Workflow_docs/Metagenomics_conda.yaml
     conda env create -f Metagenomics_conda.yaml
     conda activate Metagenomics
 
@@ -129,7 +129,7 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
        .. code-block:: bash
 
-          wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/Workflow_docs/Metagenomics_DBinstall_cmds.sh
+          curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/Workflow_docs/Metagenomics_DBinstall_cmds.sh
           nohup bash Metagenomics_DBinstall_cmds.sh &
 
     MetaPhlAn2
@@ -217,7 +217,7 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
 #. Get the parameter file with::
 
-    wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Menagenomics.yaml
+    curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Menagenomics.yaml
 
 #. **Settings to set in the parameter file**
 

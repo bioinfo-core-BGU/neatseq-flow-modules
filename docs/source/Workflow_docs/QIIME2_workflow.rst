@@ -84,7 +84,7 @@ Download
 
 The workflow file is available for download with the following command::
 
-   wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/qiime2.analysis.salmon.yaml
+   curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/qiime2.analysis.salmon.yaml
 
 
 .. [#f1] `<https://onlinelibrary.wiley.com/doi/full/10.1111/eva.12658>`_
@@ -156,8 +156,8 @@ Download
 
 The workflow and sample files are available for download with the following commands::
 
-   wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/qiime2_MovingPic_fullAuto.params.yaml
-   wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/qiime2_MovingPic_fullAuto.samples.nsfs
+   curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/qiime2_MovingPic_fullAuto.params.yaml
+   curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/qiime2_MovingPic_fullAuto.samples.nsfs
 
 
 .. :download:`here <../../../Workflows/qiime2_MovingPic_fullAuto.params.yaml>`

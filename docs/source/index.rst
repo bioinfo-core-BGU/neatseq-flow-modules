@@ -99,7 +99,7 @@ Installing and using the modules
 
    #. download the repository::
 
-       wget https://github.com/bioinfo-core-BGU/neatseq-flow-modules/archive/master.zip
+       curl -LO https://github.com/bioinfo-core-BGU/neatseq-flow-modules/archive/master.zip
 
    #. **Alternatively**, clone the repository::
 

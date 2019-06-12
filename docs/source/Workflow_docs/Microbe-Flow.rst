@@ -254,7 +254,7 @@ MLST/cgMLST Typing Scheme File [Tab delimited]
 
           .. code-block:: csh
           
-             wget http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/get_scheme.sh
+             curl -LO http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/get_scheme.sh
         
         **For example:** in order to download the **MLST** Required Files of **Campylobacter jejuni**  
         
@@ -312,9 +312,9 @@ Using CONDA environment
   
      conda config --add channels conda-forge
      conda config --add channels bioconda
-     wget http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/Microbe-Flow_conda_env_install.yaml
+     curl -LO http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/Microbe-Flow_conda_env_install.yaml
      conda env create -f  Microbe-Flow_conda_env_install.yaml
-     wget http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/Microbe-Flow_GUBBINS_conda_env_install.yaml 
+     curl -LO http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/Microbe-Flow_GUBBINS_conda_env_install.yaml
      conda env create -f  Microbe-Flow_GUBBINS_conda_env_install.yaml
 
 3. Activate the Microbe-Flow environment
@@ -906,7 +906,7 @@ Perform a test run on a publicly available data
     .. code-block:: bash
         
         cd $MICROBE_FLOW_CWD
-        wget http://www.irisa.fr/symbiose/projects/gassst/Gassst_v1.28.tar.gz
+        curl -LO http://www.irisa.fr/symbiose/projects/gassst/Gassst_v1.28.tar.gz
         tar -xvzf Gassst_v1.28.tar.gz
         cd $MICROBE_FLOW_CWD/Gassst_v1.28
         make
@@ -921,7 +921,7 @@ Perform a test run on a publicly available data
     .. code-block:: bash
     
         cd $MICROBE_FLOW_CWD
-        wget http://bio.informatik.uni-jena.de/artifactory/simple/dist/de/unijena/bioinf/gecko3/Gecko3.1.zip
+        curl -LO http://bio.informatik.uni-jena.de/artifactory/simple/dist/de/unijena/bioinf/gecko3/Gecko3.1.zip
         unzip Gecko3.1.zip
         
 
@@ -933,7 +933,7 @@ Perform a test run on a publicly available data
     .. code-block:: bash
         
         cd $MICROBE_FLOW_CWD
-        wget http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/get_scheme.sh
+        curl -LO http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/get_scheme.sh
         mkdir MLST
         cd $MICROBE_FLOW_CWD/MLST
         sh $MICROBE_FLOW_CWD/get_scheme.sh "Campylobacter jejuni" "MLST" 
@@ -955,8 +955,8 @@ Perform a test run on a publicly available data
     .. code-block:: bash
     
         cd $MICROBE_FLOW_CWD
-        wget http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/SRP090551_Samples.nsfs
-        wget http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/SRP090551_DATA.txt
+        curl -LO http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/SRP090551_Samples.nsfs
+        curl -LO http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/SRP090551_DATA.txt
         
 6. Edit the Microbe-Flow parameter file to suit your cluster
 ***************************************************************
@@ -968,7 +968,7 @@ Perform a test run on a publicly available data
   .. code-block:: csh
     
     cd $MICROBE_FLOW_CWD
-    wget http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/Microbe-Flow_conda_test_run.yaml
+    curl -LO http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/Microbe-Flow_conda_test_run.yaml
     sed -i $( echo 's:$MICROBE_FLOW_CWD:'$MICROBE_FLOW_CWD':') Microbe-Flow_conda_test_run.yaml
     sed -i $( echo 's:/PATH_TO_YOUR_QSUB/:'$(dirname `which qsub`)':') Microbe-Flow_conda_test_run.yaml
     nano  Microbe-Flow_conda_test_run.yaml

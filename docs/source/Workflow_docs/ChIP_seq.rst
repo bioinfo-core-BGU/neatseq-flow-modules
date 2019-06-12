@@ -94,7 +94,7 @@ For easy setup of the workflow with CONDA, use the following instructions:
 
 #. Create and activate a conda environment with all the required programs::
 
-    wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/Workflow_docs/ChIP_seq_conda.yaml
+    curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/Workflow_docs/ChIP_seq_conda.yaml
     conda env create -n ChIP_seq_WF -f ChIP_seq_conda.yaml
     conda activate ChIP_seq_WF
 
@@ -111,7 +111,7 @@ For easy setup of the workflow with CONDA, use the following instructions:
 
 #. Get the parameter file with::
 
-    wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/ChIP_seq.yaml
+    curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/ChIP_seq.yaml
 
 
 #. Run the workflow:
