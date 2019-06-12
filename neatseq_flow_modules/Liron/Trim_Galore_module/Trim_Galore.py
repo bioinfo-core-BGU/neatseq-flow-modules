@@ -126,82 +126,86 @@ class Step_Trim_Galore(Step):
             # Use the dir it returns as the base_dir for this step.
             use_dir = self.local_start(self.base_dir)
             
-            for direction in self.sample_data[sample]["type"]:    # Iterate over Forward and single, if they exist in sample_data
+            # for direction in self.sample_data[sample]["type"]:    # Iterate over Forward and single, if they exist in sample_data
+            if "fastq.F" in self.sample_data[sample] and "fastq.R" in self.sample_data[sample]:
+                direction = "PE"
+            elif "fastq.S" in self.sample_data[sample]:
+                direction = "SE"
+            else:
+                raise AssertionExcept("No read files exist in sample!",sample)
+            if direction == "PE":
+                # Add 'env' and 'script_path':
+                self.script += self.get_script_env_path()
 
-                if direction == "PE":
-                    # Add 'env' and 'script_path':
-                    self.script += self.get_script_env_path()
-                    
-                    # Here we do the script constructing for paired end
-                    # Define target filenames:
-                    basename_F = os.path.basename(self.sample_data[sample]["fastq.F"])
-                    basename_R = os.path.basename(self.sample_data[sample]["fastq.R"])
-                    # TODO: Remove ".fq" in middle of file name
-                    # Setting filenames before adding output arguments to script
-                    fq_fn_F = use_dir + "".join([re.sub("\.\w+$","",basename_F ), "_val_1.fq"])  #The filename containing the end result. Used both in script and to set reads in $sample_params    
-                    fq_fn_R = use_dir + "".join([re.sub("\.\w+$","",basename_R), "_val_2.fq"])  #The filename containing the end result. Used both in script and to set reads in $sample_params
-                    fq_fn_F_UP = use_dir + "".join([re.sub("\.\w+$","",basename_F ),  "_unpaired_1.fq"])   # The filename containing the end unpaired trimmo output
-                    fq_fn_R_UP = use_dir + "".join([re.sub("\.\w+$","",basename_R) ,  "_unpaired_2.fq"])        #The filename containing the end unpaired trimmo output          
-                    fq_fn_F_bn = os.path.basename(fq_fn_F);
-                    fq_fn_R_bn = os.path.basename(fq_fn_R);
-                    fq_fn_F_UP_bn = os.path.basename(fq_fn_F_UP);
-                    fq_fn_R_UP_bn = os.path.basename(fq_fn_R_UP);
+                # Here we do the script constructing for paired end
+                # Define target filenames:
+                basename_F = os.path.basename(self.sample_data[sample]["fastq.F"])
+                basename_R = os.path.basename(self.sample_data[sample]["fastq.R"])
+                # TODO: Remove ".fq" in middle of file name
+                # Setting filenames before adding output arguments to script
+                fq_fn_F = use_dir + "".join([re.sub("\.\w+$","",basename_F ), "_val_1.fq"])  #The filename containing the end result. Used both in script and to set reads in $sample_params
+                fq_fn_R = use_dir + "".join([re.sub("\.\w+$","",basename_R), "_val_2.fq"])  #The filename containing the end result. Used both in script and to set reads in $sample_params
+                fq_fn_F_UP = use_dir + "".join([re.sub("\.\w+$","",basename_F ),  "_unpaired_1.fq"])   # The filename containing the end unpaired trimmo output
+                fq_fn_R_UP = use_dir + "".join([re.sub("\.\w+$","",basename_R) ,  "_unpaired_2.fq"])        #The filename containing the end unpaired trimmo output
+                fq_fn_F_bn = os.path.basename(fq_fn_F);
+                fq_fn_R_bn = os.path.basename(fq_fn_R);
+                fq_fn_F_UP_bn = os.path.basename(fq_fn_F_UP);
+                fq_fn_R_UP_bn = os.path.basename(fq_fn_R_UP);
 
-                    self.script += self.get_redir_parameters_script()
-                    
-                    if "cutadapt_path" in list(self.params.keys()):
-                        self.script += "--path_to_cutadapt %s \\\n\t" % self.params["cutadapt_path"] 
-                    self.script += "%s \\\n\t" % (" \\\n\t".join([self.sample_data[sample]["fastq.F"],\
-                                                                  self.sample_data[sample]["fastq.R"]]))
-                    # if "--paired" not in self.params["redir_params"].keys():
-                    self.script += "--paired \\\n\t"
+                self.script += self.get_redir_parameters_script()
 
-                    self.script += "-o %s \n\n" % use_dir 
-                    
-                elif direction=="SE":
-                    # Add 'env' and 'script_path':
-                    self.script += self.get_script_env_path()
-                    
-                    # Here we do the script constructing for single end
-                    # Define target filenames:
-                    basename_S = os.path.basename(self.sample_data[sample]["fastq.S"])
-                    # TODO: Remove ".fq" in middle of file name          
-                    
-                    fq_fn_S = use_dir + "".join([re.sub("\.\w+$","",basename_S ), "_trimmed.fq"])          #The filename containing the end result. Used both in script and to set reads in $sample_params
-                    fq_fn_S_bn = os.path.basename(fq_fn_S);
-                    # # TODO: use existing      
-                    # # Remove --paired and --retain_unpaired from redirects. Should not be passed if SE (Menachem)
-                    # for key in ["--paired","--retain_unpaired"]:
-                        # if key in self.params:
-                            # del self.params[key]
-                    self.script += self.get_redir_parameters_script()
+                if "cutadapt_path" in list(self.params.keys()):
+                    self.script += "--path_to_cutadapt %s \\\n\t" % self.params["cutadapt_path"]
+                # if "--paired" not in self.params["redir_params"].keys():
+                self.script += "--paired \\\n\t"
+                self.script += "-o %s \\\n\t" % use_dir
+                self.script += "%s \n\n" % (" \\\n\t".join([self.sample_data[sample]["fastq.F"],\
+                                                              self.sample_data[sample]["fastq.R"]]))
 
-                    # for key in self.params["redir_params"].keys():
-                        # if key not in ["--paired","--retain_unpaired"]:
-                            # self.script += "%s %s \\\n\t" % (key,self.params["redir_params"][key]) 
-                    if "cutadapt_path" in list(self.params.keys()):
-                        self.script += "--path_to_cutadapt %s \\\n\t" % self.params["cutadapt_path"] 
-                    self.script += "%s \\\n\t" % self.sample_data[sample]["fastq.S"]
-                    self.script += "-o %s \\\n\t" % use_dir 
-                    #Generate log file:
-                    #self.script += ">& %s.log\n\n" % os.sep.join([use_dir.rstrip(os.sep),output_prefix])
-                    self.script += "\n\n"
-                else: # direction=="Reverse". Ignore (included in "Forward")
-                    pass
-                    
-                    
 
-                
+            elif direction=="SE":
+                # Add 'env' and 'script_path':
+                self.script += self.get_script_env_path()
 
-                if direction == "PE":
-                    #Set current active sequence files to tagged files
-                    self.sample_data[sample]["fastq.F"] = self.base_dir + fq_fn_F_bn
-                    self.sample_data[sample]["fastq.R"] = self.base_dir + fq_fn_R_bn
-                    self.sample_data[sample]["fastq.F.unpaired"] = self.base_dir + fq_fn_F_UP_bn
-                    self.sample_data[sample]["fastq.R.unpaired"] = self.base_dir + fq_fn_R_UP_bn
-                    
-                elif direction == "SE":
-                    self.sample_data[sample]["fastq.S"] = self.base_dir + fq_fn_S_bn
+                # Here we do the script constructing for single end
+                # Define target filenames:
+                basename_S = os.path.basename(self.sample_data[sample]["fastq.S"])
+                # TODO: Remove ".fq" in middle of file name
+
+                fq_fn_S = use_dir + "".join([re.sub("\.\w+$","",basename_S ), "_trimmed.fq"])          #The filename containing the end result. Used both in script and to set reads in $sample_params
+                fq_fn_S_bn = os.path.basename(fq_fn_S);
+                # # TODO: use existing
+                # # Remove --paired and --retain_unpaired from redirects. Should not be passed if SE (Menachem)
+                # for key in ["--paired","--retain_unpaired"]:
+                    # if key in self.params:
+                        # del self.params[key]
+                self.script += self.get_redir_parameters_script()
+
+                # for key in self.params["redir_params"].keys():
+                    # if key not in ["--paired","--retain_unpaired"]:
+                        # self.script += "%s %s \\\n\t" % (key,self.params["redir_params"][key])
+                if "cutadapt_path" in list(self.params.keys()):
+                    self.script += "--path_to_cutadapt %s \\\n\t" % self.params["cutadapt_path"]
+                self.script += "-o %s \\\n\t" % use_dir
+                self.script += "%s \n\n" % self.sample_data[sample]["fastq.S"]
+                #Generate log file:
+                #self.script += ">& %s.log\n\n" % os.sep.join([use_dir.rstrip(os.sep),output_prefix])
+            else: # direction=="Reverse". Ignore (included in "Forward")
+                pass
+
+
+
+
+
+            if direction == "PE":
+                #Set current active sequence files to tagged files
+                self.sample_data[sample]["fastq.F"] = self.base_dir + fq_fn_F_bn
+                self.sample_data[sample]["fastq.R"] = self.base_dir + fq_fn_R_bn
+                self.sample_data[sample]["fastq.F.unpaired"] = self.base_dir + fq_fn_F_UP_bn
+                self.sample_data[sample]["fastq.R.unpaired"] = self.base_dir + fq_fn_R_UP_bn
+
+            elif direction == "SE":
+                self.sample_data[sample]["fastq.S"] = self.base_dir + fq_fn_S_bn
                         
                     
             # Move all files from temporary local dir to permanent base_dir

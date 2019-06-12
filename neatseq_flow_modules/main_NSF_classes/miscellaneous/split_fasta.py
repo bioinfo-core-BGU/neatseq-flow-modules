@@ -262,8 +262,8 @@ awk -v nseqs="$NUMSEQS" '
                     self.sample_data[subsample][self.params["type"]] = \
                         "{use_dir}{sample}.fa".format(use_dir=self.base_dir,sample=sample)
                     # Storing origin of subsample in grouping dict:
-                    self.sample_data[subsample]["grouping"] = dict()
-                    self.sample_data[subsample]["grouping"]["source"] = sample
+                    self.sample_data[subsample]["..grouping.."] = dict()
+                    self.sample_data[subsample]["..grouping.."]["source"] = sample
                     self.sample_data[subsample]["type"] = self.determine_sample_types(subsample,self.sample_data[subsample])
                     # Stamping file
                     self.stamp_file(self.sample_data[sample][self.params["type"]])

@@ -72,7 +72,7 @@ class Step_subet_samples(Step):
         bad_samples = [sample
                        for sample
                        in self.sample_data["samples"]
-                       if "grouping" not in self.sample_data[sample]]
+                       if "..grouping.." not in self.sample_data[sample]]
         if bad_samples:
             raise AssertionExcept("For some reason, sample '{smp}' does not have "
                                   "grouping data".format(smp=", ".join(bad_samples)))
@@ -80,7 +80,7 @@ class Step_subet_samples(Step):
         bad_samples = [sample
                        for sample
                        in self.sample_data["samples"]
-                       if self.params["category"] not in self.sample_data[sample]["grouping"]]
+                       if self.params["category"] not in self.sample_data[sample]["..grouping.."]]
         if bad_samples:
             raise AssertionExcept(
                 "Sample '{smp}' does not have '{cat}' category".format(smp=", ".join(bad_samples),

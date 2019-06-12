@@ -297,8 +297,8 @@ class Step_fasta_splitter(Step):
                                                                         "--part-num-prefix"],
                                                                     main=file_info[0],
                                                                     ext=file_info[1])
-                    self.sample_data[subsample]["grouping"] = dict()
-                    self.sample_data[subsample]["grouping"]["source"] = sample
+                    self.sample_data[subsample]["..grouping.."] = dict()
+                    self.sample_data[subsample]["..grouping.."]["source"] = sample
                     self.sample_data[subsample]["type"] = self.determine_sample_types(subsample,
                                                                                       self.sample_data[subsample])
 

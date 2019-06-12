@@ -264,8 +264,8 @@ awk -v nseqs="$numseqs" '
                                                                                       fastq_type=direction_dict[fastq_type],
                                                                                       subsample=subsample)
                         # Storing origin of subsample in grouping dict:
-                        self.sample_data[subsample]["grouping"] = dict()
-                        self.sample_data[subsample]["grouping"]["source"] = sample
+                        self.sample_data[subsample]["..grouping.."] = dict()
+                        self.sample_data[subsample]["..grouping.."]["source"] = sample
 
                         # Stamping file
                         self.stamp_file(self.sample_data[sample][fastq_type])

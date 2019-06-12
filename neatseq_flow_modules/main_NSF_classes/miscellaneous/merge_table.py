@@ -169,7 +169,7 @@ class Step_merge_table(Step):
                 raise AssertionExcept("'category' parameter must be a string.")
             for sample in self.sample_data["samples"]:  # Getting list of samples out of samples_hash
                 try:
-                    self.sample_data[sample]["grouping"][self.params["category"]]
+                    self.sample_data[sample]["..grouping.."][self.params["category"]]
                 except KeyError:
                     raise AssertionExcept("category '{cat}' not defined for sample".format(cat=self.params["category"]),
                                           sample)

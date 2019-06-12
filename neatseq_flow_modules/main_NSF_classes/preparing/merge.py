@@ -182,7 +182,7 @@ class Step_merge(Step):
         self.file_tag = "merge"
 
         # TODO: Find a better way for doing this
-        self.conserved_sample_types = ["type","grouping"]
+        self.conserved_sample_types = ["type","..grouping.."]
 
         # Load YAML of file type stored in merge_file_types.yml
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),"merge_file_types.yml"),"r") as fileh:
@@ -228,12 +228,13 @@ class Step_merge(Step):
             # if "type" in sample_src:
             #     sample_src.remove("type")   # 'type' is the type of sample (PE, etc.)
             # Remove keywords from sample. These are not 'src's.
-            # At the moment, "type" and "grouping". Add more when required!
+            # At the moment, "type" and "..grouping..". Add more when required!
             sample_src = [src1
                           for src1
                           in sample_src
                           if src1 not in self.conserved_sample_types]
             sample_scope = ["sample"] * len(sample_src)
+
             # If sample data exists, store in 'src' and 'scope'
             # Do this only if one of the following:
                 # 1. 'scope' is not defined, or 
@@ -345,9 +346,8 @@ class Step_merge(Step):
         #     pp(self.params[param])
         # #---------------------------------------
         # sys.exit()
-
         # For each src in the list of sources:
-        for src_ind in range(len(self.params["src"])):  
+        for src_ind in range(len(self.params["src"])):
             src = self.params["src"][src_ind]
             scope = self.params["scope"][src_ind]
             script_path = self.params["script_path"][src_ind]
@@ -389,7 +389,6 @@ class Step_merge(Step):
             #     except KeyError:
             #         raise AssertionExcept("src '{src}' is not recognized. Can't guess 'ext'.".format(src=src))
 
-
             # Guessing scope if None
             if not scope:
                 if all([src in list(self.sample_data[x].keys()) for x in self.sample_data["samples"]]):
@@ -414,7 +413,6 @@ class Step_merge(Step):
                     # Is none or ..guess.. - try guessing
                     # src_exts is defined as follows: For each sample in samples list,
                     # get the list of file extensions. Creates a list of lists.
-
                     src_exts = [[os.path.splitext(filename)[1]
                                  for filename
                                  in self.sample_data[sample][src]]
@@ -424,26 +422,25 @@ class Step_merge(Step):
 
                     # TODO: src_exts can be empty if assuming sample scope but no files exist!
 
+                    if src_exts:
 
-                    # Flatten the list of lists, and uniqify:
-                    src_exts = list(set([item for sublist in src_exts for item in sublist]))
-
-                    if len(src_exts)>1:
-                        # Will be determined in the script building stage
-                        pass
-                    else:
-                        # Convert set to string:
-                        src_exts = src_exts[0]
-                        if src_exts not in list(self.script_path_map.keys()):
-                            raise AssertionExcept("Unidentified extension in source '{src}' ({ext}). Can't guess "
-                                                  "'script_path'".format(src=src, ext=src_exts))
+                        # Flatten the list of lists, and uniqify:
+                        src_exts = list(set([item for sublist in src_exts for item in sublist]))
+                        if len(src_exts)>1:
+                            # Will be determined in the script building stage
+                            pass
                         else:
-                            if isinstance(self.script_path_map[src_exts],list):
-                                self.params["script_path"][src_ind] = self.script_path_map[src_exts][0]
-                                self.params["pipe"][src_ind] = self.script_path_map[src_exts][1]
+                            # Convert set to string:
+                            src_exts = src_exts[0]
+                            if src_exts not in list(self.script_path_map.keys()):
+                                raise AssertionExcept("Unidentified extension in source '{src}' ({ext}). Can't guess "
+                                                      "'script_path'".format(src=src, ext=src_exts))
                             else:
-                                self.params["script_path"][src_ind] = self.script_path_map[src_exts]
-                        # print "===> ",src_exts
+                                if isinstance(self.script_path_map[src_exts],list):
+                                    self.params["script_path"][src_ind] = self.script_path_map[src_exts][0]
+                                    self.params["pipe"][src_ind] = self.script_path_map[src_exts][1]
+                                else:
+                                    self.params["script_path"][src_ind] = self.script_path_map[src_exts]
 
             elif scope=="project":
                 if src not in self.sample_data["project_data"]:
