@@ -101,8 +101,6 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
         curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/_extra/extra_files/Metagenomics_conda.yaml
 
-..        curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/Workflow_docs/Metagenomics_conda.yaml
-
 #. Create and activate a conda environment with all the required programs:
 
    .. code-block:: bash
