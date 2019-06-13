@@ -80,11 +80,11 @@ Instructions
 
 **Install all the required programs in to a conda environment:**
 
-   1. Download the RNASeq conda environment installer file:
+    1. Download the :download:`RNASeq conda environment installer file <../_extra/RNASeq_env_install.yaml>`:
 
        .. code-block:: bash
 
-            curl https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/RNASeq_env_install.yaml > RNASeq_env_install.yaml
+            curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/source/_extra/RNASeq_env_install.yaml
             
 
     2. Create the RNASeq conda environment:
@@ -95,14 +95,14 @@ Instructions
 
 **Download the Work-Flow's Parameter file:**
 
-    Using STAR as the mapper:
+    :download:`Using STAR as the mapper <../../../Workflows/RNASeq_STAR.yaml>`:
     
     .. code-block:: bash
 
             curl https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/RNASeq_STAR.yaml > RNASeq.yaml
 
 
-    Using Bowtie2 as the mapper:
+    :download:`Using Bowtie2 as the mapper <../../../Workflows/RNASeq_Bowtie2.yaml>`:
     
     .. code-block:: bash
 

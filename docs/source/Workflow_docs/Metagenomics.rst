@@ -225,9 +225,9 @@ For easy setup of the workflow, including a sample dataset, use the following in
                     $DBDIR/centrifuge/index/arch_bac_vir
             .. Attention:: The download commands may fail because of the libssl version.
 
-#. Get the parameter file with::
+#. Get :download:`the parameter file <../../../Workflows/Metagenomics.yaml>` with::
 
-    curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Menagenomics.yaml
+    curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Metagenomics.yaml
 
 #. **Settings to set in the parameter file**
 

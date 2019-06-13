@@ -28,7 +28,7 @@ Preparatory steps
 
     #. Download a template config file with the following command and edit is as necessary. In the parameter file, set ``Vars.paths.BUSCO_cfg`` to the full path to the config file.
 
-        ::
+       .. code-block:: bash
 
             curl -L -o config.ini https://gitlab.com/ezlab/busco/raw/master/config/config.ini.default
 
@@ -121,9 +121,11 @@ Example of Sample File
 Download
 ~~~~~~~~~
 
-The workflow file is available for download with the following command::
+The workflow file is available :download:`here <../../../Workflows/RNA_seq_Trinity.yaml>` or with the following command:
 
-   curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/RNA_seq_Trinity.yaml
+   .. code-block:: bash
+
+      curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/RNA_seq_Trinity.yaml
 
 
 Quick start with conda
@@ -133,11 +135,20 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
 .. Attention:: ``rnammer`` is not available with CONDA. To use it, you will have to install it and modify it `following the instructions here <https://github.com/Trinotate/Trinotate.github.io/wiki/Software-installation-and-data-required#rnammer-free-academic-download>`_.
 
-#. Create and activate a conda environment with all the required programs::
+#. Download the conda environment definition file:
 
-    curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/Workflow_docs/RNA_seq_Trinity_conda.yaml
-    conda env create -f RNA_seq_Trinity_conda.yaml
-    conda activate RNA_trinity
+   You can :download:`download the RNA_seq_Trinity_conda.yaml file <../_extra/RNA_seq_Trinity_conda.yaml>` here, or programatically with:
+
+   .. code-block:: bash
+
+        curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/_extra/RNA_seq_Trinity_conda.yaml
+
+#. Create and activate a conda environment with all the required programs:
+
+   .. code-block:: bash
+
+        conda env create -f RNA_seq_Trinity_conda.yaml
+        conda activate RNA_trinity
 
 #. Get the raw data from Trinity::
 
@@ -159,7 +170,7 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
          readlink -f 00.Raw_reads/reads.left.fq.gz
 
-#. Get the parameter file with::
+#. Get :download:`the parameter file <../../../Workflows/RNA_seq_Trinity.yaml>` with::
 
     curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/RNA_seq_Trinity.yaml
 

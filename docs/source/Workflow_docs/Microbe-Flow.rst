@@ -254,8 +254,8 @@ MLST/cgMLST Typing Scheme File [Tab delimited]
 
           .. code-block:: csh
           
-             curl -LO http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/get_scheme.sh
-        
+             curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Microbe-Flow/get_scheme.sh
+
         **For example:** in order to download the **MLST** Required Files of **Campylobacter jejuni**  
         
         In the command line type:
@@ -312,9 +312,10 @@ Using CONDA environment
   
      conda config --add channels conda-forge
      conda config --add channels bioconda
-     curl -LO http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/Microbe-Flow_conda_env_install.yaml
+     curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/source/_extra/Microbe-Flow/Microbe-Flow_conda_env_install.yaml
+
      conda env create -f  Microbe-Flow_conda_env_install.yaml
-     curl -LO http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/Microbe-Flow_GUBBINS_conda_env_install.yaml
+     curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/source/_extra/Microbe-Flow/Microbe-Flow_GUBBINS_conda_env_install.yaml
      conda env create -f  Microbe-Flow_GUBBINS_conda_env_install.yaml
 
 3. Activate the Microbe-Flow environment
@@ -362,15 +363,13 @@ Using CONDA environment
 
   .. code-block:: csh
     
-    curl http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/Microbe-Flow_conda.yaml > Microbe-Flow_conda.yaml
+    curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Microbe-Flow/Microbe-Flow_conda.yaml
     nano  Microbe-Flow_conda.yaml
 
   .. tip:: You can do the editting with any text editor of your liking. However:
   
         * The file needs to be in unix End Of Line (EOL) format. 
         * Don't forget to copy it to the project directory.
-        
-
 
   .. attention:: Edit the global params section [Especially the lines marked by **<<**]:
 
@@ -663,7 +662,8 @@ Using a local copy of NeatSeq-Flow
 
   .. code-block:: csh
     
-    curl http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/Microbe-Flow.yaml > Microbe-Flow.yaml
+    curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Microbe-Flow/Microbe-Flow.yaml
+
     nano  Microbe-Flow.yaml
 
 
@@ -933,7 +933,8 @@ Perform a test run on a publicly available data
     .. code-block:: bash
         
         cd $MICROBE_FLOW_CWD
-        curl -LO http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/get_scheme.sh
+        curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Microbe-Flow/get_scheme.sh
+
         mkdir MLST
         cd $MICROBE_FLOW_CWD/MLST
         sh $MICROBE_FLOW_CWD/get_scheme.sh "Campylobacter jejuni" "MLST" 
@@ -955,9 +956,10 @@ Perform a test run on a publicly available data
     .. code-block:: bash
     
         cd $MICROBE_FLOW_CWD
-        curl -LO http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/SRP090551_Samples.nsfs
-        curl -LO http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/SRP090551_DATA.txt
-        
+        curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Microbe-Flow/SRP090551_Samples.nsfs
+        curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Microbe-Flow/SRP090551_DATA.txt
+
+
 6. Edit the Microbe-Flow parameter file to suit your cluster
 ***************************************************************
 
@@ -968,7 +970,8 @@ Perform a test run on a publicly available data
   .. code-block:: csh
     
     cd $MICROBE_FLOW_CWD
-    curl -LO http://neatseq-flow.readthedocs.io/projects/neatseq-flow-modules/en/latest/_downloads/Microbe-Flow_conda_test_run.yaml
+    curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Microbe-Flow/Microbe-Flow_conda_test_run.yaml
+
     sed -i $( echo 's:$MICROBE_FLOW_CWD:'$MICROBE_FLOW_CWD':') Microbe-Flow_conda_test_run.yaml
     sed -i $( echo 's:/PATH_TO_YOUR_QSUB/:'$(dirname `which qsub`)':') Microbe-Flow_conda_test_run.yaml
     nano  Microbe-Flow_conda_test_run.yaml
