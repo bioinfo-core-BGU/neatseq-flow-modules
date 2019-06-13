@@ -92,11 +92,23 @@ Quick start with conda
 
 For easy setup of the workflow, including a sample dataset, use the following instructions for complete installation with conda:
 
-#. Create and activate a conda environment with all the required programs::
 
-    curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/Workflow_docs/Metagenomics_conda.yaml
-    conda env create -f Metagenomics_conda.yaml
-    conda activate Metagenomics
+#. Download the conda environment definition file:
+
+   You can :download:`download the Metagenomics_conda.yaml file <../_extra/extra_files/Metagenomics_conda.yaml>` here, or programatically with:
+
+   .. code-block:: bash
+
+        curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/_extra/extra_files/Metagenomics_conda.yaml
+
+..        curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/Workflow_docs/Metagenomics_conda.yaml
+
+#. Create and activate a conda environment with all the required programs:
+
+   .. code-block:: bash
+
+        conda env create -f Metagenomics_conda.yaml
+        conda activate Metagenomics
 
 #. Create a sample file. It should look like the following, only the file names should be replaced with absolute file names::
 
