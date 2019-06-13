@@ -95,11 +95,11 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
 #. Download the conda environment definition file:
 
-   You can :download:`download the Metagenomics_conda.yaml file <../_extra/extra_files/Metagenomics_conda.yaml>` here, or programatically with:
+   You can :download:`download the Metagenomics_conda.yaml file <../_extra/Metagenomics_conda.yaml>` here, or programatically with:
 
    .. code-block:: bash
 
-        curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/_extra/extra_files/Metagenomics_conda.yaml
+        curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/_extra/Metagenomics_conda.yaml
 
 #. Create and activate a conda environment with all the required programs:
 
@@ -133,13 +133,13 @@ For easy setup of the workflow, including a sample dataset, use the following in
 
     .. Warning:: Installing the databases requires **about 220 GB** of disk space!
 
-    .. Tip:: File ``Metagenomics_DBinstall_cmds.sh`` contains a script for installing all the databases described below.
+    .. Tip:: File :download:`Metagenomics_DBinstall_cmds.sh <../_extra/Metagenomics_DBinstall_cmds.sh>` contains a script for installing all the databases described below.
 
        Execution might take a while due to the large datasetb being downloaded, therefore it is recommended to execute as follows (**After setting $DBDIR!!!**):
 
        .. code-block:: bash
 
-          curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/Workflow_docs/Metagenomics_DBinstall_cmds.sh
+          curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/_extra/Metagenomics_DBinstall_cmds.sh
           nohup bash Metagenomics_DBinstall_cmds.sh &
 
     MetaPhlAn2
