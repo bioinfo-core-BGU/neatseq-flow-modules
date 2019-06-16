@@ -27,7 +27,7 @@ Steps
 
 #. *MergeReads*: Get the data and files from the sample file.
 #. *FastQC_Merge*, *TrimGalore*, *FastQC_TrimGal*, and *MultiQC_TrimGal*: QC on the reads: FastQC and Trim Galore!. Depending on the quality of the reads, `TrimGalore`` might not be required.
-#. *AddMetadata*: Import the metadata file into the workflow.
+#. *Get_Project_Files*: Download and import the metadata and classifier files into the workflow.
 #. *import*: import sequence data into a QIIME2 artifact
 #. *sequence_qual*: Create quality report for the sequences.
 #. *dada2*: `dada2 <https://benjjneb.github.io/dada2/>`_  and visualization.
@@ -47,9 +47,9 @@ Steps
 #. *alpha_group_signif*: alpha groups differences based on Faith's diversity index.
 #. Classification:
 
-   #. *add_classifier*: Adding an extrenal classifier.
+   #. Using the classifier downloaded in step *Get_Project_Files*.
 
-      .. Tip:: You can add steps to `train your own classifier <https://docs.qiime2.org/2018.11/tutorials/feature-classifier/>`_, but that is beyond the scope of this workflow.
+      .. Tip:: You can add steps in the workflow to `train your own classifier <https://docs.qiime2.org/2018.11/tutorials/feature-classifier/>`_, but that is beyond the scope of this workflow.
 
    #. *classify*: Classify the reads.
    #. *classify_tabulate* and *classify_plot*: Visualization of the classification.
@@ -75,7 +75,7 @@ Requires
 
       curl -sl https://datadryad.org/bitstream/handle/10255/dryad.181830/16S_reads_salmo_salar_V3_V4_gut_microbiota.tar.gz | tar zxv
 
-#. Get :download:`the salmon sample file <../../../Workflows/Metagenomics.yaml>` with:
+#. Get :download:`the salmon sample file <../_extra/QIIME2/qiime2.samples.salmon.yaml>` with:
 
    .. code-block:: bash
 
