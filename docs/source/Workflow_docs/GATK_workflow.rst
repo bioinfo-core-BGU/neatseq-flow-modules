@@ -7,6 +7,12 @@ Variant analysis using GATK
 :Affiliation: Bioinformatics Core Facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
+
+.. contents:: Module categories
+   :local:
+   :depth: 1
+
+
 A workflow for somatic short variant discovery (SNVs + Indels), based on `GATK Best Practices <https://software.broadinstitute.org/gatk/best-practices/workflow?id=11146>`_.
 adapted for the analysis of rare diseases.
 
@@ -19,7 +25,7 @@ adapted for the analysis of rare diseases.
       **It is recommended to carefully follow the log file and ensure that all jobs have completed successfully.**
 
 
-Steps:
+Steps
 ~~~~~~~
 
 1. Read preparation:

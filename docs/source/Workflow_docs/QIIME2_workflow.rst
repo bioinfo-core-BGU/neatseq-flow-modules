@@ -19,7 +19,7 @@ This workflow is based on the data described in *Structural and compositional mi
 
 The data for the workflow is available on `datadryad <https://datadryad.org/resource/doi:10.5061/dryad.5ff8m0q>`_.
 
-Steps:
+Steps
 ~~~~~~~~~~
 
 
@@ -67,9 +67,25 @@ Workflow Schema
 Requires
 ~~~~~~~~
 
-Raw reads for the analysis can be downloaded as follows::
+#. Raw reads for the analysis can be downloaded as follows (Note: The downloaded directory is 5.5 GB!):
 
-   curl -sl https://datadryad.org/bitstream/handle/10255/dryad.181830/16S_reads_salmo_salar_V3_V4_gut_microbiota.tar.gz | tar zxv
+   .. code-block:: bash
+
+      curl -sl https://datadryad.org/bitstream/handle/10255/dryad.181830/16S_reads_salmo_salar_V3_V4_gut_microbiota.tar.gz | tar zxv
+
+#. Get :download:`the salmon sample file <../../../Workflows/Metagenomics.yaml>` with:
+
+   .. code-block:: bash
+
+      curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/_extra/QIIME2/qiime2.samples.salmon.yaml
+
+#. Modify the paths in the sample file to the **correct full paths**.
+
+.. Tip:: If the raw read directory (``16S_reads_salmo_salar_V3_V4_gut_microbiota``) and the sample file are in the same path, you can set the paths with the following sed command:
+
+   .. code-block:: bash
+
+      sed -i s+/path/to/+$PWD/16S_reads_salmo_salar_V3_V4_gut_microbiota/+ qiime2.samples.salmon.yaml
 
 Programs required
 ~~~~~~~~~~~~~~~~~~
@@ -85,6 +101,23 @@ Download
 The workflow file is available for download with the following command::
 
    curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/qiime2.analysis.salmon.yaml
+
+
+Execute NeatSeq-Flow
+~~~~~~~~~~~~~~~~~~~~~~
+
+`Execute NeatSeq-Flow <https://neatseq-flow.readthedocs.io/en/latest/02b.execution.html#executing-neatseq-flow>`_ with the sample and parameters files downloaded above:
+
+   .. code-block:: bash
+
+      source activate NeatSeq_Flow
+      neatseq_flow.py -s qiime2.samples.salmon.yaml -p qiime2.analysis.salmon.yaml
+
+
+
+.. Tip:: See also `this nice presentation <http://evomicsorg.wpengine.netdna-cdn.com/wp-content/uploads/2015/07/cfar_lab_09182015.pdf>`_ by Galeb Abu-Ali, Eric Franzosa and Curtis Huttenhower
+
+
 
 
 .. [#f1] `<https://onlinelibrary.wiley.com/doi/full/10.1111/eva.12658>`_

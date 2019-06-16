@@ -7,6 +7,11 @@
 :Affiliation: Bioinformatics Core Facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
+
+.. contents:: Module categories
+   :local:
+   :depth: 1
+
 A pipeline for RNA-seq analysis using Trinity.
 
 The workflow is built to run Trinity's sample data, which consists of stranded, paired-end reads. You should modify the workflow steps to suit your data.
@@ -148,7 +153,7 @@ For easy setup of the workflow, including a sample dataset, use the following in
    .. code-block:: bash
 
         conda env create -f RNA_seq_Trinity_conda.yaml
-        conda activate RNA_trinity
+        source activate RNA_trinity
 
 #. Get the raw data from Trinity::
 

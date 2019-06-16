@@ -317,7 +317,6 @@ output:
 
         :return:
         """
-
         if sample == "project_data":
             sample = None
         # Use self.get_base_sample_data() to get historic files (4th entry in input strings)

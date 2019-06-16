@@ -8,6 +8,14 @@
 
 A class that defines a module for running ``BUSCO``.
 
+BUSCO searches for predefined sequences in an assembly. See `the BUSCO website <https://busco.ezlab.org/>`_.
+
+This module creates scripts for running BUSCO on a fasta file against a BUSCO lineage database.
+
+The lineage can be specified in two ways:
+
+1. Specify the path to the lineage file with the ``--lineage`` redirected argument.
+2. Specify the URL of the database (*e.g.* http://busco.ezlab.org/v2/datasets/eukaryota_odb9.tar.gz). The file will be downloaded and unzipped.
 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -43,7 +51,7 @@ Parameters that can be set
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-::
+Run BUSCO on project-scope fasta file, using a pre-downloaded BUSCO database::
 
     BUSCO1:
         module:             BUSCO
@@ -57,7 +65,7 @@ Lines for parameter file
             --force:
             --restart:
             
-::
+Run BUSCO on project-scope fasta file, including downloading the BUSCO database::
 
     BUSCO1:
         module:             BUSCO
@@ -139,7 +147,6 @@ You must specify a 'mode':
                     raise AssertionExcept("It seems there is no sample-wide %s fasta file." % self.type, sample)
         elif self.params["scope"] == "project":
             if ("fasta.%s" % self.type) not in self.sample_data["project_data"]:
-                print("BUSCO: in here")
                 raise AssertionExcept("It seems there is no project-wide %s fasta file." % self.type)
         else:
             raise AssertionExcept("'scope' must be either 'sample' or 'project'.")
@@ -183,67 +190,27 @@ cd -
 
     def build_scripts(self):
     
+        # Set list of samples to go over. Either self.sample_data["samples"] for sample scope
+        # or ["project_data"] for project scope
         if self.params["scope"] == "project":
-            self.build_scripts_project()
+            sample_list = ["project_data"]
+        elif self.params["scope"] == "sample":
+            sample_list = self.sample_data["samples"]
         else:
-            self.build_scripts_sample()
-            
-            
-    def build_scripts_project(self):
-        
-        
-        # Name of specific script:
-        self.spec_script_name = self.set_spec_script_name()
+            raise AssertionExcept("'scope' must be either 'sample' or 'project'")
 
-        self.script = ""
-
-        # This line should be left before every new script. It sees to local issues.
-        # Use the dir it returns as the base_dir for this step.
-        use_dir = self.local_start(self.base_dir)
-
-        self.script += "# Moving into output location\n"
-        self.script += "cd %s \n\n" % use_dir
-        
-        self.script += self.get_script_const()
-
-        # The results will be put in data/step_name/name/Title
-        self.script += "--out %s \\\n\t" % self.sample_data["Title"]
-        self.script += "--in %s \\\n\t"  % self.sample_data["project_data"]["fasta.%s" % self.type]
-        self.script += "--tmp %s \\\n\t"  % os.path.join(use_dir,"tmp")
-
-        if "BUSCO.lineage" in self.sample_data["project_data"] and "--lineage" not in self.params["redir_params"]:
-            self.script += "--lineage %s \\\n\t" % self.sample_data["project_data"]["BUSCO.lineage"]
-        self.script = self.script.rstrip("\\\n\t")
-
-
-        # Store results to fasta and assembly slots:
-        self.sample_data["project_data"]["BUSCO"] = os.path.join(self.base_dir,"run_%s" % self.sample_data["Title"])
-
-        # Move all files from temporary local dir to permanent base_dir
-        self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
-     
-
-        self.create_low_level_script()
-                    
-#################################################
-    def build_scripts_sample(self):
-        
-        for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
+        for sample in sample_list:  # Getting list of samples out of samples_hash
 
         # Name of specific script:
             self.spec_script_name = self.set_spec_script_name(sample)
             self.script = ""
 
-
             # Make a dir for the current sample:
             sample_dir = self.make_folder_for_sample(sample)
-            
 
-        
             # This line should be left before every new script. It sees to local issues.
             # Use the dir it returns as the base_dir for this step.
             use_dir = self.local_start(sample_dir)
-            
 
             self.script += "# Moving into output location\n"
             self.script += "cd %s \n\n" % use_dir
@@ -255,8 +222,11 @@ cd -
             self.script += "--in %s \\\n\t"  % self.sample_data[sample]["fasta.%s" % self.type]
             self.script += "--tmp %s \\\n\t"  % os.path.join(use_dir,"tmp")
             
-            if "BUSCO.lineage" in self.sample_data["project_data"] and "--lineage" not in self.params["redir_params"]:
-                self.script += "--lineage %s \\\n\t" % self.sample_data["project_data"]["BUSCO.lineage"]
+            if "--lineage" not in self.params["redir_params"]:
+                if "BUSCO.lineage" in self.sample_data["project_data"]:
+                    self.script += "--lineage %s \\\n\t" % self.sample_data["project_data"]["BUSCO.lineage"]
+                else:
+                    raise AssertionExcept("Please supply a lineage, either via redirects (--lineage) or via 'get_lineage'")
 
             self.script = self.script.rstrip("\\\n\t")
 
@@ -265,7 +235,5 @@ cd -
 
             # Move all files from temporary local dir to permanent base_dir
             self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)
-         
 
             self.create_low_level_script()
-            

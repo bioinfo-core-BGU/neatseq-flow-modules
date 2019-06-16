@@ -5,6 +5,11 @@ NeatSeq-Flow Tutorial Workflow
 :Affiliation: Bioinformatics Core Facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
+
+.. contents:: Module categories
+   :local:
+   :depth: 1
+
 This tutorial describes how to create and execute the workflow described in the **NeatSeq-Flow** manuscript
 (`Article on BioRXiv <https://www.biorxiv.org/content/early/2018/12/18/173005>`_).
 
@@ -24,7 +29,7 @@ Workflow Schema
 .. image:: Tutorial.png
    :alt: Example Workflow DAG
 
-Steps:
+Steps
 ~~~~~~~
 
 
@@ -87,6 +92,6 @@ Download
 
 .. code-block:: bash
 
-   curl https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-tutorial/master/Samples_conda.nsfs > Tutorial_Samples_file.nsfs
+   curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-tutorial/master/Samples_conda.nsfs
 
-   curl https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-tutorial/master/Example_WF_conda_env.yaml > Tutorial_Parameter_file.yaml
+   curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-tutorial/master/Example_WF_conda_env.yaml

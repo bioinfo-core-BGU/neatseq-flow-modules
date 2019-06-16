@@ -5,6 +5,11 @@ Shotgun Metagenomics
 :Affiliation: Bioinformatics Core Facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
+
+.. contents:: Module categories
+   :local:
+   :depth: 1
+
 A workflow for executing various analyses on metagenomics data.
 
 The workflow uses two approaches:
@@ -14,7 +19,7 @@ The workflow uses two approaches:
 
 **Developed as part of a study led by Prof. Jacob Moran-Gilad.**
  
-Steps:
+Steps
 ~~~~~~~
 
 a. Analysis of the raw reads with:
@@ -106,7 +111,7 @@ For easy setup of the workflow, including a sample dataset, use the following in
    .. code-block:: bash
 
         conda env create -f Metagenomics_conda.yaml
-        conda activate Metagenomics
+        source activate Metagenomics
 
 #. Create a sample file. It should look like the following, only the file names should be replaced with absolute file names::
 
@@ -225,9 +230,11 @@ For easy setup of the workflow, including a sample dataset, use the following in
                     $DBDIR/centrifuge/index/arch_bac_vir
             .. Attention:: The download commands may fail because of the libssl version.
 
-#. Get :download:`the parameter file <../../../Workflows/Metagenomics.yaml>` with::
+#. Get :download:`the parameter file <../../../Workflows/Metagenomics.yaml>` with:
 
-    curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Metagenomics.yaml
+   .. code-block:: bash
+
+      curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Metagenomics.yaml
 
 #. **Settings to set in the parameter file**
 

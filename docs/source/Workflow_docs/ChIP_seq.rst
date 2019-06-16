@@ -5,6 +5,11 @@ ChIP-seq workflow
 :Affiliation: Bioinformatics Core Facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
+
+.. contents:: Module categories
+   :local:
+   :depth: 1
+
 This workflow automates a standard ChIP-seq analysis.
 
 .. Note:: This workflow is based on a workflow kindly provided by Dr. Dena Leshkowitz of the Life Sciences Core Facilities, Weizmann Institute of Science.
@@ -96,7 +101,7 @@ For easy setup of the workflow with CONDA, use the following instructions:
 
     curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/Workflow_docs/ChIP_seq_conda.yaml
     conda env create -n ChIP_seq_WF -f ChIP_seq_conda.yaml
-    conda activate ChIP_seq_WF
+    source activate ChIP_seq_WF
 
 
 #. Create a sample file. It should look like the file shown in `Example of Sample File`_. Don't forget to **replace the sample names and file paths**:

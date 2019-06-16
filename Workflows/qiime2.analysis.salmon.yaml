@@ -16,6 +16,7 @@ Global_params:
     conda:
         path:   /gpfs0/bioinfo/users/sklarz/my_conda_envs_envs/qiime2-2018.11
         env:    qiime2-2018.11
+    module_path:  ../neatseq_flow_modules
 
 Vars:
     paths:
@@ -24,8 +25,8 @@ Vars:
         trimgal:        /gpfs0/bioinfo/apps/TrimGalore/TrimGalore-0.4.5/trim_galore
         cutadapt:       /fastspace/bioinfo_apps/cutadapt/cutadapt_v1.12.1/cutadapt
     QIIME:
-        classifier:   /gpfs0/bioinfo/users/sklarz/QIIME_workshops/QIIME2_workshop_2018/NeatSeq-Flow/07.molly/silva-132-99-nb-classifier.qza
-        metadata:       /gpfs0/bioinfo/users/sklarz/QIIME_workshops/QIIME2_workshop_2018/NeatSeq-Flow/06b.Salmo_salar_Rimouski/metadata.tsv
+        classifier:   https://data.qiime2.org/2018.11/common/gg-13-8-99-515-806-nb-classifier.qza
+        metadata:       https://github.com/bioinfo-core-BGU/neatseq-flow-modules/blob/devel/docs/source/_extra/QIIME2/qiime2.metadata.salmon.tsv
         sampling_depth: 5684
         type:           SampleData[PairedEndSequencesWithQuality]   # For single end reads, 'SampleData[SequencesWithQuality]'
         input_format:   PairedEndFastqManifestPhred33   # Note: use the correct format! XXXEndFastqManifestPhredYYY where XXX is 'Paired' or 'Single' and YYY is '33' or '64'.
@@ -34,14 +35,28 @@ Vars:
 Step_params:
     MergeReads:
         module:         merge
-        scope:          sample
+        scope:          
         script_path:
         tag:            QC
 
+    Get_Project_Files:
+        module:         Fillout_Generic
+        base:           MergeReads
+        scope:          project
+        script_path:    |
+            curl -L https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/devel/docs/source/_extra/QIIME2/qiime2.metadata.salmon.tsv > {{o:metadata}}
+            curl -L https://data.qiime2.org/2018.11/common/gg-13-8-99-515-806-nb-classifier.qza > {{o:TaxonomicClassifier}}
+        output:
+            metadata:
+                scope:  project
+                string: "{{base_dir}}/{{project}}metadata.tsv"
+            TaxonomicClassifier:
+                scope:  project
+                string: "{{base_dir}}/{{project}}classifier.qza"
 
     FastQC_Merge:
         module:         fastqc_html
-        base:           MergeReads
+        base:           Get_Project_Files
         script_path:    {Vars.paths.fastqc}
         setenv:         PERL5LIB=""
         qsub_params:
@@ -51,7 +66,7 @@ Step_params:
 
     TrimGalore: 
         module:         Trim_Galore
-        base:           MergeReads
+        base:           Get_Project_Files
         script_path:    {Vars.paths.trimgal}
         cutadapt_path:  {Vars.paths.cutadapt}
         setenv:         PERL5LIB=""
@@ -78,19 +93,19 @@ Step_params:
         redirects:
             --interactive:
 
-    AddMetadata:
-        module:             manage_types
-        base:               MergeReads
-        script_path:        
-        scope:              project
-        operation:          add
-        type:               metadata
-        path:               {Vars.QIIME.metadata} 
+    # AddMetadata:
+        # module:             manage_types
+        # base:               MergeReads
+        # script_path:        
+        # scope:              project
+        # operation:          add
+        # type:               metadata
+        # path:               {Vars.QIIME.metadata} 
         
     
     import:
         module:                     qiime2_import
-        base:                       [TrimGalore,AddMetadata]
+        base:                       TrimGalore  #,AddMetadata]
         script_path:                qiime tools import
         tag:                        qiime
         redirects:
@@ -201,19 +216,19 @@ Step_params:
         base:                       diversity
         script_path:                qiime diversity alpha-group-significance
 
-    add_classifier:
-        module:             manage_types
-        base:               MergeReads
-        script_path:        
-        scope:              project
-        operation:          add
-        type:               TaxonomicClassifier
-        path:               {Vars.QIIME.classifier} 
+    # add_classifier:
+        # module:             manage_types
+        # base:               MergeReads
+        # script_path:        
+        # scope:              project
+        # operation:          add
+        # type:               TaxonomicClassifier
+        # path:               {Vars.QIIME.classifier} 
         
 
     classify:
         module:                     qiime2_general
-        base:                       [dada2,add_classifier]
+        base:                       dada2  #,add_classifier]
         script_path:                qiime feature-classifier classify-sklearn
         # stop_and_show:
 
@@ -232,7 +247,7 @@ Step_params:
 #### Gneiss
     gneiss_cor_clust:
         module:                     qiime2_general
-        base:                       [filter_feature_table,AddMetadata]  #dada2
+        base:                       [filter_feature_table, Get_Project_Files]  # Addign metadata back again
         script_path:                qiime gneiss correlation-clustering
         # stop_and_show:
         

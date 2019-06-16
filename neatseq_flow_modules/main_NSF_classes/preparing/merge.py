@@ -234,13 +234,14 @@ class Step_merge(Step):
                           in sample_src
                           if src1 not in self.conserved_sample_types]
             sample_scope = ["sample"] * len(sample_src)
-
             # If sample data exists, store in 'src' and 'scope'
             # Do this only if one of the following:
                 # 1. 'scope' is not defined, or 
-                # 2. 'scope' is a string equal to 'sample' or
-                # 3. 'scope' is a list containing 'sample'.
+                # 2. 'scope' is a None or
+                # 3. 'scope' is a string equal to 'sample' or
+                # 4. 'scope' is a list containing 'sample'.
             if "scope" not in self.params \
+                or not self.params["scope"] \
                 or (isinstance(self.params["scope"],str) and self.params["scope"] == "sample") \
                 or (isinstance(self.params["scope"],list) and "sample" in self.params["scope"]):
                 src += sample_src
@@ -250,12 +251,14 @@ class Step_merge(Step):
             project_scope = ["project"] * len(project_src)
             # If project data exists, add to 'src' and 'scope'
             # Do this only if one of the following:
-                # 1. 'scope' is not defined, or 
+                # 1. 'scope' is not defined, or
+                # 2. 'scope' is None, or
                 # 2. 'scope' is a string equal to 'project' or
                 # 3. 'scope' is a list containing 'project'.
             if "scope" not in self.params \
-                or (isinstance(self.params["scope"],str) and self.params["scope"] == "project") \
-                or (isinstance(self.params["scope"],list) and "project" in self.params["scope"]):
+                    or not self.params["scope"] \
+                    or (isinstance(self.params["scope"],str) and self.params["scope"] == "project") \
+                    or (isinstance(self.params["scope"],list) and "project" in self.params["scope"]):
                 src = src + project_src
                 scope = scope + project_scope
 

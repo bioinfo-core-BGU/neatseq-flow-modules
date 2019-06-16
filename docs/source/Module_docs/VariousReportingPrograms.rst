@@ -18,3 +18,5 @@ Various Reporting Programs
 
 .. automodule:: neatseq_flow_modules.Liron.Tree_plot_module.Tree_plot
 
+.. automodule:: neatseq_flow_modules.Reports.BUSCO
+

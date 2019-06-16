@@ -5,20 +5,20 @@ RNA-Seq using a reference genome
 :Affiliation: Bioinformatics Core Facility
 :Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
 
-.. Note:: In order to use this Work-Flow first:
-
-    1. Install `NeatSeq-Flow <https://neatseq-flow.readthedocs.io/en/latest/Installation_guide.html#install-with-script>`_ using conda
-    2. Make sure that conda is in your **PATH**.
-    
-    
 .. contents:: Page Contents:
    :depth: 2
    :local:
    :backlinks: top
 
 
+.. Note:: In order to use this Work-Flow first:
+
+    1. Install `NeatSeq-Flow <https://neatseq-flow.readthedocs.io/en/latest/Installation_guide.html#install-with-script>`_ using conda
+    2. Make sure that conda is in your **PATH**.
     
-Steps:
+
+    
+Steps
 ~~~~~~~
 
 1. **Merge** Decompression and Concatenation (IF NEADED) of read files into single files per direction.
@@ -61,7 +61,7 @@ Programs required
 Example of Sample File
 ~~~~~~~~~~~~~~~~~~~~~~
 
-::
+Create a tab-delimited sample file. It should look as follows::
 
     Title	RNA_seq
 
@@ -75,8 +75,10 @@ Example of Sample File
     Sample2	Forward	/path/to/Sample2_F2.fastq.gz
     Sample2	Reverse	/path/to/Sample2_R2.fastq.gz
 
-Instructions 
-~~~~~~~~~~~~~~
+.. Note:: You can edit the file in excel but make sure to save it in tab-delimited format. See `this section of the manual <https://neatseq-flow.readthedocs.io/en/latest/02a.FileDefinition.html#sample-file-definition>`_ for a full description of the sample file format.
+
+Quick start with conda
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Install all the required programs in to a conda environment:**
 
@@ -84,7 +86,7 @@ Instructions
 
        .. code-block:: bash
 
-            curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/source/_extra/RNASeq_env_install.yaml
+            curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/_extra/RNASeq_env_install.yaml
             
 
     2. Create the RNASeq conda environment:
