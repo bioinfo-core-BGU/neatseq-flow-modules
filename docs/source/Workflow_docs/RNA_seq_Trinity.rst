@@ -161,19 +161,19 @@ For easy setup of the workflow, including a sample dataset, use the following in
     cp $CONDA_PREFIX/opt/trinity-2.8.4/Docker/test_data/reads.right.fq.gz 00.Raw_reads/
     cp $CONDA_PREFIX/opt/trinity-2.8.4/Docker/test_data/reads.left.fq.gz 00.Raw_reads/
 
-#. Create a sample file. It should look like the following, only the file names should be replaced with absolute file names::
+#. Get :download:`the sample file <../_extra/RNA_seq_Trinity_samples.nsfs>` with:
 
-        Title   Trinity_example
+   .. code-block:: bash
 
-        #SampleID       Type    Path
-        Sample1 Forward 00.Raw_reads/reads.left.fq.gz
-        Sample1 Reverse 00.Raw_reads/reads.right.fq.gz
+      curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/_extra/RNA_seq_Trinity_samples.nsfs
 
-   .. Tip:: To get the full path to a file, use the following command:
+#. Modify the paths in the sample file to the **correct full paths**.
 
-      .. code-block:: bash
+.. Tip:: If the raw read directory (``00.Raw_data``) and the sample file are in the same path, you can set the paths with the following sed command:
 
-         readlink -f 00.Raw_reads/reads.left.fq.gz
+   .. code-block:: bash
+
+      sed -i s+/path/to/+$PWD/+ RNA_seq_Trinity_samples.nsfs
 
 #. Get :download:`the parameter file <../../../Workflows/RNA_seq_Trinity.yaml>` with::
 
@@ -186,20 +186,21 @@ For easy setup of the workflow, including a sample dataset, use the following in
         echo $CONDA_EXE | sed -e 's/\/bin\/conda$//g'
 
 
-#. If you want to use Trinotate, create a directory for the required databases (this step takes some time to complete)::
+#. If you want to use Trinotate, create a directory for the required databases (this step takes some time to complete):
 
-    mkdir Trinotate_dbs;
-    Build_Trinotate_Boilerplate_SQLite_db.pl  Trinotate_dbs/Trinotate
+   .. code-block:: bash
+        mkdir Trinotate_dbs;
+        Build_Trinotate_Boilerplate_SQLite_db.pl  Trinotate_dbs/Trinotate
 
-    mv uniprot_sprot.* Trinotate_dbs/
-    mv Pfam-A.hmm.gz Trinotate_dbs/
-    cd Trinotate_dbs/
-    makeblastdb -in uniprot_sprot.pep -dbtype prot
-    gunzip Pfam-A.hmm.gz
-    hmmpress Pfam-A.hmm
-    cd -
+        mv uniprot_sprot.* Trinotate_dbs/
+        mv Pfam-A.hmm.gz Trinotate_dbs/
+        cd Trinotate_dbs/
+        makeblastdb -in uniprot_sprot.pep -dbtype prot
+        gunzip Pfam-A.hmm.gz
+        hmmpress Pfam-A.hmm
+        cd -
 
-.. Attention:: If you already have the Trinotate databases downloaded and setup, you do not have to do the last steps. You can set the paths to the databases in the ``databases`` subsection of the ``Vars`` section in the parameter file.
+    .. Attention:: If you already have the Trinotate databases downloaded and setup, you do not have to do the last steps. You can set the paths to the databases in the ``databases`` subsection of the ``Vars`` section in the parameter file.
 
 #. If you want to use BUSCO:
 
@@ -208,5 +209,11 @@ For easy setup of the workflow, including a sample dataset, use the following in
         curl -L -o config.ini https://gitlab.com/ezlab/busco/raw/master/config/config.ini.default
 
     #. Set the Vars.databases.BUSCO variable to the URL or the BUSCO dataset to use. Choose a URL from this list: `<https://busco.ezlab.org/frame_wget.html>`_.
+
+#. Deactivate the RNA_trinity environment:
+
+   .. code-block:: bash
+
+        conda deactivate
 
 #. `Execute NeatSeq-Flow  <https://neatseq-flow.readthedocs.io/en/latest/02b.execution.html#executing-neatseq-flow>`_.

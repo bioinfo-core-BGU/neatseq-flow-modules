@@ -12,6 +12,8 @@ Microbiome analysis using QIIME2
    :local:
    :backlinks: top
 
+.. Attention:: This workflow is in active development!
+
 Captive and Wild Atlantic Salmon project
 --------------------------------------------
 
@@ -86,6 +88,7 @@ Requires
    .. code-block:: bash
 
       sed -i s+/path/to/+$PWD/16S_reads_salmo_salar_V3_V4_gut_microbiota/+ qiime2.samples.salmon.yaml
+
 
 Programs required
 ~~~~~~~~~~~~~~~~~~

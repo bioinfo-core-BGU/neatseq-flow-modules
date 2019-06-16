@@ -20,12 +20,12 @@ Vars:
         dbsnp:              /path/to/gatk/bundle/b37/dbsnp_138.b37.vcf
         VEP_cache:          /path/to/VEP/ensembl-vep-release-88.10/cache
 Step_params:
-    merge1:
+    Merge:
         module: merge
         script_path: gzip -cd
-    trim1:
+    Trimmomatic:
         module: trimmo
-        base: merge1
+        base: Merge
         script_path: '{Vars.path.java} -jar {Vars.paths.trimmo.path}'
         qsub_params:
             -pe: shared 20
@@ -35,7 +35,7 @@ Step_params:
             -threads: 20
     fQC_trim:
         module: fastqc_html
-        base: trim1
+        base: Trimmomatic
         script_path: {Vars.paths.fastq}
         qsub_params:
             -pe: shared 20
@@ -67,7 +67,7 @@ Step_params:
             -pe:      shared 15
         redirects:
             -nct: 15
-    Picard_CollectAlignmentSummaryMatrics1:
+    Picard_CollectAlignmentSummaryMatrics:
         module: Picard_CollectAlignmentSummaryMatrics
         base: GATK_pre_processing
         script_path: '{Vars.paths.java} -jar {Vars.paths.picard}'
@@ -79,15 +79,15 @@ Step_params:
         genome_reference:    {Vars.databases.genome_reference}
         cohort_size: 10
         chrom_list: "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT" 
-    GenotypeGVCFs1:
+    GenotypeGVCFs:
         module: GenotypeGVCFs
         base: gatk_merge_gvcf
         script_path:     '{Vars.paths.java} -jar {Vars.paths.GATK}'
         chrom_list: "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT" 
         genome_reference:   {Vars.databases.genome_reference} 
-    GATK_hard_filters1:
+    GATK_Hard_Filters:
         module: GATK_hard_filters 
-        base: GenotypeGVCFs1
+        base: GenotypeGVCFs
         script_path:     '{Vars.paths.java} -jar {Vars.paths.GATK}'
         genome_reference:   {Vars.databases.genome_reference}
         chrom_list: "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT" 
@@ -95,7 +95,7 @@ Step_params:
         filterExpression_INDEL: '"QD < 2.0 || ReadPosRankSum < -20.0 || FS > 200.0 || SOR > 10.0 || InbreedingCoeff < -0.8"'
     VEP1:
         module: VEP 
-        base: GATK_hard_filters1
+        base: GATK_Hard_Filters
         script_path: {Vars.paths.VEP}
         chrom_list: "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT" 
         redirects:
@@ -111,9 +111,9 @@ Step_params:
             --symbol: null
             --force_overwrite: null
             --vcf: null
-    Picard_CollectVariantCalling1:
+    Picard_CollectVariantCalling:
         module: Picard_CollectVariantCalling 
-        base: GATK_hard_filters1
+        base: GATK_Hard_Filters
         script_path: '{Vars.paths.java} -jar {Vars.paths.picard}'
         DBSNP:      {Vars.databases.dbsnp}
         chrom_list: "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT" 
@@ -125,7 +125,7 @@ Step_params:
         genome_reference:   {Vars.databases.genome_reference}
         redirects:
             --setFilteredGtToNocall: null
-    GATK_CatVariants1:
+    GATK_CatVariants:
         module: GATK_CatVariants
         base: GATK_SelectVariants_VEPfiltered
         script_path:     '{Vars.paths.java} -jar {Vars.paths.GATK} org.broadinstitute.gatk.tools.CatVariants'
