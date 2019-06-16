@@ -4,6 +4,12 @@
 
 [![Documentation Status](https://readthedocs.org/projects/neatseq-flow-modules/badge/?version=latest)](http://neatseq-flow-modules.readthedocs.io/en/latest/?badge=latest)
 
+<!-- [![Github All Releases](https://img.shields.io/github/downloads/sklarz-bgu/neatseq-flow-modules/total.svg)]() -->
+<!-- ![GitHub release](https://img.shields.io/github/release-pre/sklarz-bgu/neatseq-flow-modules.svg) -->
+<!-- ![GitHub repo size](https://img.shields.io/github/repo-size/sklarz-bgu/neatseq-flow-modules.svg) -->
+<!-- ![GitHub top language](https://img.shields.io/github/languages/top/sklarz-bgu/neatseq-flow-modules.svg) -->
+<!-- ![GitHub last commit](https://img.shields.io/github/last-commit/sklarz-bgu/neatseq-flow-modules.svg) -->
+
 
                 
 
