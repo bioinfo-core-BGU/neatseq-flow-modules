@@ -569,11 +569,14 @@ class Step_merge(Step):
                 # Changing extension to value set in unzipped file in sample file, if the 'zip_ext' column is True
                 # in "merge_script_path_types"
                 first_file_ext = os.path.splitext(self.sample_data[sample][src][0])[1]
-
-                # Testing that: (a) ext exists in scritp_path_map; (b) it has at least 3 fields and
-                # (c) the last field is True
                 if not ext or ext == "..guess..":
+                    # If ext is a zipped type, finding the type to unzip to:
+                    # Testing that: (a) ext exists in script_path_map;
+                    # (b) it is a list in script_path_map
+                    # (c) it has at least 3 fields and
+                    # (d) the last field is True
                     if first_file_ext in self.script_path_map and \
+                            isinstance(self.script_path_map[first_file_ext],list) and \
                             len(self.script_path_map[first_file_ext])>=3 and \
                             self.script_path_map[first_file_ext][2]:
                         first_file = os.path.splitext(self.sample_data[sample][src][0])[0]
@@ -581,13 +584,14 @@ class Step_merge(Step):
                             # Add other limits on ext, in case the filename has a "." in it., such as length < 5
                             ext = os.path.splitext(first_file)[1].lstrip(".")
                     else:
+                        # Guess based on src type:
                         try:
                             ext = self.default_src_trg_map[src][1]
                         except KeyError:
+                            # Guess based on raw file types:
                             ext = first_file_ext.lstrip(".")
                             self.write_warning("src '{src}' is not recognized. Setting 'ext' to type of first file "
                                                "({ext}).".format(src=src,ext=ext))
-                        print(ext)
 
                 fq_fn = ".".join([sample_title, src, self.file_tag,ext])
 
