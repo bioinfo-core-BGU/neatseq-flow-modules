@@ -8,52 +8,55 @@ Description: |
     The data for the workflow is available on `datadryad <https://datadryad.org/resource/doi:10.5061/dryad.5ff8m0q>`_.
     
 Global_params:
-    Default_wait: 10
-    Qsub_opts: -V -cwd
-    Qsub_q: bioinfo.q
-    Qsub_nodes:         [sge1030,sge1031,sge1032,sge1033,sge213,sge214,sge224,sge37]
-    Qsub_path: /storage/SGE6U8/bin/lx24-amd64
+    Default_wait:   10
+    Qsub_opts:      -V -cwd -notify
+    Qsub_q:         queue.q
+    Qsub_nodes:     
+    Qsub_path:      /storage/SGE6U8/bin/lx24-amd64
     conda:
-        path:   /gpfs0/bioinfo/users/sklarz/my_conda_envs_envs/qiime2-2018.11
-        env:    qiime2-2018.11
-    module_path:  ../neatseq_flow_modules
+        path:   {Vars.conda.path}
+        env:    {Vars.conda.env}    
+    module_path:    ../neatseq_flow_modules
+    setenv:         'LD_LIBRARY_PATH="{Vars.conda.env}/lib:$$LD_LIBRARY_PATH" R_LIBS="{Vars.conda.env}/lib/R/library"'
 
 Vars:
+    conda:  
+        path:
+        env:            qiime2-2019.4
     paths:
-        fastqc:         /gpfs0/bioinfo/apps/FastQC/FastQC_v0.11.7/fastqc
-        multiqc:        /gpfs0/bioinfo/apps/multiQC/multiQC_v1.4/multiqc
-        trimgal:        /gpfs0/bioinfo/apps/TrimGalore/TrimGalore-0.4.5/trim_galore
-        cutadapt:       /fastspace/bioinfo_apps/cutadapt/cutadapt_v1.12.1/cutadapt
+        fastqc:         fastqc
+        multiqc:        multiqc
+        trimgal:        trim_galore
+        cutadapt:       cutadapt
     QIIME:
-        classifier:   https://data.qiime2.org/2018.11/common/gg-13-8-99-515-806-nb-classifier.qza
-        metadata:       https://github.com/bioinfo-core-BGU/neatseq-flow-modules/blob/devel/docs/source/_extra/QIIME2/qiime2.metadata.salmon.tsv
-        sampling_depth: 5684
+        classifier:     https://data.qiime2.org/2019.4/common/gg-13-8-99-515-806-nb-classifier.qza
+        sampling_depth: XXXX
         type:           SampleData[PairedEndSequencesWithQuality]   # For single end reads, 'SampleData[SequencesWithQuality]'
         input_format:   PairedEndFastqManifestPhred33   # Note: use the correct format! XXXEndFastqManifestPhredYYY where XXX is 'Paired' or 'Single' and YYY is '33' or '64'.
         dada2_method:   denoise-single   # For paired-end reads, you can use 'denoise-paired'. 
     
 Step_params:
+    # Get the reads and metadata file
     MergeReads:
         module:         merge
         scope:          
         script_path:
         tag:            QC
+        stop_and_show:
 
+    # Get the classifier object
     Get_Project_Files:
         module:         Fillout_Generic
         base:           MergeReads
         scope:          project
         script_path:    |
-            curl -L https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/devel/docs/source/_extra/QIIME2/qiime2.metadata.salmon.tsv > {{o:metadata}}
-            curl -L https://data.qiime2.org/2018.11/common/gg-13-8-99-515-806-nb-classifier.qza > {{o:TaxonomicClassifier}}
+            curl -L {Vars.QIIME.classifier} > {{o:TaxonomicClassifier}}
         output:
-            metadata:
-                scope:  project
-                string: "{{base_dir}}/{{project}}metadata.tsv"
             TaxonomicClassifier:
                 scope:  project
                 string: "{{base_dir}}/{{project}}classifier.qza"
-
+        # stop_and_show:
+        
     FastQC_Merge:
         module:         fastqc_html
         base:           Get_Project_Files
@@ -63,7 +66,9 @@ Step_params:
             -pe:        shared 15
         redirects:
             --threads:  15
-
+        conda:  
+            path:
+            env:        QC
     TrimGalore: 
         module:         Trim_Galore
         base:           Get_Project_Files
@@ -75,6 +80,10 @@ Step_params:
             --quality:  20 # Parameters for running Trim Galore
             --max_n:    1
             --trim-n:
+        conda:  
+            path:
+            env:        QC
+
     FastQC_TrimGal:
         module:         fastqc_html
         base:           TrimGalore
@@ -84,7 +93,9 @@ Step_params:
             -pe:        shared 15
         redirects:
             --threads:  15
-        conda:
+        conda:  
+            path:
+            env:        QC
 
     MultiQC_TrimGal:
         module:         Multiqc
@@ -92,20 +103,14 @@ Step_params:
         script_path:    {Vars.paths.multiqc}        
         redirects:
             --interactive:
+        conda:  
+            path:
+            env:        QC
 
-    # AddMetadata:
-        # module:             manage_types
-        # base:               MergeReads
-        # script_path:        
-        # scope:              project
-        # operation:          add
-        # type:               metadata
-        # path:               {Vars.QIIME.metadata} 
-        
     
     import:
         module:                     qiime2_import
-        base:                       TrimGalore  #,AddMetadata]
+        base:                       TrimGalore  
         script_path:                qiime tools import
         tag:                        qiime
         redirects:
@@ -123,10 +128,9 @@ Step_params:
         module:                     qiime2_general
         base:                       import
         script_path:                'qiime dada2 {Vars.QIIME.dada2_method}'
-        setenv:                     R_LIBS="$CONDA_PREFIX/lib/R/library"
         qsub_params:
             -pe:            shared 60
-        export:
+        export_o_params:
             - --o-denoising-stats
         redirects:
             --p-trunc-q:           20 
@@ -142,13 +146,13 @@ Step_params:
         module:                     qiime2_general
         base:                       dada2
         script_path:                qiime feature-table summarize
-        export:
+        export_o_params:
                     
     dada2_vis_tabulate:
         module:                     qiime2_general
         base:                       dada2
         script_path:                qiime feature-table tabulate-seqs 
-        export:
+        export_o_params:
         
     # Filtering out features in less than halp the samples
     remove_metadata:                # Sample metadata interferes with filter...
@@ -171,13 +175,13 @@ Step_params:
         module:                     qiime2_general
         base:                       filter_feature_table
         script_path:                qiime feature-table summarize
-        export:
+        export_o_params:
                     
     filtered_vis_tabulate:
         module:                     qiime2_general
         base:                       filter_feature_table
         script_path:                qiime feature-table tabulate-seqs 
-        export:
+        export_o_params:
         
             
     phylogeny:
@@ -190,6 +194,7 @@ Step_params:
         module:                     qiime2_general
         base:                       phylogeny
         script_path:                qiime diversity core-metrics-phylogenetic
+        tag:                        needs_sampling_depth
         store_output:
             - --o-rarefied-table
             - --o-faith-pd-vector       # Faith's PD is stored in 'SampleData[AlphaDiversity]' slot
@@ -205,6 +210,7 @@ Step_params:
         module:                     qiime2_general
         base:                       phylogeny   # diversity
         script_path:                qiime diversity alpha-rarefaction
+        tag:                        needs_sampling_depth
         redirects:
             --p-max-depth:          {Vars.QIIME.sampling_depth}
             --p-metrics:            [faith_pd,chao1,shannon,observed_otus]

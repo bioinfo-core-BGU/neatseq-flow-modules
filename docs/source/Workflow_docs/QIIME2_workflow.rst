@@ -97,6 +97,14 @@ Programs required
 
 .. Attention:: Download the parameter file in the link below and set the conda ``path`` in the ``Global_params`` section to the location of your conda installation, not including ``bin``. *e.g.*, if using the default location of miniconda, the path should be ``$HOME/miniconda2``. The ``env`` in the same section should be the name of the qiime environment, typically something like *qiime2-2018.11*.
 
+* ``fastqc``, ``multiqc``, ``TrimGalore!`` and ``cutadapt`` which are not included in the qiime2 environment. All of these can be installed in a separate conda environment with:
+
+   .. code-block:: bash
+
+      curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/_extra/QC_conda.yaml
+      conda env create -f QC_conda.yaml
+
+   You can also :download:`download the file from here <../_extra/QC_conda.yaml>`
 
 Download
 ~~~~~~~~~
