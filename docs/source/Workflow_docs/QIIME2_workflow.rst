@@ -93,7 +93,7 @@ Requires
 Programs required
 ~~~~~~~~~~~~~~~~~~
 
-* `QIIME2 <https://qiime2.org/>`_, version 2018.11, `installed with conda as described here <https://docs.qiime2.org/2018.11/install/native/#natively-installing-qiime-2>`_.
+* `QIIME2 <https://qiime2.org/>`_, version 2019.4, `installed with conda as described here <https://docs.qiime2.org/2019.4/install/native/#natively-installing-qiime-2>`_.
 
 .. Attention:: Download the parameter file in the link below and set the conda ``path`` in the ``Global_params`` section to the location of your conda installation, not including ``bin``. *e.g.*, if using the default location of miniconda, the path should be ``$HOME/miniconda2``. The ``env`` in the same section should be the name of the qiime environment, typically something like *qiime2-2018.11*.
 
