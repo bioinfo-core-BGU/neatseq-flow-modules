@@ -44,9 +44,9 @@ Parameters that can be set
     :header: "Parameter", "Values", "Comments"
 
     "store_output", "list of output parameters", "These parameters will be stored as file types for use by downstream modules"
-    "export", "empty or list of output parameters", "If empty, all outputs will be exported, *i.e.* unzipped with qiime tools export. If list of parameters, only those types will be exported."
+    "export_o_params", "empty or list of output parameters", "If empty, all outputs will be exported, *i.e.* unzipped with qiime tools export. If list of parameters, only those types will be exported."
 
-    
+
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -56,7 +56,7 @@ DADA2 plugin, with export of stats output::
         module:                     qiime2_general
         base:                       import
         script_path:                qiime dada2 denoise-single #paired
-        export:
+        export_o_params:
             - --o-denoising-stats
         redirects:
             --p-trim-left:         10
@@ -75,7 +75,7 @@ Store only particular outputs in type index::
         module:                     qiime2_general
         base:                       phylogeny
         script_path:                qiime diversity core-metrics-phylogenetic
-        export:                     --o-rarefied-table
+        export_o_params:                     --o-rarefied-table
         store_output:
             - --o-rarefied-table
             - --o-faith-pd-vector
@@ -338,9 +338,9 @@ if [ -e {dir}{outdir} ]; then rm -rf {dir}{outdir}; fi
                                                                                    ext="qzv" if typ == "Visualization" else "qza",
                                                                                    outp=edit_qiime_params(outp))
             self.stamp_file(self.sample_data[sample][typ])
-            if "export" in self.params: # and not outp == "--o-visualization":
-                if not self.params["export"] or outp in self.params["export"]:
-                    # Adding export code if requested
+            if "export_o_params" in self.params: # and not outp == "--o-visualization":
+                if not self.params["export_o_params"] or outp in self.params["export_o_params"]:
+                    # Adding export_o_params code if requested
                     self.script += """
 qiime tools export \\
     --input-path {inppath} \\
