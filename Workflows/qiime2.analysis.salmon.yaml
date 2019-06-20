@@ -11,7 +11,7 @@ Global_params:
     Default_wait:   10
     Qsub_opts:      -V -cwd -notify
     Qsub_q:         queue.q
-    Qsub_nodes:     
+    # Qsub_nodes:     
     Qsub_path:      /storage/SGE6U8/bin/lx24-amd64
     conda:
         path:   {Vars.conda.path}
