@@ -38,8 +38,8 @@ Vars:
 Step_params:
     # Get the reads and metadata file
     MergeReads:
-        module:         merge
-        scope:          
+        module:   Import
+        scope:
         script_path:
         tag:            QC
         stop_and_show:

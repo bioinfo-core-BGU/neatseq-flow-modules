@@ -29,7 +29,7 @@ Vars:
         trimmo:             /path/to/trimmomatic
 Step_params:
     merge1:
-        module:             merge
+        module:   Import
         script_path:        {Vars.paths.merge}
     fqc_merge1:
         module:             fastqc_html

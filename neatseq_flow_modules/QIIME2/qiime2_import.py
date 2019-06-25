@@ -67,8 +67,8 @@ Importing paired end reads::
 Importing internal types::
 
     merge_data:
-        module:         merge
-        src:            EMPSingleEndSequences
+        module:   Import
+       src:            EMPSingleEndSequences
         trg:            EMPSingleEndSequences
         script_path:    ..import..
         scope:          project

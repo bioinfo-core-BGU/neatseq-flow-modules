@@ -93,7 +93,7 @@ Step_params:
     # -------------------- Part 1: Merging and QC
     # Copy and concatenate files into data directory:
     Merge:
-        module:             merge
+        module:   Import
         script_path:
         tag:                QC
     # FastQC on the files
@@ -151,7 +151,7 @@ Step_params:
         script_path:        '{Vars.paths.Trinity}'
         qsub_params:
             -pe:            '{Vars.cluster_params.pe} 20'
-        scope:              sample  #project
+        scope:              project
         setenv:             PERL5LIB=""
         get_Trinity_gene_to_trans_map:  '{Vars.paths.trinity_scripts}get_Trinity_gene_to_trans_map.pl'
         redirects:

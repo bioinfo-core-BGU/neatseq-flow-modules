@@ -84,8 +84,8 @@ Vars:
 Step_params:
 
     Merge:
-        module: merge
-        script_path: 
+        module:   Import
+        script_path:
 
     FastQC_Merge:
         module: fastqc_html

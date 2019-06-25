@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<script src="WorkflowGraph_files/htmlwidgets-1.3/htmlwidgets.js"></script>
+<script src="WorkflowGraph_files/viz-0.3/viz.js"></script>
+<link href="WorkflowGraph_files/DiagrammeR-styles-0.2/styles.css" rel="stylesheet" />
+<script src="WorkflowGraph_files/grViz-binding-1.0.0/grViz.js"></script>
+  <title>SalmonGut</title>
+</head>
+<body style="background-color:white;">
+<div id="htmlwidget_container">
+  <div id="htmlwidget-3598d0f648644b1411fe" style="width:960px;height:500px;" class="grViz html-widget"></div>
+</div>
+<script type="application/json" data-for="htmlwidget-3598d0f648644b1411fe">{"x":{"diagram":"\ndigraph a_nice_graph {\n      \ntooltip = \"Graph for workflow SalmonGut\"\n\n# node definitions with substituted label text\nnode [shape = egg, style = filled, fontname = Helvetica]\n1 [label = \"MergeReads\n(merge)\", fillcolor = lightskyblue3 ]\n2 [label = \"FastQC_Merge\n(fastqc_html)\", fillcolor = lightpink2 ]\n3 [label = \"Get_Project_Files\n(Fillout_Generic)\", fillcolor = plum3 ]\n4 [label = \"TrimGalore\n(Trim_Galore)\", fillcolor = burlywood3 ]\n5 [label = \"FastQC_TrimGal\n(fastqc_html)\", fillcolor = lightpink2 ]\n6 [label = \"import\n(qiime2_import)\", fillcolor = pink2 ]\n7 [label = \"MultiQC_TrimGal\n(Multiqc)\", fillcolor = mediumturquoise ]\n8 [label = \"dada2\n(qiime2_general)\", fillcolor = darkseagreen ]\n9 [label = \"sequence_qual\n(qiime2_general)\", fillcolor = darkseagreen ]\n10 [label = \"ANCOM_mk_composition\n(qiime2_general)\", fillcolor = darkseagreen ]\n11 [label = \"dada2_vis_summary\n(qiime2_general)\", fillcolor = darkseagreen ]\n12 [label = \"dada2_vis_tabulate\n(qiime2_general)\", fillcolor = darkseagreen ]\n13 [label = \"phylogeny\n(qiime2_general)\", fillcolor = darkseagreen ]\n14 [label = \"remove_metadata\n(manage_types)\", fillcolor = gray , style = dashed]\n15 [label = \"ANCOM\n(qiime2_general)\", fillcolor = darkseagreen ]\n16 [label = \"alpha_rarefaction\n(qiime2_general)\", fillcolor = darkseagreen ]\n17 [label = \"classify\n(qiime2_general)\", fillcolor = darkseagreen ]\n18 [label = \"diversity\n(qiime2_general)\", fillcolor = darkseagreen ]\n19 [label = \"filter_feature_table\n(qiime2_general)\", fillcolor = darkseagreen ]\n20 [label = \"alpha_group_signif\n(qiime2_general)\", fillcolor = darkseagreen ]\n21 [label = \"classify_plot\n(qiime2_general)\", fillcolor = darkseagreen ]\n22 [label = \"classify_tabulate\n(qiime2_general)\", fillcolor = darkseagreen ]\n23 [label = \"filtered_vis_summary\n(qiime2_general)\", fillcolor = darkseagreen ]\n24 [label = \"filtered_vis_tabulate\n(qiime2_general)\", fillcolor = darkseagreen ]\n25 [label = \"gneiss_cor_clust\n(qiime2_general)\", fillcolor = darkseagreen ]\n26 [label = \"gneiss_ilr_clust\n(qiime2_general)\", fillcolor = darkseagreen ]\n27 [label = \"gneiss_ols_reg\n(qiime2_general)\", fillcolor = darkseagreen ]\n28 [label = \"gneiss_heatmap\n(qiime2_general)\", fillcolor = darkseagreen ]\n29 [label = \"gneiss_balance_taxonomy\n(qiime2_general)\", fillcolor = darkseagreen ]\n\n# edge definitions with the node IDs\n1 -> 2\n1 -> 3\n1 -> 4\n4 -> 5\n4 -> 6\n5 -> 7\n6 -> 8\n6 -> 9\n8 -> 10\n8 -> 11\n8 -> 12\n8 -> 13\n8 -> 14\n10 -> 15\n13 -> 16\n8 -> 17\n3 -> 17\n13 -> 18\n14 -> 19\n18 -> 20\n17 -> 21\n17 -> 22\n19 -> 23\n19 -> 24\n19 -> 25\n1 -> 25\n25 -> 26\n26 -> 27\n27 -> 28\n27 -> 29\n17 -> 29\n}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+<script type="application/htmlwidget-sizing" data-for="htmlwidget-3598d0f648644b1411fe">{"viewer":{"width":450,"height":350,"padding":15,"fill":true},"browser":{"width":960,"height":500,"padding":40,"fill":false}}</script>
+</body>
+</html>

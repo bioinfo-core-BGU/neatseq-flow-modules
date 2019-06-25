@@ -23,8 +23,9 @@ Description: |
 
 Step_params:
     merge1:
-        module:         merge
+        module:   Import
         script_path:    {Vars.paths.merge}
+        # stop_and_show:
     derepel1:
         module:         vsearch_derepel
         base:           merge1

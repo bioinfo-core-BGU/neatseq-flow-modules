@@ -119,7 +119,7 @@ class Step_vsearch_derepel(Step):
                         self.write_warning("Both 'nucl' and 'fastq.S' exist and no 'source' param passed. Using 'nucl'")
                         self.params["source"] = "fasta.nucl"
                 if "fasta.nucl" not in self.sample_data[sample] and "fastq.S" not in self.sample_data[sample]:
-                    raise AssertionExcept("Neither 'nucl' nor 'fastq.S' exist!",sample)
+                    raise AssertionExcept("Neither 'fasta.nucl' nor 'fastq.S' exist!",sample)
                 if "fasta.nucl" in self.sample_data[sample]:
                     self.params["source"] = "fasta.nucl"
                 if "fastq.S" in self.sample_data[sample]:

@@ -32,7 +32,7 @@ Vars:
         STAR_index:         /path/to/GRCh38_STARind/            # Directory in which STAR index was created
 Step_params:
     merge1:
-        module:             merge
+        module:   Import
         script_path:        {Vars.paths.merge}
     trim1:
         module:             trimmo

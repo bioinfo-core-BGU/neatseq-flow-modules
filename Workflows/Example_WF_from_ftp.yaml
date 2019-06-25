@@ -48,7 +48,7 @@ Vars:
 Step_params:
 
     Merge:
-        module:         merge 
+        module:    Import
         script_path:    echo -n   
         pipe:           xargs -0 -d " " curl | gzip -cd 
         redirects:

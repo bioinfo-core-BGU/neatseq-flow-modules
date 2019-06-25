@@ -98,7 +98,7 @@ Step_params:
     ##Preprocessing
 
     Merge:        
-        module:         merge
+        module:   Import
         script_path:
         
     Trim_Galore:

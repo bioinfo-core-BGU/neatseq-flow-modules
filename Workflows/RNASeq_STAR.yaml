@@ -44,8 +44,8 @@ Vars:
     min_quality: '25'
 Step_params:
   Merge:
-    module: merge
-    script_path: 
+    module:   Import
+   script_path:
   FastQC_Merge:
     base: Merge
     module: fastqc_html

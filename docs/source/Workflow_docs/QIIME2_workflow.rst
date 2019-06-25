@@ -76,6 +76,12 @@ Workflow Schema
 .. image:: QIIME2_workflow_Salmon.jpg
    :alt: QIIME2 Salmon workflow scheme
 
+.. .. raw:: html
+
+..    <iframe src="../_static/WorkflowGraph.html" marginwidth="0" marginheight="0" scrolling="no" style="width:960px; height:600px; border:0; overflow:hidden;">
+..    </iframe>
+
+
 .. _requires:
 
 Requires

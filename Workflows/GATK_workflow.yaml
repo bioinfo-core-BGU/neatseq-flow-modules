@@ -21,7 +21,7 @@ Vars:
         VEP_cache:          /path/to/VEP/ensembl-vep-release-88.10/cache
 Step_params:
     Merge:
-        module: merge
+        module:   Import
         script_path: gzip -cd
     Trimmomatic:
         module: trimmo
