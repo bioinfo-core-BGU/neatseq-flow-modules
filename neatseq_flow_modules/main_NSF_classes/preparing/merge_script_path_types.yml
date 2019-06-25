@@ -1,4 +1,7 @@
 # extension    script_path or [script_path,pipe,zip_ext]
+.txt:    cat
+.tsv:    cat
+.csv:    cat
 .fasta:  cat
 .faa:    cat
 .fna:    cat
