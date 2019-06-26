@@ -31,7 +31,7 @@ Vars:
 Step_params:
 ############################ 1. merge and QC
     Merge_smp:
-        module:             merge
+        module:   Import
         script_path:        {Vars.paths.merge}
         src:                [Nucleotide, Protein, BED]
         trg:                [null,null   ,bed]
@@ -41,7 +41,7 @@ Step_params:
         
         
     Merge_prj:
-        module:             merge
+        module:   Import
         script_path:        {Vars.paths.merge}
         src:                [Nucleotide, Protein, BED]
         trg:                [null,null   ,bed]

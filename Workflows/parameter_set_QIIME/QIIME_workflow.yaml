@@ -55,7 +55,7 @@ Vars:
         id_to_taxonomy:     /path/to/majority_taxonomy_7_levels.txt
 Step_params:
     merge1:                            
-        module:             merge
+        module:   Import
         script_path:        {Vars.paths.merge}
     fQC_merge:
         module:             fastqc_html

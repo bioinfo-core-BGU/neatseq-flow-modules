@@ -45,7 +45,7 @@ Vars:
 Step_params:
 ############################ 1. merge and QC
     merge_reads:
-        module:             merge
+        module:   Import
         script_path:        {Vars.paths.merge}
     fqc_merge:
         module:             fastqc_html

@@ -1,9 +1,8 @@
 Title	SalmonGut	
 		
 		
-# #Type	Path	
-# metadata	https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/devel/docs/source/_extra/QIIME2/qiime2.metadata.salmon.yaml
-# TaxonomicClassifier	https://data.qiime2.org/2018.11/common/gg-13-8-99-515-806-nb-classifier.qza	
+#Type	Path	
+metadata	qiime2.metadata.salmon.tsv
 		
 		
 #SampleID	Type	Path

@@ -35,7 +35,7 @@ Vars:
             table:      /path/to/uniprot_sprot.tsv
 Step_params:
     merge_nucl:
-        module:             merge
+        module:   Import
         script_path:        {Vars.paths.merge}
 ############################ 1. BLAST db construction
     mkblst_nucl:

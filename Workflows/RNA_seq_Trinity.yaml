@@ -64,6 +64,7 @@ Vars:
         fastqc:             fastqc
         trimmomatic:        trimmomatic
         Trinity:            Trinity
+        TrinityStats:       TrinityStats.pl
         get_Trinity_gene_to_trans_map: get_Trinity_gene_to_trans_map.pl
         trinity_scripts:    ""
         BUSCO:              run_BUSCO.py
@@ -92,7 +93,7 @@ Step_params:
     # -------------------- Part 1: Merging and QC
     # Copy and concatenate files into data directory:
     Merge:
-        module:             merge
+        module:   Import
         script_path:
         tag:                QC
     # FastQC on the files
@@ -159,6 +160,9 @@ Step_params:
             --max_memory:       10G
             --SS_lib_type:      RF
             # --full_cleanup:
+        TrinityStats:
+            path:           {Vars.paths.TrinityStats}
+            
         # stop_and_show:
         
     # Map the reads to the assembly

@@ -274,6 +274,10 @@ class Step_STAR_mapper(Step):
                     self.params["redir_params"]["--genomeDir"] = self.sample_data[sample]["STAR.index"]
                 else:   
                     self.params["redir_params"]["--genomeDir"] = self.sample_data["project_data"]["STAR.index"]
+            self.script += """
+if [ -e {tmpdir} ]; then 
+    rm -rf {tmpdir}; 
+fi\n\n""".format(tmpdir=use_dir+"STAR_tmp")
 
             # Get constant part of script:
             self.script += self.get_script_const()

@@ -17,7 +17,7 @@ Step_params:
     # 2. metadata is imported using 'cat' 
     # 3. TaxonomicClassifier is imported with curl -L, because it is a remote file
     merge_data:
-        module:         merge
+        module:   Import
         src:            [EMPSingleEndSequences, metadata, TaxonomicClassifier]
         trg:            [EMPSingleEndSequences, metadata, TaxonomicClassifier]
         script_path:    [..import.., cat, 'curl -L']

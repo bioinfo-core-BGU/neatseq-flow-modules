@@ -189,6 +189,7 @@ For easy setup of the workflow, including a sample dataset, use the following in
 #. If you want to use Trinotate, create a directory for the required databases (this step takes some time to complete):
 
    .. code-block:: bash
+
         mkdir Trinotate_dbs;
         Build_Trinotate_Boilerplate_SQLite_db.pl  Trinotate_dbs/Trinotate
 

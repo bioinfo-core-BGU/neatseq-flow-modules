@@ -56,6 +56,7 @@ Parameters that can be set
     "scope", "sample|project", "Set if project-wide fasta slot should be used"
     "skip_gene_to_trans_map", "", "Set to skip construction of the transcript map. You can use a dedicated module, ``Trinity_gene_to_trans_map``. Both put the map in the same slot (gene_trans_map)"
     "get_Trinity_gene_to_trans_map", "", "Path to get_Trinity_gene_to_trans_map.pl. If not passed, will try guessing from Trinity path"
+    "TrinityStats", "", "block with 'path:' set to `TrinityStats.pl` executable"
 
 
     
@@ -79,6 +80,8 @@ Lines for parameter file
             --seqType:          fq
             --min_kmer_cov:     2
             --full_cleanup:
+        TrinityStats:
+            path:           {Vars.paths.TrinityStats}
 
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -163,11 +166,11 @@ class Step_trinity(Step):
             self.script = ""
 
             # Make a dir for the current sample:
-            # sample_dir = self.make_folder_for_sample()
+            sample_dir = self.make_folder_for_sample(sample)
 
             # This line should be left before every new script. It sees to local issues.
             # Use the dir it returns as the base_dir for this step.
-            use_dir = self.local_start(self.base_dir)
+            use_dir = self.local_start(sample_dir)
 
             # Adding 'trinity' to output dir:
             # "output directory must contain the word 'trinity' as a safety precaution, given that auto-deletion can take place."
@@ -227,232 +230,29 @@ class Step_trinity(Step):
             # If there is an extra "\\\n\t" at the end of the script, remove it.
             self.script = self.script.rstrip("\\\n\t") + "\n\n"
 
+            if "TrinityStats" in self.params:
+                self.script += """  
+{TrinityStats} \\
+    {fasta} \\
+    > {fasta_stats}
+""".format(TrinityStats=self.params["TrinityStats"]["path"],
+           fasta=use_dir + ".".join([output_basename, "Trinity.fasta"]),
+           fasta_stats=use_dir + ".".join([output_basename, "Trinity.fasta.stats"]),)
+                self.sample_data[sample]["trinity.stats"] = ".".join([sample_dir, output_basename, "Trinity.fasta.stats"])
+
             # Store results to fasta and assembly slots:
             # transcriptome = os.path.join(output_basename, "Trinity.fasta")
             transcriptome = ".".join([output_basename, "Trinity.fasta"])
-            self.sample_data[sample]["fasta.nucl"] = os.path.join(self.base_dir, transcriptome)
+            self.sample_data[sample]["fasta.nucl"] = os.path.join(sample_dir, transcriptome)
             self.sample_data[sample][self.get_step_step() + ".contigs"] = self.sample_data[sample]["fasta.nucl"]
 
             self.stamp_file(self.sample_data[sample]["fasta.nucl"])
 
             # Created automatically by trinity:
-            self.sample_data[sample]["gene_trans_map"] = "{contigs}.gene_trans_map".format(contigs=os.path.join(self.base_dir, transcriptome))
+            self.sample_data[sample]["gene_trans_map"] = "{contigs}.gene_trans_map".format(contigs=os.path.join(sample_dir, transcriptome))
             self.stamp_file(self.sample_data[sample]["gene_trans_map"])
 
-            self.local_finish(use_dir, self.base_dir)
+            self.local_finish(use_dir, sample_dir)
             self.create_low_level_script()
 
 
-
-
-            #             #######################################################################################
-#             ##
-#             ## Step 2: Create gene_to_trans_map
-#             if not "get_Trinity_gene_to_trans_map" in self.params:
-#                 self.params["get_Trinity_gene_to_trans_map"] = \
-#                     os.path.join(os.path.dirname(os.path.normpath(self.params["script_path"])), \
-#                                  "util/support_scripts/get_Trinity_gene_to_trans_map.pl")
-#             if "skip_gene_to_trans_map" not in self.params:
-#                 self.script += """
-# # Create summary of biom table for use in rarefaction later
-#
-# if [ -e {transcriptome} ]
-# then
-#     {script_path} \\
-#         {transcriptome} \\
-#         > {map}
-# fi
-# """.format(transcriptome=os.path.join(use_dir, transcriptome),
-#            script_path=self.params["get_Trinity_gene_to_trans_map"],
-#            map="{contigs}.gene_trans_map".format(contigs=os.path.join(use_dir, transcriptome)))
-
-
-            # Wrapping up function. Leave these lines at the end of every iteration:
-
-#     def build_scripts_project(self):
-#
-#
-#         # Name of specific script:
-#         self.spec_script_name = self.set_spec_script_name()
-#
-#         self.script = ""
-#
-#         # This line should be left before every new script. It sees to local issues.
-#         # Use the dir it returns as the base_dir for this step.
-#         use_dir = self.local_start(self.base_dir)
-#
-#         forward = list()   # List of all forward files
-#         reverse = list()   # List of all reverse files
-#         single = list()    # List of all single files
-#
-#         # Loop over samples and concatenate read files to $forward and $reverse respectively
-#         # add cheack if paiered or single !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-#             # If both F and R reads exist, adding them to forward and reverse
-#             # Assuming upstream input testing to check that if there are F reads then there are also R reads.
-#             if "fastq.F" in list(self.sample_data[sample].keys()):
-#                 forward.append(self.sample_data[sample]["fastq.F"])
-#                 reverse.append(self.sample_data[sample]["fastq.R"])
-#             if "fastq.S" in list(self.sample_data[sample].keys()):
-#                 single.append(self.sample_data[sample]["fastq.S"])
-#
-#         # Concatenate all filenames separated by commas:
-#         single  = ",".join(single)   if (len(single) > 0) else None
-#         forward = ",".join(forward)  if (len(forward) > 0) else None
-#         reverse = ",".join(reverse)  if (len(reverse) > 0) else None
-#
-#         # Adding single reads to end of left (=forward) reads
-#         if single != None and forward != None:
-#             forward = ",".join([forward,single])
-#
-#         self.script += self.get_script_const()
-#
-#         # Adding 'trinity' to output dir:
-#         # "output directory must contain the word 'trinity' as a safety precaution, given that auto-deletion can take place."
-#         output_basename = "{title}_trinity".format(title = self.sample_data["Title"])
-#         # The results will be put in data/step_name/name/Title
-#         self.script += "--output %s \\\n\t" % os.path.join(use_dir, output_basename)
-#
-#         #add if single or paired!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#         if (forward):
-#             self.script += "--left %s \\\n\t" % forward
-#             self.script += "--right %s \n\n" % reverse
-#         elif (single):
-#             self.script += "--single %s \n\n" % single
-#
-#         # The assembly itself is stored in the prefix + .Trinity.fasta:
-#         output_basename += ".Trinity.fasta"
-#
-#         # Store results to fasta and assembly slots:
-#         self.sample_data["project_data"]["fasta.nucl"] = os.path.join(self.base_dir, output_basename)
-#         self.sample_data["project_data"][self.get_step_step() + ".contigs"] = self.sample_data["project_data"]["fasta.nucl"]
-#
-#         self.stamp_file(self.sample_data["project_data"]["fasta.nucl"])
-#
-#
-#         #######################################################################################
-#         ##
-#         ## Step 2: Create gene_to_trans_map
-#
-#         # cmd_text = self.get_script_env_path()
-#         if not "get_Trinity_gene_to_trans_map" in self.params:
-#             self.params["get_Trinity_gene_to_trans_map"] = \
-#                 os.path.join(os.path.dirname(os.path.normpath(self.params["script_path"])), \
-#                              "util/support_scripts/get_Trinity_gene_to_trans_map.pl")
-#         if "skip_gene_to_trans_map" not in self.params:
-#             cmd_text = """
-#     {script_path} \\
-#         {transcriptome} \\
-#         > {map}
-# """.format(transcriptome = os.path.join(use_dir, output_basename) ,\
-#            script_path   = self.params["get_Trinity_gene_to_trans_map"],\
-#            map           = "{contigs}.gene_trans_map".format(contigs=os.path.join(use_dir, output_basename)))
-#
-#
-#             self.script += """
-# # Creating transcript to gene mapping file:
-#
-# if [ -e {transcriptome} ]
-# then
-# 	{cmd_text}
-# fi
-# """.format(transcriptome = os.path.join(use_dir, output_basename),
-#            cmd_text = cmd_text)
-#
-#
-#             self.sample_data["project_data"]["gene_trans_map"] = "{contigs}.gene_trans_map".format(contigs=os.path.join(self.base_dir, output_basename))
-#             self.stamp_file(self.sample_data["project_data"]["gene_trans_map"])
-#
-#         # Move all files from temporary local dir to permanent base_dir
-#         self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
-#
-#
-#
-#
-#         self.create_low_level_script()
-#
-# #################################################
-#     def build_scripts_sample(self):
-#
-#         for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-#
-#         # Name of specific script:
-#             self.spec_script_name = self.set_spec_script_name(sample)
-#             self.script = ""
-#
-#
-#             # Make a dir for the current sample:
-#             sample_dir = self.make_folder_for_sample(sample)
-#
-#             # This line should be left before every new script. It sees to local issues.
-#             # Use the dir it returns as the base_dir for this step.
-#             use_dir = self.local_start(sample_dir)
-#
-#             self.script += self.get_script_const()
-#             # Adding 'trinity' to output dir:
-#             # "output directory must contain the word 'trinity' as a safety precaution, given that auto-deletion can take place."
-#             output_basename = "{title}_trinity".format(title = sample)
-#
-#             self.script += "--output %s \\\n\t" % os.path.join(use_dir,output_basename)
-#
-#             if "fastq.F" in list(self.sample_data[sample].keys()):
-#                 self.script += "--left %s \\\n\t" % self.sample_data[sample]["fastq.F"]
-#                 self.script += "--right %s \\\n\t" % self.sample_data[sample]["fastq.R"]
-#             if "fastq.S" in list(self.sample_data[sample].keys()):
-#                 self.script += "--single %s \n\n" % self.sample_data[sample]["fastq.S"]
-#
-#             # If there is an extra "\\\n\t" at the end of the script, remove it.
-#             self.script = self.script.rstrip("\\\n\t") + "\n\n"
-#
-#             # The assembly itself is stored in the prefix + .Trinity.fasta:
-#             output_basename += ".Trinity.fasta"
-#
-#             # Store results to fasta and assembly slots:
-#             self.sample_data[sample]["fasta.nucl"] = os.path.join(sample_dir, output_basename)
-#
-#             self.sample_data[sample][self.get_step_step() + ".contigs"] = self.sample_data[sample]["fasta.nucl"]
-#
-#             self.stamp_file(self.sample_data[sample]["fasta.nucl"])
-#
-#
-#             #######################################################################################
-#             ##
-#             ## Step 2: Create gene_to_trans_map
-#
-#             # cmd_text = self.get_script_env_path()
-#             if "skip_gene_to_trans_map" not in self.params:
-#                 cmd_text = """
-#         {script_path} \\
-#             {transcriptome} \\
-#             > {map}
-# """.format(transcriptome = os.path.join(use_dir,output_basename),\
-#            script_path   = os.sep.join([os.path.split(os.path.normpath(self.params["script_path"]))[0] , \
-#                                           "util/support_scripts/get_Trinity_gene_to_trans_map.pl"]),\
-#            map           = "{contigs}.gene_trans_map".format(contigs=os.path.join(use_dir, output_basename)))
-#
-#
-#                 self.script += """
-# # Create summary of biom table for use in rarefaction later
-#
-# if [ -e {transcriptome} ]
-# then
-#     {cmd_text}
-# fi
-# """.format(transcriptome = os.path.join(use_dir, output_basename),
-#            cmd_text = cmd_text)
-#
-#
-#                 self.sample_data[sample]["gene_trans_map"] = "{contigs}.gene_trans_map".format(contigs=os.path.join(sample_dir, output_basename))
-#                 self.stamp_file(self.sample_data[sample]["gene_trans_map"])
-#
-#
-#             # Wrapping up function. Leave these lines at the end of every iteration:
-#             self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)
-#
-#             self.create_low_level_script()
-#
-#
-#
-#
-#
-#

@@ -14,7 +14,7 @@ Vars:
 Step_params:
 
     Merge_data:
-        module:         merge
+        module:   Import
         src:            [barcodes, sequences, metadata, TaxonomicClassifier]
         trg:            [barcodes, sequences, metadata, TaxonomicClassifier]
         script_path:    [..import.., ..import.., 'curl -L', 'curl -L']

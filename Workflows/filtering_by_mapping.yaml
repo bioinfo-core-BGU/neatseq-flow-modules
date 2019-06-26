@@ -46,7 +46,7 @@ Vars:
 Step_params:
 # ---------------------------------- 1. Merge, QC  and trimming
     merge1:
-        module:         merge
+        module:   Import
         script_path:    {Vars.paths.merge}
     fqc_merge1:
         module:         fastqc_html

@@ -38,13 +38,13 @@ Vars:
 Step_params:
 # ---------------------------------- 1. Merge, QC  and trimming
     merge1:
-        module:         merge
-        script_path:    
+        module:   Import
+        script_path:
         intermediate:
         tag:            basic
-
+        
     merge_advanced:
-        module:         merge
+        module:   Import
         src:
             - Forward
             - Reverse
@@ -85,6 +85,7 @@ Step_params:
             --tag:
             --force: 
             --threads:  10
+        export:
 
     fastq_screen_alt2:
         module:         fastq_screen

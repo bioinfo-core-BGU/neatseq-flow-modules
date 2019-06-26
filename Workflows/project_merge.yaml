@@ -7,7 +7,7 @@ Global_params:
 
 Step_params:
     merge_proj:
-        module:             merge
+        module:   Import
         script_path:        [cat,     cat ]
         src:                [TYP1,    TYP2]
         trg:                [typ1,    typ2]
@@ -15,7 +15,7 @@ Step_params:
         scope:              project
     
     merge_smp:
-        module:             merge
+        module:   Import
         script_path:        # Guess
         src:                [Forward, Reverse]
         trg:                [null,    null   ]

@@ -30,7 +30,7 @@ Vars:
         bowtie2_ind:    /path/to/ref_genome/bowtie2_ind
 Step_params:
     merge1:
-        module:         merge
+        module:   Import
         script_path:    {Vars.paths.merge}
     bowtieR1:
         module:         bowtie2_mapper

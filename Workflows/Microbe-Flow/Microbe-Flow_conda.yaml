@@ -97,8 +97,8 @@ Vars:
 Step_params:
 
     Merge:
-        module: merge
-        script_path: 
+        module:   Import
+        script_path:
 
     FastQC_Merge:
         module: fastqc_html
@@ -214,6 +214,7 @@ Step_params:
         module: Prokka
         base: Spades
         script_path: {Vars.Programs_path.Prokka}
+        scope:          sample
         qsub_params:
             -pe: '{Vars.Parallel_Environment.pe_name}  {Vars.Parallel_Environment.Prokka}'
         generate_GFF_dir: null
