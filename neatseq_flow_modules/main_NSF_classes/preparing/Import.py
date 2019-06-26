@@ -57,6 +57,7 @@ The ``Import`` module can be used in two modes:
         ".faa", "cat",""
         ".fna", "cat",""
         ".txt", "cat",""
+        ".tsv", "cat",""
         ".csv", "cat",""
         ".fastq", "cat",""
         ".fa", "cat",""
@@ -90,6 +91,11 @@ Requires
     "REFERENCE",    "reference"
     "VCF",          "vcf"
     "G.VCF",        "g.vcf"
+    "GTF",          "gtf"
+    "GFF",          "gff"
+    "GFF3",         "gff3"
+    "manifest",     "qiime2.manifest"
+    "barcodes",     "barcodes"
 
 * For the Advanced mode:
     * Lists of files in any file type, either in ``[<sample>]`` or in ``[project_data]``.
