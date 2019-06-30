@@ -6,7 +6,7 @@ Preparation and QC
    :depth: 1
 
 
-.. automodule:: neatseq_flow_modules.main_NSF_classes.preparing.merge
+.. automodule:: neatseq_flow_modules.main_NSF_classes.preparing.Import
 
 .. automodule:: neatseq_flow_modules.main_NSF_classes.preparing.fastqc_html
 
