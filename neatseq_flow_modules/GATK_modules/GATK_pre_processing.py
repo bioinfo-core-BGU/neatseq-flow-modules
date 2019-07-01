@@ -132,64 +132,65 @@ class Step_GATK_pre_processing(Step):
 cd %(sample_dir)s
 echo '\\n---------- generate uBAM -------------\\n'
 %(picard_path)s FastqToSam \\
-FASTQ=%(Forword_reads)s \\
-FASTQ2=%(Revers_reads)s \\
-OUTPUT=%(output_uBAM)s \\
-READ_GROUP_NAME=%(sample_name)s \\
-SAMPLE_NAME=%(sample_name)s \\
-LIBRARY_NAME=%(group_name)s \\
-PLATFORM_UNIT=Unit1 \\
-PLATFORM=illumina \\
-SEQUENCING_CENTER=BI \\
-RUN_DATE=2016-08-20T00:00:00-0400
+    FASTQ=%(Forword_reads)s \\
+    FASTQ2=%(Revers_reads)s \\
+    OUTPUT=%(output_uBAM)s \\
+    READ_GROUP_NAME=%(sample_name)s \\
+    SAMPLE_NAME=%(sample_name)s \\
+    LIBRARY_NAME=%(group_name)s \\
+    PLATFORM_UNIT=Unit1 \\
+    PLATFORM=illumina \\
+    SEQUENCING_CENTER=BI \\
+    TMP_DIR=%(sample_dir)s \\
+    RUN_DATE=2016-08-20T00:00:00-0400
 
 
 echo '\\n---------- MarkIlluminaAdapters -------------\\n'
 %(picard_path)s MarkIlluminaAdapters \\
-I=%(output_uBAM)s \\
-O=%(output_markilluminaadapters)s \\
-M= %(matrix_markilluminaadapters)s \\
-TMP_DIR=%(sample_dir)s
+    I=%(output_uBAM)s \\
+    O=%(output_markilluminaadapters)s \\
+    M= %(matrix_markilluminaadapters)s \\
+    TMP_DIR=%(sample_dir)s
 
 echo '\\n---------- uBAM to fastq -------------\\n'
 %(picard_path)s SamToFastq \
-I=%(output_markilluminaadapters)s \\
-FASTQ=%(output_samtofastq)s \\
-CLIPPING_ATTRIBUTE=XT \\
-CLIPPING_ACTION=2 \\
-INTERLEAVE=true \\
-NON_PF=true \\
-TMP_DIR=%(sample_dir)s
+    I=%(output_markilluminaadapters)s \\
+    FASTQ=%(output_samtofastq)s \\
+    CLIPPING_ATTRIBUTE=XT \\
+    CLIPPING_ACTION=2 \\
+    INTERLEAVE=true \\
+    NON_PF=true \\
+    TMP_DIR=%(sample_dir)s
 
 echo '\\n---------- BWA MEM -------------\\n'
 %(path_bwa_mem)s -M -t %(thread_number)s -p %(genome_reference)s \\
-%(output_samtofastq)s > %(output_bwa_mem)s
+    %(output_samtofastq)s > %(output_bwa_mem)s
 
 echo '\\n---------- Merge BAM and UBAM -------------\\n'
 %(picard_path)s MergeBamAlignment \\
-R=%(genome_reference)s \\
-UNMAPPED_BAM=%(output_uBAM)s \\
-ALIGNED_BAM=%(output_bwa_mem)s \\
-O=%(output_merge_bam_ubam)s \\
-CREATE_INDEX=true \\
-ADD_MATE_CIGAR=true \\
-CLIP_ADAPTERS=false \\
-CLIP_OVERLAPPING_READS=true \\
-INCLUDE_SECONDARY_ALIGNMENTS=true \\
-MAX_INSERTIONS_OR_DELETIONS=-1 \\
-PRIMARY_ALIGNMENT_STRATEGY=MostDistant \\
-ATTRIBUTES_TO_RETAIN=XS \\
-TMP_DIR=%(sample_dir)s
+    R=%(genome_reference)s \\
+    UNMAPPED_BAM=%(output_uBAM)s \\
+    ALIGNED_BAM=%(output_bwa_mem)s \\
+    O=%(output_merge_bam_ubam)s \\
+    CREATE_INDEX=true \\
+    ADD_MATE_CIGAR=true \\
+    CLIP_ADAPTERS=false \\
+    CLIP_OVERLAPPING_READS=true \\
+    INCLUDE_SECONDARY_ALIGNMENTS=true \\
+    MAX_INSERTIONS_OR_DELETIONS=-1 \\
+    PRIMARY_ALIGNMENT_STRATEGY=MostDistant \\
+    ATTRIBUTES_TO_RETAIN=XS \\
+    TMP_DIR=%(sample_dir)s
 
 
 echo '\\n---------- Mark dup -------------\\n'
 %(picard_path)s MarkDuplicates \\
-INPUT=%(output_merge_bam_ubam)s \\
-OUTPUT=%(output_duplicates)s \\
-METRICS_FILE=%(matrix_duplicates)s \\
-OPTICAL_DUPLICATE_PIXEL_DISTANCE=2500 \\
-CREATE_INDEX=true \\
-TMP_DIR=%(sample_dir)s
+    INPUT=%(output_merge_bam_ubam)s \\
+    OUTPUT=%(output_duplicates)s \\
+    METRICS_FILE=%(matrix_duplicates)s \\
+    OPTICAL_DUPLICATE_PIXEL_DISTANCE=2500 \\
+    CREATE_INDEX=true \\
+    TMP_DIR=%(sample_dir)s
 
 
                     
