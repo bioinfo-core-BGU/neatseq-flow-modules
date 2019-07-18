@@ -742,13 +742,13 @@ if (is.na(Annotation)) {
       try_count=0
       while ((length(dataset) == 0)&&(try_count<10) ){
           try_count = try_count+1
-          host = "www.ensembl.org"
+          host = "oct2018.archive.ensembl.org"#"www.ensembl.org"
           Test_host<-try(biomaRt::listMarts(host=host),silent = T)
           if (inherits(Test_host,"try-error")){
             host = "ensembl.org"
           }
           biomart = "ENSEMBL_MART_ENSEMBL"
-          M=biomaRt::useMart(biomart = biomart, host = host)
+          M=biomaRt::useMart(biomart = biomart, host = host,ensemblRedirect = FALSE)
           ensembl=biomaRt::listDatasets(M)
           dataset= ensembl$dataset[(sapply(X = ensembl$description,FUN = function(X) stringi::stri_startswith(fixed =  stringi::stri_trans_tolower(opt$Species),str =  stringi::stri_trans_tolower(X)    )))]
           if (length(dataset) == 0){
@@ -765,7 +765,7 @@ if (is.na(Annotation)) {
               host = "plants.ensembl.org"
             }
             biomart = 'plants_mart'
-            M=biomaRt::useMart(biomart = biomart,host = host)
+            M=biomaRt::useMart(biomart = biomart,host = host,ensemblRedirect = FALSE)
             plant=biomaRt::listDatasets(M)
             dataset= plant$dataset[(sapply(X = plant$description,FUN = function(X) stringi::stri_startswith(fixed =  stringi::stri_trans_tolower(opt$Species),str =  stringi::stri_trans_tolower(X)    )))]
           }
@@ -805,7 +805,7 @@ if (is.na(Annotation)) {
           if (!opt$GENE_ID_TYPE %in% attributes){
             attributes = c(opt$GENE_ID_TYPE,attributes)
           }
-          for (subset_genes in split(genes[,opt$GENE_ID_TYPE], ceiling(seq_along(genes[,opt$GENE_ID_TYPE] )/100))){
+          for (subset_genes in split(genes[,opt$GENE_ID_TYPE], ceiling(seq_along(genes[,opt$GENE_ID_TYPE] )/1000))){
               Annotation=getBM(values = subset_genes,
                                filters = opt$GENE_ID_TYPE,
                                attributes = attributes,
