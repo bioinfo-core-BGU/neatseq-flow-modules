@@ -67,12 +67,12 @@ Vars:
         MLST:
             FASTA: $MICROBE_FLOW_CWD/MLST/Campylobacterjejuni_MLST_FASTA.fasta
             scheme: $MICROBE_FLOW_CWD/MLST/Campylobacterjejuni_MLST_scheme.tsv
-            Allele: $MICROBE_FLOW_CWD/MLST/Campylobacterjejuni_MLST_Alleles_Map.tab
+            Allele: $MICROBE_FLOW_CWD/MLST/Campylobacterjejuni_MLST_Alleles.tab
             Type_col_name: "ST,clonal_complex"
         cgMLST:
             FASTA: $MICROBE_FLOW_CWD/cgMLST/Campylobacterjejuni_cgMLST_FASTA.fasta
             scheme: $MICROBE_FLOW_CWD/cgMLST/Campylobacterjejuni_cgMLST_scheme.tsv
-            Allele: $MICROBE_FLOW_CWD/cgMLST/Campylobacterjejuni_cgMLST_Alleles_Map.tab
+            Allele: $MICROBE_FLOW_CWD/cgMLST/Campylobacterjejuni_cgMLST_Alleles.tab
             Type_col_name: cgST
     Database:
         kraken: 
