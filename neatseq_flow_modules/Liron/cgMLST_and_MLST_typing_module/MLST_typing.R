@@ -88,7 +88,8 @@ mlst["Samples"]=sample
 
 # Read BLAST data:
 blast_raw <- read.delim(opt$blast,
-                        he = T,
+                        comment.char = '#',
+                        header = T,
                         stringsAsFactors = F)
 # Set Gene as rowname
 rownames(blast_raw) <- blast_raw$Gene
