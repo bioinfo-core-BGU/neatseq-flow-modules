@@ -742,10 +742,10 @@ if (is.na(Annotation)) {
       try_count=0
       while ((length(dataset) == 0)&&(try_count<10) ){
           try_count = try_count+1
-          host = "oct2018.archive.ensembl.org"#"www.ensembl.org"
+          host = "www.ensembl.org"#"grch37.ensembl.org"
           Test_host<-try(biomaRt::listMarts(host=host),silent = T)
           if (inherits(Test_host,"try-error")){
-            host = "ensembl.org"
+            host = "apr2019.archive.ensembl.org"
           }
           biomart = "ENSEMBL_MART_ENSEMBL"
           M=biomaRt::useMart(biomart = biomart, host = host,ensemblRedirect = FALSE)
@@ -797,9 +797,7 @@ if (is.na(Annotation)) {
           } else {
             genes <- getBM(attributes = opt$GENE_ID_TYPE, mart = ensembl)
           }
-          attributes=c( 'description',
-                        'external_gene_name',
-                        'kegg_enzyme',
+          attributes=c( 'kegg_enzyme',
                         'go_id',
                         'namespace_1003')
           if (!opt$GENE_ID_TYPE %in% attributes){
@@ -813,6 +811,12 @@ if (is.na(Annotation)) {
                                mart = ensembl)
             Total_Annotation = rbind(Total_Annotation,Annotation)
             }
+          biotype = getBM(attributes = c(opt$GENE_ID_TYPE,
+                                         'external_gene_name',
+                                         'gene_biotype',
+                                         'description'
+                                         ),uniqueRows = TRUE, mart = ensembl)
+          Total_Annotation=merge.data.frame(x = Total_Annotation,y = biotype,by = opt$GENE_ID_TYPE,all = T)
           Annotation = Total_Annotation
           Annotation$kegg = sapply(X = Annotation$kegg_enzyme,FUN = function(X) unlist(stringi::stri_split(str = X,fixed  = '+'))[1] )
           Annotation$kegg = sapply(X = Annotation$kegg,FUN = function(X) if (!is.na(X)) if (X!='')  paste('path:map',X,collapse = "",sep='' ) else NA else NA  )
