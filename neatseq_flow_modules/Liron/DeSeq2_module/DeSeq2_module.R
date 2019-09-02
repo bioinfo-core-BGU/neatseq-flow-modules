@@ -742,7 +742,7 @@ if (is.na(Annotation)) {
       try_count=0
       while ((length(dataset) == 0)&&(try_count<10) ){
           try_count = try_count+1
-          host = "www.ensembl.org"#"grch37.ensembl.org"
+          host = "grch37.ensembl.org"#"www.ensembl.org"
           Test_host<-try(biomaRt::listMarts(host=host),silent = T)
           if (inherits(Test_host,"try-error")){
             host = "apr2019.archive.ensembl.org"
