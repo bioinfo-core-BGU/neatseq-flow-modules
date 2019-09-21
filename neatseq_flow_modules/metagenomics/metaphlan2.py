@@ -192,7 +192,7 @@ class Step_metaphlan2(Step):
 """.format(path=self.params["ktImportText"]["path"],
            redirs=redirects,
            output=krona_report_fn)
-
+            self.script += " \\\n\t"
             for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
                 self.script += "%s,%s \\\n\t" % (self.sample_data[sample]["classification"], sample)
             self.script = self.script.rstrip("\\\n\t") 
