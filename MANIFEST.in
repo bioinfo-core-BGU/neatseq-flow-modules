@@ -1,1 +1,1 @@
-recursive-include neatseq_flow_modules *.R *.fasta *.tsv *.yml *.pl
+recursive-include neatseq_flow_modules *.R *.Rmd *.fa *.exe *.fasta *.tsv *.yml *.yaml *.pl
