@@ -312,10 +312,10 @@ Using CONDA environment
   
      conda config --add channels conda-forge
      conda config --add channels bioconda
-     curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/source/_extra/Microbe-Flow/Microbe-Flow_conda_env_install.yaml
+     curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/_extra/Microbe-Flow/Microbe-Flow_conda_env_install.yaml
 
      conda env create -f  Microbe-Flow_conda_env_install.yaml
-     curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/source/_extra/Microbe-Flow/Microbe-Flow_GUBBINS_conda_env_install.yaml
+     curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/_extra/Microbe-Flow/Microbe-Flow_GUBBINS_conda_env_install.yaml
      conda env create -f  Microbe-Flow_GUBBINS_conda_env_install.yaml
 
 3. Activate the Microbe-Flow environment
