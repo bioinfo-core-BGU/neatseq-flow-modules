@@ -1580,10 +1580,10 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                 Normalized_counts_assay = Normalized_counts_assay[sig.genes,]
                 cat(sprintf("<h3>%s</h3>", 'NOTE: Clustering Analysis is done on the user defined significant genes !!!!'))
             }else if (!is.na(DESeqDataSet_Results)){
-                #sig.genes = rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"padj"]<FDR_PVAL_CUTOFF)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
-                up_reg    = rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"log2FoldChange"]>FC_CUTOFF_log2)&(DESeqDataSet_Results_redOrdered[,"padj"]<FDR_PVAL_CUTOFF)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
-                down_reg  = rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"log2FoldChange"]<FC_CUTOFF_log2)&(DESeqDataSet_Results_redOrdered[,"padj"]<FDR_PVAL_CUTOFF)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
-                sig.genes = c(up_reg,down_reg)
+                sig.genes = rownames(DESeqDataSet_Results_redOrdered)[(DESeqDataSet_Results_redOrdered[,"padj"]<FDR_PVAL_CUTOFF)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"]))]
+                up_reg    = rownames(DESeqDataSet_Results_redOrdered)[(DESeqDataSet_Results_redOrdered[,"log2FoldChange"]>FC_CUTOFF_log2)&(DESeqDataSet_Results_redOrdered[,"padj"]<FDR_PVAL_CUTOFF)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"]))]
+                down_reg  = rownames(DESeqDataSet_Results_redOrdered)[(DESeqDataSet_Results_redOrdered[,"log2FoldChange"]<FC_CUTOFF_log2)&(DESeqDataSet_Results_redOrdered[,"padj"]<FDR_PVAL_CUTOFF)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"]))]
+                #sig.genes = c(up_reg,down_reg)
             }else{
                 sig.genes = rownames(countData)
                 cat(sprintf("<h3>%s</h3>", 'NOTE: Clustering Analysis is done on all input genes !!!!'))
@@ -1777,9 +1777,10 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                                         clusters=Clustering$cluster
                                     }
                                 }
-                            }else if (nrow(SPLIT_Normalized_counts_Annotated_mean)==1){
+                            }else if (nrow(SPLIT_Normalized_counts_Annotated_mean)<3){
                                 clusters=c(1)
                                 names(clusters)=rownames((SPLIT_Normalized_counts_Annotated_mean))
+                                cat(sprintf("<h4>%s</h4>",'Since only 2 significant genes were detected, No clustering was performed'))
                             }else if (nrow(SPLIT_Normalized_counts_Annotated_mean)==2){
                                 Clustering <- eclust(as.matrix(SPLIT_Normalized_counts_Annotated_mean),stand = F,
                                                            FUNcluster= 'kmeans',

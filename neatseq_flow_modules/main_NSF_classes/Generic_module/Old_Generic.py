@@ -87,7 +87,6 @@ Lines for parameter file
                                     # If more then one File_Type was specify the inputs File_Types of this argument will be listed delimited by sep.
                 prefix:             # A prefix for this input argument file name
                 suffix:             # A suffix for this input argument file name
-                use_dirname:        # Use only the input Directory and add suffix for constant file name and prefix to add a string before the input Directory
                 del:                # Delete the files in the input File_Type after the step ends [use to save space for large files you don't need downstream]
                                     # Will generate empty file with the same name and a suffix of _DELETED
         outputs:                    # The outputs for this module
@@ -137,9 +136,6 @@ class Step_Generic(Step):
         """
         self.shell = get_File_Type_data(self.params,["shell"],"bash")
         self.project_del_script=[]
-        if 'arg_separator' in self.params.keys():
-            if self.params['arg_separator']==None:
-                self.params['arg_separator']=""
         self.params['arg_separator'] = get_File_Type_data(self.params,["arg_separator"]," ")
         pass
         
@@ -423,8 +419,8 @@ class Step_Generic(Step):
                     else:
                         base=self.step    
                     
-                    prefix       = get_File_Type_data(self.params["inputs"],[inputs,"prefix"])
-                    suffix       = get_File_Type_data(self.params["inputs"],[inputs,"suffix"])
+                    prefix=get_File_Type_data(self.params["inputs"],[inputs,"prefix"])
+                    suffix=get_File_Type_data(self.params["inputs"],[inputs,"suffix"])
                     
                     if len(get_File_Type_data(self.params["inputs"],[inputs,"sep"]))>0:
                         sep=get_File_Type_data(self.params["inputs"],[inputs,"sep"])
@@ -438,15 +434,9 @@ class Step_Generic(Step):
                         if len(File_Type)>0:
                             File_Type+=sep
                         if get_File_Type_data(self.params["inputs"],[inputs,"scope"])=="project":
-                            if 'use_dirname' in self.params["inputs"][inputs].keys():
-                                File_Type += prefix + os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot]) , (suffix).lstrip(os.sep) )
-                            else:
-                                File_Type +=          os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot]) , (prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).lstrip(os.sep) )
+                            File_Type += os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot]) , (prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).lstrip(os.sep) )
                         else:
-                            if 'use_dirname' in self.params["inputs"][inputs].keys():
-                                File_Type += prefix + os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]   ) , (suffix).lstrip(os.sep) )
-                            else:
-                                File_Type +=          os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]   ) , (prefix + os.path.basename( inputs_sample_data[sample][File_Type_slot]       ) + suffix).lstrip(os.sep) )
+                            File_Type += os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]   ) , (prefix + os.path.basename( inputs_sample_data[sample][File_Type_slot]       ) + suffix).lstrip(os.sep) )
                     if inputs.startswith("Empty".lower()):
                         inputs_script +="%s   \\\n\t"    % File_Type
                     else:
@@ -460,7 +450,7 @@ class Step_Generic(Step):
                 # Generating delete script for input File_Types if specified 
                 del_script=""
                 for inputs in list(self.params["inputs"].keys()):                                       
-                    if ("del" in list(self.params["inputs"][inputs].keys()) ):
+                    if "del" in list(self.params["inputs"][inputs].keys()):
                         
                         
                         base=get_File_Type_data(self.params["inputs"],[inputs,"base"],None)                
@@ -473,32 +463,16 @@ class Step_Generic(Step):
                         else:
                             base=self.step    
                         
-                        prefix       = get_File_Type_data(self.params["inputs"],[inputs,"prefix"])
-                        suffix       = get_File_Type_data(self.params["inputs"],[inputs,"suffix"])
+                        prefix=get_File_Type_data(self.params["inputs"],[inputs,"prefix"])
+                        suffix=get_File_Type_data(self.params["inputs"],[inputs,"suffix"])
                         
                         for File_Type_slot in str(get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])).replace("'",'').replace(" ",'').replace('[','').replace(']','').split(','):
                             if get_File_Type_data(self.params["inputs"],[inputs,"scope"])=="project":
-                                if 'use_dirname' in self.params["inputs"][inputs].keys():
-                                    file2delete = prefix + os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot]) , (suffix).lstrip(os.sep) )
-                                else:
-                                    file2delete =          os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot]) , ( prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).lstrip(os.sep)) 
-                                
-                                if file2delete.endswith(os.sep):
-                                    self.project_del_script.append("rm -rf %s*   \n\n"      % file2delete )
-                                else:
-                                    self.project_del_script.append("rm -rf %s   \n\n"       % file2delete )
-                                    self.project_del_script.append("echo > %s_DELETED \n\n" % file2delete.rstrip(os.sep) )
+                                self.project_del_script.append("rm -rf %s   \n\n"       % os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  , ( prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).lstrip(os.sep)) )
+                                self.project_del_script.append("echo > %s_DELETED \n\n" % os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  , ( prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).lstrip(os.sep)).rstrip(os.sep) )
                             else:
-                                if 'use_dirname' in self.params["inputs"][inputs].keys():
-                                    file2delet = prefix + os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]   ) , (suffix).lstrip(os.sep) )
-                                else:
-                                    file2delet =          os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]   ) , ( prefix + os.path.basename(     inputs_sample_data[sample][File_Type_slot]     ) + suffix).lstrip(os.sep) )
-                                
-                                if file2delete.endswith(os.sep):
-                                    self.project_del_script.append("rm -rf %s*   \n\n"       % file2delete )
-                                else:
-                                    del_script +="rm -rf %s   \n\n"        % file2delete
-                                    del_script +="echo > %s_DELETED  \n\n" % file2delete.rstrip(os.sep)
+                                del_script +="rm -rf %s   \n\n"        % os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]    )  , ( prefix + os.path.basename(     inputs_sample_data[sample][File_Type_slot]     ) + suffix).lstrip(os.sep) )
+                                del_script +="echo > %s_DELETED  \n\n" % os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]    )  , ( prefix + os.path.basename(     inputs_sample_data[sample][File_Type_slot]     ) + suffix).lstrip(os.sep) ).rstrip(os.sep)
                 
             if len(get_File_Type_data(self.params,["outputs"]))>0:
                 # Add output files
@@ -594,9 +568,9 @@ class Step_Generic(Step):
                 else:
                     base=self.step
                 
-                prefix    = get_File_Type_data(self.params["inputs"],[inputs,"prefix"])
-                suffix    = get_File_Type_data(self.params["inputs"],[inputs,"suffix"])
-                File_Type = ""
+                prefix=get_File_Type_data(self.params["inputs"],[inputs,"prefix"])
+                suffix=get_File_Type_data(self.params["inputs"],[inputs,"suffix"])
+                File_Type=""
                 
                 if len(get_File_Type_data(self.params["inputs"],[inputs,"sep"]))>0:
                     sep=get_File_Type_data(self.params["inputs"],[inputs,"sep"])
@@ -611,19 +585,15 @@ class Step_Generic(Step):
                         if len(File_Type)>0:
                             File_Type+=sep
                         
-                        if 'use_dirname' in self.params["inputs"][inputs].keys():
-                            File_Type+=     prefix + os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  , (suffix).lstrip(os.sep) )
-                        else:
-                            File_Type+=              os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  , ( prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).lstrip(os.sep) )
+
+                        File_Type+=    os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  , ( prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).lstrip(os.sep) )
                 else:
                     for sample in self.sample_data["samples"]:
                         for File_Type_slot in str(get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])).replace("'",'').replace(" ",'').replace('[','').replace(']','').split(','):
                             if len(File_Type)>0:
                                 File_Type+=sep
-                            if 'use_dirname' in self.params["inputs"][inputs].keys():
-                                File_Type+=   prefix + os.path.join(os.path.dirname(        inputs_sample_data[sample][File_Type_slot])  , (suffix).lstrip(os.sep) )
-                            else:
-                                File_Type+=            os.path.join(os.path.dirname(        inputs_sample_data[sample][File_Type_slot])  , ( prefix + os.path.basename(        inputs_sample_data[sample][File_Type_slot]) + suffix).lstrip(os.sep) )
+                            
+                            File_Type+=os.path.join(os.path.dirname(        inputs_sample_data[sample][File_Type_slot])  , ( prefix + os.path.basename(        inputs_sample_data[sample][File_Type_slot]) + suffix).lstrip(os.sep) )
 
                 if inputs.startswith("Empty".lower()):
                     inputs_script +="%s   \\\n\t"    % File_Type
@@ -651,33 +621,17 @@ class Step_Generic(Step):
                     else:
                         base=self.step
                     
-                    prefix   = get_File_Type_data(self.params["inputs"],[inputs,"prefix"])
-                    suffix   = get_File_Type_data(self.params["inputs"],[inputs,"suffix"])
+                    prefix=get_File_Type_data(self.params["inputs"],[inputs,"prefix"])
+                    suffix=get_File_Type_data(self.params["inputs"],[inputs,"suffix"])
                     
                     for File_Type_slot in str(get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])).replace("'",'').replace(" ",'').replace('[','').replace(']','').split(','):
                         if get_File_Type_data(self.params["inputs"],[inputs,"scope"])=="project":
-                            if 'use_dirname' in self.params["inputs"][inputs].keys():
-                                file2delete = prefix + os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  , (suffix).rstrip(os.sep) )
-                            else:
-                                file2delete =          os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  , ( prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).rstrip(os.sep) )
-                            
-                            if file2delete.endswith(os.sep):
-                                self.project_del_script.append("rm -rf %s*   \n\n"      % file2delete )
-                            else:
-                                self.project_del_script.append("rm -rf %s   \n\n"       % file2delete )
-                                self.project_del_script.append("echo > %s_DELETED \n\n" % file2delete.rstrip(os.path.sep))
+                            self.project_del_script.append("rm -rf %s   \n\n"       % os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  , ( prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).rstrip(os.sep) )                    )
+                            self.project_del_script.append("echo > %s_DELETED \n\n" % os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  , ( prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).rstrip(os.sep) ).rstrip(os.path.sep))
                         else:
                             for sample in self.sample_data["samples"]:
-                                if 'use_dirname' in self.params["inputs"][inputs].keys():
-                                    file2delete = prefix + os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]    )  , (suffix).rstrip(os.sep)  )
-                                else:
-                                    file2delete =          os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]    )  , ( prefix + os.path.basename(     inputs_sample_data[sample][File_Type_slot]     ) + suffix).rstrip(os.sep)  )
-                                
-                                if file2delete.endswith(os.sep):
-                                    del_script +="rm -rf %s*   \n\n"       % file2delete
-                                else:
-                                    del_script +="rm -rf %s   \n\n"        % file2delete
-                                    del_script +="echo > %s_DELETED  \n\n" % file2delete.rstrip(os.path.sep)
+                                del_script +="rm -rf %s   \n\n"        % os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]    )  , ( prefix + os.path.basename(     inputs_sample_data[sample][File_Type_slot]     ) + suffix).rstrip(os.sep)  )
+                                del_script +="echo > %s_DELETED  \n\n" % os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]    )  , ( prefix + os.path.basename(     inputs_sample_data[sample][File_Type_slot]     ) + suffix).lstrip(os.sep)  ).rstrip(os.path.sep)
 
         if len(get_File_Type_data(self.params,["outputs"]))>0:
             # Add output files

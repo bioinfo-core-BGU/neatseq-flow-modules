@@ -1822,21 +1822,20 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                                                            hc_method = opt$hc_method,
                                                            k.max =  k.max,
                                                            nboot = opt$nboot,
-                                                           gap_maxSE = list(method= opt$gap_maxSE_method, SE.factor = opt$gap_maxSE_SE.factor) )
+                                                           gap_maxSE = list(method= "Tibs2001SEmax", SE.factor = 1) )
                                         clusters=Clustering$cluster
                                     }
                                 }
-                            }else if (nrow(SPLIT_Normalized_counts_Annotated_mean)<3){
+                            }else if (nrow(SPLIT_Normalized_counts_Annotated_mean)==1){
                                 clusters=c(1)
                                 names(clusters)=rownames((SPLIT_Normalized_counts_Annotated_mean))
-                                cat(sprintf("<h4>%s</h4>",'Since only 2 significant genes were detected, No clustering was performed'))
                             }else if (nrow(SPLIT_Normalized_counts_Annotated_mean)==2){
                                 Clustering <- eclust(as.matrix(SPLIT_Normalized_counts_Annotated_mean),stand = F,
                                                            FUNcluster= 'kmeans',
                                                            graph = FALSE,
                                                            k.max = 2,
                                                            nboot = opt$nboot,
-                                                           gap_maxSE = list(method= opt$gap_maxSE_method, SE.factor = opt$gap_maxSE_SE.factor) )
+                                                           gap_maxSE = list(method= "Tibs2001SEmax", SE.factor = 1) )
                                 clusters=Clustering$cluster
                                 cat(sprintf("<h4>%s</h4>",'Since only 2 significant genes were detected, the clustering was performed using the kmeans method'))
                                 

@@ -3,7 +3,7 @@ channels:
     - bioconda
     - conda-forge
 dependencies:
-
+    - pandoc=2.7.3
 # R
     - r-base=3.4.1
     - r-optparse=1.6.0

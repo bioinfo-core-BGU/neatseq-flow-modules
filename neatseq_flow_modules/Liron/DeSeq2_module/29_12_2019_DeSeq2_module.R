@@ -85,7 +85,7 @@ option_list = list(
   
   make_option(c("--FUNcluster"), type="character", default='hclust',
               help='A clustering function including [kmeans,pam,clara,fanny,hclust,agnes,diana,click]. The default is hclust', metavar="character"),
-  make_option(c("--hc_metric"), type="character", default='pearson',
+  make_option(c("--hc_metric"), type="character", default='euclidean',
               help="Hierarchical clustering metric to be used for calculating dissimilarities between observations. The default is pearson", metavar="character"),
   make_option(c("--hc_method"), type="character", default='ward.D2',
               help="Hierarchical clustering agglomeration method to be used. The default is ward.D2 ", metavar="character"),
@@ -99,11 +99,6 @@ option_list = list(
               help="The maximum number of clusters to consider, must be at least two. The default is 20", metavar="character"),
   make_option(c("--nboot"), type="numeric", default=10,
               help="Number of Monte Carlo (bootstrap) samples for determining the number of clusters [Not For Mclust]. The default is 10 ", metavar="character"),
-  make_option(c("--gap_maxSE_method"), type="character", default='firstSEmax',
-              help="eclust parameter for determining the number of clusters [Not For Mclust]. The default is firstSEmax ", metavar="character"),
-  make_option(c("--gap_maxSE_SE.factor"), type="numeric", default=1,
-              help="eclust parameter for determining the number of clusters [Not For Mclust] higher number is less sensitive. The default is 1 ", metavar="character"),
-  
   make_option(c("--stand"), action="store_true",default=FALSE, 
               help="The Data will be Standardized Before Clustering", metavar="character"), 
   make_option(c("--Mclust"), action="store_true",default=FALSE, 
@@ -112,7 +107,7 @@ option_list = list(
   make_option(c("--Enriched_terms_overlap"), action="store_true",default=FALSE, 
               help="Test for genes overlap in enriched terms", metavar="character"),
   make_option(c("--USE_INPUT_GENES_AS_BACKGROUND"), action="store_true",default=FALSE, 
-              help="Use The input Genes as the Background for Enrichment Analysis", metavar="character"),
+              help="Use The input Genes as the Background for Enrichment Analysis", metavar="character"),           
   make_option(c("--PCA_COLOR"), type="character", default=NA,
               help="The Filed In the Sample Data To Determine Color In The PCA Plot", metavar="character"),
   make_option(c("--PCA_SHAPE"), type="character", default=NA,
@@ -3105,10 +3100,10 @@ for (test2do in test_count){
       sig.genes = unlist(stringi::stri_split(str = opt$significant_genes,regex = ','))
       Normalized_counts_assay = Normalized_counts_assay[sig.genes,]
     }else if (!is.na(DESeqDataSet_Results)){
-      sig.genes=rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"padj"]<opt$ALPHA)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
+      #sig.genes=rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"padj"]<opt$ALPHA)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
       up_reg    = rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"log2FoldChange"]>FC_CUTOFF_log2)&(DESeqDataSet_Results_redOrdered[,"padj"]<FDR_PVAL_CUTOFF)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
       down_reg  = rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"log2FoldChange"]<FC_CUTOFF_log2)&(DESeqDataSet_Results_redOrdered[,"padj"]<FDR_PVAL_CUTOFF)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
-      #sig.genes = c(up_reg,down_reg)
+      sig.genes = c(up_reg,down_reg)
     }else{
       sig.genes=rownames(countData)
     }
@@ -3292,22 +3287,20 @@ for (test2do in test_count){
                                        hc_method = opt$hc_method,
                                        k.max =  k.max,
                                        nboot = opt$nboot,
-                                       gap_maxSE = list(method= opt$gap_maxSE_method, SE.factor = opt$gap_maxSE_SE.factor) )
-                                       
+                                       gap_maxSE = list(method= "Tibs2001SEmax", SE.factor = 1) )
                   clusters=Clustering$cluster
                 }
               }
-            }else if (nrow(SPLIT_Normalized_counts_Annotated_mean)<3){
+            }else if (nrow(SPLIT_Normalized_counts_Annotated_mean)==1){
               clusters=c(1)
               names(clusters)=rownames((SPLIT_Normalized_counts_Annotated_mean))
-              sprintf("<h4>%s</h4>",'Since only 2 significant genes were detected, No clustering was performed')
             }else if (nrow(SPLIT_Normalized_counts_Annotated_mean)==2){
               Clustering <- eclust(as.matrix(SPLIT_Normalized_counts_Annotated_mean),stand = F,
                                    FUNcluster= 'kmeans',
                                    graph = FALSE,
                                    k.max = 2,
                                    nboot = opt$nboot,
-                                   gap_maxSE = list(method= opt$gap_maxSE_method, SE.factor = opt$gap_maxSE_SE.factor) )
+                                   gap_maxSE = list(method= "Tibs2001SEmax", SE.factor = 1) )
               clusters=Clustering$cluster
               sprintf("%s",'Since only 2 significant genes were detected, the clustering was performed using the kmeans method')
               
