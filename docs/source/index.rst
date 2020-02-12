@@ -29,6 +29,7 @@ See also the `main NeatSeq-Flow website <https://neatseq-flow.readthedocs.io/en/
    :caption: Workflows
 
    Workflow_docs/Tutorial
+   Workflow_docs/RNA_seq_non_model
    Workflow_docs/RNA_seq_reference
    Workflow_docs/RNA_seq_Trinity
    Workflow_docs/QIIME_workflow

@@ -1,4 +1,4 @@
-*de-novo* RNA-seq using Trinity
+Transcriptome assembly and annotation with Trinity
 --------------------------------------------------------------
 
 .. include:: ../links.rst

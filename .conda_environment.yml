@@ -3,7 +3,7 @@ channels:
   - conda-forge
 dependencies:
 # Deps of Neatseq_Flow
-  - python=2.7
+  - python=3.6.5
   - pyyaml
   - bunch
   #Neatseq_Flow
