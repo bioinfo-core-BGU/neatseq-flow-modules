@@ -267,7 +267,7 @@ class Step_Snippy(Step):
                 self.script +="--se  %s  \\\n\t" % self.sample_data[sample]["fastq.S"]
             self.script +="--prefix  %s  \\\n\t" % sample
             if "--reference" not in self.params["redir_params"]:
-                if "fasta.nucl" in list(self.sample_data.keys()):
+                if "fasta.nucl" in list(self.sample_data["project_data"].keys()):
                     self.script +="--reference %s  \\\n\t" % self.sample_data["project_data"]["fasta.nucl"]
                 else:
                     raise AssertionExcept("No reference file found in project level [fasta.nucl] and not in the redirects [--reference] \n Supports FASTA, GenBank, EMBL (not GFF)")

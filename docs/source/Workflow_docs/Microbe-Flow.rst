@@ -921,7 +921,7 @@ Perform a test run on a publicly available data
     .. code-block:: bash
     
         cd $MICROBE_FLOW_CWD
-        curl -LO http://bio.informatik.uni-jena.de/artifactory/simple/dist/de/unijena/bioinf/gecko3/Gecko3.1.zip
+        curl -LO https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/genecluster/gecko/Gecko3.1.zip
         unzip Gecko3.1.zip
         
 
