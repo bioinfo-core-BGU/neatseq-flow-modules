@@ -156,9 +156,15 @@ class Step_Snippy(Step):
                     self.script +="cd '%s' \n\n" % results_dir
                     if "env" in list(self.params.keys()):
                         if self.shell=="bash":
-                            self.script +="export env %s  \\\n\t" % self.params["env"]
+                            self.script +="export  %s  \n\n" % self.params["env"]
                         else:
-                            self.script +="env %s  \\\n\t" % self.params["env"]
+                            self.script +="env %s  \n\n" % self.params["env"]
+                    if "setenv" in list(self.params.keys()):
+                        for env in self.params["setenv"]:
+                            if self.shell=="bash":
+                                self.script +="export  %s  \n\n" % env
+                            else:
+                                self.script +="env %s  \n\n" % env
                     self.script +="%s  \\\n\t" % self.params["snippy_core"]["script_path"]
                     for par in list(self.params["snippy_core"].keys()):
                         if par !="script_path":
@@ -185,11 +191,7 @@ class Step_Snippy(Step):
                                 Gubbins_results_dir = self.make_folder_for_sample("Gubbins")         
                                 #Running the file merge script
                                 self.script +="cd '%s' \n\n" % Gubbins_results_dir
-                                if "env" in list(self.params.keys()):
-                                    if self.shell=="bash":
-                                        self.script +="export env %s  \\\n\t" % self.params["env"]
-                                    else:
-                                        self.script +="env %s  \\\n\t" % self.params["env"]
+                                
                                 self.script +="%s  \\\n\t" % self.params["gubbins"]["script_path"]
                                 for par in list(self.params["gubbins"].keys()):
                                     if par !="script_path":
@@ -210,11 +212,7 @@ class Step_Snippy(Step):
                         if "MLST_parser.py" in os.listdir(self.module_location):
                             # Make a dir for the parsed files:
                             pars_dir = self.make_folder_for_sample("Data_for_Phyloviz")
-                            if "env" in list(self.params.keys()):
-                                if self.shell=="bash":
-                                    self.script +="export env %s  \\\n\t" % self.params["env"]
-                                else:
-                                    self.script +="env %s  \\\n\t" % self.params["env"]
+                            
                             self.script +="python %s  \\\n\t" % os.path.join(self.module_location,"MLST_parser.py")
                             if is_it_dict(self.params["phyloviz"]):
                                 for par in list(self.params["phyloviz"].keys()):

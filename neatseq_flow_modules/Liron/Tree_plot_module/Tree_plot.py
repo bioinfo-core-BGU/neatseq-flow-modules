@@ -129,7 +129,7 @@ class Step_Tree_plot(Step):
         """
         
         # Name of specific script:
-        self.spec_script_name = self.jid_name_sep.join([self.step,self.name])
+        self.spec_script_name = self.set_spec_script_name()
         self.script = ""
         sample_dir=self.base_dir
         # This line should be left before every new script. It sees to local issues.
