@@ -4,10 +4,11 @@ build:
   image: latest
 
 python:
-  version: 3.6
-  setup_py_install: true
+  version: 3.6.5
+#  setup_py_install: true
   
+python.system_packages: true
 formats: []
 
-conda:
-  file: .conda_environment.yml
+# conda:
+  # file: .conda_environment.yml
