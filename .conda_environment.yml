@@ -8,5 +8,5 @@ dependencies:
   - bunch
   #Neatseq_Flow
   - pip:
-    - git+https://github.com/bioinfo-core-BGU/neatseq-flow.git
+#    - git+https://github.com/bioinfo-core-BGU/neatseq-flow.git
     - git+https://github.com/bioinfo-core-BGU/neatseq-flow-modules.git
