@@ -252,20 +252,22 @@ MLST/cgMLST Typing Scheme File [Tab delimited]
 
         In the command line type:
 
-          .. code-block:: csh
+          .. code-block:: sh
           
-             curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Microbe-Flow/get_scheme.sh
+             wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Microbe-Flow/get_scheme.sh
 
         **For example:** in order to download the **MLST** Required Files of **Campylobacter jejuni**  
         
         In the command line type:
 
-          .. code-block:: csh     
+          .. code-block:: sh     
           
              sh get_scheme.sh "Campylobacter jejuni" "MLST" 
              
      **Go to** `PubMLST  <https://pubmlst.org/>`_ **to make sure the correct scheme was downloaded!!!!**
      
+
+
 Install and Run Microbe-Flow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     **There are two ways to install and run the Microbe-Flow workflow:**
@@ -290,12 +292,23 @@ Using CONDA environment
 ********************************************
   In the command line type:
 
-  .. code-block:: csh
+  .. code-block:: sh
 
      mkdir Microbe-Flow 
      cd Microbe-Flow 
 
-2. Install the Microbe-Flow environment 
+2. Install NeatSeq-Flow
+***************************
+  Install NeatSeq-Flow using CONDA
+  
+  In the command line type:
+  
+  .. code-block:: sh
+  
+     wget https://raw.githubusercontent.com/bioinfo-core-BGU/NeatSeq-Flow-GUI/master/NeatSeq_Flow_GUI_installer.yaml
+     conda env create -f NeatSeq_Flow_GUI_installer.yaml
+     
+3. Install the Microbe-Flow environment 
 *********************************************************************
 **This installation includes NeatSeq-Flow, it's modules and most of the required programs and packages**
 
@@ -308,44 +321,44 @@ Using CONDA environment
 
   In the command line type:
 
-  .. code-block:: csh
+  .. code-block:: sh
   
      conda config --add channels conda-forge
      conda config --add channels bioconda
-     curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/_extra/Microbe-Flow/Microbe-Flow_conda_env_install.yaml
+     wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/_extra/Microbe-Flow/Microbe-Flow_conda_env_install.yaml
 
      conda env create -f  Microbe-Flow_conda_env_install.yaml
-     curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/_extra/Microbe-Flow/Microbe-Flow_GUBBINS_conda_env_install.yaml
+     wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/docs/source/_extra/Microbe-Flow/Microbe-Flow_GUBBINS_conda_env_install.yaml
      conda env create -f  Microbe-Flow_GUBBINS_conda_env_install.yaml
 
-3. Activate the Microbe-Flow environment
+4. Activate the NeatSeq-Flow environment
 ******************************************************************************************
 
   .. attention:: **From the following step onwards, you should be in ``bash`` shell**
       
       In the command line type:
 
-      .. code-block:: csh
+      .. code-block:: sh
 
         bash
 
   In the command line type:
 
-  .. code-block:: csh
+  .. code-block:: sh
 
-    source activate Microbe-Flow
+    source activate NeatSeq_Flow
     export CONDA_BASE=$(conda info --root)
 
 
   .. note:: To perform a test run on a publicly available data jump to the :ref:`Perform a test run <Perform a test run>` section
   
   
-4. Create a Samples file for your project
+5. Create a Samples file for your project
 **********************************************
 
   In the command line type:
 
-  .. code-block:: csh
+  .. code-block:: sh
     
     nano Samples.nsfs
 
@@ -356,14 +369,14 @@ Using CONDA environment
         * Don't forget to copy it to the project directory.
      
 
-5. Edit the Microbe-Flow parameter file to suit your cluster
+6. Edit the Microbe-Flow parameter file to suit your cluster
 ***************************************************************
 
   In the command line type:
 
-  .. code-block:: csh
+  .. code-block:: sh
     
-    curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Microbe-Flow/Microbe-Flow_conda.yaml
+    wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Microbe-Flow/Microbe-Flow_conda.yaml
     nano  Microbe-Flow_conda.yaml
 
   .. tip:: You can do the editting with any text editor of your liking. However:
@@ -376,6 +389,7 @@ Using CONDA environment
       .. code-block:: yaml
 
         Global_params:
+            Executor: Local # Change to your Executor SGE/SLURM/Local
             Qsub_opts: -cwd
             Qsub_path: /PATH_TO_YOUR_QSUB/ <<
             Qsub_q: your.q <<
@@ -383,7 +397,7 @@ Using CONDA environment
   
   .. tip:: The ``Qsub_path`` parameter can be determined by executing the following command:
   
-    .. code-block:: csh
+    .. code-block:: sh
     
         dirname `which qsub`
     
@@ -481,7 +495,7 @@ Using CONDA environment
       
       You can type in the command line:
       
-      .. code-block:: csh
+      .. code-block:: sh
 
         qconf -spl
         
@@ -489,7 +503,7 @@ Using CONDA environment
 
   .. tip:: If you don't have a Kraken database you can create one using this command:
      
-     .. code-block:: csh
+     .. code-block:: sh
 
         mkdir Kraken_db
         kraken-build  --standard --db Kraken_db
@@ -524,13 +538,15 @@ Using CONDA environment
      
 
 
-6. Run NeatSeq-Flow
+7. Run NeatSeq-Flow
 ********************
 
   In the command line type:
 
-  .. code-block:: csh
-
+  .. code-block:: sh
+    
+    source activate NeatSeq_Flow
+    
     neatseq_flow.py                                                      \
     --sample_file Samples.nsfs                                           \
     --param_file  Microbe-Flow_conda.yaml  \
@@ -539,23 +555,23 @@ Using CONDA environment
   .. note::  If NeatSeq-Flow says :``Finished successfully....`` it is OK to move on.
 
 
-7. Run Microbe-Flow
+8. Run Microbe-Flow
 **********************
 
   In the command line type:
 
-  .. code-block:: csh
+  .. code-block:: sh
 
-    csh scripts/00.workflow.commands.csh
+    sh scripts/00.workflow.commands.sh
 
 .. _NeatSeq-Flow monitor:
 
-8. Run the NeatSeq-Flow monitor
+9. Run the NeatSeq-Flow monitor
 *********************************
 
   In the command line type:
 
-  .. code-block:: csh
+  .. code-block:: sh
 
     neatseq_flow_monitor.py
 
@@ -567,13 +583,13 @@ Using CONDA environment
       |     [Step/sample finished with Errors or did not finished at all]
     * | **Yellow:** indicate that **The step/sample is in progress**
 
-9. Checking the Workflow output
+10. Checking the Workflow output
 ************************************
 
     * Browse the ``data/`` directory for the outputs from the programs executed by Microbe-Flow.
     * You can also check out the log files, the standard output and error files in the ``logs/``, ``stdout/`` and ``stderr/`` directories, respectively. **It is especially informative when problems were identified in the** :ref:`The NeatSeq-Flow monitor<NeatSeq-Flow monitor>` 
 
-10. Deactivate Microbe-Flow environment
+11. Deactivate Microbe-Flow environment
 ******************************************************************************************
 
     Deactivate the Microbe-Flow environment if you want to go back to you're regular system settings.
@@ -582,7 +598,7 @@ Using CONDA environment
     
   In the command line type:
 
-  .. code-block:: csh
+  .. code-block:: sh
 
     source deactivate 
 
@@ -593,7 +609,7 @@ Using CONDA environment
     
   .. warning:: Since installing Microbe-Flow environment takes time, un-install it only if you are not going to use it in the future.
 
-  .. code-block:: csh
+  .. code-block:: sh
 
     conda remove --name  Microbe-Flow --all
     conda remove --name  gubbins --all
@@ -620,7 +636,7 @@ Using a local copy of NeatSeq-Flow
 ******************************************************************************************
   In the command line type:
 
-  .. code-block:: csh
+  .. code-block:: sh
 
      mkdir Microbe-Flow
      cd Microbe-Flow 
@@ -630,7 +646,7 @@ Using a local copy of NeatSeq-Flow
 ******************************************************************************************
   In the command line type:
 
-  .. code-block:: csh
+  .. code-block:: sh
 
     mkdir NeatSeq-Flow
     cd NeatSeq-Flow 
@@ -644,7 +660,7 @@ Using a local copy of NeatSeq-Flow
 
   In the command line type:
 
-  .. code-block:: csh
+  .. code-block:: sh
     
     nano Samples.nsfs
 
@@ -660,9 +676,9 @@ Using a local copy of NeatSeq-Flow
 
   In the command line type:
 
-  .. code-block:: csh
+  .. code-block:: sh
     
-    curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Microbe-Flow/Microbe-Flow.yaml
+    wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Microbe-Flow/Microbe-Flow.yaml
 
     nano  Microbe-Flow.yaml
 
@@ -680,7 +696,7 @@ Using a local copy of NeatSeq-Flow
       
   .. tip:: The ``Qsub_path`` parameter can be determined by executing the following command:
   
-    .. code-block:: csh
+    .. code-block:: sh
     
         dirname `which qsub`
     
@@ -688,7 +704,7 @@ Using a local copy of NeatSeq-Flow
     
   .. tip:: The ``module_path`` parameter can be determined by executing the following command:
   
-    .. code-block:: csh
+    .. code-block:: sh
     
         echo $cwd/NeatSeq-Flow/neatseq-flow-modules/neatseq_flow_modules/
     
@@ -779,7 +795,7 @@ Using a local copy of NeatSeq-Flow
       
       You can type in the command line:
       
-      .. code-block:: csh
+      .. code-block:: sh
 
         qconf –spl
         
@@ -787,7 +803,7 @@ Using a local copy of NeatSeq-Flow
 
   .. tip:: The ``parse_blast`` parameter can be determined by executing the following command:
   
-    .. code-block:: csh
+    .. code-block:: sh
     
         echo $cwd/NeatSeq-Flow/parse_blast/bin/parse_blast.R
     
@@ -827,7 +843,7 @@ Using a local copy of NeatSeq-Flow
 
   In the command line type:
 
-  .. code-block:: csh
+  .. code-block:: sh
 
     python NeatSeq-Flow/neatseq-flow/bin/neatseq_flow.py                                                      \
     --sample_file Samples.nsfs                                           \
@@ -842,9 +858,9 @@ Using a local copy of NeatSeq-Flow
 
   In the command line type:
 
-  .. code-block:: csh
+  .. code-block:: sh
 
-    csh scripts/00.workflow.commands.csh
+    sh scripts/00.workflow.commands.sh
 
 .. _NeatSeq-Flow monitor2:
 
@@ -853,7 +869,7 @@ Using a local copy of NeatSeq-Flow
 
   In the command line type:
 
-  .. code-block:: csh
+  .. code-block:: sh
 
     neatseq_flow_monitor.py
 
@@ -906,7 +922,7 @@ Perform a test run on a publicly available data
     .. code-block:: bash
         
         cd $MICROBE_FLOW_CWD
-        curl -LO http://www.irisa.fr/symbiose/projects/gassst/Gassst_v1.28.tar.gz
+        wget http://www.irisa.fr/symbiose/projects/gassst/Gassst_v1.28.tar.gz
         tar -xvzf Gassst_v1.28.tar.gz
         cd $MICROBE_FLOW_CWD/Gassst_v1.28
         make
@@ -921,7 +937,7 @@ Perform a test run on a publicly available data
     .. code-block:: bash
     
         cd $MICROBE_FLOW_CWD
-        curl -LO https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/genecluster/gecko/Gecko3.1.zip
+        wget https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/genecluster/gecko/Gecko3.1.zip
         unzip Gecko3.1.zip
         
 
@@ -933,7 +949,7 @@ Perform a test run on a publicly available data
     .. code-block:: bash
         
         cd $MICROBE_FLOW_CWD
-        curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Microbe-Flow/get_scheme.sh
+        wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Microbe-Flow/get_scheme.sh
 
         mkdir MLST
         cd $MICROBE_FLOW_CWD/MLST
@@ -956,8 +972,8 @@ Perform a test run on a publicly available data
     .. code-block:: bash
     
         cd $MICROBE_FLOW_CWD
-        curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Microbe-Flow/SRP090551_Samples.nsfs
-        curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Microbe-Flow/SRP090551_DATA.txt
+        wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Microbe-Flow/SRP090551_Samples.nsfs
+        wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Microbe-Flow/SRP090551_DATA.txt
 
 
 6. Edit the Microbe-Flow parameter file to suit your cluster
@@ -967,10 +983,10 @@ Perform a test run on a publicly available data
   
   In the command line type:
 
-  .. code-block:: csh
+  .. code-block:: sh
     
     cd $MICROBE_FLOW_CWD
-    curl -LO https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Microbe-Flow/Microbe-Flow_conda_test_run.yaml
+    wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/Workflows/Microbe-Flow/Microbe-Flow_conda_test_run.yaml
 
     sed -i $( echo 's:$MICROBE_FLOW_CWD:'$MICROBE_FLOW_CWD':') Microbe-Flow_conda_test_run.yaml
     sed -i $( echo 's:/PATH_TO_YOUR_QSUB/:'$(dirname `which qsub`)':') Microbe-Flow_conda_test_run.yaml
@@ -988,6 +1004,7 @@ Perform a test run on a publicly available data
       .. code-block:: yaml
 
         Global_params:
+            Executor: Local # Change to your Executor SGE/SLURM/Local
             Qsub_opts: -cwd
             Qsub_q: your.q <<
             Default_wait: 10
@@ -1037,10 +1054,20 @@ Perform a test run on a publicly available data
 
 7. Run NeatSeq-Flow
 ******************************************************************************************
-
+  
+  If you did not activate the NeatSeq-Flow environment:
+  
   In the command line type:
-
-  .. code-block:: csh
+    
+  .. code-block:: sh
+    
+    source activate NeatSeq_Flow
+    
+  To generate the workflow scripts:
+    
+  In the command line type:
+    
+  .. code-block:: sh
 
     neatseq_flow.py                                                   \
     --sample_file $MICROBE_FLOW_CWD/SRP090551_Samples.nsfs            \
@@ -1055,9 +1082,9 @@ Perform a test run on a publicly available data
 
   In the command line type:
 
-  .. code-block:: csh
+  .. code-block:: sh
 
-    csh scripts/00.workflow.commands.csh
+    sh scripts/00.workflow.commands.sh
 
 
 9. Run the NeatSeq-Flow monitor
@@ -1065,7 +1092,7 @@ Perform a test run on a publicly available data
 
   In the command line type:
 
-  .. code-block:: csh
+  .. code-block:: sh
 
     neatseq_flow_monitor.py
 
