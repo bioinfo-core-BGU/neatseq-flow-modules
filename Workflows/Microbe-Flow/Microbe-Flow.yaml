@@ -1,4 +1,29 @@
+"Documentation": |-
+
+    Microbe-Flow
+    =========================
+    Microbe-Flow is an easy to setup, modular and flexible workflow for analyzing bacterial whole genome sequencing (WGS) data. It is based on the NeatSeq-Flow platform for modular workflow design and efficient execution on computer clusters. Microbe-Flow uses a wide range of tools to enable a comprehensive overview on large numbers of samples. Microbe-Flow offers an automated solution for WGS, starting from FASTQ files, including raw reads quality control (QC), de novo assembly and its QC, gene prediction and annotation including virulence/resistance genes, phylogenetic analyses and typing based on variant calling and core SNPs, multilocus sequence typing (MLST) and core genome (cg)MLST. Notably, Microbe-Flow enables a range of studies including pan-genome and association analysis for desired bacterial attributes, bi-clustering of virulence genes including enrichment and gene cluster co-localization tests. Conveniently, Microbe-Flow is not species-specific and can be adjusted to any bacterium, while species-specific steps can be added as needed. It also produces a final report. Microbe-Flow was designed to work hand in hand with CONDA environments to enable an easy installation of almost all the pre-required programs and packages. Finally, Microbe-Flow is well documented and has step by step walk through instructions.
+    
+    The Microbe-Flow Workflow performs the following tasks
+    -------------------------------------------------------
+    Quality testing and trimming of raw reads (paired or single end) using Trim Galore [1] and Cutadapt [2].
+    Contamination check using Kraken.
+    De novo assembly using SPAdes.
+    De novo assembly QC using QUAST.
+    Graphical QC reports (post and pre trimming) using MultiQC.
+    Gene prediction and annotation including the identification of virulence genes from the VFDB database, using Prokka and detection of resistance genes using CARD RGI.
+    Variant calling and generation of a core SNP set using Snippy and prediction of recombination regions by Gubbins
+    Multi-locus sequence typing (MLST) and core genome (cg) MLST using GASSST global alignment search tool and in house scripts, including detection of new alleles.
+    Pan-genome analysis using Roary, including generation of a genes X genomes presence/absence matrix and association analysis based on the pan-genome using scoary.
+    Bi-clustering analysis of virulence genes, to identify groups of genes that are shared by subsets of the genomes using the eisa R package and in-house scripts..
+    Enrichment analysis of gene groups and genome subsets, identified by the bi-clustering analysis using the clusterProfiler R package and in house scripts.
+    Co-localization analysis of gene clusters identified in the bi-clustering analysis using Gecko3.
+    Generation of output files ready to use in phyloviz.
+    Generation of multiple layers’ phylogenetic trees plots using ggtree R package and in-house scripts.
+    Generation of a final report that includes- Sample’s MetaData, reads QC, Kraken results, de novo assembly QC, pan-genome analysis matrix, resistance genes results and MLST typing
+
 Global_params:
+    Executor: Local # Change to your Executor SGE/SLURM/Local
     Qsub_opts: -cwd
     Qsub_path: /PATH_TO_YOUR_QSUB/ 
     Qsub_q: your.q 

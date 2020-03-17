@@ -1,4 +1,29 @@
+"Documentation": |-
+
+    Microbe-Flow
+    =========================
+    Microbe-Flow is an easy to setup, modular and flexible workflow for analyzing bacterial whole genome sequencing (WGS) data. It is based on the NeatSeq-Flow platform for modular workflow design and efficient execution on computer clusters. Microbe-Flow uses a wide range of tools to enable a comprehensive overview on large numbers of samples. Microbe-Flow offers an automated solution for WGS, starting from FASTQ files, including raw reads quality control (QC), de novo assembly and its QC, gene prediction and annotation including virulence/resistance genes, phylogenetic analyses and typing based on variant calling and core SNPs, multilocus sequence typing (MLST) and core genome (cg)MLST. Notably, Microbe-Flow enables a range of studies including pan-genome and association analysis for desired bacterial attributes, bi-clustering of virulence genes including enrichment and gene cluster co-localization tests. Conveniently, Microbe-Flow is not species-specific and can be adjusted to any bacterium, while species-specific steps can be added as needed. It also produces a final report. Microbe-Flow was designed to work hand in hand with CONDA environments to enable an easy installation of almost all the pre-required programs and packages. Finally, Microbe-Flow is well documented and has step by step walk through instructions.
+    
+    The Microbe-Flow Workflow performs the following tasks
+    -------------------------------------------------------
+    Quality testing and trimming of raw reads (paired or single end) using Trim Galore [1] and Cutadapt [2].
+    Contamination check using Kraken.
+    De novo assembly using SPAdes.
+    De novo assembly QC using QUAST.
+    Graphical QC reports (post and pre trimming) using MultiQC.
+    Gene prediction and annotation including the identification of virulence genes from the VFDB database, using Prokka and detection of resistance genes using CARD RGI.
+    Variant calling and generation of a core SNP set using Snippy and prediction of recombination regions by Gubbins
+    Multi-locus sequence typing (MLST) and core genome (cg) MLST using GASSST global alignment search tool and in house scripts, including detection of new alleles.
+    Pan-genome analysis using Roary, including generation of a genes X genomes presence/absence matrix and association analysis based on the pan-genome using scoary.
+    Bi-clustering analysis of virulence genes, to identify groups of genes that are shared by subsets of the genomes using the eisa R package and in-house scripts..
+    Enrichment analysis of gene groups and genome subsets, identified by the bi-clustering analysis using the clusterProfiler R package and in house scripts.
+    Co-localization analysis of gene clusters identified in the bi-clustering analysis using Gecko3.
+    Generation of output files ready to use in phyloviz.
+    Generation of multiple layers’ phylogenetic trees plots using ggtree R package and in-house scripts.
+    Generation of a final report that includes- Sample’s MetaData, reads QC, Kraken results, de novo assembly QC, pan-genome analysis matrix, resistance genes results and MLST typing
+
 Global_params:
+    Executor: Local # Change to your Executor SGE/SLURM/Local
     Qsub_opts: -cwd
     Qsub_path: /PATH_TO_YOUR_QSUB/ 
     Qsub_q: your.q 
@@ -101,6 +126,7 @@ Step_params:
         script_path:
 
     FastQC_Merge:
+        setenv: PERL5LIB=""
         module: fastqc_html
         base: Merge
         script_path: {Vars.Programs_path.FastQC}
@@ -110,6 +136,7 @@ Step_params:
             --threads: {Vars.Parallel_Environment.FastQC}
 
     Trim_Galore:
+        setenv: PERL5LIB=""
         module: Trim_Galore
         base: Merge
         script_path: {Vars.Programs_path.Trim_Galore.Main}
@@ -119,6 +146,7 @@ Step_params:
             -q: 25
 
     FastQC_Trim_Galore:
+        setenv: PERL5LIB=""
         module: fastqc_html
         base: Trim_Galore
         script_path: {Vars.Programs_path.FastQC}
@@ -128,6 +156,7 @@ Step_params:
             --threads: {Vars.Parallel_Environment.FastQC}
 
     Kraken:
+        setenv: PERL5LIB=""
         module: kraken
         base: Trim_Galore
         script_path: {Vars.Programs_path.Kraken}
@@ -140,6 +169,7 @@ Step_params:
             --threads: {Vars.Parallel_Environment.Kraken}
 
     Collect_kraken:
+        setenv: PERL5LIB=""
         module: Collect_results
         base: Kraken
         script_path: null
@@ -151,6 +181,7 @@ Step_params:
             -T: null
 
     Snippy:
+        setenv: PERL5LIB=""
         module: Snippy
         base: Trim_Galore
         script_path: {Vars.Programs_path.Snippy.Main}
@@ -173,6 +204,7 @@ Step_params:
             --reference: {Vars.Genome.reference}
 
     Gubbins:
+        setenv: PERL5LIB=""
         conda:
             path: {Vars.Programs_path.Gubbins.conda.base}
             env:  {Vars.Programs_path.Gubbins.conda.env}
@@ -186,6 +218,7 @@ Step_params:
             -M: {Vars.MetaData.File}
 
     Spades:
+        setenv: PERL5LIB=""
         module: spades_assembl
         base: Trim_Galore
         script_path: {Vars.Programs_path.Spades}
@@ -199,6 +232,7 @@ Step_params:
             --cov-cutoff: auto
 
     Quast:
+        setenv: PERL5LIB=""
         module: quast
         base: Spades
         script_path: {Vars.Programs_path.Quast}
@@ -211,13 +245,14 @@ Step_params:
             -L: null
 
     Prokka:
+        setenv: PERL5LIB=""
         module: Prokka
         base: Spades
         script_path: {Vars.Programs_path.Prokka}
         scope:          sample
         qsub_params:
             -pe: '{Vars.Parallel_Environment.pe_name}  {Vars.Parallel_Environment.Prokka}'
-        generate_GFF_dir: null
+        # generate_GFF_dir: null
         redirects:
             --cpus: {Vars.Parallel_Environment.Prokka}
             --force: null
@@ -226,6 +261,7 @@ Step_params:
             --proteins: VFDB
 
     CARD_RGI:
+        setenv: PERL5LIB=""
         JSON2tsv_script: {Vars.Programs_path.CARD_RGI.JSON2tsv_script}
         module: CARD_RGI
         base: Spades
@@ -239,6 +275,7 @@ Step_params:
 
 
     Collect_CARD_RGI:
+        setenv: PERL5LIB=""
         module: Collect_results
         base: CARD_RGI
         script_path: null
@@ -249,6 +286,11 @@ Step_params:
             -R: .CARD_RGI.txt$
 
     Roary:
+        setenv:
+        - PERL5LIB=""
+        - R_LIBS_SITE=""
+        - LD_LIBRARY_PATH=""
+        - R_LIBS=""
         module: Roary
         base:
         - Prokka
@@ -282,6 +324,7 @@ Step_params:
             -y: null
 
     Collect_Virulence:
+        setenv: PERL5LIB=""
         module: Collect_results
         base: Roary
         script_path: 
@@ -291,6 +334,7 @@ Step_params:
             --split_by: ','
             
     Collect_Roary:
+        setenv: PERL5LIB=""
         module: Collect_results
         base: Roary
         script_path: 
@@ -298,6 +342,7 @@ Step_params:
             -R: gene_presence_absence.tab$
         
     MLST_Gassst:
+        setenv: PERL5LIB=""
         module: Gassst
         base: Spades
         script_path: {Vars.Programs_path.Gassst}
@@ -312,6 +357,11 @@ Step_params:
             -p: 95
 
     MLST_parse_blast:
+        setenv:
+        - PERL5LIB=""
+        - R_LIBS_SITE=""
+        - LD_LIBRARY_PATH=""
+        - R_LIBS=""
         module: parse_blast
         base: MLST_Gassst
         script_path: {Vars.Programs_path.parse_blast}
@@ -329,6 +379,11 @@ Step_params:
             --sort_str: '''evalue,i,pident,d,length,d'''
 
     MLST_verdict:
+        setenv:
+        - PERL5LIB=""
+        - R_LIBS_SITE=""
+        - LD_LIBRARY_PATH=""
+        - R_LIBS=""
         module: cgMLST_and_MLST_typing
         base: MLST_parse_blast
         script_path: 
@@ -342,6 +397,7 @@ Step_params:
             --scheme: {Vars.Typing.MLST.scheme} 
 
     cgMLST_Gassst:
+        setenv: PERL5LIB=""
         module: Gassst
         base: Spades
         script_path: {Vars.Programs_path.Gassst}
@@ -356,6 +412,11 @@ Step_params:
             -p: 95
 
     cgMLST_parse_blast:
+        setenv:
+        - PERL5LIB=""
+        - R_LIBS_SITE=""
+        - LD_LIBRARY_PATH=""
+        - R_LIBS=""
         module: parse_blast
         base: cgMLST_Gassst
         script_path: {Vars.Programs_path.parse_blast}
@@ -373,6 +434,11 @@ Step_params:
             --sort_str: '''evalue,i,pident,d,length,d'''
 
     cgMLST_verdict:
+        setenv:
+        - PERL5LIB=""
+        - R_LIBS_SITE=""
+        - LD_LIBRARY_PATH=""
+        - R_LIBS=""
         module: cgMLST_and_MLST_typing
         base: cgMLST_parse_blast
         script_path: 
@@ -384,9 +450,9 @@ Step_params:
         redirects:
             --Type_col_name: {Vars.Typing.cgMLST.Type_col_name}
             --scheme: {Vars.Typing.cgMLST.scheme} 
-        # stop_and_show:
 
     Collect_typing_verdict:
+        setenv: PERL5LIB=""
         module: Collect_results
         base: 
         - MLST_verdict
@@ -400,6 +466,7 @@ Step_params:
             
         
     MultiQC_raw_reads:
+        setenv: PERL5LIB=""
         module: Multiqc
         base:
         - FastQC_Merge
@@ -409,6 +476,7 @@ Step_params:
             --template: default
         
     MultiQC_post_trim:
+        setenv: PERL5LIB=""
         module: Multiqc
         base:
         - FastQC_Trim_Galore
@@ -421,6 +489,7 @@ Step_params:
             --template: default
 
     Collect_MultiQC_post_trim:
+        setenv: PERL5LIB=""
         module: Collect_results
         base: MultiQC_post_trim
         script_path: 
@@ -429,6 +498,7 @@ Step_params:
             -R: .txt$
             
     Collect_MultiQC_raw_reads:
+        setenv: PERL5LIB=""
         module: Collect_results
         base: MultiQC_raw_reads
         script_path: 
@@ -437,6 +507,7 @@ Step_params:
             -R: .txt$
             
     Collect_ALL:
+        setenv: PERL5LIB=""
         module: Collect_results
         base:
         - Collect_typing_verdict
@@ -450,23 +521,13 @@ Step_params:
         redirects:
             --Excel: null
             -R: .merg$
-    # aaaaaaaaa:
-        # module: manage_types
-        # base:
-        # - Collect_ALL
-        # - cgMLST_verdict
-        # - MLST_verdict
-        # - Roary
-        # - Gubbins
-        # script_path: 
-        # operation:  add
-        # type:       klkk
-        # scope:          sample
-        # path:       kjlklkjlj
-        # stop_and_show:
-        
-        
+
     Plot_Trees_Resistance:
+        setenv:
+        - PERL5LIB=""
+        - R_LIBS_SITE=""
+        - LD_LIBRARY_PATH=""
+        - R_LIBS=""
         module: Tree_plot
         base:
         - Collect_ALL
@@ -490,6 +551,11 @@ Step_params:
             --ID_heatmap_field: 'Samples'
     
     Plot_Trees_virulence:
+        setenv:
+        - PERL5LIB=""
+        - R_LIBS_SITE=""
+        - LD_LIBRARY_PATH=""
+        - R_LIBS=""
         module: Tree_plot
         base:
         - Collect_ALL

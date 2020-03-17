@@ -55,7 +55,7 @@ dependencies:
   - blast=2.7.1
 
   #Neatseq_Flow
-  - pip:
-    - git+https://github.com/bioinfo-core-BGU/neatseq-flow.git
-    - git+https://github.com/bioinfo-core-BGU/neatseq-flow-modules.git
-    - git+https://github.com/bioinfo-core-BGU/parse_blast.git
+  # - pip:
+    # - git+https://github.com/bioinfo-core-BGU/neatseq-flow.git
+    # - git+https://github.com/bioinfo-core-BGU/neatseq-flow-modules.git
+    # - git+https://github.com/bioinfo-core-BGU/parse_blast.git
