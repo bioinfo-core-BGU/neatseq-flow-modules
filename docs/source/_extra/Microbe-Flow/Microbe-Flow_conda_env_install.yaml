@@ -26,6 +26,7 @@ dependencies:
   - bioconductor-DOSE=3.2.0
   - bioconductor-clusterprofiler=3.4.4
   - bioconductor-expressionview=1.34.0
+  - bioconda bioconductor-treeio=1.0.2
   - r-ape=5.3
   - bioconductor-ggtree=1.8.2 
   - r-XML

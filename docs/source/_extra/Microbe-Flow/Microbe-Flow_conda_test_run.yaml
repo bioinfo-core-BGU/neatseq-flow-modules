@@ -533,6 +533,7 @@ Step_params:
             --H_Excel: Collect_CARD_RGI
             --heatmap: null
             --OTU: ST
+            --Tip_labels: null
             # --layout: fan
             --heatmap_highest_value: blue
             --heatmap_variable: null
@@ -561,6 +562,7 @@ Step_params:
             --H_Excel: Collect_Virulence
             --heatmap: null
             --OTU: ST
+            --Tip_labels: null
             # --layout: fan
             --heatmap_variable: null
             --heatmap_count_by_sep: ','
