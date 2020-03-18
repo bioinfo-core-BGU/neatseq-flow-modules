@@ -81,7 +81,7 @@ Vars:
             scoary: scoary
             Gecko3: /PATH_TO_GECKO3/ 
         Gassst: /PATH_TO_GASSST/ 
-        parse_blast: parse_blast.R
+        parse_blast: parse_blast_v1.R
         Multiqc: multiqc
     Genome:
         reference: /PATH_TO_REFERENCE_GENOME_IN_FASTA_or_GENBANK_FORMAT/ 
@@ -373,8 +373,7 @@ Step_params:
             --merge_blast: qseqid
             --merge_metadata: Allele
             --min_coverage: 100
-            --names: '"qseqid sallseqid qlen slen qstart qend sstart send length evalue
-                pident sseq"'
+            --names: '"qseqid sallseqid qlen slen qstart qend sstart send length evalue pident sseq"'
             --num_hits: 1
             --sort_str: '''evalue,i,pident,d,length,d'''
 
@@ -428,8 +427,7 @@ Step_params:
             --merge_blast: qseqid
             --merge_metadata: Allele
             --min_coverage: 100
-            --names: '"qseqid sallseqid qlen slen qstart qend sstart send length evalue
-                pident sseq"'
+            --names: '"qseqid sallseqid qlen slen qstart qend sstart send length evalue pident sseq"'
             --num_hits: 1
             --sort_str: '''evalue,i,pident,d,length,d'''
 
@@ -543,6 +541,7 @@ Step_params:
             --H_Excel: Collect_CARD_RGI
             --heatmap: null
             --OTU: ST
+            --Tip_labels: null
             # --layout: fan
             --heatmap_highest_value: blue
             --heatmap_variable: null
@@ -571,6 +570,7 @@ Step_params:
             --H_Excel: Collect_Virulence
             --heatmap: null
             --OTU: ST
+            --Tip_labels: null
             # --layout: fan
             --heatmap_variable: null
             --heatmap_count_by_sep: ','

@@ -89,8 +89,8 @@ if __name__ == "__main__":
         fig = plt.figure(figsize=(17, 20))
 
         ax1=plt.subplot2grid((50,50), (13, 15), colspan=30,rowspan=35)
-        ax2=plt.subplot2grid((50,50),(13, 0), colspan=10,rowspan=35, axisbg='white')
-        #ax3=plt.subplot2grid((50,50),(0, 15), colspan=30,rowspan=10, axisbg='white')
+        ax2=plt.subplot2grid((50,50),(13, 0), colspan=10,rowspan=35, facecolor='white')
+        #ax3=plt.subplot2grid((50,50),(0, 15), colspan=30,rowspan=10, facecolor='white')
         
         fig.subplots_adjust(wspace=0, hspace=0)
 
@@ -171,8 +171,8 @@ if __name__ == "__main__":
             fig = plt.figure(figsize=(17, 20))
 
             ax1=plt.subplot2grid((50,50), (13, 15), colspan=30,rowspan=35)
-            ax2=plt.subplot2grid((50,50),(13, 0), colspan=10,rowspan=35, axisbg='white')
-            #ax3=plt.subplot2grid((50,50),(0, 15), colspan=30,rowspan=10, axisbg='white')
+            ax2=plt.subplot2grid((50,50),(13, 0), colspan=10,rowspan=35, facecolor='white')
+            #ax3=plt.subplot2grid((50,50),(0, 15), colspan=30,rowspan=10, facecolor='white')
             
             fig.subplots_adjust(wspace=0, hspace=0)
 

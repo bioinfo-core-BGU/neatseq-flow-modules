@@ -80,7 +80,7 @@ Vars:
             scoary: scoary
             Gecko3: $MICROBE_FLOW_CWD/Gecko3.1/bin/Gecko3
         Gassst: $MICROBE_FLOW_CWD/Gassst_v1.28/Gassst
-        parse_blast: parse_blast.R
+        parse_blast: parse_blast_v1.R
         Multiqc: multiqc
     Genome:
         genus: '"Campylobacter jejuni"'
@@ -365,8 +365,7 @@ Step_params:
             --merge_blast: qseqid
             --merge_metadata: Allele
             --min_coverage: 100
-            --names: '"qseqid sallseqid qlen slen qstart qend sstart send length evalue
-                pident sseq"'
+            --names: '"qseqid sallseqid qlen slen qstart qend sstart send length evalue pident sseq"'
             --num_hits: 1
             --sort_str: '''evalue,i,pident,d,length,d'''
 
@@ -420,8 +419,7 @@ Step_params:
             --merge_blast: qseqid
             --merge_metadata: Allele
             --min_coverage: 100
-            --names: '"qseqid sallseqid qlen slen qstart qend sstart send length evalue
-                pident sseq"'
+            --names: '"qseqid sallseqid qlen slen qstart qend sstart send length evalue pident sseq"'
             --num_hits: 1
             --sort_str: '''evalue,i,pident,d,length,d'''
 
