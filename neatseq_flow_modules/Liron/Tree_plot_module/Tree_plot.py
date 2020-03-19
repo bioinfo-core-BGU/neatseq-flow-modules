@@ -147,7 +147,16 @@ class Step_Tree_plot(Step):
             if self.params["script_path"]!=None:  
                 #Tree_plot main command
                 if "env" in list(self.params.keys()):
-                    self.script +="env %s  \\\n" % self.params["env"]
+                    if self.shell=="bash":
+                        self.script +="export  %s  \n\n" % self.params["env"]
+                    else:
+                        self.script +="env %s  \n\n" % self.params["env"]
+                if "setenv" in list(self.params.keys()):
+                    for env in self.params["setenv"]:
+                        if self.shell=="bash":
+                            self.script +="export  %s  \n\n" % env
+                        else:
+                            self.script +="env %s  \n\n" % env
                 self.script += "%s \\\n\t"  % self.params["script_path"]
                 if ('--tree' or '-t') not in self.params["redir_params"]:
                     if 'newick' in self.sample_data["project_data"]:
@@ -194,7 +203,16 @@ class Step_Tree_plot(Step):
                         sample_data=self.get_base_sample_data()[base.name]
                     #Tree_plot main command
                     if "env" in list(self.params.keys()):
-                        self.script +="env %s  \\\n" % self.params["env"]
+                        if self.shell=="bash":
+                            self.script +="export  %s  \n\n" % self.params["env"]
+                        else:
+                            self.script +="env %s  \n\n" % self.params["env"]
+                    if "setenv" in list(self.params.keys()):
+                        for env in self.params["setenv"]:
+                            if self.shell=="bash":
+                                self.script +="export  %s  \n\n" % env
+                            else:
+                                self.script +="env %s  \n\n" % env
                     self.script += "%s \\\n\t"  % self.params["script_path"]
                     if ('--tree' or '-t') not in self.params["redir_params"]:
                         if 'newick' in list(sample_data["project_data"].keys()):
@@ -234,7 +252,16 @@ class Step_Tree_plot(Step):
                 if self.params["script_path"]!=None:  
                     #Tree_plot main command
                     if "env" in list(self.params.keys()):
-                        self.script +="env %s  \\\n" % self.params["env"]
+                        if self.shell=="bash":
+                            self.script +="export  %s  \n\n" % self.params["env"]
+                        else:
+                            self.script +="env %s  \n\n" % self.params["env"]
+                    if "setenv" in list(self.params.keys()):
+                        for env in self.params["setenv"]:
+                            if self.shell=="bash":
+                                self.script +="export  %s  \n\n" % env
+                            else:
+                                self.script +="env %s  \n\n" % env
                     self.script += "%s \\\n\t"  % self.params["script_path"]
                     
                     self.script += "--tree_by_heatmap \\\n\t" 
