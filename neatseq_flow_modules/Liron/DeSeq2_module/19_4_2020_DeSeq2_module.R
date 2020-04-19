@@ -1353,7 +1353,6 @@ create_excel_output <- function(dds,opt, contrusts, Norm_Type, output_path, dds_
     res_df$pass_any <- ifelse(test = res_df[,stringr::str_detect(string = names(res_df),pattern = "pass")]!="",
                               yes = "yes",
                               no = "no")
-    Sig_Gene = row.names(res_df[res_df$pass_any=='yes',])
     res_df_grouping <- c(res_df_grouping,1)
     res_df_compar_head <- c(res_df_compar_head, "pass_any")
     names(res_df) <- make.names(names(res_df),

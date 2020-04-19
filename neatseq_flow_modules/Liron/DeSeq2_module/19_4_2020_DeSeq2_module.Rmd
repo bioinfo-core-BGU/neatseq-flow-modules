@@ -889,8 +889,7 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                         
                         topT <- na.omit(as.data.frame(DESeqDataSet_Results))
                         volcano=ggplot(data = topT,mapping = aes(x=log2FoldChange, y=-log10(padj), fill=padj<FDR_PVAL_CUTOFF)) + 
-                        geom_point(size=1,pch=21)+
-                        scale_fill_manual(values = c('black','red'))+
+                        geom_point(size=1,pch=21,colour="black")+
                         geom_hline(yintercept =-log10(max(topT$padj[topT$padj<FDR_PVAL_CUTOFF], na.rm=TRUE)) ,size=0.2)+
                         geom_vline(xintercept = -1*FC_CUTOFF_log2,linetype="dotted",size=0.2)+
                         geom_vline(xintercept =  FC_CUTOFF_log2,linetype="dotted",size=0.2)+
@@ -981,7 +980,7 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                 geom_point(data = subset(topT,(padj>=FDR_PVAL_CUTOFF)&(log2FoldChange<=-1*ylimit) ),mapping = aes(x=baseMean),y=-1*ylimit,size=0.5,pch=25,fill="black",colour="black")+
                 geom_point(data = subset(topT,(padj<FDR_PVAL_CUTOFF)&(log2FoldChange>ylimit) ),mapping = aes(x=baseMean),y=ylimit,size=1,pch=24,fill="red",colour="black")+
                 geom_point(data = subset(topT,(padj<FDR_PVAL_CUTOFF)&(log2FoldChange<=-1*ylimit) ),mapping = aes(x=baseMean),y=-1*ylimit,size=1,pch=25,fill="red",colour="black")+
-                scale_fill_manual(values = c('black','red'))+
+                scale_fill_manual(values = c('black','reCUTOFF)&(log2FoldChange<-d'))+
                 geom_hline(yintercept = -1*FC_CUTOFF_log2,linetype="dotted",size=0.2)+
                 geom_hline(yintercept =  FC_CUTOFF_log2,linetype="dotted",size=0.2)+
                 #coord_cartesian(ylim=c(max(abs(topT$log2FoldChange)),-1*max(abs(topT$log2FoldChange))) )+
@@ -1815,28 +1814,16 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                                                            k=Number_Of_Clusters ) 
                                         clusters=Clustering$cluster
                                     }else{
-                                        
-                                        method = c(opt$gap_maxSE_method,"firstSEmax", "Tibs2001SEmax", "globalSEmax",
-                                                   "firstmax", "globalmax")
-                                        for (gap_maxSE_method in method){
-                                            Clustering <- try(eclust(as.matrix(SPLIT_Normalized_counts_Annotated_mean),stand =F,
-                                                               FUNcluster= opt$FUNcluster,
-                                                               hc_metric =opt$hc_metric,
-                                                               graph = FALSE,
-                                                               hc_method = opt$hc_method,
-                                                               k.max =  k.max,
-                                                               nboot = opt$nboot,
-                                                               gap_maxSE = list(method= gap_maxSE_method, SE.factor = opt$gap_maxSE_SE.factor) ),
-                                                    silent = T)
-                                            if ((inherits(Clustering,"try-error"))==FALSE){
-                                                clusters=Clustering$cluster
-                                                if (gap_maxSE_method != opt$gap_maxSE_method){
-                                                   cat(sprintf("<h5>%s</h5>",'The original gap_maxSE_method parameter did not work therefore it was changed to')) 
-                                                   cat(sprintf("<h5>%s</h5>",gap_maxSE_method)) 
-                                                }
-                                                break
-                                            }
-                                        }
+    
+                                        Clustering <- eclust(as.matrix(SPLIT_Normalized_counts_Annotated_mean),stand =F,
+                                                           FUNcluster= opt$FUNcluster,
+                                                           hc_metric =opt$hc_metric,
+                                                           graph = FALSE,
+                                                           hc_method = opt$hc_method,
+                                                           k.max =  k.max,
+                                                           nboot = opt$nboot,
+                                                           gap_maxSE = list(method= opt$gap_maxSE_method, SE.factor = opt$gap_maxSE_SE.factor) )
+                                        clusters=Clustering$cluster
                                     }
                                 }
                             }else if (nrow(SPLIT_Normalized_counts_Annotated_mean)<3){
