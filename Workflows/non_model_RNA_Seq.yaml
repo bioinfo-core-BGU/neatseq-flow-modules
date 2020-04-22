@@ -1,0 +1,754 @@
+#----Qsub options
+Global_params:
+    Default_wait: 10
+    Qsub_opts: -V -cwd -notify
+    Qsub_q: QSUB_Q
+    Qsub_nodes: [QSUB_NODES]
+    job_limit:          CONDA_PATH/bin/job_limit.txt
+
+#------Documentation
+"Documentation": |
+    A pipeline for non-model organisms RNA-seq analysis
+    ---------------------------------------------------
+    
+    This workflow takes reads in fastq format, either paired-end or single, qaulity checks them and assembles a trascriptome with Trinity. It then runs `align_and_estimate_abundance.pl` and `abundance_estimates_to_matrix.pl` to map the reads to the trascriptome and creates normalized counts tables. These tables are then used in DEseq2 for statistical analysis of RNA-seq data and for function enrichment analysis.
+
+    You need to set up the following conda environments by running the configure.sh script provided :
+    - base Miniconda environment
+    - Neatseq_flow 
+    - non_model_RNA_Seq 
+    - DeSeq2
+    
+    Steps:
+    ------
+    
+    1. Import fastq reads.
+    2. Assess their quality with fastqc and trim them with trim galore then assess the qaulity of the trimmed reads.
+    3. Map to rRNA sequences from non-model organism and assess the quality of the unmap reads and alignments. 
+    4. Add tags required by trinity to the read titles (/1 and /2 for F and R. See https://github.com/trinityrnaseq/trinityrnaseq/wiki/Running-Trinity).
+    5. Assemble transcriptome using trinity and assess its quality using quast and BUSCO.
+    6. Map reads to the assembled transcriptome and generate acount matrix.
+    7. Filter out lowly expressed transcripts using a customized Rscript and assess the quality of the filtered trancriptome using quast and BUSCO.
+    8. Map reads to the filtered transcriptome and generate a count matrix.
+    9. Select representative transcript by getting only highly expressed transcripts using trinity.
+    10. Annotate the representative transcript using Trinotate or blastx against Refseq database for further functional analysis using Blast2GO.
+    11. Perform differential gene expression and enrichment analysis using the DeSeq2 module.
+
+#----------- Setting the necessary variables
+Vars:
+# --------------- Path to your executable programs
+    paths:
+    
+# --------- General
+        java:                CONDA_PATH/bin/
+        perl_lib_in_conda:           CONDA_PATH/lib/5.26.2/
+        PERL_DIR:    CONDA_PATH/lib/site_perl/5.26.2/
+        
+# -------- Import reads
+        import_seqs:          gzip -cd  
+        
+# -------- Qaulity check and filter reads:		
+        fastqc:        CONDA_PATH/bin/fastqc 
+        trimgal:        CONDA_PATH/bin/trim_galore 
+        multiqc:        CONDA_PATH/bin/multiqc
+        cutadapt:      CONDA_PATH/bin/cutadapt
+        bowtie2:        CONDA_PATH/bin/
+        bwa:            CONDA_PATH/bin/bwa
+        samtools:         CONDA_PATH/bin/samtools
+        
+# -------- Assemble transcriptome
+        Trinity:            CONDA_PATH/opt/trinity-2.8.4/
+        
+# -------- Rename Transcripts
+        Seqkit_replace:     CONDA_PATH/bin/seqkit replace  
+        
+# -------- Map, count, filter and choose representative transcript from the assembled transcriptome
+        get_Trinity_gene_to_trans_map:   CONDA_PATH/opt/trinity-2.8.4/util/support_scripts/get_Trinity_gene_to_trans_map.pl
+        get_longest_isoform_seq_per_trinity_gene:   CONDA_PATH/opt/trinity-2.8.4/util/misc/get_longest_isoform_seq_per_trinity_gene.pl
+        RSEM:               CONDA_PATH/bin/
+        filter_low_expr_transcripts:    CONDA_PATH/opt/trinity-2.8.4/util/filter_low_expr_transcripts.pl
+        filter_trinity_by_counts:  CONDA_PATH/bin/filter_trinity_by_counts.R
+        		
+# -------- Make blast database from filtered transcriptome
+        makeblastdb:        CONDA_PATH/bin/makeblastdb 
+        
+# -------- Quality Check the assembled transcriptome (filtered or unfiltered)
+        quast:              CONDA_PATH/bin/quast.py
+        BUSCO:              CONDA_PATH/bin/run_BUSCO.py
+        
+# -------- Annotate representative transcripts with Trinotate
+        TransDecoder:       CONDA_PATH/bin/TransDecoder.LongOrfs
+        Trinotate:          CONDA_PATH/bin/Trinotate    
+        hmm_bin:                CONDA_PATH/bin/
+        rnammer:            CONDA_PATH/opt/RNAMMERv1.2/rnammer
+        RnammerTranscriptome:   CONDA_PATH/bin/RnammerTranscriptome_mod.pl  # Modified script to handle empty rRNA predictions by rnammer
+        blast:              CONDA_PATH/bin/
+        blastp:             CONDA_PATH/bin/blastp
+        blastn:           CONDA_PATH/bin/blastn
+        
+# ------- Blast representative sequence against Refseq protein for functional annotation using Blast2GO
+        blastx:             CONDA_PATH/bin/blastx
+        BlastXMLmerge:      CONDA_PATH/bin/BlastXMLmerge.py
+        
+# ------- Paths to the required databases
+    databases:  
+        rRNA:
+            fasta:      CONDA_PATH/databases/rRNA/RNA_DATABASE
+            bwa_ind:    CONDA_PATH/databases/rRNA/RNA_DATABASE
+        RefSeq:
+            blastdb:        CONDA_PATH/databases/Refseq/refseq_protein                           
+        trinotate:
+            sprot:          CONDA_PATH/databases/Trinotate/uniprot_sprot.pep
+            pfam:           CONDA_PATH/databases/Trinotate/Pfam-A.hmm
+            sqlitedb:       CONDA_PATH/databases/Trinotate/Trinotate.sqlite
+        BUSCO:              
+            lineage:        CONDA_PATH/databases/BUSCO/BUSCO_DATABASE
+            
+# ----- Set other important global variables
+    grouping:   SAMPLE_MAPPING_FILE
+    Transcript_prefix:    TRANSCRIPT_PREFIX    # Prefix to use when renaming transcripts
+    Treatment_name:    TREATMENT_NAME    # group name in samples_mapping_file.txt to use during filtering
+    min_count:    'MINIMUM_COUNT'    #  Minimum count for filtering out lowly expresed transcripts
+    min_sample:   'MINIMUM_REPLICATES'  # Minimum number of samples or replicates within a treatment group to use during filtering
+
+    
+# ---- Statistics, clustering and enrichment analysis using DeSeq2 module
+    DeSeq2:
+       conda_env:    DESEQ2
+       SAMPLE_DATA: SAMPLE_MAPPING_FILE
+       design:    ~TREATMENT_NAME # Model design
+       contrast:    COMPARISON
+
+Step_params:
+# ---------------------------------- 1. Import, trim and quality check reads
+    Import_reads:
+        module:         Import
+        script_path:    {Vars.paths.import_seqs}
+        tag:    00.Quality_check #Import_reads
+        #SKIP Import_reads:
+
+    QC_imported_reads:
+        module:         fastqc_html
+        base:           Import_reads
+        script_path:    {Vars.paths.fastqc}
+        tag:    00.Quality_check #QC_imported_reads
+        setenv:         'PERL5LIB=""'
+        qsub_params:
+            -pe:        shared 15
+        redirects:
+            --threads:  15
+        #SKIP QC_imported_reads:
+
+    Trim_imported_reads: 
+        module:         Trim_Galore
+        base:           Import_reads
+        script_path:    {Vars.paths.trimgal}
+        tag:    00.Quality_check #Trim_imported_reads
+        cutadapt_path:  {Vars.paths.cutadapt}
+        setenv:         'PERL5LIB=""'
+        redirects:
+            --length:   50
+            --quality:  20 
+            --max_n:    1
+            --trim-n:
+        #SKIP Trim_imported_reads:
+
+    QC_trimmed_reads:
+        module:         fastqc_html
+        base:           Trim_imported_reads
+        script_path:    {Vars.paths.fastqc}
+        tag:    00.Quality_check #QC_trimmed_reads
+        setenv:         'PERL5LIB=""'
+        qsub_params:
+            -pe:        shared 15
+        redirects:
+            --threads:  15
+        #SKIP QC_trimmed_reads:
+
+    SummarizeQC_imported_reads:
+        module:         Multiqc
+        base:           QC_imported_reads
+        script_path:    {Vars.paths.multiqc}
+        tag:            00.Quality_check #SummarizeQC_imported_reads
+        redirects:
+            --interactive:
+        #SKIP SummarizeQC_imported_reads:
+
+    SummarizeQC_trimmed_reads:
+        module:         Multiqc
+        base:           QC_trimmed_reads
+        script_path:    {Vars.paths.multiqc}
+        tag:            00.Quality_check #SummarizeQC_trimmed_reads
+        redirects:
+            --interactive:
+        #SKIP SummarizeQC_trimmed_reads:
+
+# Mapping to rRNA sequences of target organism or organism group:
+    Map_reads_to_rRNA:
+        module:         bwa_mapper
+        base:           Trim_imported_reads
+        script_path:    {Vars.paths.bwa}
+        tag:    00.Quality_check #Map_reads_to_rRNA
+        mod:            mem
+        qsub_params:
+            -pe:        shared 10
+        ref_genome:     {Vars.databases.rRNA.fasta}
+        ref_index:      {Vars.databases.rRNA.bwa_ind}
+        redirects:
+            -t:         10                
+        #SKIP Map_reads_to_rRNA:
+
+    Filter_unmapped_reads:
+        module:         samtools
+        base:           Map_reads_to_rRNA
+        script_path:    "{Vars.paths.samtools}"
+        tag:    00.Quality_check #Filter_unmapped_reads
+        qsub_params:
+            -pe:        shared 10
+        view:           -buh  -@ 10
+        sort:           -@ 10
+        flagstat: 
+        index: 
+        stats:          --remove-dups
+        idxstats:
+        fastq:          -f 12 -t
+        #SKIP Filter_unmapped_reads:
+
+    QC_unmapped_reads:
+        module:         fastqc_html
+        base:           Filter_unmapped_reads
+        script_path:    {Vars.paths.fastqc}
+        tag:    00.Quality_check #QC_unmapped_reads
+        setenv:         'PERL5LIB=""'
+        qsub_params:
+            -pe:        shared 15
+        redirects:
+            --threads:  15
+        #SKIP QC_unmapped_reads:
+        
+    SummarizeQC_unmapped_reads_and_alignment:
+        module:         Multiqc
+        base:           
+            - QC_unmapped_reads
+            - Filter_unmapped_reads
+        script_path:    {Vars.paths.multiqc}
+        bases_only:
+        tag:    00.Quality_check #SummarizeQC_unmapped_reads_and_alignment
+        redirects:
+            --interactive:
+        #SKIP SummarizeQC_unmapped_reads_and_alignment:
+
+# ------------------------- 2. De novo assembly with Trinity, producing the "full transcriptome"
+    Add_trinity_tags:
+        module:             add_trinity_tags
+        base:               Filter_unmapped_reads
+        script_path: 
+        tag:                01.Assembly #Add_trinity_tags
+        #SKIP Add_trinity_tags:
+
+    Assemble_Transcriptome:
+        module:             trinity
+        base:               Add_trinity_tags
+        script_path:        '{Vars.paths.Trinity}/Trinity'
+        tag:                01.Assembly #Assemble_Transcriptome
+        qsub_params:
+            -pe:            shared 50
+        scope:              project
+        setenv:             PATH="{Vars.paths.java}:{Vars.paths.bowtie2}:$PATH" PERL5LIB=""
+        redirects:
+            --CPU:             50
+            --max_memory:        500G 
+            --seqType:          fq
+            --min_kmer_cov:     2
+            --full_cleanup:
+        #SKIP Assemble_Transcriptome:
+
+# Rename transcripts by adding "Transcript_prefix" as a prefix to the original transcript name
+    Rename_Transcripts:                      
+        module:                     Generic 
+        base:                       Assemble_Transcriptome
+        script_path:                "{Vars.paths.Seqkit_replace}"
+        tag:                01.Assembly #Rename_Transcripts
+        shell:                      bash
+        scope:                      project              
+        inputs:                    
+            " ":
+                scope:              project
+                File_Type:          fasta.nucl
+        outputs:                    
+            ">":                    
+                File_Type:          fasta.nucl
+                
+                suffix:             .fasta              
+        redirects:                  
+            -p:     '"(.+)"'
+            -r:     '''"{Vars.Transcript_prefix}\$1"'''
+        #SKIP Rename_Transcripts:            
+
+
+    Generate_Gene_Transcript_Map:
+        module:             Trinity_gene_to_trans_map
+        base:               Rename_Transcripts
+        script_path:        {Vars.paths.get_Trinity_gene_to_trans_map}
+        tag:                01.Assembly #Generate_Gene_Transcript_Map
+        scope:              project
+        #SKIP Generate_Gene_Transcript_Map:
+
+### Quality assessment of the full transcriptome
+
+    quastQC_full_transcriptome:
+        module:             quast
+        base:               Rename_Transcripts
+        script_path:        {Vars.paths.quast}
+        tag:                01.Assembly #quastQC_full_transcriptome
+        scope:              project
+        qsub_params:
+            -pe:            shared 10
+        redirects:
+            -t:             10
+        #SKIP quastQC_full_transcriptome:
+
+    BuscoQC_full_transcriptome:
+        module:             BUSCO
+        base:               Rename_Transcripts
+        script_path:        {Vars.paths.BUSCO}
+        tag:                01.Assembly #BuscoQC_full_transcriptome
+        scope:              project
+        setenv:             PATH="{Vars.paths.hmm_bin}:{Vars.paths.blast}:$PATH"
+        redirects:
+            --mode:         transcriptome
+            --lineage:      {Vars.databases.BUSCO.lineage}
+            --cpu:          10
+            --force:
+        qsub_params:
+            -pe:            shared 10
+        conda:
+            path: null
+            env: non_model_RNA_Seq    
+        #SKIP BuscoQC_full_transcriptome:
+
+
+# --------------------------- 3. Filtering out low expressed transcripts
+### Map reads to full transcriptome, and build an expression matrix
+### in preparation for filtering out lowly expressed transcripts
+
+    Map_reads_to_full_transcriptome:
+        module:             trinity_mapping
+        base:               Generate_Gene_Transcript_Map
+        script_path:        '{Vars.paths.Trinity}/util/align_and_estimate_abundance.pl'
+        scope:              project
+        tag:                02.Filtering #Map_reads_to_full_transcriptome    
+        setenv:             'PATH="{Vars.paths.bowtie2}:{Vars.paths.RSEM}:$PATH" PERL5LIB=""'
+        qsub_params:
+            -pe:            shared 20
+        redirects:
+            --est_method:   RSEM
+            --aln_method:   bowtie2
+            --gene_trans_map:
+            --seqType:      fq
+            --thread_count: 20
+        #SKIP Map_reads_to_full_transcriptome:
+
+    Generate_count_matrix:
+        module: trinity_statistics
+        base: Map_reads_to_full_transcriptome
+        script_path: 'abundance_estimates_to_matrix.pl'
+        tag:                02.Filtering #Generate_count_matrix
+        conda:
+            path: null
+            env: non_model_RNA_Seq    
+        use_isoforms: null
+        scope: project
+        redirects:
+            --est_method: RSEM
+            --name_sample_by_basedir: null
+            --basedir_index: '-2'
+        setenv: 
+        - 'PERL5LIB=""'
+        - 'R_LIBS=""'
+        #SKIP Generate_count_matrix:
+
+## Filtering out lowly expressed transcripts:
+## retain transcripts with at least x reads in at least n replicates in at least one of the treatment groups
+## The result is called "filtered transcriptome"
+
+    Filter_low_expressed_transcripts:                   
+        module:             Generic             
+        base:               Generate_count_matrix
+        script_path:        "Rscript {Vars.paths.filter_trinity_by_counts}"
+        tag:                02.Filtering #Filter_low_expressed_transcripts
+        conda:
+            path: null
+            env: non_model_RNA_Seq    
+        scope:              project
+        shell:              bash
+        inputs:                     # The inputs for this module
+            --counts:                    # Input argument, could be also 'empty#'
+                scope:      project
+                File_Type:  isoform.raw_counts
+            --FASTA:
+                scope:      project
+                File_Type:  fasta.nucl
+        outputs:
+            --output:
+                File_Type:   fasta.nucl
+                suffix:      .filtered.fasta       # A suffix for this output argument file name
+        redirects:
+            --grouping:     {Vars.grouping}
+            --treatment_header: "{Vars.Treatment_name}"
+            --min_count:    {Vars.min_count}
+            --min_sample:   {Vars.min_sample}
+            --min_groups:   1 
+        #SKIP Filter_low_expressed_transcripts:
+
+### QA of the filtered transcriptome
+
+    quastQC_filtered_transcripts:
+        module:             quast
+        base:               Filter_low_expressed_transcripts
+        script_path:        {Vars.paths.quast}
+        scope:              project
+        tag:                02.Filtering #quastQC_filtered_transcripts
+        qsub_params:
+            -pe:            shared 20
+        redirects:
+            -t:             20
+        #SKIP quastQC_filtered_transcripts:
+
+    BuscoQC_filtered_transcripts:
+        module: BUSCO
+        base: Filter_low_expressed_transcripts
+        script_path: '{Vars.paths.BUSCO}'
+        tag:                02.Filtering #BuscoQC_filtered_transcripts
+        scope: project
+        setenv: PATH="{Vars.paths.hmm_bin}:{Vars.paths.blast}:$PATH"
+        redirects:
+            --mode: transcriptome
+            --lineage: '{Vars.databases.BUSCO.lineage}'
+            --cpu: '20'
+            --force: null
+        qsub_params:
+            -pe: shared 20
+        conda:
+            path: null
+            env: non_model_RNA_Seq
+        #SKIP BuscoQC_filtered_transcripts:
+            
+## Make a blast database from the filtered transcriptome
+
+    Make_filtered_transcripts_BLAST_db:
+        module: makeblastdb
+        base: Filter_low_expressed_transcripts
+        script_path: '{Vars.paths.makeblastdb}'
+        tag:                02.Filtering #Make_filtered_transcripts_BLAST_db
+        redirects:
+            -dbtype: nucl
+        scope: project
+        #SKIP Make_filtered_transcripts_BLAST_db:
+
+## Select a representative transcript per gene from the filtered transcriptome (for annotation)
+    Generate_filtered_Gene_Transcript_Map:
+        module:             Trinity_gene_to_trans_map
+        base:               Filter_low_expressed_transcripts
+        script_path:        {Vars.paths.get_Trinity_gene_to_trans_map}
+        tag:                02.Filtering #Generate_filtered_Gene_Transcript_Map
+        scope:              project
+        #SKIP Generate_filtered_Gene_Transcript_Map:
+
+    Map_reads_to_filtered_transcriptome:
+        module: trinity_mapping
+        base: Generate_filtered_Gene_Transcript_Map
+        script_path: '{Vars.paths.Trinity}/util/align_and_estimate_abundance.pl'
+        tag:                02.Filtering #Map_reads_to_filtered_transcriptome
+        scope: project
+        setenv:
+        - PATH="{Vars.paths.bowtie2}:{Vars.paths.RSEM}:$PATH"
+        - PERL5LIB=''
+        qsub_params:
+            -pe: shared 20
+        redirects:
+            --est_method: RSEM
+            --aln_method: bowtie2
+            --trinity_mode: null
+            --seqType: fq
+            --thread_count: '20'
+        #SKIP Map_reads_to_filtered_transcriptome:
+
+    Generate_filtered_count_matrix:
+        module: trinity_statistics
+        base: Map_reads_to_filtered_transcriptome
+        script_path: 'abundance_estimates_to_matrix.pl'
+        tag:                02.Filtering #Generate_filtered_count_matrix
+        conda:
+            path: null
+            env: non_model_RNA_Seq    
+        use_isoforms: null
+        scope: project
+        redirects:
+            --est_method: RSEM
+            --name_sample_by_basedir: null
+            --basedir_index: '-2'
+        setenv: 
+        - 'PERL5LIB=""'
+        - 'R_LIBS=""'
+        #SKIP Generate_filtered_count_matrix:
+
+
+# Filter representative transcripts
+    Select_representative_transcripts:
+        module:             Generic
+        base:               Generate_filtered_count_matrix
+        script_path:        {Vars.paths.filter_low_expr_transcripts}
+        tag:                02.Filtering #Select_representative_transcripts
+        setenv:             'PERL5LIB=""'
+        scope:              project
+        shell:              bash                   
+        inputs:                     
+            --matrix:
+                scope:      project
+                File_Type:  isoform.norm_counts
+            --transcripts:
+                scope:      project
+                File_Type:  fasta.nucl
+            --gene_to_trans_map:    
+                scope:      project
+                File_Type:  gene_trans_map
+        outputs:                    
+            '>':                    
+                File_Type:   fasta.nucl
+                suffix:      .representative.fasta       # A suffix for this output argument file name    
+        redirects:
+            --highest_iso_only:
+        #SKIP Select_representative_transcripts:
+
+### Quality assessment of Representative transcripts
+
+    quastQC_representative_transcripts:
+        module:             quast
+        base:               Select_representative_transcripts
+        script_path:        {Vars.paths.quast}
+        tag:                02.Filtering #quastQC_representative_transcripts
+        scope:              project
+        qsub_params:
+            -pe:            shared 20
+        redirects:
+            -t:             20
+        #SKIP quastQC_representative_transcripts:
+
+    BuscoQC_representative_transcripts:
+        module:             BUSCO
+        base:               Select_representative_transcripts
+        script_path:        {Vars.paths.BUSCO}
+        tag:                02.Filtering #BuscoQC_representative_transcripts
+        scope:              project
+        setenv:             PATH="{Vars.paths.hmm_bin}:{Vars.paths.blast}:$PATH"
+        redirects:
+            --mode:         transcriptome
+            --lineage:      {Vars.databases.BUSCO.lineage}
+            --cpu:          40
+            --force:
+        qsub_params:
+            -pe:            shared 40
+        conda:
+            path: null
+            env: non_model_RNA_Seq    
+        #SKIP BuscoQC_representative_transcripts:
+
+
+# -------------------------- 4. Annotate representative transcript per gene
+
+# 1. Split fasta of representative transcripts into small units for parallelization during BLASTing
+    Split_representative_fasta:
+        module:             fasta_splitter
+        base:               Select_representative_transcripts  
+        script_path:    
+        tag:                03.Annotation #Split_representative_fasta
+        scope:              project
+        type:               nucl
+        setenv:             'PERL5LIB=""'
+        redirects:
+            --n-parts:      1000
+            --measure:      seq
+        #SKIP Split_representative_fasta:        
+        
+# 2. BLAST vs. RefSeq:
+    Refseq_protein_blastx:
+        module:             blast
+        base:               Split_representative_fasta
+        script_path:        {Vars.paths.blastx}
+        tag:                03.Annotation #Refseq_protein_blastx
+        querytype:          nucl
+        query:         sample
+        db:            {Vars.databases.RefSeq.blastdb}
+        qsub_params:
+            -pe:            shared 10
+        redirects:
+            -outfmt:        5 
+            -evalue:        1e-3 
+            -word_size:     3 
+            -show_gis: 
+            -num_alignments: 20 
+            -max_hsps:      20 
+            -num_threads:   10
+        #SKIP Refseq_protein_blastx:
+        
+# 3. Merging blast reports with BlastXMLmerge.py for function annotation using Blast2GO
+    Merge_refseq_blastx_xmls:                   
+        module:             Generic             
+        base:               Refseq_protein_blastx
+        script_path:        "python {Vars.paths.BlastXMLmerge}"
+        tag:                03.Annotation #Merge_refseq_blastx_xmls
+        scope:              project
+        shell:              bash
+        inputs_last:
+        inputs:                     
+            " ":                    
+                scope:      sample
+                File_Type:  blast.nucl
+        outputs:
+            empty2:
+                File_Type:   blast.nucl
+                suffix:      .xml       # A suffix for this output argument file name
+        #SKIP Merge_refseq_blastx_xmls:
+
+# ----------------------------------------------------------------
+# 4. Trinotate pipeline:
+    Generate_rep_Gene_Transcript_Map:
+        module:             Trinity_gene_to_trans_map
+        base:               Split_representative_fasta
+        script_path:        {Vars.paths.get_Trinity_gene_to_trans_map}
+        tag:                03.Annotation #Generate_rep_Gene_Transcript_Map
+        scope:              sample
+        #SKIP Generate_rep_Gene_Transcript_Map:
+
+    Swiss_prot_blastx:
+        module:             blast
+        base:               Split_representative_fasta
+        script_path:        {Vars.paths.blastx}
+        tag:                03.Annotation #Swiss_prot_blastx
+        querytype:          nucl
+        query:         sample
+        db:            {Vars.databases.trinotate.sprot}
+        redirects:
+            -max_target_seqs: 1
+            -num_threads:   1
+            -outfmt:        6
+        #SKIP Swiss_prot_blastx:
+
+    Identify_coding_region:
+        module:             TransDecoder
+        base:               Split_representative_fasta
+        script_path:        {Vars.paths.TransDecoder}
+        tag:                03.Annotation #Identify_coding_region
+        scope:              sample
+        setenv:             'PATH="{Vars.paths.PERL_DIR}/bin:$PATH" PERL5LIB="{Vars.paths.PERL_DIR}"'
+        #SKIP Identify_coding_region:
+
+    Swiss_prot_blastp:
+        module:             blast
+        base:               Identify_coding_region
+        script_path:        {Vars.paths.blastp}
+        tag:                03.Annotation #Swiss_prot_blastp
+        querytype:          prot
+        query:         sample
+        db:            {Vars.databases.trinotate.sprot}
+        redirects:
+            -max_target_seqs: 1
+            -num_threads:   1
+            -outfmt:        6
+        #SKIP Swiss_prot_blastp:
+
+    Identify_protein_domain:
+        module:             hmmscan
+        base:               Identify_coding_region
+        script_path:        "{Vars.paths.hmm_bin}/hmmscan"
+        tag:                03.Annotation #Identify_protein_domain
+        scope:              sample
+        type:               prot
+        output_type:        domtblout
+        hmmdb:              {Vars.databases.trinotate.pfam}
+        redirects:
+            --cpu:          1
+        #SKIP Identify_protein_domain:            
+            
+    Predict_rRNA:
+        module:             RnammerTranscriptome
+        base:               Split_representative_fasta
+        script_path:        {Vars.paths.RnammerTranscriptome}
+        tag:                03.Annotation #Predict_rRNA
+        scope:              sample
+        redirects:
+            --path_to_rnammer:  {Vars.paths.rnammer}
+        conda:
+            path: null
+            env: non_model_RNA_Seq    
+        setenv: 'PERL5LIB=""'
+        #SKIP Predict_rRNA:
+   
+    Merge_blast_results:
+        module:             merge_table
+        base:               [Swiss_prot_blastp,Swiss_prot_blastx,Generate_rep_Gene_Transcript_Map,Predict_rRNA]
+        script_path:        
+        tag:                03.Annotation #Merge_blast_results
+        type:               [blast.prot,blast.nucl,gene_trans_map,transcripts.fasta.nucl,fasta.prot,rnammer]
+        #SKIP Merge_blast_results:
+
+    Merge_protein_domain_results:
+        module:             merge_table
+        base:               Identify_protein_domain
+        script_path:        
+        tag:                03.Annotation #Merge_protein_domain_results
+        type:               hmmscan.prot
+        header:             3
+        #SKIP Merge_protein_domain_results:
+
+#-- make sure you have perl DBI module installed in your conda environment - conda install -c bioconda perl-dbd-sqlite perl-dbi
+    Generate_annotation_table:
+        module:             Trinotate
+        base:               [Merge_blast_results,Merge_protein_domain_results]
+        script_path:        {Vars.paths.Trinotate}
+        tag:                03.Annotation #Generate_annotation_table
+#-- set the PERL5LIB to the perl library within your conda env in order to avoid conflicts with other versions of perl that you might have installed
+        setenv:    PERL5LIB="{Vars.paths.perl_lib_in_conda}"
+        scope:              project
+        sqlitedb:           {Vars.databases.trinotate.sqlitedb}
+        cp_sqlitedb:               
+        conda:
+            path: null
+            env: non_model_RNA_Seq    
+        #SKIP Generate_annotation_table:
+ 
+# ----------------------- 5. Staistical analysis using DESeq2
+# For a complete tutorial on the DESeq2 module please see  https://github.com/bioinfo-core-BGU/NeatSeq-Flow_Workflows/blob/master/DeSeq_Workflow/Tutorial.md
+    Statistical_analysis:
+        script_path: 
+        conda:
+            path:   {Vars.DeSeq2.conda_env}
+            env:    DeSeq2 
+        tag:    04.Statistics #Statistical_analysis
+        scope:     project 
+        module:            DeSeq2
+        base:              [Map_reads_to_filtered_transcriptome,Generate_annotation_table]
+        redirects:
+            --SAMPLE_DATA_FILE:    {Vars.DeSeq2.SAMPLE_DATA}
+            --FILTER_GENES:    TRUE
+            --NORMALIZATION_TYPE:   VSD 
+            --DESIGN:   "{Vars.DeSeq2.design}"
+            --ALPHA:    0.05
+            --FoldChange:    1
+            --Post_statistical_FoldChange: 1.3
+            --CONTRAST:   '''{Vars.DeSeq2.contrast}'''
+            --modelMatrixType: standard
+            --X_AXIS: "{Vars.Treatment_name}"
+            --FUNcluster:  hclust
+            --hc_metric:   pearson
+            --hc_method:   ward.D2
+            --k.max:   20
+            --nboot:   10
+            --stand:   TRUE
+            --Mclust:  FALSE
+            --PCA_COLOR: "{Vars.Treatment_name}"
+            --PCA_SHAPE: "{Vars.Treatment_name}"
+            --Enriched_terms_overlap:  TRUE
+            --USE_INPUT_GENES_AS_BACKGROUND: FALSE
+        #SKIP Statistical_analysis:
