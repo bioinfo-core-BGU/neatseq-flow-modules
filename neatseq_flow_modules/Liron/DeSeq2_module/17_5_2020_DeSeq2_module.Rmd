@@ -1946,8 +1946,6 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                                                             cluster_cols = F,silent = T)
                                         }
                                         New_clusters=c(New_clusters,clusters[heat_map$tree_row$labels[heat_map$tree_row$order]])
-                                    }else{
-                                        New_clusters=c(New_clusters,clusters[Genes])
                                     }
                                 }
     
@@ -2312,7 +2310,7 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
             
             
         }
- save(list = ls(all.names = TRUE),file =file.path(opt$outDir,'Session.RSession'))
+ save.image(file.path(opt$outDir,'Session.RSession'))
  colData   = Original_colData   
  countData = Original_countData 
 
