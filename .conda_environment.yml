@@ -6,6 +6,7 @@ dependencies:
   - python=3.6.5
   - pyyaml
   - bunch
+  - yaml
 # Neatseq_Flow
   - pip:
     - git+https://github.com/bioinfo-core-BGU/neatseq-flow.git
