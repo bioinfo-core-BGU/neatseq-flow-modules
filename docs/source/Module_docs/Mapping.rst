@@ -28,8 +28,6 @@ Mapping
 
 .. automodule:: neatseq_flow_modules.main_NSF_classes.mapping.samtools
 
-.. .. automodule:: neatseq_flow_modules.main_NSF_classes.mapping.samtools_new
-
 .. automodule:: neatseq_flow_modules.main_NSF_classes.Reports.Multiqc
 
 .. automodule:: neatseq_flow_modules.Liron.RSEM_module.RSEM
