@@ -5,10 +5,10 @@ build:
 
 python:
   version: 3.6
-#  setup_py_install: true
+  setup_py_install: true
   
 python.system_packages: true
 formats: []
 
-conda:
-  file: .conda_environment.yml
+# conda:
+  # environment: .conda_environment.yml
