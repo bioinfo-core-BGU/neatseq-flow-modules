@@ -10,5 +10,5 @@ python:
 python.system_packages: true
 formats: []
 
-# conda:
-  # file: .conda_environment.yml
+conda:
+  file: .conda_environment.yml
