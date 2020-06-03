@@ -93,7 +93,6 @@ Lines for parameter file
                 constant_value:     # use a constant value instead of "File_Type".
                                     # it is the same as the "redirects".
                                     # use when the order of inputs are important!!
-                                    # use '{{sample_name}}' to be replace with the sample name (or project name in project scope)
                                     # using the constant_value option will override all other input arguments!!!!!!
         outputs:                    # The outputs for this module
             STR:                    # Output argument, e.g. -o, --out , the scope of the output arguments is determinant by the module scope
@@ -420,8 +419,6 @@ class Step_Generic(Step):
                     
                     if "constant_value" in list(self.params["inputs"][inputs].keys()):
                         value =get_File_Type_data(self.params["inputs"],[inputs,"constant_value"],'')
-                        value = value.replace('{{sample_name}}',sample)
-                        value = value.replace('{{project_name}}',self.sample_data["Title"])
                         if value!='':
                             if inputs.startswith("Empty".lower()):
                                 inputs_script +="%s   \\\n\t"    % value
@@ -603,8 +600,6 @@ class Step_Generic(Step):
                 
                 if "constant_value" in list(self.params["inputs"][inputs].keys()):
                     value =get_File_Type_data(self.params["inputs"],[inputs,"constant_value"],'')
-                    value = value.replace('{{sample_name}}',self.sample_data["Title"])
-                    value = value.replace('{{project_name}}',self.sample_data["Title"])
                     if value!='':
                         if inputs.startswith("Empty".lower()):
                             inputs_script +="%s   \\\n\t"    % value
