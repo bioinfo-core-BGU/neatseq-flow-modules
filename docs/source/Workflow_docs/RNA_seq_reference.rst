@@ -32,7 +32,7 @@ Steps
 Workflow Schema
 ~~~~~~~~~~~~~~~~
 
-.. image:: RNA_seq.png
+.. image:: RNA_seq_reference.png
    :alt: Reference-based RNA seq DAG
 
 .. Note:: It is possible to add a DeSeq2 step for Differential Expression, Clustering and Functional Analyses.
