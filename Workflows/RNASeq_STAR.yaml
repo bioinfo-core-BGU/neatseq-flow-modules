@@ -45,7 +45,7 @@ Vars:
 Step_params:
   Merge:
     module:   Import
-   script_path:
+    script_path:
   FastQC_Merge:
     base: Merge
     module: fastqc_html
