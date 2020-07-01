@@ -18,7 +18,7 @@ RNA-Seq using a reference genome
     
 
     
-Steps
+Steps:
 ~~~~~~~
 
 1. **Merge** Decompression and Concatenation (IF NEADED) of read files into single files per direction.
@@ -32,6 +32,8 @@ Steps
 Workflow Schema
 ~~~~~~~~~~~~~~~~
 
+.. image:: RNA_seq_reference.png
+   :alt: Reference-based RNA seq DAG
 
 .. Note:: It is possible to add a DeSeq2 step for Differential Expression, Clustering and Functional Analyses.
           For more information see the `DESeq2 Tutorial <https://github.com/bioinfo-core-BGU/NeatSeq-Flow_Workflows/blob/master/DeSeq_Workflow/Tutorial.md#differential-expression-deseq2-clustering-and-functional-analyses-tutorial>`_
