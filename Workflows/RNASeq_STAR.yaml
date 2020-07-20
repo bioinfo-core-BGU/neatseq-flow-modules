@@ -32,9 +32,9 @@ Vars:
     RSEM_plot: rsem-plot-model
     RSEM_prepare_reference: rsem-prepare-reference
     Trim_Galore: trim_galore
-    bowtie2: null
+    bowtie2: $CONDA_PREFIX/bin
     cutadapt: cutadapt
-    star: null
+    star: $CONDA_PREFIX/bin
   Genome:
     gtf: /PATH2GTF/genome.gtf
     reference: /PATH2reference/genome.fa
