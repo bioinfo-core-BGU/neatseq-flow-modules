@@ -18,6 +18,7 @@ Short Description
     * Heatmaps of significant genes by clusters.
     * Expression patterns plot by clusters
     * Enrichment analysis KEGG/GO.
+    
 
 Requires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -59,8 +60,26 @@ Comments
         ``clusterProfiler``
         ``KEGGREST``
         ``scater``
+        ``sva``
+        ``rmarkdown``
+        ``plotly``
+        ``dt``
+        ``xml2``
+        ``dplyr``
+        ``rcolorbrewer``
+        ``colorspace``
+        ``stringr``
+
+.. Note:: 
+    It is Possible to use CONDA to install all dependencies:
+    
+    .. code-block:: bash
         
-        
+        wget https://raw.githubusercontent.com/bioinfo-core-BGU/neatseq-flow-modules/master/neatseq_flow_modules/Liron/DeSeq2_module/DeSeq2_env_install.yaml
+        conda env create -f DeSeq2_env_install.yaml
+    
+    Flow this `Tutorial <https://github.com/bioinfo-core-BGU/NeatSeq-Flow_Workflows/blob/master/DeSeq_Workflow/Tutorial.md>`_ for More Information.
+
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -118,7 +137,7 @@ Lines for parameter file
             --USE_INPUT_GENES_AS_BACKGROUND # Use The input Genes as the Background for Enrichment Analysis
             --only_clustering               # Don't Perform Differential Analysis!!!
             --significant_genes             # Use these genes as the set of significant genes [a comma separated list]
-            
+            --collapseReplicates            # Will collapse technical replicates using a Sample Data field indicating which samples are technical replicates
 """
 import os
 import sys

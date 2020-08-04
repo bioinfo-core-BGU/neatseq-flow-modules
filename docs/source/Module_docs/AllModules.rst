@@ -17,6 +17,7 @@ NeatSeq-Flow modules
 .. include:: GenomeAssembly.rst
 .. include:: TranscriptomeAssembly.rst
 .. include:: TranscriptomeAnnotation.rst
+.. include:: RNASeq.rst
 .. include:: SequenceAnnotation.rst
 .. include:: SequenceSearching.rst
 .. include:: Variants.rst

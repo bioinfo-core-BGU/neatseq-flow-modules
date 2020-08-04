@@ -59,6 +59,7 @@ See also the `main NeatSeq-Flow website <https://neatseq-flow.readthedocs.io/en/
 ..   Module_docs/GenomeAssembly
 ..   Module_docs/TranscriptomeAssembly
 ..   Module_docs/TranscriptomeAnnotation
+..   Module_docs/RNASeq
 ..   Module_docs/SequenceAnnotation
 ..   Module_docs/SequenceSearching
 ..   Module_docs/Variants
