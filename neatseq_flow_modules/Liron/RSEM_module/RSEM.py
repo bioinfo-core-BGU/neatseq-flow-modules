@@ -150,7 +150,7 @@ class Step_RSEM(Step):
             
         #initiating new script 
         self.script = ""
-        if ("transcriptome" in self.params["mode"]) and (self.params["annotation"] != None)
+        if ("transcriptome" in self.params["mode"]) and (self.params["annotation"] != None):
             if "Trinity" in self.params["annotation"]:
                 if "from_Trinity_to_gene_map_script_path" not in list(self.params.keys()):
                     if "Create_map_from_Trinity.py" not in os.listdir(self.module_location):
