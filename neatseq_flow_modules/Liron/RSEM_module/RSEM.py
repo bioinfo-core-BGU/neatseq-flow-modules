@@ -143,9 +143,14 @@ class Step_RSEM(Step):
         #Preparing reference genome/transcriptome
         #Creating new folder for the reference files
         REF_dir = self.make_folder_for_sample("Reference")
+        if "annotation" not in self.params.keys():
+            self.params["annotation"] = None
+        elif self.params["annotation"] =='':
+            self.params["annotation"] = None
+            
         #initiating new script 
         self.script = ""
-        if ("transcriptome" in self.params["mode"])&("Trinity" in self.params["annotation"]):
+        if ("transcriptome" in self.params["mode"]) and ("Trinity" in self.params["annotation"]):
             if "from_Trinity_to_gene_map_script_path" not in list(self.params.keys()):
                 if "Create_map_from_Trinity.py" not in os.listdir(self.module_location):
                     sys.exit("you should provide from_Trinity_to_gene_map_script_path !!! \n")
@@ -162,7 +167,7 @@ class Step_RSEM(Step):
                 
         #The main part of generating the reference files        
         self.script +=self.params["rsem_prepare_reference_script_path"]+" \\\n\t"
-        if ("transcriptome" in self.params["mode"]):
+        if ("transcriptome" in self.params["mode"]) and (self.params["annotation"] != None):
             #If the reference is a transcriptome use the transcript_to_gene_map annotation file
             self.script +="-transcript-to-gene-map %s \\\n\t" % self.params["annotation"]
         elif ("genome" in self.params["mode"]):
