@@ -143,7 +143,7 @@ class Step_RSEM(Step):
         #Preparing reference genome/transcriptome
         #Creating new folder for the reference files
         REF_dir = self.make_folder_for_sample("Reference")
-        if "annotation" not in self.params.keys():
+        if "annotation" not in list(self.params.keys()):
             self.params["annotation"] = None
         elif self.params["annotation"] =='':
             self.params["annotation"] = None
@@ -171,15 +171,15 @@ class Step_RSEM(Step):
         if ("transcriptome" in self.params["mode"]) and (self.params["annotation"] != None):
             #If the reference is a transcriptome use the transcript_to_gene_map annotation file
             self.script +="-transcript-to-gene-map %s \\\n\t" % self.params["annotation"]
-        elif ("genome" in self.params["mode"]):
+        elif ("genome" in self.params["mode"]) and (self.params["annotation"] != None):
             if "gff3" not in list(self.params.keys()): 
                 #If the reference is a genome use the gtf annotation file
                 self.script +="--gtf %s \\\n\t" % self.params["annotation"]
             else:
                 #If the reference is a genome and the --gff3 flag is set, use the gff3 annotation file
                 self.script +="--gff3 %s \\\n\t" % self.params["annotation"]
-        else:
-            sys.exit("mode can only be transcriptome or genome !!! \n")
+        # else:
+            # sys.exit("mode can only be transcriptome or genome !!! \n")
         if self.params["mapper_path"]!=None:
             self.script +="--%s --%%s-path %%%%s  \\\n\t" % self.params["mapper"] \
                                                           % self.params["mapper"] \
