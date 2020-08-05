@@ -150,21 +150,22 @@ class Step_RSEM(Step):
             
         #initiating new script 
         self.script = ""
-        if ("transcriptome" in self.params["mode"]) and ("Trinity" in self.params["annotation"]):
-            if "from_Trinity_to_gene_map_script_path" not in list(self.params.keys()):
-                if "Create_map_from_Trinity.py" not in os.listdir(self.module_location):
-                    sys.exit("you should provide from_Trinity_to_gene_map_script_path !!! \n")
-                else:
-                    self.params["from_Trinity_to_gene_map_script_path"]== "python  %s "  % os.path.join(self.module_location,"Create_map_from_Trinity.py")
+        if ("transcriptome" in self.params["mode"]) and (self.params["annotation"] != None)
+            if "Trinity" in self.params["annotation"]:
+                if "from_Trinity_to_gene_map_script_path" not in list(self.params.keys()):
+                    if "Create_map_from_Trinity.py" not in os.listdir(self.module_location):
+                        sys.exit("you should provide from_Trinity_to_gene_map_script_path !!! \n")
+                    else:
+                        self.params["from_Trinity_to_gene_map_script_path"]== "python  %s "  % os.path.join(self.module_location,"Create_map_from_Trinity.py")
+                        
+                if self.params["from_Trinity_to_gene_map_script_path"]!=None:
+                    #preparing a transcript_to_gene map file from the reference transcriptome file [if it was created by Trinity] 
+                    self.script +="%s  %%s  %%%%s \n\n" % self.params["from_Trinity_to_gene_map_script_path"] \
+                                                           % self.params["reference"] \
+                                                           % os.sep.join([REF_dir.rstrip(os.sep),"transcript_to_gene_map.map"])
+                    #update the annotation slot to the new  transcript_to_gene_map annotation file
+                    self.params["annotation"]=os.sep.join([REF_dir.rstrip(os.sep),"transcript_to_gene_map.map"])
                     
-            if self.params["from_Trinity_to_gene_map_script_path"]!=None:
-                #preparing a transcript_to_gene map file from the reference transcriptome file [if it was created by Trinity] 
-                self.script +="%s  %%s  %%%%s \n\n" % self.params["from_Trinity_to_gene_map_script_path"] \
-                                                       % self.params["reference"] \
-                                                       % os.sep.join([REF_dir.rstrip(os.sep),"transcript_to_gene_map.map"])
-                #update the annotation slot to the new  transcript_to_gene_map annotation file
-                self.params["annotation"]=os.sep.join([REF_dir.rstrip(os.sep),"transcript_to_gene_map.map"])
-                
         #The main part of generating the reference files        
         self.script +=self.params["rsem_prepare_reference_script_path"]+" \\\n\t"
         if ("transcriptome" in self.params["mode"]) and (self.params["annotation"] != None):
