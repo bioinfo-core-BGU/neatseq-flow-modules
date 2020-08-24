@@ -147,7 +147,7 @@ class Step_STAR_mapper(Step):
     def step_specific_init(self):
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
 
-        self.auto_redirs = ["--readFilesCommand", "--readFilesIn", "--outFileNamePrefix", "--outTmpDir", "--outStd"]
+        self.auto_redirs = ["--readFilesIn", "--outFileNamePrefix", "--outTmpDir", "--outStd"]
 
         if "ref_genome" not in list(self.params.keys()):
             self.write_warning("No reference given with 'ref_genome' (path to fasta file). It is highly recommended to give one!\n")
