@@ -136,17 +136,26 @@ class Step_Trim_Galore(Step):
             if direction == "PE":
                 # Add 'env' and 'script_path':
                 self.script += self.get_script_env_path()
-
+                if self.sample_data[sample]["fastq.F"].endswith('.gz'):
+                    zip_F = '.gz'
+                else:
+                    zip_F = ''
+                
+                if self.sample_data[sample]["fastq.R"].endswith('.gz'):
+                    zip_R = '.gz'
+                else:
+                    zip_R = ''
+                
                 # Here we do the script constructing for paired end
                 # Define target filenames:
                 basename_F = os.path.basename(self.sample_data[sample]["fastq.F"])
                 basename_R = os.path.basename(self.sample_data[sample]["fastq.R"])
                 # TODO: Remove ".fq" in middle of file name
                 # Setting filenames before adding output arguments to script
-                fq_fn_F = use_dir + "".join([re.sub("\.\w+$","",basename_F ), "_val_1.fq"])  #The filename containing the end result. Used both in script and to set reads in $sample_params
-                fq_fn_R = use_dir + "".join([re.sub("\.\w+$","",basename_R), "_val_2.fq"])  #The filename containing the end result. Used both in script and to set reads in $sample_params
-                fq_fn_F_UP = use_dir + "".join([re.sub("\.\w+$","",basename_F ),  "_unpaired_1.fq"])   # The filename containing the end unpaired trimmo output
-                fq_fn_R_UP = use_dir + "".join([re.sub("\.\w+$","",basename_R) ,  "_unpaired_2.fq"])        #The filename containing the end unpaired trimmo output
+                fq_fn_F = use_dir + "".join([re.sub("\.\w+$","",basename_F ), "_val_1.fq",zip_F])  #The filename containing the end result. Used both in script and to set reads in $sample_params
+                fq_fn_R = use_dir + "".join([re.sub("\.\w+$","",basename_R), "_val_2.fq",zip_R])  #The filename containing the end result. Used both in script and to set reads in $sample_params
+                fq_fn_F_UP = use_dir + "".join([re.sub("\.\w+$","",basename_F ),  "_unpaired_1.fq",zip_F])   # The filename containing the end unpaired trimmo output
+                fq_fn_R_UP = use_dir + "".join([re.sub("\.\w+$","",basename_R) ,  "_unpaired_2.fq",zip_R])        #The filename containing the end unpaired trimmo output
                 fq_fn_F_bn = os.path.basename(fq_fn_F);
                 fq_fn_R_bn = os.path.basename(fq_fn_R);
                 fq_fn_F_UP_bn = os.path.basename(fq_fn_F_UP);
@@ -166,13 +175,16 @@ class Step_Trim_Galore(Step):
             elif direction=="SE":
                 # Add 'env' and 'script_path':
                 self.script += self.get_script_env_path()
-
+                if self.sample_data[sample]["fastq.S"].endswith('.gz'):
+                    zip = '.gz'
+                else:
+                    zip = ''
                 # Here we do the script constructing for single end
                 # Define target filenames:
                 basename_S = os.path.basename(self.sample_data[sample]["fastq.S"])
                 # TODO: Remove ".fq" in middle of file name
 
-                fq_fn_S = use_dir + "".join([re.sub("\.\w+$","",basename_S ), "_trimmed.fq"])          #The filename containing the end result. Used both in script and to set reads in $sample_params
+                fq_fn_S = use_dir + "".join([re.sub("\.\w+$","",basename_S ), "_trimmed.fq",zip])          #The filename containing the end result. Used both in script and to set reads in $sample_params
                 fq_fn_S_bn = os.path.basename(fq_fn_S);
                 # # TODO: use existing
                 # # Remove --paired and --retain_unpaired from redirects. Should not be passed if SE (Menachem)
