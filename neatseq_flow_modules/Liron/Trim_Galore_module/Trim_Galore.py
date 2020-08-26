@@ -136,26 +136,40 @@ class Step_Trim_Galore(Step):
             if direction == "PE":
                 # Add 'env' and 'script_path':
                 self.script += self.get_script_env_path()
-                if self.sample_data[sample]["fastq.F"].endswith('.gz'):
-                    zip_F = '.gz'
-                else:
-                    zip_F = ''
-                
-                if self.sample_data[sample]["fastq.R"].endswith('.gz'):
-                    zip_R = '.gz'
-                else:
-                    zip_R = ''
-                
+               
                 # Here we do the script constructing for paired end
                 # Define target filenames:
                 basename_F = os.path.basename(self.sample_data[sample]["fastq.F"])
                 basename_R = os.path.basename(self.sample_data[sample]["fastq.R"])
-                # TODO: Remove ".fq" in middle of file name
+                
+                if basename_F.endswith('.gz'):
+                    basename_F = basename_F.rpartition('.gz')[0]
+                    zip_F = '.gz'
+                else:
+                    zip_F = ''
+                
+                if basename_R.endswith('.gz'):
+                    basename_R = basename_R.rpartition('.gz')[0]
+                    zip_R = '.gz'
+                else:
+                    zip_R = ''
+                
+                if basename_F.endswith('.fq'):
+                    basename_F = basename_F.rpartition('.fq')[0]
+                elif basename_F.endswith('.fastq'):
+                    basename_F = basename_F.rpartition('.fastq')[0]
+                    
+                if basename_R.endswith('.fq'):
+                    basename_R = basename_R.rpartition('.fq')[0]
+                elif basename_R.endswith('.fastq'):
+                    basename_R = basename_R.rpartition('.fastq')[0]
+                
+                
                 # Setting filenames before adding output arguments to script
-                fq_fn_F = use_dir + "".join([re.sub("\.\w+$","",basename_F ), "_val_1.fq",zip_F])  #The filename containing the end result. Used both in script and to set reads in $sample_params
-                fq_fn_R = use_dir + "".join([re.sub("\.\w+$","",basename_R), "_val_2.fq",zip_R])  #The filename containing the end result. Used both in script and to set reads in $sample_params
-                fq_fn_F_UP = use_dir + "".join([re.sub("\.\w+$","",basename_F ),  "_unpaired_1.fq",zip_F])   # The filename containing the end unpaired trimmo output
-                fq_fn_R_UP = use_dir + "".join([re.sub("\.\w+$","",basename_R) ,  "_unpaired_2.fq",zip_R])        #The filename containing the end unpaired trimmo output
+                fq_fn_F = use_dir + "".join([basename_F, "_val_1.fq",zip_F])  #The filename containing the end result. Used both in script and to set reads in $sample_params
+                fq_fn_R = use_dir + "".join([basename_R, "_val_2.fq",zip_R])  #The filename containing the end result. Used both in script and to set reads in $sample_params
+                fq_fn_F_UP = use_dir + "".join([basename_F,  "_unpaired_1.fq",zip_F])   # The filename containing the end unpaired trimmo output
+                fq_fn_R_UP = use_dir + "".join([basename_R,  "_unpaired_2.fq",zip_R])        #The filename containing the end unpaired trimmo output
                 fq_fn_F_bn = os.path.basename(fq_fn_F);
                 fq_fn_R_bn = os.path.basename(fq_fn_R);
                 fq_fn_F_UP_bn = os.path.basename(fq_fn_F_UP);
@@ -175,16 +189,24 @@ class Step_Trim_Galore(Step):
             elif direction=="SE":
                 # Add 'env' and 'script_path':
                 self.script += self.get_script_env_path()
-                if self.sample_data[sample]["fastq.S"].endswith('.gz'):
-                    zip = '.gz'
-                else:
-                    zip = ''
+                
                 # Here we do the script constructing for single end
                 # Define target filenames:
                 basename_S = os.path.basename(self.sample_data[sample]["fastq.S"])
+                if basename_S.endswith('.gz'):
+                    basename_S = basename_S.rpartition('.gz')[0]
+                    zip = '.gz'
+                else:
+                    zip = ''
+                    
+                if basename_S.endswith('.fq'):
+                    basename_S = basename_S.rpartition('.fq')[0]
+                elif basename_S.endswith('.fastq'):
+                    basename_S = basename_S.rpartition('.fastq')[0]
                 # TODO: Remove ".fq" in middle of file name
 
-                fq_fn_S = use_dir + "".join([re.sub("\.\w+$","",basename_S ), "_trimmed.fq",zip])          #The filename containing the end result. Used both in script and to set reads in $sample_params
+                # fq_fn_S = use_dir + "".join([re.sub("\.\w+$","",basename_S ), "_trimmed.fq",zip])          #The filename containing the end result. Used both in script and to set reads in $sample_params
+                fq_fn_S = use_dir + "".join([basename_S, "_trimmed.fq",zip])          #The filename containing the end result. Used both in script and to set reads in $sample_params
                 fq_fn_S_bn = os.path.basename(fq_fn_S);
                 # # TODO: use existing
                 # # Remove --paired and --retain_unpaired from redirects. Should not be passed if SE (Menachem)
