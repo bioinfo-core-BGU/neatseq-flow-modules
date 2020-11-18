@@ -10,7 +10,7 @@ library("stringr")
 library("openxlsx")
 library("RColorBrewer")
 library("colorspace")
-theme_set(theme_half_open())
+
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
@@ -289,7 +289,7 @@ clusters_enricher=function(outDir, clusters,Type,organism,universe,keyType,file_
     }
     
     if (dim(allRes@compareClusterResult)[1]>0){
-        enrichplot::dotplot(allRes,x=allRes@compareClusterResult$Cluster,font.size =font.size,showCategory=1000)+
+      DOSE::dotplot(allRes,x=allRes@compareClusterResult$Cluster,font.size =font.size,showCategory=1000)+
         ggplot2::ggsave(filename = file.path(outDir,paste(file_name,".pdf",collapse = "")),dpi = 600,device = "pdf",width = 20,height = 20)
     }
   }
@@ -360,7 +360,7 @@ Clusters_Enrichment_Test=function(outDir,clusters,TERM2NAME,TERM2GENE,file_name,
   }
   
   if (dim(allRes@compareClusterResult)[1]>0){
-      enrichplot::dotplot(allRes,showCategory=1000,font.size=font.size)+ 
+    DOSE::dotplot(allRes,showCategory=1000,font.size=font.size)+ 
       ggplot2::ggsave(filename = file.path(outDir,paste(file_name,".pdf",collapse = "")),dpi = 600,device = "pdf",width = 20,height = 20)
   }
   return(allRes)
@@ -604,15 +604,15 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
   writeLines(text =  paste(dim(mat)[1],dim(mat)[2],sep = ' ' ),con = file.path(outDir,'clickInput.orig'))
   write.table(x = mat,append = T,file = file.path(outDir,'clickInput.orig'),sep = '\t',col.names = F)
   lines=c()
-  lines = c(lines,'DATA_TYPE')
+  lines = c(lines,'DATA_TYPE ')
   lines = c(lines,'FP ')
-  lines = c(lines,'INPUT_FILES_PREFIX')
+  lines = c(lines,'INPUT_FILES_PREFIX ')
   lines = c(lines,file.path(outDir,'clickInput '))
-  lines = c(lines,'OUTPUT_FILE_PREFIX')
+  lines = c(lines,'OUTPUT_FILE_PREFIX ')
   lines = c(lines,file.path(outDir,'clickOutput '))
-  lines = c(lines,'SIMILARITY_TYPE')
+  lines = c(lines,'SIMILARITY_TYPE ')
   lines = c(lines,'CORRELATION ')
-  lines = c(lines,'HOMOGENEITY')
+  lines = c(lines,'HOMOGENEITY ')
   lines = c(lines,as.character(HOMOGENEITY))
   writeLines(text =  lines,con = file.path(outDir,'params.txt'))
   system(command = paste(click_path,file.path(outDir,'params.txt'),sep = ' ') )
@@ -1052,6 +1052,7 @@ old_create_excel_output <- function(dds,opt, contrusts, Norm_Type, output_path, 
   
 }
 
+
 Prepair_Normalized_counts_for_clustering <- function(Normalized_counts_assay,colData,opt){
   if (!is.na(opt$X_AXIS)){    
     X_AXIS=opt$X_AXIS
@@ -1108,6 +1109,7 @@ Prepair_Normalized_counts_for_clustering <- function(Normalized_counts_assay,col
 }
 
 cluster_Normalized_counts <- function(Normalized_counts_assay,opt){
+  
   no_var=names(which( apply(Normalized_counts_assay,MARGIN = 1,FUN = sd)==0))
   if (length(no_var)>0){
     Normalized_counts_assay=Normalized_counts_assay[!(row.names(SPLIT_Normalized_counts_Annotated_mean)  %in% no_var),]
@@ -1218,15 +1220,9 @@ create_excel_output <- function(dds,opt, contrusts, Norm_Type, output_path, dds_
     ### Add statistical tables
     for (CONTRAST in contrusts) {
       contrast_list = unlist(stringi::stri_split(str =  CONTRAST,regex = ','))
-      if (length(contrast_list)==2){
-          compar_print_name = paste(contrast_list[1],contrast_list[2],sep = '_vs_')
-          contrast_list = as.list(contrast_list)
-      }else{
-          compar_print_name = paste(contrast_list[2],contrast_list[3],sep = '_vs_')
-      }
+      compar_print_name = paste(contrast_list[2],contrast_list[3],sep = '_vs_')
       
       cat(paste0("Adding contrust: ", compar_print_name, "\n"))
-      print(contrast_list)
       res_df <-
         results(dds,
                 contrast = contrast_list,
@@ -1371,11 +1367,7 @@ create_excel_output <- function(dds,opt, contrusts, Norm_Type, output_path, dds_
   }
   
   if ((use_only_sig_gene)&(length(Sig_Gene)>0)) {
-    if (length(Sig_Gene)>1){
-        order_genes = cluster_Normalized_counts(Normalized_counts_For_clustering[Sig_Gene,],opt)
-    }else{
-        order_genes = Sig_Gene
-    }
+    order_genes = cluster_Normalized_counts(Normalized_counts_For_clustering[Sig_Gene,],opt)
     #order_genes = cluster_Normalized_counts(norm_counts[Sig_Gene,],opt)
     Cluster_Order = 1:length(order_genes)
     order_genes = data.frame(row.names = order_genes,Cluster_Order)
@@ -1609,7 +1601,7 @@ if (opt$COUNT_SOURCE=='RSEM'){
 }
 
 Annotation_flag = ''
-keggConv_id_type = "uniprot"
+
 Annotation_file=file.path(opt$outDir,paste('Annotation','tab', sep = '.'))
 
 if  (!file.exists(Annotation_file)){
@@ -1638,88 +1630,6 @@ if  (!file.exists(Annotation_file)){
     }
 
     if (is.na(Annotation)) {
-        if(!(all(c('AnnotationHub') %in% installed.packages()))) {
-            if (Sys.getenv("CONDA_PREFIX")!=""){
-                source("https://bioconductor.org/biocLite.R")
-                biocLite('AnnotationHub')
-                library('AnnotationHub',character.only =T)
-              }else{
-                cat("The Bioconductor AnnotationHub Annotation package is not installed. You must install it for this script to work!")
-              }
-            }else{
-              library('AnnotationHub',character.only =T)  
-            } 
-        
-        if(!(all(c('ensembldb') %in% installed.packages()))) {
-            if (Sys.getenv("CONDA_PREFIX")!=""){
-                source("https://bioconductor.org/biocLite.R")
-                biocLite('ensembldb')
-                library('ensembldb',character.only =T)
-              }else{
-                cat("The Bioconductor ensembldb Annotation package is not installed. You must install it for this script to work!")
-              }
-            }else{
-              library('ensembldb',character.only =T)  
-            } 
-        
-        if ( ("package:AnnotationHub" %in% search())&("package:ensembldb" %in% search()) ){
-            cache = file.path(opt$outDir,'cache')
-            dir.create(cache, showWarnings = T)
-            ah  = AnnotationHub(cache = cache )
-            Hub = query(ah, c('OrgDb'))
-            species = unique(Hub$species)
-            
-            dataset = species[(sapply(X = species,FUN = function(X) stringi::stri_startswith(fixed =  stringi::stri_trans_tolower(opt$Species),str =  stringi::stri_trans_tolower(X)    )))]
-            if (length(dataset) > 0) {
-                dataset = dataset[1]
-                print('Found Species:')
-                print(dataset)
-                Hub = query(ah, c('OrgDb',dataset))
-                Hub = Hub[[length(Hub$title)]]
-                if ( stringi::stri_trans_toupper(opt$GENE_ID_TYPE) %in% columns(Hub)){
-                    if (opt$USE_INPUT_GENES_AS_BACKGROUND){
-                        genes  = rownames(countData)
-                    } else {
-                        Genes  = keys(Hub, keytype=stringi::stri_trans_toupper(opt$GENE_ID_TYPE))
-                    }
-                    
-                    Hub_columns = columns(Hub)
-                    # c('GENENAME','GO','ONTOLOGY','SYMBOL','UNIPROT','GID','PFAM','PATH')
-                    Annotation  = select(Hub,
-                                         keys = as.character(Genes),
-                                         columns=intersect(Hub_columns, c('GENENAME','GO','SYMBOL','PFAM')),
-                                         keytype=stringi::stri_trans_toupper(opt$GENE_ID_TYPE))
-                    print(dim(Annotation))
-                    if ('GO' %in% Hub_columns) {
-                        colnames(Annotation)['GO' == colnames(Annotation)] = 'go_id'
-                    }
-                    if ('UNIPROT' %in% Hub_columns) {
-                        Kegg_Annotation = select(Hub,
-                                             keys = as.character(Genes),
-                                             columns=intersect(Hub_columns, c('UNIPROT')),
-                                             keytype=stringi::stri_trans_toupper(opt$GENE_ID_TYPE))
-                        colnames(Kegg_Annotation) = c(stringi::stri_trans_toupper(opt$GENE_ID_TYPE),keggConv_id_type)
-                    }else if ('GID' %in% Hub_columns){
-                        Kegg_Annotation = select(Hub,
-                                             keys = as.character(Genes),
-                                             columns=intersect(Hub_columns, c('GID')),
-                                             keytype=stringi::stri_trans_toupper(opt$GENE_ID_TYPE))
-                        keggConv_id_type = 'ncbi-geneid'
-                        colnames(Kegg_Annotation) = c(stringi::stri_trans_toupper(opt$GENE_ID_TYPE),keggConv_id_type)
-                    }
-                    opt$Species      = dataset
-                    Annotation_flag  = 'ensembl'
-                    opt$GENE_ID_TYPE = stringi::stri_trans_toupper(opt$GENE_ID_TYPE)
-                    
-                }
-            }
-            unlink(cache,recursive=TRUE)
-        }
-     
-    }
-     
-    
-    if (is.na(Annotation)) {
       if (!is.na(opt$Species)){
         # Check if required packages are installed:
         if(!(all(c('biomaRt') %in% installed.packages()))) {
@@ -1737,27 +1647,24 @@ if  (!file.exists(Annotation_file)){
         if ("package:biomaRt" %in% search()){
           dataset=c()
           try_count=0
-          mirror = "useast"
           while ((length(dataset) == 0)&&(try_count<10) ){
             try_count = try_count+1
-            host = "www.ensembl.org"#
+            host = "grch37.ensembl.org"#"www.ensembl.org"#
             Test_host<-try(biomaRt::listMarts(host=host),silent = T)
             if (inherits(Test_host,"try-error")){
               host = "apr2019.archive.ensembl.org"
             }
-            biomart = "ensembl"
-            M=biomaRt::useMart(biomart = biomart, host = host)
-            ensembl_dataset = biomaRt::listDatasets(M)
-            dataset= ensembl_dataset$dataset[(sapply(X = ensembl_dataset$description,FUN = function(X) stringi::stri_startswith(fixed =  stringi::stri_trans_tolower(opt$Species),str =  stringi::stri_trans_tolower(X)    )))]
-            print(dataset)
+            biomart = "ENSEMBL_MART_ENSEMBL"
+            M=biomaRt::useMart(biomart = biomart, host = host,ensemblRedirect = FALSE)
+            ensembl=biomaRt::listDatasets(M)
+            dataset= ensembl$dataset[(sapply(X = ensembl$description,FUN = function(X) stringi::stri_startswith(fixed =  stringi::stri_trans_tolower(opt$Species),str =  stringi::stri_trans_tolower(X)    )))]
             if (length(dataset) == 0){
-              list_dataset=unlist(stringi::stri_split(str = unlist(stringi::stri_split(str =  unlist( t(ensembl_dataset) ),regex = '\n \nTableSet\t')),regex = '\t'))
+              list_dataset=unlist(stringi::stri_split(str = unlist(stringi::stri_split(str =  unlist( t(ensembl) ),regex = '\n \nTableSet\t')),regex = '\t'))
               dataset<-try( list_dataset[which(stringi::stri_startswith(str = stringi::stri_trans_tolower(list_dataset),fixed = stringi::stri_trans_tolower(opt$Species)))-1],silent = T) 
               if (inherits(Test_host,"try-error")){
                 dataset=''
               }
             }
-            
             if (length(dataset) == 0){
               host = "www.plants.ensembl.org"
               Test_host<-try(biomaRt::listMarts(host=host),silent = T)
@@ -1765,7 +1672,7 @@ if  (!file.exists(Annotation_file)){
                 host = "plants.ensembl.org"
               }
               biomart = 'plants_mart'
-              M=biomaRt::useMart(biomart = biomart,host = host)
+              M=biomaRt::useMart(biomart = biomart,host = host,ensemblRedirect = FALSE)
               plant=biomaRt::listDatasets(M)
               dataset= plant$dataset[(sapply(X = plant$description,FUN = function(X) stringi::stri_startswith(fixed =  stringi::stri_trans_tolower(opt$Species),str =  stringi::stri_trans_tolower(X)    )))]
             }
@@ -1776,98 +1683,57 @@ if  (!file.exists(Annotation_file)){
                 dataset=c()
               }
             }
-            
-            if (length(dataset) == 1){
-                try_count2 =0
-                if (biomart == 'plants_mart'){
-                     ensembl <- try(biomaRt::useEnsemblGenomes(biomart=biomart, dataset=as.character(dataset)),silent = T)
-                } else{
-                     ensembl <-  try(biomaRt::useEnsembl(biomart=biomart, dataset=as.character(dataset),host = host,mirror=mirror),silent = T)
-                }
-                while ((inherits(ensembl,"try-error")) &&( try_count2<3) ){
-                  try_count2 = try_count2+1
-                  if (biomart == 'plants_mart'){
-                     ensembl <- try(biomaRt::useEnsemblGenomes(biomart=biomart, dataset=as.character(dataset)),silent = T)
-                  } else{
-                     ensembl <- try(biomaRt::useEnsembl(biomart=biomart, dataset=as.character(dataset),host = host,mirror=mirror),silent = T)
-                  }
-                }
-                if (inherits(ensembl,"try-error")){
-                  dataset=c()
-                }
-                
+            try_count2 =0
+            ensembl <- try(biomaRt::useEnsembl(biomart=biomart, dataset=as.character(dataset),host = host),silent = T)
+            while ((inherits(ensembl,"try-error")) &&( try_count2<3) ){
+              try_count2 = try_count2+1
+              ensembl <- try(biomaRt::useEnsembl(biomart=biomart, dataset=as.character(dataset),host = host),silent = T)
+            }
+            if (inherits(ensembl,"try-error")){
+              dataset=c()
             }
           }
           
           if (length(dataset)==1){
             print('Found Species:')
             print(dataset)
-            if ( opt$GENE_ID_TYPE %in% biomaRt::listAttributes(ensembl)$name){
+            if ( opt$GENE_ID_TYPE %in% listAttributes(ensembl)$name){
               Total_Annotation = c()
               if (opt$USE_INPUT_GENES_AS_BACKGROUND){
                 genes <- rownames(countData)
               } else {
                 genes <- getBM(attributes = opt$GENE_ID_TYPE, mart = ensembl)
               }
-              attributes=c( 'go_id',
+              attributes=c( 'kegg_enzyme',
+                            'go_id',
                             'namespace_1003')
               if (!opt$GENE_ID_TYPE %in% attributes){
                 attributes = c(opt$GENE_ID_TYPE,attributes)
               }
-              for (subset_genes in split(genes[,opt$GENE_ID_TYPE], ceiling(seq_along(genes[,opt$GENE_ID_TYPE] )/10000))){
-                # subset_genes   = genes[,opt$GENE_ID_TYPE]
-                getBM_count    = 1
-                max_getBM_trys = 100
-                while (getBM_count<max_getBM_trys){
-                    print(getBM_count)
-                    Annotation = try(getBM(values = subset_genes,
-                                        filters = opt$GENE_ID_TYPE,
-                                        attributes = attributes,
-                                        uniqueRows = TRUE,
-                                        mart = ensembl),silent = T)
-                                        
-                    if (!inherits(Annotation,"try-error")){
-                        Total_Annotation = rbind(Total_Annotation,Annotation)
-                        getBM_count = max_getBM_trys
-                    }
-                    getBM_count = getBM_count + 1
-                }
-                if (inherits(Annotation,"try-error")){
-                    stop()
-                }
+              for (subset_genes in split(genes[,opt$GENE_ID_TYPE], ceiling(seq_along(genes[,opt$GENE_ID_TYPE] )/1000))){
+                Annotation=getBM(values = subset_genes,
+                                 filters = opt$GENE_ID_TYPE,
+                                 attributes = attributes,
+                                 uniqueRows = TRUE,
+                                 mart = ensembl)
+                Total_Annotation = rbind(Total_Annotation,Annotation)
               }
-              getBM_count=1
-              max_getBM_trys = 20
-              while (getBM_count<max_getBM_trys){
-                  print(getBM_count)
-                  biotype = try(getBM(attributes = c(opt$GENE_ID_TYPE,
+              biotype = getBM(attributes = c(opt$GENE_ID_TYPE,
                                              'external_gene_name',
                                              'gene_biotype',
                                              'description'
-                                                    ),
-                                       uniqueRows = TRUE,
-                                       mart = ensembl),silent = T)
-                 if (!inherits(biotype,"try-error")){
-                     getBM_count = max_getBM_trys
-                 }
-                    getBM_count = getBM_count + 1  
-              }
-              
-              if (inherits(biotype,"try-error")){
-                 stop()
-              }
-              
+              ),uniqueRows = TRUE, mart = ensembl)
               Total_Annotation=merge.data.frame(x = Total_Annotation,y = biotype,by = opt$GENE_ID_TYPE,all = T)
               Annotation = Total_Annotation
-              # Annotation$kegg = sapply(X = Annotation$kegg_enzyme,FUN = function(X) unlist(stringi::stri_split(str = X,fixed  = '+'))[1] )
-              #Annotation$kegg = sapply(X = Annotation$kegg,FUN = function(X) if (!is.na(X)) if (X!='')  paste('path:map',X,collapse = "",sep='' ) else NA else NA  )
+              Annotation$kegg = sapply(X = Annotation$kegg_enzyme,FUN = function(X) unlist(stringi::stri_split(str = X,fixed  = '+'))[1] )
+              Annotation$kegg = sapply(X = Annotation$kegg,FUN = function(X) if (!is.na(X)) if (X!='')  paste('path:map',X,collapse = "",sep='' ) else NA else NA  )
               Annotation$ontology = Annotation$namespace_1003
               Annotation$namespace_1003 = NULL
               Kegg_Annotation = getBM(attributes=c(opt$GENE_ID_TYPE,
                                                    'uniprotsptrembl'),
                                       mart = ensembl)
               
-              colnames(Kegg_Annotation) = c(opt$GENE_ID_TYPE,keggConv_id_type)
+              colnames(Kegg_Annotation) = c(opt$GENE_ID_TYPE,"UNIPROT")
               Annotation_flag = 'ensembl'
             }else{
               
@@ -1877,7 +1743,7 @@ if  (!file.exists(Annotation_file)){
             
           }else{
             cat("Unable to find the Species Annotation in Ensembl, choose from:")
-            print(ensembl_dataset$description)
+            print(ensembl$description)
             print(plant$description)
           }
           
@@ -1942,10 +1808,10 @@ if  (!file.exists(Annotation_file)){
           
           if (length(ORGANISM)==1){       
             print(ORGANISM)
-            kegg=keggConv(ORGANISM,keggConv_id_type) 
+            kegg=keggConv(ORGANISM,"uniprot") #'ncbi-geneid')
             uniprot =  unlist(lapply(X =names(kegg) ,FUN = function(x) rev(unlist(stringi::stri_split(str = x,regex = ":")))[1]))
             kegg=as.data.frame(kegg)
-            kegg[keggConv_id_type]=uniprot
+            kegg["uniprot"]=uniprot
             
             KO=keggLink(ORGANISM,"ko")
             ko=names(KO)
@@ -1977,8 +1843,8 @@ if  (!file.exists(Annotation_file)){
             colnames(Pathway_info)="info"
             Pathway_info["pathway"]=info
             temp=merge.data.frame(temp,Pathway_info,by = "pathway",all.x = T)
-            Kegg_Annotation=merge.data.frame(Kegg_Annotation,temp,by =keggConv_id_type ,by.y = keggConv_id_type,all.x = T)
-            # Kegg_Annotation=merge.data.frame(Kegg_Annotation,temp,by.x ="UNIPROT" ,by.y = "uniprot",all.x = T)
+            Kegg_Annotation=merge.data.frame(Kegg_Annotation,temp,by.x ="UNIPROT" ,by.y = "uniprot",all.x = T)
+            
             Annotation$kegg = NULL 
             Annotation = merge.data.frame(Annotation,Kegg_Annotation,by.x =opt$GENE_ID_TYPE ,by.y = opt$GENE_ID_TYPE,all.x = T)
             Annotation$pathway_info = Annotation$info
@@ -2401,95 +2267,50 @@ if ((opt$FILTER_SAMPLES) | (opt$FILTER_GENES)){
   } 
   library(scater)
   
-  if (packageVersion('scater')=='1.14.0'){
-      sce <- newSCESet(countData=countData)
-      dim(sce)
-      sce <- calculateQCMetrics(sce)
-      pdf(file = file.path(opt$outDir,"Pre_QA_hist.pdf"))
-      par(mfrow=c(1,2))
-      hist(sce$total_counts/1e6, xlab="Library sizes (millions)", main="", 
-           breaks=20, col="grey80", ylab="Number of Samples")
-      hist(sce$total_features, xlab="Number of expressed genes", main="", 
-           breaks=20, col="grey80", ylab="Number of Samples")
-      dev.off() 
-      
-      if (opt$FILTER_SAMPLES){
-        print('Filtering Samples')
-        libsize.drop <- isOutlier(sce$total_counts, nmads=3, type="lower", log=TRUE)
-        feature.drop <- isOutlier(sce$total_features, nmads=3, type="lower", log=TRUE)
-        sce <- sce[,!(libsize.drop | feature.drop )]
-        print.data.frame(data.frame(ByLibSize=sum(libsize.drop), ByFeature=sum(feature.drop), Remaining=ncol(sce)))
-        use_names=colnames(sce)
-        countData=countData[,use_names]
-        colData=colData[use_names,]
-      }
-      
-      if (opt$FILTER_GENES){
-        print('Filtering low-abundance genes')
-        print('Before Filtering:')
-        print(dim(sce))
-        ave.counts <- rowMeans(counts(sce))
-        keep <- ave.counts >= 1
-        #print(sum(keep))
-        sce <- sce[names(keep[keep==T]),]
-        print('After Filtering:')
-        print(dim(sce))
-        countData=countData[names(keep[keep==T]),]
-      }
-      
-      pdf(file = file.path(opt$outDir,"Post_QA_hist.pdf"))
-      par(mfrow=c(1,2))
-      hist(sce$total_counts/1e6, xlab="Library sizes (millions)", main="", 
-           breaks=20, col="grey80", ylab="Number of Samples")
-      hist(sce$total_features, xlab="Number of expressed genes", main="", 
-           breaks=20, col="grey80", ylab="Number of Samples")
-      
-      dev.off()
-  }else{
-      sce = SingleCellExperiment(list(counts=countData))
-      dim(sce)
-      sce_cell <- perCellQCMetrics(sce)
-      pdf(file = file.path(opt$outDir,"Pre_QA_hist.pdf"))
-      par(mfrow=c(1,2))
-      hist(sce_cell$sum/1e6, xlab="Library sizes (millions)", main="", 
-           breaks=20, col="grey80", ylab="Number of Samples")
-      hist(sce_cell$detected, xlab="Number of expressed genes", main="", 
-           breaks=20, col="grey80", ylab="Number of Samples")
-      dev.off() 
-      
-      if (opt$FILTER_SAMPLES){
-        print('Filtering Samples')
-        libsize.drop <- isOutlier(sce_cell$sum, nmads=3, type="lower", log=TRUE)
-        feature.drop <- isOutlier(sce_cell$detected, nmads=3, type="lower", log=TRUE)
-        sce <- sce[,!(libsize.drop | feature.drop )]
-        print.data.frame(data.frame(ByLibSize=sum(libsize.drop), ByFeature=sum(feature.drop), Remaining=ncol(sce)))
-        use_names=colnames(sce)
-        countData=countData[,use_names]
-        colData=colData[use_names,]
-      }
-      
-      if (opt$FILTER_GENES){
-        print('Filtering low-abundance genes')
-        print('Before Filtering:')
-        print(dim(sce))
-        ave.counts <- rowMeans(counts(sce))
-        keep <- ave.counts >= 1
-        #print(sum(keep))
-        sce <- sce[names(keep[keep==T]),]
-        print('After Filtering:')
-        print(dim(sce))
-        countData=countData[names(keep[keep==T]),]
-      }
-      sce_cell <- perCellQCMetrics(sce)
-      pdf(file = file.path(opt$outDir,"Post_QA_hist.pdf"))
-      par(mfrow=c(1,2))
-      hist(sce_cell$sum/1e6, xlab="Library sizes (millions)", main="", 
-           breaks=20, col="grey80", ylab="Number of Samples")
-      hist(sce_cell$detected, xlab="Number of expressed genes", main="", 
-           breaks=20, col="grey80", ylab="Number of Samples")
-      
-      dev.off()
+  
+  sce <- newSCESet(countData=countData)
+  dim(sce)
+  sce <- calculateQCMetrics(sce)
+  pdf(file = file.path(opt$outDir,"Pre_QA_hist.pdf"))
+  par(mfrow=c(1,2))
+  hist(sce$total_counts/1e6, xlab="Library sizes (millions)", main="", 
+       breaks=20, col="grey80", ylab="Number of Samples")
+  hist(sce$total_features, xlab="Number of expressed genes", main="", 
+       breaks=20, col="grey80", ylab="Number of Samples")
+  dev.off() 
+  
+  if (opt$FILTER_SAMPLES){
+    print('Filtering Samples')
+    libsize.drop <- isOutlier(sce$total_counts, nmads=3, type="lower", log=TRUE)
+    feature.drop <- isOutlier(sce$total_features, nmads=3, type="lower", log=TRUE)
+    sce <- sce[,!(libsize.drop | feature.drop )]
+    print.data.frame(data.frame(ByLibSize=sum(libsize.drop), ByFeature=sum(feature.drop), Remaining=ncol(sce)))
+    use_names=colnames(sce)
+    countData=countData[,use_names]
+    colData=colData[use_names,]
   }
+  
+  if (opt$FILTER_GENES){
+    print('Filtering low-abundance genes')
+    print('Before Filtering:')
+    print(dim(sce))
+    ave.counts <- rowMeans(counts(sce))
+    keep <- ave.counts >= 1
+    #print(sum(keep))
+    sce <- sce[names(keep[keep==T]),]
+    print('After Filtering:')
+    print(dim(sce))
+    countData=countData[names(keep[keep==T]),]
+  }
+  
+  pdf(file = file.path(opt$outDir,"Post_QA_hist.pdf"))
+  par(mfrow=c(1,2))
+  hist(sce$total_counts/1e6, xlab="Library sizes (millions)", main="", 
+       breaks=20, col="grey80", ylab="Number of Samples")
+  hist(sce$total_features, xlab="Number of expressed genes", main="", 
+       breaks=20, col="grey80", ylab="Number of Samples")
+  
+  dev.off()
 }        
 ##################Filttering the data END######################
 
@@ -2841,11 +2662,7 @@ for (test2do in test_count){
       test_name=test2do
     }else{
       contrast_list = unlist(stringi::stri_split(str = test2do,regex = ','))
-      if (length(contrast_list)==2){
-          test_name = paste(contrast_list[1],contrast_list[2],sep = '_vs_')
-      }else{
-          test_name = paste(contrast_list[2],contrast_list[3],sep = '_vs_')
-      }
+      test_name = paste(contrast_list[2],contrast_list[3],sep = '_vs_')
     }
     rmarkdown::render(input             = opt$Rmarkdown,
                       output_file       = file.path(base_out_dir,paste('Final_Report',test_name,'html', sep = '.')),
@@ -2912,17 +2729,12 @@ for (test2do in test_count){
     }else{
       opt$CONTRAST=test2do
       contrast_list = unlist(stringi::stri_split(str =  opt$CONTRAST,regex = ','))
-      if (length(contrast_list)==2){
-          test_name = paste(contrast_list[1],contrast_list[2],sep = '_vs_')
-          contrast_list = as.list(contrast_list)
-      }else{
-          test_name = paste(contrast_list[2],contrast_list[3],sep = '_vs_')
-      }
+      test_name = paste(contrast_list[2],contrast_list[3],sep = '_vs_')
       opt$outDir=file.path(base_out_dir,test_name)
       dir.create(opt$outDir, showWarnings = FALSE)
       
       DESeqDataSet_Results <- results(DESeqDataSet,
-                                      contrast     = contrast_list ,
+                                      contrast     = unlist(stringi::stri_split(str = opt$CONTRAST ,regex = ",")) ,
                                       alpha        = opt$ALPHA,
                                       lfcThreshold = log2(opt$FoldChange)   )
       
@@ -2949,11 +2761,7 @@ for (test2do in test_count){
         if ((!is.na(opt$CONTRAST))  & (opt$CONTRAST != "")){
           Results_for_print = Results_for_print[,c('log2FoldChange','pvalue','padj')]
           contrast_list = unlist(stringi::stri_split(str =  opt$CONTRAST,regex = ','))
-          if (length(contrast_list)==2){
-              test_name = paste(contrast_list[1],contrast_list[2],sep = '.vs.')
-          }else{
-              test_name = paste(contrast_list[2],contrast_list[3],sep = '.vs.')
-          }
+          test_name = paste(contrast_list[2],contrast_list[3],sep = '.vs.')
         }
       }
       
@@ -2984,11 +2792,7 @@ for (test2do in test_count){
       }else{
         if ((!is.na(opt$CONTRAST))  & (opt$CONTRAST != "")){
           contrast_list = unlist(stringi::stri_split(str =  opt$CONTRAST,regex = ','))
-          if (length(contrast_list)==2){
-             test_name = paste(contrast_list[1],contrast_list[2],sep = ' vs ')
-          }else{
-             test_name = paste(contrast_list[2],contrast_list[3],sep = ' vs ')
-          }
+          test_name = paste(contrast_list[2],contrast_list[3],sep = ' vs ')
           plotTitle = paste('Volcano Plot (', test_name, ')', sep="")
           pdf(file.path(opt$outDir,paste(c(plotTitle,".pdf"),collapse ="")))
           par(mar=c(5,5,5,5), cex=1.0, cex.main=1.4, cex.axis=1.4, cex.lab=1.4)

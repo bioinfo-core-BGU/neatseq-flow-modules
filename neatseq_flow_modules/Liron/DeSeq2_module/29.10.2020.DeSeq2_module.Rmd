@@ -184,7 +184,7 @@ clusters_enricher=function(outDir, clusters,Type,organism,universe,keyType,file_
 
         if (dim(allRes@compareClusterResult)[1]>0){
             #cat(sprintf("<h4>%s</h4>", paste(unlist(stringi::stri_split(str = file_name,fixed='_')),collapse = " ") ))
-            x=enrichplot::dotplot(allRes,x=allRes@compareClusterResult$Cluster,showCategory=10000,font.size =font.size)+
+            x=DOSE::dotplot(allRes,x=allRes@compareClusterResult$Cluster,showCategory=10000,font.size =font.size)+
             ggplot2::ggsave(filename = file.path(outDir,paste(file_name,".pdf",sep='',collapse = "")),dpi = 600,device = "pdf",width = 20,height = 20)
             grid::grid.newpage()
             return(list(original_allRes,list(htmltools::h4(paste(unlist(stringi::stri_split(str = file_name,fixed='_')),collapse = " ")),ggplotly(x),Simplify_title,Enrichment_table)))
@@ -285,7 +285,7 @@ Clusters_Enrichment_Test=function(outDir,clusters,TERM2NAME,TERM2GENE,file_name,
 
     if (dim(allRes@compareClusterResult)[1]>0){
         #cat(sprintf("<h4>%s</h4>", paste(unlist(stringi::stri_split(str = file_name,fixed='_')),collapse = " ") ))
-        x=enrichplot::dotplot(allRes,showCategory=10000,font.size=font.size)+ 
+        x=DOSE::dotplot(allRes,showCategory=10000,font.size=font.size)+ 
         ggplot2::ggsave(filename = file.path(outDir,paste(file_name,".pdf",sep='',collapse = "")),dpi = 600,device = "pdf",width = 20,height = 20)
         grid::grid.newpage()
         return(list(original_allRes,list(htmltools::h4(paste(unlist(stringi::stri_split(str = file_name,fixed='_')),collapse = " ")),ggplotly(x),Simplify_title,Enrichment_table)))
@@ -555,15 +555,15 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
       writeLines(text =  paste(dim(mat)[1],dim(mat)[2],sep = ' ' ),con = file.path(outDir,'clickInput.orig'))
       write.table(x = mat,append = T,file = file.path(outDir,'clickInput.orig'),sep = '\t',col.names = F)
       lines=c()
-      lines = c(lines,'DATA_TYPE')
+      lines = c(lines,'DATA_TYPE ')
       lines = c(lines,'FP ')
-      lines = c(lines,'INPUT_FILES_PREFIX')
+      lines = c(lines,'INPUT_FILES_PREFIX ')
       lines = c(lines,file.path(outDir,'clickInput '))
-      lines = c(lines,'OUTPUT_FILE_PREFIX')
+      lines = c(lines,'OUTPUT_FILE_PREFIX ')
       lines = c(lines,file.path(outDir,'clickOutput '))
-      lines = c(lines,'SIMILARITY_TYPE')
+      lines = c(lines,'SIMILARITY_TYPE ')
       lines = c(lines,'CORRELATION ')
-      lines = c(lines,'HOMOGENEITY')
+      lines = c(lines,'HOMOGENEITY ')
       lines = c(lines,as.character(HOMOGENEITY))
       writeLines(text =  lines,con = file.path(outDir,'params.txt'))
       system(command = paste(click_path,file.path(outDir,'params.txt'),sep = ' ') )
@@ -673,15 +673,13 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                 opt$CONTRAST=test2do
                 contrast_list = unlist(stringi::stri_split(str =  opt$CONTRAST,regex = ','))
                 if (length(contrast_list)==2){
-                      test_name = paste(contrast_list[1],contrast_list[2],sep = '_vs_')
-                      contrast_list = as.list(contrast_list)
-                }else{
-                      test_name = paste(contrast_list[2],contrast_list[3],sep = '_vs_')
+                    contrast_list=c('',contrast_list)
                 }
+                test_name = paste(contrast_list[2],contrast_list[3],sep = '_vs_')
                 opt$outDir=file.path(base_out_dir,test_name)
                 dir.create(opt$outDir, showWarnings = FALSE)
                 DESeqDataSet_Results <- results(DESeqDataSet,
-                                                contrast     = contrast_list ,
+                                                contrast     = unlist(stringi::stri_split(str = opt$CONTRAST ,regex = ",")) ,
                                                 alpha        = opt$ALPHA,
                                                 lfcThreshold = log2(opt$FoldChange)   )
               
@@ -804,13 +802,10 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                 if (!is.na(opt$CONTRAST)){
                     Results_for_print = Results_for_print[,c('log2FoldChange','pvalue','padj')]
                     contrast_list = unlist(stringi::stri_split(str =  opt$CONTRAST,regex = ','))
-                    
                     if (length(contrast_list)==2){
-                          test_name = paste(contrast_list[1],contrast_list[2],sep = '.vs.')
-                    }else{
-                          test_name = paste(contrast_list[2],contrast_list[3],sep = '.vs.')
+                        contrast_list=c('',contrast_list)
                     }
-                    
+                    test_name = paste(contrast_list[2],contrast_list[3],sep = '.vs.')
                 }
             }
 
@@ -1844,10 +1839,10 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
                                         }
                                     }
                                 }
-                            }else if (nrow(SPLIT_Normalized_counts_Annotated_mean)==1){
-                                clusters=rep(1,nrow(SPLIT_Normalized_counts_Annotated_mean))
+                            }else if (nrow(SPLIT_Normalized_counts_Annotated_mean)<3){
+                                clusters=c(1)
                                 names(clusters)=rownames((SPLIT_Normalized_counts_Annotated_mean))
-                                cat(sprintf("<h4>%s</h4>",'Since only 1 significant genes were detected, No clustering was performed'))
+                                cat(sprintf("<h4>%s</h4>",'Since only 2 significant genes were detected, No clustering was performed'))
                             }else if (nrow(SPLIT_Normalized_counts_Annotated_mean)==2){
                                 Clustering <- eclust(as.matrix(SPLIT_Normalized_counts_Annotated_mean),stand = F,
                                                            FUNcluster= 'kmeans',
@@ -2317,7 +2312,7 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
             
             
         }
- save.image(file.path(opt$outDir,'Session.RSession'))
+ save(list = ls(all.names = TRUE),file =file.path(opt$outDir,'Session.RSession'))
  colData   = Original_colData   
  countData = Original_countData 
 
