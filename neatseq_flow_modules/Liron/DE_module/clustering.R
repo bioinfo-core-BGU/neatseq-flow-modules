@@ -22,7 +22,7 @@ option_list = list(
               help="Path to Gene Level Count Data Files [comma sep]", metavar="character"),
   make_option(c("-s", "--SAMPLE_DATA_FILE"), type="character", default=NA, 
               help="Path to Samples Information File", metavar="character"),    
-  make_option(c("-o","--outDir"), type="character", default=NA, 
+  make_option(c("-o","--outDir"), type="character", default='', 
               help="path to the output directory", metavar="character"),
   make_option(c("--X_AXIS"), type="character", default=NA,
               help="The Filed In the Sample Data To Use as X Axis ", metavar="character"),
@@ -93,7 +93,7 @@ Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
   return(clusters)
 }
 
-Prepair_Normalized_counts_for_clustering <- function(Normalized_counts_assay,colData,opt){
+Prepair_Normalized_counts_for_clustering <- function(Normalized_counts_assay,colData,opt,FUN = mean){
   if (!is.na(opt$X_AXIS)){    
     X_AXIS=opt$X_AXIS
     if (is.na(opt$GROUP)){
@@ -103,7 +103,7 @@ Prepair_Normalized_counts_for_clustering <- function(Normalized_counts_assay,col
     }
     if (X_AXIS!=GROUP){
       Normalized_counts_Annotated                               = merge(colData[c(X_AXIS,GROUP)],t(Normalized_counts_assay),all.x = T ,by="row.names",sort=F)
-      Normalized_counts_Annotated_mean                          = aggregate.data.frame(x = Normalized_counts_Annotated,by = c(Normalized_counts_Annotated[GROUP],Normalized_counts_Annotated[X_AXIS]),FUN = mean)
+      Normalized_counts_Annotated_mean                          = aggregate.data.frame(x = Normalized_counts_Annotated,by = c(Normalized_counts_Annotated[GROUP],Normalized_counts_Annotated[X_AXIS]),FUN = FUN)
       rownames(Normalized_counts_Annotated_mean)                = paste(unlist(Normalized_counts_Annotated_mean[GROUP]),unlist(Normalized_counts_Annotated_mean[X_AXIS]))
       Normalized_counts_Annotated_mean                          = Normalized_counts_Annotated_mean[order(rownames(Normalized_counts_Annotated_mean)),]
       Normalized_counts_Annotated_mean$Row.names                = NULL
@@ -125,7 +125,7 @@ Prepair_Normalized_counts_for_clustering <- function(Normalized_counts_assay,col
       
     }else{
       Normalized_counts_Annotated                   = merge(colData[c(X_AXIS)],t(Normalized_counts_assay),all.x = T,by="row.names",sort=F)
-      Normalized_counts_Annotated_mean              = aggregate.data.frame(x = Normalized_counts_Annotated,by = Normalized_counts_Annotated[X_AXIS],FUN = mean)
+      Normalized_counts_Annotated_mean              = aggregate.data.frame(x = Normalized_counts_Annotated,by = Normalized_counts_Annotated[X_AXIS],FUN = FUN)
       rownames(Normalized_counts_Annotated_mean)    = unlist(Normalized_counts_Annotated_mean[X_AXIS])
       Normalized_counts_Annotated_mean              = Normalized_counts_Annotated_mean[order(rownames(Normalized_counts_Annotated_mean)),]
       Normalized_counts_Annotated_mean[X_AXIS]      = NULL
@@ -188,6 +188,114 @@ sub_cluster  <- function(Normalized_counts_assay,opt){
   }
   New_order = c(New_order,no_var)
   return(New_order)
+}
+
+
+plot_clusters<-function(clusters,vs_ano,color_group=c('Type','Time_int'),titles=c("Type","Time","Normalized counts"),split_by=c(),smooth=T,X_AXIS_ORDER=NA){
+  plot_list=list()
+  count=1
+  for (i in sort(unique(clusters))){
+    Df=data.frame()
+    genes=names(clusters[clusters==i])
+    for (j in genes){
+      if (length(split_by)>0){
+        temp=subset.data.frame(x =vs_ano,,c(split_by,color_group,j))
+        colnames(temp)=c("split_by","Type","Time","EXP")
+        Df=rbind(Df,temp)
+      }else{
+        temp=subset.data.frame(x =vs_ano,,c(color_group,j))
+        colnames(temp)=c("Type","Time","EXP")
+        Df=rbind(Df,temp)
+      }
+    }
+    if (color_group[1]==color_group[2]){
+      Df$Type='Trend'
+    }
+    if (length(X_AXIS_ORDER)>1){
+      Df$Time <-factor(Df$Time,levels=intersect(X_AXIS_ORDER,unique(Df$Time)))
+    }
+    if (length(split_by)>0){
+      plot_list[count]=list(ggplot(data=Df, aes(x=Time, y=EXP, group=Type)) + 
+                              facet_wrap(~split_by, ncol=1,scales = "free_y",strip.position = c("right"))+
+                              theme(strip.text.y = element_text(size = 7, colour = "black"))+#,face="bold" ,angle = 90))+
+                              #theme(strip.background = element_blank())+
+                              ggtitle( paste(paste("Cluster ", i  ,sep="") ,length(genes) ,sep="\n")) +
+                              #theme(plot.title = element_text(colour = "black", size = 12)) + 
+                              theme(legend.position  ="none")+
+                              xlab(titles[2]) +
+                              ylab(titles[3]) +
+                              theme(axis.title   = element_text(colour = "black", size = 10) )+
+                              theme(legend.title = element_text(colour = "black", size = 10) )+
+                              theme(legend.text  = element_text(colour = "black", size = 8) )+
+                              theme(axis.text.y  = element_text(colour = "black", size = 6))+
+                              theme(axis.text.x  = element_text(colour = "black", size = 6))+
+                              theme(plot.margin  = unit(c(0.5,0.2,0.5,0.2),"cm")  )+
+                              #scale_color_discrete(name=titles[1])+
+                              #scale_linetype_manual(name=titles[1],values=c(1,5))+
+                              scale_x_discrete(limits=unique(Df$Time))+
+                              theme(legend.key.width =unit(3,"line")) 
+                            #scale_y_continuous(breaks=c(seq(0,10,by=2)) )
+      )
+    }else{
+      plot_list[count]=list(ggplot(data=Df, aes(x=Time, y=EXP, group=Type)) + 
+                              ggtitle( paste(paste("Cluster ", i  ,sep="") ,length(genes) ,sep="\n")) +
+                              #theme(plot.title = element_text(colour = "black", size = 12)) + 
+                              theme(legend.position  ="none")+
+                              xlab(titles[2]) +
+                              ylab(titles[3]) +
+                              theme(axis.title   = element_text(colour = "black", size = 10) )+
+                              theme(legend.title = element_text(colour = "black", size = 10) )+
+                              theme(legend.text  = element_text(colour = "black", size = 8) )+
+                              theme(axis.text.y  = element_text(colour = "black", size = 6))+
+                              theme(axis.text.x  = element_text(colour = "black", size = 6))+
+                              theme(plot.margin  = unit(c(0.5,0.2,0.5,0.2),"cm")  )+
+                              #scale_color_discrete(name=titles[1])+
+                              #scale_linetype_manual(name=titles[1],values=c(1,5))+
+                              scale_x_discrete(limits=unique(Df$Time))+
+                              theme(legend.key.width = unit(3,"line")) 
+                            #scale_y_continuous(breaks=c(seq(0,10,by=2)) )
+      )
+    }
+    
+    
+    if (smooth){
+      if (dim(Df)[1]>10000){
+        plot_list[count]=list(plot_list[[count]]+
+                                stat_smooth(method="auto", span = 5.0 ,fullrange=F, size=0.5 ,aes(linetype=Type,color=Type)) 
+        )
+      }else{
+        plot_list[count]=list(plot_list[[count]]+
+                                stat_smooth(method="loess", fullrange=F, size=0.5 ,aes(linetype=Type,color=Type)) 
+        )
+      }
+      
+      gp2=plot_list[count]
+      res<-try(get_legend(gp2[[1]] + theme(legend.position  ="right")+guides(color=guide_legend(title=titles[1]),linetype=guide_legend(title=titles[1]))) ,silent = T)
+      if (inherits(res,"try-error")){
+        plot_list[count]=list(plot_list[[count]]+
+                                stat_summary(fun.y=mean, geom="point", size = 3,aes(color=Type))+
+                                stat_summary(fun.data = "mean_se", geom = "errorbar", width = .3,size = 1,aes(color=Type),show.legend = F)
+        )
+      }
+    }else{
+      plot_list[count]=list(plot_list[[count]]+
+                              stat_summary(fun.y=mean, geom="line", size = 1.3,aes(linetype=Type,color=Type))+
+                              stat_summary(fun.data = "mean_se", geom = "errorbar", width = .3,size = 1,aes(color=Type),show.legend = F)
+      )
+    }
+    
+    count=count+1  
+  }
+  
+  gp2=plot_list[1]
+  if (color_group[1]==color_group[2]){
+    ml<-marrangeGrob(plot_list, nrow=2, ncol=3, top=NULL)
+  }else{
+    legend <- get_legend(gp2[[1]] + theme(legend.position  ="right")+guides(color=guide_legend(title=titles[1]),linetype=guide_legend(title=titles[1])))
+    ml<-marrangeGrob(plot_list, nrow=2, ncol=3,right=legend, top=NULL)
+    
+  }
+  return(ml)
 }
 
 plot_clusters<-function(clusters,vs_ano,color_group=c('Type','Time_int'),titles=c("Type","Time","Normalized counts"),split_by=c(),smooth=0.5,X_AXIS_ORDER=NA,show_lines=F){
@@ -272,12 +380,12 @@ plot_clusters<-function(clusters,vs_ano,color_group=c('Type','Time_int'),titles=
         plot_list[count]=list(plot_list[[count]]+
                                 stat_summary(fun.y=mean,geom="line",aes(linetype=Type,color=Type))+
                                 stat_summary(fun.data = "mean_se", geom = "errorbar", width = .3,size = 1,aes(color=Type),show.legend = F)
-                                
+                              
         )
       }else{
         plot_list[count]=list(plot_list[[count]]+
                                 stat_smooth(method="loess", span = smooth, fullrange=F, size=0.5,alpha=1.0 ,aes(linetype=Type,color=Type))
-                               
+                              
         )
       }
       
@@ -309,6 +417,128 @@ plot_clusters<-function(clusters,vs_ano,color_group=c('Type','Time_int'),titles=
   }
   return(ml)
 }
+
+plot_clusters<-function(clusters,vs_ano,color_group=c('Type','Time_int'),titles=c("Type","Time","Normalized counts"),split_by=c(),smooth=0.5,X_AXIS_ORDER=NA,show_lines=F){
+  plot_list=list()
+  count=1
+  for (i in sort(unique(clusters))){
+    Df=data.frame()
+    genes=names(clusters[clusters==i])
+    for (j in genes){
+      if (length(split_by)>0){
+        temp=subset.data.frame(x =vs_ano,,c(split_by,color_group,j))
+        colnames(temp)=c("split_by","Type","Time","EXP")
+        temp['Gene'] = j
+        temp['Gene'] = paste(temp[,'Type'],temp[,'Gene'],sep = '_')
+        Df=rbind(Df,temp)
+      }else{
+        temp=subset.data.frame(x =vs_ano,,c(color_group,j))
+        colnames(temp)=c("Type","Time","EXP")
+        temp['Gene'] = j
+        temp['Gene'] = paste(temp[,'Type'],temp[,'Gene'],sep = '_')
+        Df=rbind(Df,temp)
+      }
+    }
+    if (color_group[1]==color_group[2]){
+      Df$Type='Trend'
+    }else{
+      Df$Type = as.character(Df$Type)
+    }
+    if (length(X_AXIS_ORDER)>1){
+      Df$Time <-factor(Df$Time,levels=intersect(X_AXIS_ORDER,unique(Df$Time)))
+    }
+    if (length(split_by)>0){
+      plot_list[count]=list(ggplot(data=Df, aes(x=Time, y=EXP, group=Type)) + 
+                              facet_wrap(~split_by, ncol=1,scales = "free_y",strip.position = c("right"))+
+                              theme(strip.text.y = element_text(size = 7, colour = "black"))+#,face="bold" ,angle = 90))+
+                              #theme(strip.background = element_blank())+
+                              ggtitle( paste(paste("Cluster ", i  ,sep="") ,length(genes) ,sep="\n")) +
+                              theme(plot.title = element_text(hjust = 0.5,colour = "black", size = 12)) + 
+                              theme(legend.position  ="none")+
+                              xlab(titles[2]) +
+                              ylab(titles[3]) +
+                              theme(axis.title   = element_text(colour = "black", size = 10) )+
+                              theme(legend.title = element_text(colour = "black", size = 10) )+
+                              theme(legend.text  = element_text(colour = "black", size = 8) )+
+                              theme(axis.text.y  = element_text(colour = "black", size = 6))+
+                              theme(axis.text.x  = element_text(colour = "black", size = 6))+
+                              theme(plot.margin  = unit(c(0.5,0.2,0.5,0.2),"cm")  )+
+                              #scale_color_discrete(name=titles[1])+
+                              #scale_linetype_manual(name=titles[1],values=c(1,5))+
+                              scale_x_discrete(limits=unique(Df$Time))+
+                              theme(legend.key.width =unit(3,"line")) 
+                            #scale_y_continuous(breaks=c(seq(0,10,by=2)) )
+      )
+    }else{
+      plot_list[count]=list(ggplot(data=Df, aes(x=Time, y=EXP, group=Type)) + 
+                              ggtitle( paste(paste("Cluster ", i  ,sep="") ,length(genes) ,sep="\n")) +
+                              theme(plot.title = element_text(hjust = 0.5,colour = "black", size = 12)) + 
+                              theme(legend.position  ="none")+
+                              xlab(titles[2]) +
+                              ylab(titles[3]) +
+                              theme(axis.title   = element_text(colour = "black", size = 10) )+
+                              theme(legend.title = element_text(colour = "black", size = 10) )+
+                              theme(legend.text  = element_text(colour = "black", size = 8) )+
+                              theme(axis.text.y  = element_text(colour = "black", size = 6))+
+                              theme(axis.text.x  = element_text(colour = "black", size = 6))+
+                              theme(plot.margin  = unit(c(0.5,0.2,0.5,0.2),"cm")  )+
+                              #scale_color_discrete(name=titles[1])+
+                              #scale_linetype_manual(name=titles[1],values=c(1,5))+
+                              scale_x_discrete(limits=unique(Df$Time))+
+                              theme(legend.key.width = unit(3,"line")) 
+                            #scale_y_continuous(breaks=c(seq(0,10,by=2)) )
+      )
+    }
+    
+    if (show_lines){
+      plot_list[count]=list(plot_list[[count]]+
+                              stat_smooth(method="auto", span = 5.0 ,fullrange=F, size=0.1,se = F ,aes(linetype=Type,color=Type,group=Gene)) 
+      )
+    }
+    
+
+    if (smooth>0){
+      if (dim(Df)[1]>20000){
+        plot_list[count]=list(plot_list[[count]]+
+                                stat_summary(fun.y=mean,geom="line",aes(linetype=Type,color=Type))+
+                                stat_summary(fun.data = "mean_se", geom = "errorbar", width = .3,size = 1,aes(color=Type),show.legend = F)
+                              
+        )
+      }else{
+        plot_list[count]=list(plot_list[[count]]+
+                                stat_smooth(method="loess", span = smooth, fullrange=F, size=0.5,alpha=1.0 ,aes(linetype=Type,color=Type))
+                              
+        )
+      }
+      gp2=plot_list[count]
+      res<-try(get_legend(gp2[[1]] + theme(legend.position  ="right")+guides(color=guide_legend(title=titles[1]),linetype=guide_legend(title=titles[1]))) ,silent = T)
+      if (inherits(res,"try-error")){
+        plot_list[count]=list(plot_list[[count]]+
+                                stat_summary(fun.y=mean, geom="point", size = 3,aes(color=Type))+
+                                stat_summary(fun.data = "mean_se", geom = "errorbar", width = .3,size = 1,aes(color=Type),show.legend = F)
+        )
+      }
+    }else{
+      plot_list[count]=list(plot_list[[count]]+
+                              stat_summary(fun.y=mean, geom="line", size = 1.3,aes(linetype=Type,color=Type))+
+                              stat_summary(fun.data = "mean_se", geom = "errorbar", width = .3,size = 1,aes(color=Type),show.legend = F)
+      )
+    }
+    
+    count=count+1  
+  }
+  
+  gp2=plot_list[1]
+  if (color_group[1]==color_group[2]){
+    ml<-marrangeGrob(plot_list, nrow=2, ncol=3, top=NULL,as.table = F,layout_matrix = matrix(1:6, 2, 3, TRUE))
+  }else{
+    legend <- get_legend(gp2[[1]] + theme(legend.position  ="right")+guides(color=guide_legend(title=titles[1]),linetype=guide_legend(title=titles[1])))
+    ml<-marrangeGrob(plot_list, nrow=2, ncol=3,right=legend, top=NULL,as.table = F,layout_matrix = matrix(1:6, 2, 3, TRUE))
+    
+  }
+  return(ml)
+}
+
 
 cluster_Normalized_counts <- function(SPLIT_Normalized_counts_Annotated_mean,SPLIT_Normalized_counts_Annotated,colData,opt) {
   X_AXIS=opt$X_AXIS
@@ -404,22 +634,14 @@ cluster_Normalized_counts <- function(SPLIT_Normalized_counts_Annotated_mean,SPL
     clusters=rep(1,nrow(SPLIT_Normalized_counts_Annotated_mean) )
     names(clusters)=rownames((SPLIT_Normalized_counts_Annotated_mean))
   }
-  if (length(no_var)>0){
-    if (length(clusters)>0){
-      temp=rep(max(clusters)+1,length(no_var) )
-    }else{
-      temp=rep(1,length(no_var) )
-    }
-    names(temp)=no_var
-    clusters=c(clusters,temp)
-  }
+
   
   if ((opt$hc_metric=='spearman') | ((opt$hc_metric=='pearson') )){
     hc_metric='correlation'
   }else{
     hc_metric=opt$hc_metric
   }
-  
+
   New_clusters=c()
   for (num in sort(unique(clusters))){
     res_red=unique(names(clusters))
@@ -444,6 +666,15 @@ cluster_Normalized_counts <- function(SPLIT_Normalized_counts_Annotated_mean,SPL
     }
   }
   
+  if (length(no_var)>0){
+    if (length(New_clusters)>0){
+      temp=rep(max(New_clusters)+1,length(no_var) )
+    }else{
+      temp=rep(1,length(no_var) )
+    }
+    names(temp)=no_var
+    New_clusters=c(New_clusters,temp)
+  }
   clusters=New_clusters
   
   intgroup=c(opt$GROUP,opt$X_AXIS)
@@ -488,6 +719,12 @@ Heatmap_cluster <- function(mat,clusters,Heatmap_Type,opt,genes=c()){
       for (num in sort(unique(clusters))){
         res_red=unique(names(clusters))
         Genes=res_red[res_red  %in% names(clusters[clusters %in% num])]
+        if (length(Genes)>0){
+          no_var=names(which( apply(mat[Genes,],MARGIN = 1,FUN = sd)==0))
+          if (length(no_var)>0){
+           Genes  = Genes[!(Genes %in% no_var)]
+          }
+        }
         if (length(Genes)>1){
           if (opt$stand){
             heat_map=pheatmap(mat = mat[Genes,],
@@ -503,6 +740,15 @@ Heatmap_cluster <- function(mat,clusters,Heatmap_Type,opt,genes=c()){
                               cluster_cols = F,silent = T)
           }
           New_clusters=c(New_clusters,clusters[heat_map$tree_row$labels[heat_map$tree_row$order]])
+        }
+      
+        else{
+          if (length(no_var)>0){
+            New_clusters=c(New_clusters,clusters[no_var])
+          }
+          if (length(Genes)>0){
+            New_clusters=c(New_clusters,clusters[Genes])
+          }
         }
       }
       
@@ -634,15 +880,7 @@ Network_clustring <- function(mat,opt){
     "walktrap"   = igraph::cluster_walktrap(network) 
   )   
   
-  # CL   = igraph::cluster_louvain(network)
-  # CL   = igraph::cluster_fast_greedy(network)
-  ## CL   = igraph::cluster_leading_eigen(network)
-  ## CL   = igraph::cluster_optimal(network)
-  ## CL   = igraph::cluster_edge_betweenness(network)
-  # CL   = igraph::cluster_infomap(network)
-  # CL   = igraph::cluster_label_prop(network)
-  ## CL   = igraph::cluster_spinglass(network)
-  # CL   = igraph::cluster_walktrap(network)
+
 
   
   print(length(CL))
@@ -674,16 +912,14 @@ countData <- countData[, rownames(colData)]
 #colData = as.data.frame(apply(colData, MARGIN = c(1,2), FUN = function(x) as.character(str_trim(x))))
 
 
-matrix_data = Prepair_Normalized_counts_for_clustering(countData,colData,opt)
+matrix_data = Prepair_Normalized_counts_for_clustering(countData,colData,opt)#,FUN = function(x) if  (is.numeric(x)) diff(x) else x )
 
 matrix_data_mean     = matrix_data[[1]]
 matrix_data_raw      = matrix_data[[2]]
 matrix_data_heatmap  = matrix_data[[3]]
 
 
-opt$stand = F
-
-clusters = cluster_Normalized_counts(matrix_data_mean,matrix_data_raw,colData,opt )
+clusters = cluster_Normalized_counts(matrix_data_mean,matrix_data_raw,colData,opt)
 
 opt$stand = T
 
