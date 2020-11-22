@@ -1,0 +1,9 @@
+name: QC
+channels:
+  - bioconda
+dependencies:
+  - fastqc=0.11.8
+  - multiqc=1.7
+  - cutadapt=2.3
+  - trim-galore=0.4.5
+

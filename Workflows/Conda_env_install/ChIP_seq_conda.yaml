@@ -1,0 +1,24 @@
+name: ChIP_seq_WF
+channels:
+  - conda-forge
+  - bioconda
+  - cyclus
+dependencies:
+# Deps of Neatseq_Flow
+# Software
+  - curl
+  - git
+  - bowtie2>=2.3.1
+  - samtools>=1.6.0
+  - multiqc
+  - fastqc
+  - trimmomatic
+  - macs2
+  - igvtools=2.3.93
+  - bedtools
+  - ucsc-bedgraphtobigwig
+  - ucsc-bigwigtowig
+  - ucsc-bedtobigbed
+  - ucsc-bedclip
+  - multiqc
+  - deeptools

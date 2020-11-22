@@ -1,0 +1,31 @@
+name: Metagenomics
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+# Deps of Neatseq_Flow
+# Software
+  - curl
+  - git
+  - bowtie2>=2.3.1
+  - samtools>=1.6.0
+  - multiqc
+  - fastqc
+  - trimmomatic
+  - kraken2
+  - kraken-biom
+  - centrifuge
+  - biom-format
+  - kaiju
+  - krona
+  - metaphlan2
+  - bowtie2
+  - diamond<0.9.0,>=0.8.22
+  - humann2
+  - prokka
+  - quast
+  - spades
+  - blast>=2.7.0
+  - trim-galore 
+  - cutadapt
+  - rgi

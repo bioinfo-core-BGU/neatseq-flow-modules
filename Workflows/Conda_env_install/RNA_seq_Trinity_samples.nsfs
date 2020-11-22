@@ -1,0 +1,5 @@
+Title	Trinity_example	
+		
+#SampleID	Type	Path
+Sample1	Forward	/path/to/00.Raw_reads/reads.left.fq.gz
+Sample1	Reverse	/path/to/00.Raw_reads/reads.right.fq.gz

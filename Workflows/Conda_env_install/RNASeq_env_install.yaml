@@ -1,0 +1,16 @@
+name: RNASeq
+channels:
+  - bioconda
+dependencies:
+  - rsem=1.2.28
+  - star=2.5.2a
+  - bowtie2=2.3.4.3
+  - trim-galore=0.4.5
+  - cutadapt=1.15
+  - multiqc=0.9
+  - samtools=1.9
+  - fastqc=0.11.8
+  - qualimap
+  - bwa
+  - htseq
+  - biopython
