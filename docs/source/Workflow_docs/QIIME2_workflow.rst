@@ -91,8 +91,9 @@ Requires
 
    .. code-block:: bash
 
-      curl -sl https://datadryad.org/bitstream/handle/10255/dryad.181830/16S_reads_salmo_salar_V3_V4_gut_microbiota.tar.gz | tar zxv
-
+      wget https://datadryad.org/stash/downloads/file_stream/67648
+      tar zxv 16S_reads_salmo_salar_V3_V4_gut_microbiota.tar.gz
+      
 #. Get :download:`the salmon sample file <../_extra/QIIME2/qiime2.samples.salmon.nsfs>` with:
 
    .. code-block:: bash
