@@ -129,6 +129,7 @@ demux:
       --i-seqs: EMPPairedEndSequences
     outputs:
       --o-per-sample-sequences: SampleData[PairedEndSequencesWithQuality]
+      --o-error-correction-details: ErrorCorrectionDetails
     required:
     - --m-barcodes-file
     - --m-barcodes-column
@@ -140,6 +141,7 @@ demux:
         - RawSequences
     outputs:
       --o-per-sample-sequences: SampleData[SequencesWithQuality]
+      --o-error-correction-details: ErrorCorrectionDetails
     required:
     - --m-barcodes-file
     - --m-barcodes-column
