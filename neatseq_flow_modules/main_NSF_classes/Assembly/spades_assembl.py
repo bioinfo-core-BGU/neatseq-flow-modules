@@ -47,7 +47,7 @@ Parameters that can be set
 
     "scope", "sample|project", "Set if project-wide fasta slot should be used"
     "truncate_names", , "truncates contig names, *e.g.* '>NODE_82_length_18610_cov_38.4999_ID_165' will be changed to '>NODE_82_length_18610'"
-    
+    "use_corrected",,"Use the reads files after reads correction for douwnstream usge"
     
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -90,7 +90,8 @@ class Step_spades_assembl(Step):
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
-
+        if "--disable-gzip-output" not in list(self.params["redir_params"].keys()):
+             self.params["redir_params"]["--disable-gzip-output"]=''
         # Assert that all samples have reads files:
         for sample in self.sample_data["samples"]:    
             if not {"fastq.F", "fastq.R", "fastq.S"} & set(self.sample_data[sample].keys()):
@@ -180,8 +181,12 @@ mv -f %(shortnames)s %(contigs)s \n\n""" % {"contigs":sample_dir + "contigs.fast
 
                 self.stamp_file(self.sample_data[sample][self.get_step_step() + "_scaffolds"])
                 self.stamp_file(self.sample_data[sample][self.get_step_step() + "_contigs"])
-
-                    
+                if "use_corrected" in list(self.params.keys()):
+                    if "PE" in self.sample_data[sample]["type"]:
+                        self.sample_data[sample]["fastq.F"] = os.path.join(sample_dir,'corrected', '.'.join(os.path.basename(self.sample_data[sample]["fastq.F"]).split('.')[:-1]) +'.00.0_0.cor.fastq') 
+                        self.sample_data[sample]["fastq.R"] = os.path.join(sample_dir,'corrected', '.'.join(os.path.basename(self.sample_data[sample]["fastq.R"]).split('.')[:-1]) +'.00.0_0.cor.fastq')
+                    elif "SE" in self.sample_data[sample]["type"]:
+                        self.sample_data[sample]["fastq.S"] = os.path.join(sample_dir,'corrected', '.'.join(os.path.basename(self.sample_data[sample]["fastq.S"]).split('.')[:-1]) +'.00.0_0.cor.fastq')
                 # Wrapping up function. Leave these lines at the end of every iteration:
                 self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)
                             

@@ -60,6 +60,7 @@ Lines for parameter file
         mode:                                                    # transcriptome or genome
         annotation:                                              # For Genome mode: the location of GTF file [the default] , for GFF3 use the gff3 flag. For Transcriptome mode: transcript-to-gene-map file.
                                                                  # If annotation is set to Trinity the transcript-to-gene-map file will be generated using the from_Trinity_to_gene_map script
+                                                                 # If not set will use only the reference file as unrelated transcripts
         from_Trinity_to_gene_map_script_path:                    # If the mode is transcriptome and the reference was assembled using Trinity it is possible to generate the transcript-to-gene-map file automatically using this script
                                                                  # If annotation is set to Trinity and this line is empty or missing it will try using the module's associated script
         gff3:                                                    # Use if the mode is genome and the annotation file is in gff3 format
