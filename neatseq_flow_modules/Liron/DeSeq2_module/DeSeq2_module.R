@@ -1638,84 +1638,85 @@ if  (!file.exists(Annotation_file)){
     }
 
     if (is.na(Annotation)) {
-        if(!(all(c('AnnotationHub') %in% installed.packages()))) {
-            if (Sys.getenv("CONDA_PREFIX")!=""){
-                source("https://bioconductor.org/biocLite.R")
-                biocLite('AnnotationHub')
-                library('AnnotationHub',character.only =T)
-              }else{
-                cat("The Bioconductor AnnotationHub Annotation package is not installed. You must install it for this script to work!")
-              }
-            }else{
-              library('AnnotationHub',character.only =T)  
-            } 
-        
-        if(!(all(c('ensembldb') %in% installed.packages()))) {
-            if (Sys.getenv("CONDA_PREFIX")!=""){
-                source("https://bioconductor.org/biocLite.R")
-                biocLite('ensembldb')
-                library('ensembldb',character.only =T)
-              }else{
-                cat("The Bioconductor ensembldb Annotation package is not installed. You must install it for this script to work!")
-              }
-            }else{
-              library('ensembldb',character.only =T)  
-            } 
-        
-        if ( ("package:AnnotationHub" %in% search())&("package:ensembldb" %in% search()) ){
-            cache = file.path(opt$outDir,'cache')
-            dir.create(cache, showWarnings = T)
-            ah  = AnnotationHub(cache = cache )
-            Hub = query(ah, c('OrgDb'))
-            species = unique(Hub$species)
+        if (!is.na(opt$Species)){
+            if(!(all(c('AnnotationHub') %in% installed.packages()))) {
+                if (Sys.getenv("CONDA_PREFIX")!=""){
+                    source("https://bioconductor.org/biocLite.R")
+                    biocLite('AnnotationHub')
+                    library('AnnotationHub',character.only =T)
+                  }else{
+                    cat("The Bioconductor AnnotationHub Annotation package is not installed. You must install it for this script to work!")
+                  }
+                }else{
+                  library('AnnotationHub',character.only =T)  
+                } 
             
-            dataset = species[(sapply(X = species,FUN = function(X) stringi::stri_startswith(fixed =  stringi::stri_trans_tolower(opt$Species),str =  stringi::stri_trans_tolower(X)    )))]
-            if (length(dataset) > 0) {
-                dataset = dataset[1]
-                print('Found Species:')
-                print(dataset)
-                Hub = query(ah, c('OrgDb',dataset))
-                Hub = Hub[[length(Hub$title)]]
-                if ( stringi::stri_trans_toupper(opt$GENE_ID_TYPE) %in% columns(Hub)){
-                    if (opt$USE_INPUT_GENES_AS_BACKGROUND){
-                        genes  = rownames(countData)
-                    } else {
-                        Genes  = keys(Hub, keytype=stringi::stri_trans_toupper(opt$GENE_ID_TYPE))
-                    }
-                    
-                    Hub_columns = columns(Hub)
-                    # c('GENENAME','GO','ONTOLOGY','SYMBOL','UNIPROT','GID','PFAM','PATH')
-                    Annotation  = select(Hub,
-                                         keys = as.character(Genes),
-                                         columns=intersect(Hub_columns, c('GENENAME','GO','SYMBOL','PFAM')),
-                                         keytype=stringi::stri_trans_toupper(opt$GENE_ID_TYPE))
-                    print(dim(Annotation))
-                    if ('GO' %in% Hub_columns) {
-                        colnames(Annotation)['GO' == colnames(Annotation)] = 'go_id'
-                    }
-                    if ('UNIPROT' %in% Hub_columns) {
-                        Kegg_Annotation = select(Hub,
+            if(!(all(c('ensembldb') %in% installed.packages()))) {
+                if (Sys.getenv("CONDA_PREFIX")!=""){
+                    source("https://bioconductor.org/biocLite.R")
+                    biocLite('ensembldb')
+                    library('ensembldb',character.only =T)
+                  }else{
+                    cat("The Bioconductor ensembldb Annotation package is not installed. You must install it for this script to work!")
+                  }
+                }else{
+                  library('ensembldb',character.only =T)  
+                } 
+            
+            if ( ("package:AnnotationHub" %in% search())&("package:ensembldb" %in% search()) ){
+                cache = file.path(opt$outDir,'cache')
+                dir.create(cache, showWarnings = T)
+                ah  = AnnotationHub(cache = cache )
+                Hub = query(ah, c('OrgDb'))
+                species = unique(Hub$species)
+                
+                dataset = species[(sapply(X = species,FUN = function(X) stringi::stri_startswith(fixed =  stringi::stri_trans_tolower(opt$Species),str =  stringi::stri_trans_tolower(X)    )))]
+                if (length(dataset) > 0) {
+                    dataset = dataset[1]
+                    print('Found Species:')
+                    print(dataset)
+                    Hub = query(ah, c('OrgDb',dataset))
+                    Hub = Hub[[length(Hub$title)]]
+                    if ( stringi::stri_trans_toupper(opt$GENE_ID_TYPE) %in% columns(Hub)){
+                        if (opt$USE_INPUT_GENES_AS_BACKGROUND){
+                            genes  = rownames(countData)
+                        } else {
+                            Genes  = keys(Hub, keytype=stringi::stri_trans_toupper(opt$GENE_ID_TYPE))
+                        }
+                        
+                        Hub_columns = columns(Hub)
+                        # c('GENENAME','GO','ONTOLOGY','SYMBOL','UNIPROT','GID','PFAM','PATH')
+                        Annotation  = select(Hub,
                                              keys = as.character(Genes),
-                                             columns=intersect(Hub_columns, c('UNIPROT')),
+                                             columns=intersect(Hub_columns, c('GENENAME','GO','SYMBOL','PFAM')),
                                              keytype=stringi::stri_trans_toupper(opt$GENE_ID_TYPE))
-                        colnames(Kegg_Annotation) = c(stringi::stri_trans_toupper(opt$GENE_ID_TYPE),keggConv_id_type)
-                    }else if ('GID' %in% Hub_columns){
-                        Kegg_Annotation = select(Hub,
-                                             keys = as.character(Genes),
-                                             columns=intersect(Hub_columns, c('GID')),
-                                             keytype=stringi::stri_trans_toupper(opt$GENE_ID_TYPE))
-                        keggConv_id_type = 'ncbi-geneid'
-                        colnames(Kegg_Annotation) = c(stringi::stri_trans_toupper(opt$GENE_ID_TYPE),keggConv_id_type)
+                        print(dim(Annotation))
+                        if ('GO' %in% Hub_columns) {
+                            colnames(Annotation)['GO' == colnames(Annotation)] = 'go_id'
+                        }
+                        if ('UNIPROT' %in% Hub_columns) {
+                            Kegg_Annotation = select(Hub,
+                                                 keys = as.character(Genes),
+                                                 columns=intersect(Hub_columns, c('UNIPROT')),
+                                                 keytype=stringi::stri_trans_toupper(opt$GENE_ID_TYPE))
+                            colnames(Kegg_Annotation) = c(stringi::stri_trans_toupper(opt$GENE_ID_TYPE),keggConv_id_type)
+                        }else if ('GID' %in% Hub_columns){
+                            Kegg_Annotation = select(Hub,
+                                                 keys = as.character(Genes),
+                                                 columns=intersect(Hub_columns, c('GID')),
+                                                 keytype=stringi::stri_trans_toupper(opt$GENE_ID_TYPE))
+                            keggConv_id_type = 'ncbi-geneid'
+                            colnames(Kegg_Annotation) = c(stringi::stri_trans_toupper(opt$GENE_ID_TYPE),keggConv_id_type)
+                        }
+                        opt$Species      = dataset
+                        Annotation_flag  = 'ensembl'
+                        opt$GENE_ID_TYPE = stringi::stri_trans_toupper(opt$GENE_ID_TYPE)
+                        
                     }
-                    opt$Species      = dataset
-                    Annotation_flag  = 'ensembl'
-                    opt$GENE_ID_TYPE = stringi::stri_trans_toupper(opt$GENE_ID_TYPE)
-                    
                 }
+                unlink(cache,recursive=TRUE)
             }
-            unlink(cache,recursive=TRUE)
         }
-     
     }
      
     
