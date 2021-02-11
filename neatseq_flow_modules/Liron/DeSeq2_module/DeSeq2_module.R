@@ -2066,52 +2066,103 @@ if  (!file.exists(Annotation_file)){
           opt$GENE_ID_TYPE = colnames(Annotation)[1]
           Annotation[Annotation=='.']=NA
           
-          Annotation$GO = apply(X = Annotation[,c('gene_ontology_blast','gene_ontology_pfam')],
-                                FUN = function(x) unlist(paste(unique(x),collapse = ' ')),
-                                MARGIN = 1)
+          blast_ontology = NA
+          pos = stringr::str_detect(string = stringi::stri_trans_tolower(colnames(Annotation)),
+                    pattern = 'gene_ontology')
+          if (sum(pos)>0){
+                blast_ontology = colnames(Annotation)[pos]
+          }
+          print(blast_ontology)
+          if (!is.na(blast_ontology)){
+            
+              
+              Annotation$GO = apply(X = Annotation[,blast_ontology],
+                                    FUN = function(x) unlist(paste(unique(x),collapse = ' ')),
+                                    MARGIN = 1)
+              
+              
+              Annotation$GO_CC = sapply(X = Annotation$GO,
+                                        FUN = function(X) stringi::stri_replace_all(str =  paste(unlist(unique(unlist(stringi::stri_extract(regex = 'GO:[0-9]+\\^cellular_component' ,
+                                                                                                                                            str   = X ,
+                                                                                                                                            mode = 'all')))),
+                                                                                                 collapse = '/'),
+                                                                                    fixed = '^cellular_component',
+                                                                                    replacement = '') )
+              
+              Annotation$GO_BP = sapply(X = Annotation$GO,
+                                        FUN = function(X) stringi::stri_replace_all(str =  paste(unlist(unique(unlist(stringi::stri_extract(regex = 'GO:[0-9]+\\^biological_process' ,
+                                                                                                                                            str   = X ,
+                                                                                                                                            mode = 'all')))),
+                                                                                                 collapse = '/'),
+                                                                                    fixed = '^biological_process',
+                                                                                    replacement = '') )
+              
+              Annotation$GO_MF = sapply(X = Annotation$GO,
+                                        FUN = function(X) stringi::stri_replace_all(str =  paste(unlist(unique(unlist(stringi::stri_extract(regex = 'GO:[0-9]+\\^molecular_function' ,
+                                                                                                                                            str   = X ,
+                                                                                                                                            mode = 'all')))),
+                                                                                                 collapse = '/'),
+                                                                                    fixed = '^molecular_function',
+                                                                                    replacement = '') )
+              
+              
+              
+              Annotation$go_id = sapply(X = Annotation$GO,
+                                        FUN = function(X) stringi::stri_replace_all(str =  paste(unlist(unique(unlist(stringi::stri_extract(regex = 'GO:[0-9]+' ,
+                                                                                                                                            str   = X ,
+                                                                                                                                            mode = 'all')))),
+                                                                                                 collapse = '/'),
+                                                                                    fixed = '^',
+                                                                                    replacement = '') )
+          }
           
+          pos = stringr::str_detect(string = stringi::stri_trans_tolower(colnames(Annotation)),
+                    pattern = 'kegg')
           
-          Annotation$GO_CC = sapply(X = Annotation$GO,
-                                    FUN = function(X) stringi::stri_replace_all(str =  paste(unlist(unique(unlist(stringi::stri_extract(regex = 'GO:[0-9]+\\^cellular_component' ,
-                                                                                                                                        str   = X ,
-                                                                                                                                        mode = 'all')))),
-                                                                                             collapse = '/'),
-                                                                                fixed = '^cellular_component',
-                                                                                replacement = '') )
-          
-          Annotation$GO_BP = sapply(X = Annotation$GO,
-                                    FUN = function(X) stringi::stri_replace_all(str =  paste(unlist(unique(unlist(stringi::stri_extract(regex = 'GO:[0-9]+\\^biological_process' ,
-                                                                                                                                        str   = X ,
-                                                                                                                                        mode = 'all')))),
-                                                                                             collapse = '/'),
-                                                                                fixed = '^biological_process',
-                                                                                replacement = '') )
-          
-          Annotation$GO_MF = sapply(X = Annotation$GO,
-                                    FUN = function(X) stringi::stri_replace_all(str =  paste(unlist(unique(unlist(stringi::stri_extract(regex = 'GO:[0-9]+\\^molecular_function' ,
-                                                                                                                                        str   = X ,
-                                                                                                                                        mode = 'all')))),
-                                                                                             collapse = '/'),
-                                                                                fixed = '^molecular_function',
-                                                                                replacement = '') )
-          
-          
-          
-          Annotation$go_id = sapply(X = Annotation$GO,
-                                    FUN = function(X) stringi::stri_replace_all(str =  paste(unlist(unique(unlist(stringi::stri_extract(regex = 'GO:[0-9]+' ,
-                                                                                                                                        str   = X ,
-                                                                                                                                        mode = 'all')))),
-                                                                                             collapse = '/'),
-                                                                                fixed = '^',
-                                                                                replacement = '') )
-          
-          Annotation$KO = sapply(X = Annotation$Kegg,
-                                 FUN = function(X) stringi::stri_replace_all(str =  paste(unlist(stringi::stri_extract(regex = 'KO:K[0-9]+' ,
-                                                                                                                       str   = X ,
-                                                                                                                       mode = 'all')),
-                                                                                          collapse = '/'),
-                                                                             fixed = 'KO:',
-                                                                             replacement = 'ko:') )
+          if (sum(pos)>0){
+                Kegg_string = colnames(Annotation)[pos][1]
+                
+                pos = stringr::str_detect(string = stringi::stri_trans_tolower(Annotation[,Kegg_string]),pattern = 'ko:k[0-9]+')
+                pos[is.na(pos)]=F
+                if (sum(pos)>0){
+                    Annotation$KO = sapply(X = Annotation[,Kegg_string],
+                                           FUN = function(X) stringi::stri_replace_all(str =  paste(unlist(stringi::stri_extract(regex = 'KO:K[0-9]+' ,
+                                                                                                                                 str   = X ,
+                                                                                                                                 mode = 'all')),
+                                                                                                    collapse = '/'),
+                                                                                       fixed = 'KO:',
+                                                                                       replacement = 'ko:') )
+                }else{
+                    pos = stringr::str_detect(string = stringi::stri_trans_tolower(Annotation[,Kegg_string]),pattern = 'kegg:')
+                    pos[is.na(pos)]=F
+                    if (sum(pos)>0){
+                        Annotation$KO = sapply(X   = Annotation[,Kegg_string],
+                                               FUN = function(X) stringi::stri_replace_all(str = unlist(stringi::stri_extract(regex = 'KEGG:[A-z]+:[a-z A-Z _ 0-9]+' ,
+                                                                                           str   = X ,
+                                                                                           mode  = 'all')),
+                                                       fixed = 'KEGG:',
+                                                       replacement = ''))
+
+                        Keggs = unique(as.vector(na.omit(unlist(Annotation$KO))))
+                        subset_Keggs=split(Keggs, ceiling(seq_along(Keggs )/100))
+                        result = c()
+                        for (x in subset_Keggs){
+                             REST=try(KEGGREST::keggLink('ko',x),silent = F)
+                              
+                              if (!inherits(REST,"try-error")){
+                                result=c(result,REST)
+                              }else{
+                                print('KEGGREST Error')
+                              }
+                         }
+                        
+                        Annotation$KO = sapply(X   = Annotation$KO,
+                                               FUN = function(X)  paste(as.vector(na.omit(unique(result[X]))),
+                                                                                                     collapse = '/'))
+                        Annotation[Annotation=='']=NA 
+                    }
+                }
+          }
           Annotation[Annotation=='NA']=NA 
         }
         
@@ -2128,14 +2179,18 @@ if  (!file.exists(Annotation_file)){
           }
           
         }else if (!is.na(opt$Trinotate)) {
-          KEGG_KAAS_Data <- Annotation[,c(opt$GENE_ID_TYPE,"KO")] 
-          KEGG_KAAS_Data = convert_agregate(Annotation, opt$GENE_ID_TYPE ,"KO","/")
-          colnames(KEGG_KAAS_Data) = c("Genes","KO")
-          KEGG_KAAS_Data = na.omit(KEGG_KAAS_Data)
-          KEGG_KAAS_Data$KO = sapply(X =KEGG_KAAS_Data$KO, FUN = function(x) if (x=='')  NA else x)
-          
+          if ("KO" %in% colnames(Annotation)){
+              KEGG_KAAS_Data <- Annotation[,c(opt$GENE_ID_TYPE,"KO")] 
+              KEGG_KAAS_Data = convert_agregate(Annotation, opt$GENE_ID_TYPE ,"KO","/")
+              colnames(KEGG_KAAS_Data) = c("Genes","KO")
+              KEGG_KAAS_Data = na.omit(KEGG_KAAS_Data)
+              KEGG_KAAS_Data$KO = sapply(X =KEGG_KAAS_Data$KO, FUN = function(x) if (x=='')  NA else x)
+          }
         }
         
+        if (length(KEGG_KAAS_Data)==0) { 
+           KEGG_KAAS_Data=NA
+        }
         if (!is.na(KEGG_KAAS_Data)) { 
           
           
