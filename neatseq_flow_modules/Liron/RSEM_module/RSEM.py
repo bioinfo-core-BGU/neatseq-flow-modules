@@ -105,10 +105,11 @@ class Step_RSEM(Step):
         """
         self.shell = "bash"
         self.file_tag = ""
+        
+      
         assert "mode"  in list(self.params.keys()) , \
             "you should  provide mode type [transcriptome or genome] in step %s\n" % self.get_step_name()
-        assert "reference"  in list(self.params.keys()) , \
-            "you should  provide reference file in step %s\n" % self.get_step_name()
+        
         assert "mapper"  in list(self.params.keys()) , \
             "you should  provide mapper type [bowtie, bowtie2 or star] in step %s\n" % self.get_step_name()
         assert "mapper_path"  in list(self.params.keys()) , \
@@ -120,7 +121,7 @@ class Step_RSEM(Step):
         if "plot_stat" in list(self.params.keys()):
             assert "plot_stat_script_path"  in list(self.params.keys()) , \
                 "you should  provide plot_stat script location in step %s\n" % self.get_step_name()
-                
+        
         import inspect
         self.module_location=os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))
     def step_sample_initiation(self):
@@ -136,6 +137,33 @@ class Step_RSEM(Step):
             for sample in self.sample_data["samples"]:
                 if "bam" not in list(self.sample_data[sample].keys()):
                     sys.exit("No Mapping or bam file information!!! \n")
+                    
+        if "reference" not in list(self.params.keys()):
+            if 'reference' in list(self.sample_data["project_data"].keys()):
+                self.params["reference"] = self.sample_data["project_data"]['REFERENCE']
+            elif 'fasta.nucl' in list(self.sample_data["project_data"].keys()):
+                self.params["reference"] = self.sample_data["project_data"]['fasta.nucl']
+        if 'gene_trans_map' in list(self.sample_data["project_data"].keys()):
+            if "mode" in list(self.params.keys()):
+                if 'transcriptome' == self.params["mode"].lower():
+                    if 'annotation' not in list(self.params.keys()):
+                        self.params["annotation"] = self.sample_data["project_data"]['gene_trans_map']
+        
+        if "mode" in list(self.params.keys()):
+            if 'genome' == self.params["mode"].lower():
+                if 'annotation' not in list(self.params.keys()):
+                    if 'gff3' in list(self.params.keys()):
+                        gff = list({'gff3','GFF3','gff'} & set(self.sample_data["project_data"].keys()))
+                        if len(gff)>0:
+                            self.params["annotation"] = self.sample_data["project_data"][gff[0]]
+                    else:
+                        gtf= list({'GTF','gtf'} & set(self.sample_data["project_data"].keys()))
+                        if len(gtf)>0:
+                            self.params["annotation"] = self.sample_data["project_data"][gtf[0]]
+        
+        assert "reference"  in list(self.params.keys()) , \
+            "you should  provide reference file in step or have a fasta.nucl/reference file type in project level %s\n" % self.get_step_name()
+
         pass
         
     def create_spec_preliminary_script(self):
@@ -153,15 +181,20 @@ class Step_RSEM(Step):
         self.script = ""
         if ("transcriptome" in self.params["mode"]) and (self.params["annotation"] != None):
             if "Trinity" in self.params["annotation"]:
+                gene_map_command = "%s  %%s  %%%%s \n\n"
                 if "from_Trinity_to_gene_map_script_path" not in list(self.params.keys()):
-                    if "Create_map_from_Trinity.py" not in os.listdir(self.module_location):
-                        sys.exit("you should provide from_Trinity_to_gene_map_script_path !!! \n")
-                    else:
-                        self.params["from_Trinity_to_gene_map_script_path"]== "python  %s "  % os.path.join(self.module_location,"Create_map_from_Trinity.py")
+                    self.params["from_Trinity_to_gene_map_script_path"]= '''awk  '/^>/{transcript=substr($1,2,length($1));  gsub(/_i.+$/,"",$1) ; print  substr($1,2,length($1))  "\t" transcript  ; next}' '''
+                    gene_map_command = " %s < %%s > %%%%s \n\n"
+                    # if "Create_map_from_Trinity.py" not in os.listdir(self.module_location):
+                        # #sys.exit("you should provide from_Trinity_to_gene_map_script_path !!! \n")
+                        # self.params["from_Trinity_to_gene_map_script_path"]= "awk  '/^>/{transcript=substr($1,2,length($1));  gsub(/_i.+$/,"",$1) ; print  substr($1,2,length($1))  "\t" transcript  ; next}'"
+                        # gene_map_command = " %s < %%s > %%%%s \n\n"
+                    # else:
+                        # self.params["from_Trinity_to_gene_map_script_path"]= "python  %s "  % os.path.join(self.module_location,"Create_map_from_Trinity.py")
                         
                 if self.params["from_Trinity_to_gene_map_script_path"]!=None:
                     #preparing a transcript_to_gene map file from the reference transcriptome file [if it was created by Trinity] 
-                    self.script +="%s  %%s  %%%%s \n\n" % self.params["from_Trinity_to_gene_map_script_path"] \
+                    self.script +=gene_map_command % self.params["from_Trinity_to_gene_map_script_path"] \
                                                            % self.params["reference"] \
                                                            % os.sep.join([REF_dir.rstrip(os.sep),"transcript_to_gene_map.map"])
                     #update the annotation slot to the new  transcript_to_gene_map annotation file
