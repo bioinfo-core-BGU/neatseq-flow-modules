@@ -112,8 +112,6 @@ Lines for parameter file
                     File_Type:      # Copy the content of source File_Type to the target File_Type [copy from here]
                     scope:          # Copy the source File_Type From this scope [if not specified the default is sample]
                     base:           # The source step to copy the File_Type from (from previous steps). The default it the current step.
-                    constant_value: # Use to transfer information outside of the 'File_Type' system to a File Type, will always be considered as project scope
-                                    # Using the constant_value option will override all other source arguments!!!!!!
                 target:
                     File_Type:      # Copy the content of source File_Type to the target File_Type [copy to here]
                     scope:          # Copy to the target File_Type in this scope [if not specified the default is sample]
@@ -158,20 +156,13 @@ class Step_Generic(Step):
             for transfer in self.params["copy_File_Types"]:
                 dif=set(["source","target",]).difference(list(self.params["copy_File_Types"][transfer].keys()))
                 if len(dif)==0:
-                    constant_value = get_File_Type_data(self.params["copy_File_Types"],[transfer,"source","constant_value"],None)
-                    if constant_value == None:
-                        scope_in      = get_File_Type_data(self.params["copy_File_Types"],[transfer,"source","scope"],"sample")
-                        scope_out     = get_File_Type_data(self.params["copy_File_Types"],[transfer,"target","scope"],"sample")
-                        File_Type_in  = get_File_Type_data(self.params["copy_File_Types"],[transfer,"source","File_Type"],None)
-                        File_Type_out = get_File_Type_data(self.params["copy_File_Types"],[transfer,"target","File_Type"],None)
-                        base          = get_File_Type_data(self.params["copy_File_Types"],[transfer,"source","base"],None)
-                    else:
-                        scope_in      = 'project'
-                        scope_out     = get_File_Type_data(self.params["copy_File_Types"],[transfer,"target","scope"],"sample")
-                        File_Type_in  = 'Not_Used'
-                        File_Type_out = get_File_Type_data(self.params["copy_File_Types"],[transfer,"target","File_Type"],None)
-                        base          = None
-                    source_sample_data = self.sample_data
+                    scope_in=get_File_Type_data(self.params["copy_File_Types"],[transfer,"source","scope"],"sample")
+                    scope_out=get_File_Type_data(self.params["copy_File_Types"],[transfer,"target","scope"],"sample")
+                    File_Type_in=get_File_Type_data(self.params["copy_File_Types"],[transfer,"source","File_Type"],None)
+                    File_Type_out=get_File_Type_data(self.params["copy_File_Types"],[transfer,"target","File_Type"],None)
+                    base=get_File_Type_data(self.params["copy_File_Types"],[transfer,"source","base"],None)
+                    
+                    source_sample_data=self.sample_data
                     if base!=None:
                         if base in list(self.get_base_sample_data().keys()):
                             source_sample_data=self.get_base_sample_data()[base]
@@ -183,7 +174,7 @@ class Step_Generic(Step):
                     if (File_Type_in and File_Type_out)!=None:
                         if "sample" in [scope_in , scope_out]:
                             for sample in self.sample_data["samples"]:
-                                if scope_in == "sample":
+                                if scope_in =="sample":
                                     if File_Type_in in list(source_sample_data[sample].keys()):
                                         if scope_out=="sample":
                                             if not isinstance(source_sample_data[sample][File_Type_in],str):
@@ -196,31 +187,25 @@ class Step_Generic(Step):
                                     else:
                                         raise AssertionExcept("The File_Type %s is not found in the SAMPLE level  File_Types available are : %%s in step %%%%s" % File_Type_in % list(source_sample_data[sample].keys()) % base)
                                 else:
-                                    if constant_value == None:
-                                        if File_Type_in in list(source_sample_data["project_data"].keys()):
-                                            if not isinstance(source_sample_data["project_data"][File_Type_in],str):
-                                                raise AssertionExcept("The File_Type %s in the PROJECT level is empty !!  in step %%s" % File_Type_in  % base)
-                                            else:
-                                                self.sample_data[sample][File_Type_out]=source_sample_data["project_data"][File_Type_in]
+                                    if File_Type_in in list(source_sample_data["project_data"].keys()):
+                                        if not isinstance(source_sample_data["project_data"][File_Type_in],str):
+                                            raise AssertionExcept("The File_Type %s in the PROJECT level is empty !!  in step %%s" % File_Type_in  % base)
                                         else:
-                                            raise AssertionExcept("The File_Type %s is not found in the PROJECT level \n\t "
-                                                                  "File_Types available are : %s in step %s (base %s)" % \
-                                                                    (File_Type_in,
-                                                                     list(source_sample_data["project_data"].keys()),
-                                                                     base))
+                                            self.sample_data[sample][File_Type_out]=source_sample_data["project_data"][File_Type_in]
                                     else:
-                                        self.sample_data[sample][File_Type_out]=constant_value
+                                        raise AssertionExcept("The File_Type %s is not found in the PROJECT level \n\t "
+                                                              "File_Types available are : %s in step %s (base %s)" % \
+                                                                (File_Type_in,
+                                                                 list(source_sample_data["project_data"].keys()),
+                                                                 base))
                         else:
-                            if constant_value == None:
-                                if File_Type_in in list(source_sample_data["project_data"].keys()):
-                                    if not isinstance(source_sample_data["project_data"][File_Type_in],str):
-                                        raise AssertionExcept("The File_Type %s in the PROJECT level is empty !!  in step %%s" % File_Type_in  % base)
-                                    else:
-                                        self.sample_data["project_data"][File_Type_out]=source_sample_data["project_data"][File_Type_in]
+                            if File_Type_in in list(source_sample_data["project_data"].keys()):
+                                if not isinstance(source_sample_data["project_data"][File_Type_in],str):
+                                    raise AssertionExcept("The File_Type %s in the PROJECT level is empty !!  in step %%s" % File_Type_in  % base)
                                 else:
-                                    raise AssertionExcept("The File_Type %s is not found in the PROJECT level \n\t File_Types available are : %%s in step %%%%s" % File_Type_in %  list(source_sample_data["project_data"].keys()) % base )
+                                    self.sample_data["project_data"][File_Type_out]=source_sample_data["project_data"][File_Type_in]
                             else:
-                                self.sample_data["project_data"][File_Type_out]=constant_value
+                                raise AssertionExcept("The File_Type %s is not found in the PROJECT level \n\t File_Types available are : %%s in step %%%%s" % File_Type_in %  list(source_sample_data["project_data"].keys()) % base )
                     else:
                         if File_Type_in==None:
                             raise AssertionExcept("The following argument/s are missing or empty in the copy_File_Types section: %s" % "source File_Type")
