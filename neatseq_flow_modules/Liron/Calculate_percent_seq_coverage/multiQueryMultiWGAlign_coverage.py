@@ -39,9 +39,9 @@ def CommandLineProcessor():
 	if not os.path.exists(samplesIndexFile):
 		print("Error: samples index file not found!")
 		sys.exit(1)
-	if os.path.exists(outFile):
-		print("Error: output file already exists!!")
-		sys.exit(1)
+	# if os.path.exists(outFile):
+		# print("Error: output file already exists!!")
+		# sys.exit(1)
 
 
 efh=open('err','wb')
@@ -77,7 +77,7 @@ def countSeqLenInFasta(fastaFilename):
 			seqlen=0
 			seqname=line[1:]
 		elif seqname!="**UNDEFINED**":
-			seqlen+=len(line.rstrip())
+			seqlen+=len(line.rstrip().replace('N',''))
 	
 	seqLenDict[seqname]=seqlen
 	fh.close()

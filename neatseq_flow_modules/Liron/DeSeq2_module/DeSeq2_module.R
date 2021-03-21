@@ -134,6 +134,9 @@ opt_parser = optparse::OptionParser(usage = "usage: %prog [options]",
 opt = optparse::parse_args(opt_parser);
 
 
+Pathway_show_cutoff = 1
+Pathway_up_color    = 'HotPink'
+Pathway_down_color  = 'DeepSkyBlue'
 
 print("Input var:",,quote = F)
 print.data.frame(as.data.frame(x = unlist(opt),row.names = names(opt)),right = F,quote = F)
@@ -367,111 +370,152 @@ Clusters_Enrichment_Test=function(outDir,clusters,TERM2NAME,TERM2GENE,file_name,
 }
 
 
-plot_clusters<-function(clusters,vs_ano,color_group=c('Type','Time_int'),titles=c("Type","Time","Normalized counts"),split_by=c(),smooth=T,X_AXIS_ORDER=NA){
-    plot_list=list()
-    count=1
-    for (i in sort(unique(clusters))){
-        Df=data.frame()
-        genes=names(clusters[clusters==i])
-        for (j in genes){
-          if (length(split_by)>0){
-            temp=subset.data.frame(x =vs_ano,,c(split_by,color_group,j))
-            colnames(temp)=c("split_by","Type","Time","EXP")
-            Df=rbind(Df,temp)
-          }else{
-            temp=subset.data.frame(x =vs_ano,,c(color_group,j))
-            colnames(temp)=c("Type","Time","EXP")
-            Df=rbind(Df,temp)
-          }
-        }
-        if (color_group[1]==color_group[2]){
-          Df$Type='Trend'
-        }
-        if (length(X_AXIS_ORDER)>1){
-            Df$Time <-factor(Df$Time,levels=intersect(X_AXIS_ORDER,unique(Df$Time)))
-        }
-        if (length(split_by)>0){
-            plot_list[count]=list(ggplot(data=Df, aes(x=Time, y=EXP, group=Type)) + 
-                                    facet_wrap(~split_by, ncol=1,scales = "free_y",strip.position = c("right"))+
-                                    theme(strip.text.y = element_text(size = 7, colour = "black"))+#,face="bold" ,angle = 90))+
-                                    #theme(strip.background = element_blank())+
-                                    ggtitle( paste(paste("Cluster ", i  ,sep="") ,length(genes) ,sep="\n")) +
-                                    #theme(plot.title = element_text(colour = "black", size = 12)) + 
-                                    theme(legend.position  ="none")+
-                                    xlab(titles[2]) +
-                                    ylab(titles[3]) +
-                                    theme(axis.title   = element_text(colour = "black", size = 10) )+
-                                    theme(legend.title = element_text(colour = "black", size = 10) )+
-                                    theme(legend.text  = element_text(colour = "black", size = 8) )+
-                                    theme(axis.text.y  = element_text(colour = "black", size = 6))+
-                                    theme(axis.text.x  = element_text(colour = "black", size = 6))+
-                                    theme(plot.margin  = unit(c(0.5,0.2,0.5,0.2),"cm")  )+
-                                    #scale_color_discrete(name=titles[1])+
-                                    #scale_linetype_manual(name=titles[1],values=c(1,5))+
-                                    scale_x_discrete(limits=unique(Df$Time))+
-                                    theme(legend.key.width =unit(3,"line")) 
-                                    #scale_y_continuous(breaks=c(seq(0,10,by=2)) )
-                                )
-        }else{
-            plot_list[count]=list(ggplot(data=Df, aes(x=Time, y=EXP, group=Type)) + 
-                                    ggtitle( paste(paste("Cluster ", i  ,sep="") ,length(genes) ,sep="\n")) +
-                                    #theme(plot.title = element_text(colour = "black", size = 12)) + 
-                                    theme(legend.position  ="none")+
-                                    xlab(titles[2]) +
-                                    ylab(titles[3]) +
-                                    theme(axis.title   = element_text(colour = "black", size = 10) )+
-                                    theme(legend.title = element_text(colour = "black", size = 10) )+
-                                    theme(legend.text  = element_text(colour = "black", size = 8) )+
-                                    theme(axis.text.y  = element_text(colour = "black", size = 6))+
-                                    theme(axis.text.x  = element_text(colour = "black", size = 6))+
-                                    theme(plot.margin  = unit(c(0.5,0.2,0.5,0.2),"cm")  )+
-                                    #scale_color_discrete(name=titles[1])+
-                                    #scale_linetype_manual(name=titles[1],values=c(1,5))+
-                                    scale_x_discrete(limits=unique(Df$Time))+
-                                    theme(legend.key.width = unit(3,"line")) 
-                                    #scale_y_continuous(breaks=c(seq(0,10,by=2)) )
-                                )
-        }
-
-       
-        if (smooth){
-          if (dim(Df)[1]>10000){
-              plot_list[count]=list(plot_list[[count]]+
-                                      stat_smooth(method="auto", span = 5.0 ,fullrange=F, size=0.5 ,aes(linetype=Type,color=Type)) 
-                                  )
-            }else{
-              plot_list[count]=list(plot_list[[count]]+
-                                      stat_smooth(method="loess", fullrange=F, size=0.5 ,aes(linetype=Type,color=Type)) 
-                                  )
-            }
-            
-            gp2=plot_list[count]
-            res<-try(get_legend(gp2[[1]] + theme(legend.position  ="right")+guides(color=guide_legend(title=titles[1]),linetype=guide_legend(title=titles[1]))) ,silent = T)
-            if (inherits(res,"try-error")){
-                plot_list[count]=list(plot_list[[count]]+
-                                        stat_summary(fun.y=mean, geom="point", size = 3,aes(color=Type))+
-                                        stat_summary(fun.data = "mean_se", geom = "errorbar", width = .3,size = 1,aes(color=Type),show.legend = F)
-                                     )
-            }
-        }else{
-            plot_list[count]=list(plot_list[[count]]+
-                                    stat_summary(fun.y=mean, geom="line", size = 1.3,aes(linetype=Type,color=Type))+
-                                    stat_summary(fun.data = "mean_se", geom = "errorbar", width = .3,size = 1,aes(color=Type),show.legend = F)
-                                )
-        }
-
-        count=count+1  
+plot_clusters<-function(clusters,vs_ano,color_group=c('Type','Time'),titles=c("Type","Time","Normalized counts"),split_by=c(),smooth=T,X_AXIS_ORDER=NA){
+  plot_list  = list()
+  title_list = list()
+  count=1
+  for (i in sort(unique(clusters))){
+    Df=data.frame()
+    genes=names(clusters[clusters==i])
+    for (j in genes){
+      if (length(split_by)>0){
+        temp=subset.data.frame(x =vs_ano,,c(split_by,color_group,j))
+        colnames(temp)=c("split_by","Type","Time","EXP")
+        Df=rbind(Df,temp)
+      }else{
+        temp=subset.data.frame(x =vs_ano,,c(color_group,j))
+        colnames(temp)=c("Type","Time","EXP")
+        Df=rbind(Df,temp)
+      }
+    }
+    if (color_group[1]==color_group[2]){
+      Df$Type='Trend'
+    }
+    if (length(X_AXIS_ORDER)>1){
+      Df$Time <-factor(Df$Time,levels=intersect(X_AXIS_ORDER,unique(Df$Time)))
+    }
+    if (length(split_by)>0){
+      title_list[count]=list(c(i,length(genes)) ) 
+      plot_list[count]=list(ggplot(data=Df, aes(x=Time, y=EXP, group=Type)) + 
+                              facet_wrap(~split_by, ncol=1,scales = "free_y",strip.position = c("right"))+
+                              theme(strip.text.y = element_text(size = 7, colour = "black"))+#,face="bold" ,angle = 90))+
+                              #theme(strip.background = element_blank())+
+                              ggtitle( paste(paste("Cluster ", i  ,sep="") ,length(genes) ,sep="\n")) +
+                              #theme(plot.title = element_text(colour = "black", size = 12)) + 
+                              theme(legend.position  ="none")+
+                              xlab(titles[2]) +
+                              ylab(titles[3]) +
+                              theme(axis.title   = element_text(colour = "black", size = 10) )+
+                              theme(legend.title = element_text(colour = "black", size = 10) )+
+                              theme(legend.text  = element_text(colour = "black", size = 8) )+
+                              theme(axis.text.y  = element_text(colour = "black", size = 6))+
+                              theme(axis.text.x  = element_text(colour = "black", size = 6))+
+                              theme(plot.margin  = unit(c(0.5,0.2,0.5,0.2),"cm")  )+
+                              #scale_color_discrete(name=titles[1])+
+                              #scale_linetype_manual(name=titles[1],values=c(1,5))+
+                              scale_x_discrete(limits=unique(Df$Time))+
+                              theme(legend.key.width =unit(3,"line")) 
+                            #scale_y_continuous(breaks=c(seq(0,10,by=2)) )
+      )
+    }else{
+      title_list[count]=list(c(i,length(genes)) ) 
+      plot_list[count]=list(ggplot(data=Df, aes(x=Time, y=EXP, group=Type)) + 
+                              ggtitle( paste(paste("Cluster ", i  ,sep="") ,length(genes) ,sep="\n")) +
+                              #theme(plot.title = element_text(colour = "black", size = 12)) + 
+                              theme(legend.position  ="none")+
+                              xlab(titles[2]) +
+                              ylab(titles[3]) +
+                              theme(axis.title   = element_text(colour = "black", size = 10) )+
+                              theme(legend.title = element_text(colour = "black", size = 10) )+
+                              theme(legend.text  = element_text(colour = "black", size = 8) )+
+                              theme(axis.text.y  = element_text(colour = "black", size = 6))+
+                              theme(axis.text.x  = element_text(colour = "black", size = 6))+
+                              theme(plot.margin  = unit(c(0.5,0.2,0.5,0.2),"cm")  )+
+                              #scale_color_discrete(name=titles[1])+
+                              #scale_linetype_manual(name=titles[1],values=c(1,5))+
+                              scale_x_discrete(limits=unique(Df$Time))+
+                              theme(legend.key.width = unit(3,"line")) 
+                            #scale_y_continuous(breaks=c(seq(0,10,by=2)) )
+      )
     }
     
-    gp2=plot_list[1]
-    if (color_group[1]==color_group[2]){
-        ml<-marrangeGrob(plot_list, nrow=2, ncol=3, top=NULL)
+    
+    if (smooth){
+      if (dim(Df)[1]<30000){
+        old_plot = plot_list[[count]] 
+        res <- try( list(plot_list[[count]] + 
+                           stat_smooth(method="loess",
+                                       fullrange=F,
+                                       size=0.5,
+                                       aes(linetype=Type,color=Type)) ),
+                    silent = T)
+        if (inherits(res,"try-error")){
+          plot_list[count]=list(old_plot +
+                           stat_smooth(method='glm',
+                                       formula = y ~ poly(x, length(unique(Df$Time))-1),
+                                       fullrange=F,
+                                       size=0.5,
+                                       aes(linetype=Type,color=Type)) 
+                                )
+          # plot_list[count]=list(plot_list[[count]] + 
+          # stat_smooth(method="loess", span = 0.1 ,fullrange=F, size=0.5 ,aes(linetype=Type,color=Type)) 
+          # )
+        }else{
+          plot_list[count]=res
+          
+        }
+      }else{
+        plot_list[count]=list(plot_list[[count]]+
+                                stat_smooth(method='glm',
+                                            formula = y ~ poly(x, length(unique(Df$Time))-1),
+                                            fullrange=F,
+                                            size=0.5,
+                                            aes(linetype=Type,color=Type)) 
+        )
+      }
+      gp2=plot_list[count]
+      res<-try(get_legend(gp2[[1]] + theme(legend.position  ="right")+guides(color=guide_legend(title=titles[1]),linetype=guide_legend(title=titles[1]))) ,silent = T)
+      if (inherits(res,"try-error")){
+        plot_list[count]=list(plot_list[[count]]+
+                                stat_summary(fun.y=mean, geom="point", size = 3,aes(color=Type))+
+                                stat_summary(fun.data = "mean_se", geom = "errorbar", width = .3,size = 1,aes(color=Type),show.legend = F)
+        )
+      }
     }else{
-        legend <- get_legend(gp2[[1]] + theme(legend.position  ="right")+guides(color=guide_legend(title=titles[1]),linetype=guide_legend(title=titles[1])))
-        ml<-marrangeGrob(plot_list, nrow=2, ncol=3,right=legend, top=NULL)
-        
+      plot_list[count]=list(plot_list[[count]]+
+                              stat_summary(fun.y=mean, geom="line", size = 1.3,aes(linetype=Type,color=Type))+
+                              stat_summary(fun.data = "mean_se", geom = "errorbar", width = .3,size = 1,aes(color=Type),show.legend = F)
+      )
     }
-    return(ml)
+    
+    count=count+1  
+  }
+  
+  # ml_plotly = sapply(X =c(1:length(plot_list)),
+  # FUN = function(x) list(ggplotly(plot_list[[x]]) %>% 
+  # style(text=paste(
+  # paste("Cluster:",title_list[[x]][1],sep=" ") ,
+  # paste("Number of Genes:",title_list[[x]][2],sep=" ") ,
+  # sep = "<br />" ),
+  # hoverinfo = "text")))
+  
+  # ml_plotly = subplot(c(ml_plotly),
+  # nrows = ceiling(length(plot_list)/3),
+  # titleX = T,
+  # titleY  = F,
+  # shareX = T,
+  # shareY = F) %>%
+  # layout(title='Clusters',legend = list(orientation = 'h', y = -0.2))
+  gp2=plot_list[1]
+  if (color_group[1]==color_group[2]){
+    ml<-marrangeGrob(plot_list, nrow=2, ncol=3, top=NULL)
+  }else{
+    legend <- get_legend(gp2[[1]] + theme(legend.position  ="right")+guides(color=guide_legend(title=titles[1]),linetype=guide_legend(title=titles[1])))
+    ml<-marrangeGrob(plot_list, nrow=2, ncol=3,right=legend, top=NULL)
+    
+  }
+  
+  return(list(ml))#,ml_plotly))
 }
 
 
@@ -1518,7 +1562,72 @@ create_excel_output <- function(dds,opt, contrusts, Norm_Type, output_path, dds_
   
 }
 
-
+create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,Pathway2gene,show_cutoff=1,HTML=T,up_color='HotPink',down_color='DeepSkyBlue',useKO=T, Base_URL = "https://www.kegg.jp/pathway/"){
+  
+  
+  if ((length(down_reg)>0) || (length(up_reg)>0)){
+    kegg_id=''
+    if (('KEGG' %in% stringr::str_to_upper(colnames(Annotation))) & (useKO==F) ){
+      kegg_id =colnames(Annotation)[which('KEGG' == stringr::str_to_upper(colnames(Annotation)))[1]]
+    }else{
+      if ('KO' %in% stringr::str_to_upper(colnames(Annotation))){
+        kegg_id =colnames(Annotation)[which('KO' == stringr::str_to_upper(colnames(Annotation)))[1]]
+      }
+    }
+    if (kegg_id!=''){
+      Annotation2USE=Annotation
+      Annotation2USE['row.names'] = row.names(Annotation2USE)
+      gene2Kegg = convert_agregate(Annotation2USE,'row.names',kegg_id,"/")
+      colnames(gene2Kegg) = c('Gene','Kegg')
+      Pathway2gene = merge.data.frame(x =Pathway2gene,y = Pathway2name,by.x = colnames(Pathway2gene)[1] ,by.y = colnames(Pathway2name)[1])
+      Pathway2gene[,1] = unlist(stringr::str_remove(string = Pathway2gene[,1],pattern = '.+:'))
+      genes = c(up_reg,down_reg)
+      Pathway2gene_filterd = Pathway2gene[Pathway2gene[,2] %in% genes,]
+      colnames(Pathway2gene_filterd) = c('Pathway','Gene','Info')
+      if (dim(Pathway2gene_filterd)[1]>0){
+        Pathway2gene_filterd = merge.data.frame(x = Pathway2gene_filterd,y = gene2Kegg,by = 'Gene',all.x = T)
+        colnames(Pathway2gene_filterd) = c('Gene','Pathway','Info','Kegg')
+        UP = Pathway2gene_filterd[,'Gene'] %in% up_reg
+        if (sum(UP)>0){
+          Pathway2gene_filterd[UP,"URL"] = paste(Pathway2gene_filterd[UP,'Kegg'] , up_color ,sep = ' ')     
+        }
+        DOWN = Pathway2gene_filterd[,'Gene'] %in% down_reg
+        if (sum(DOWN)>0){
+          Pathway2gene_filterd[DOWN,"URL"] = paste(Pathway2gene_filterd[DOWN,'Kegg'] , down_color ,sep = ' ')     
+        }
+        Pathway2gene_count = aggregate.data.frame(x = Pathway2gene_filterd[,'Kegg'], by = list(Pathway2gene_filterd[,'Pathway']),FUN = length )
+        colnames(Pathway2gene_count) = c('Pathway','#Genes')
+        Pathway = aggregate.data.frame(x =Pathway2gene_filterd ,
+                                       by = list(Pathway2gene_filterd[,'Pathway']),
+                                       FUN =function(x) paste(unique(na.omit(x)),sep = "+",collapse = "+"))
+        Pathway['Base_URL'] = Base_URL
+        
+        Pathway[,'Kegg_URL'] = apply(X = Pathway,MARGIN = 1,FUN = function(x) paste(x['Base_URL'],x['Pathway'],sep = '',collapse = ''))
+        Pathway[,'Kegg_URL'] = apply(X = Pathway,MARGIN = 1,FUN = function(x) paste(x['Kegg_URL'],x['URL'],sep = '+',collapse = '+'))
+        
+        
+        Pathway = merge.data.frame(x = Pathway,y = Pathway2gene_count,by = "Pathway" )
+        row.names(Pathway) = Pathway$Pathway
+        Pathway = Pathway[Pathway[,'#Genes']>=show_cutoff,c("Info","#Genes","Kegg_URL","Gene","Kegg")]
+        Pathway =Pathway[order(Pathway[,'#Genes'],decreasing = T), ]
+        write.table(Pathway,
+                    file = file.path(outDir,paste('Kegg_Pathways_Links_With_Min_of',show_cutoff,'genes.tab', sep = '_')) ,
+                    quote = F,
+                    sep = "\t")
+        if (HTML){
+          Pathway[,'Kegg_URL'] = apply(X = Pathway,MARGIN = 1,FUN = function(x) paste('<a href="',x['Kegg_URL'],'" target="_blank">View Pathway</a>',sep = '',collapse = ''))
+        }
+        return(Pathway)  
+      }else{
+        return(data.frame())
+      } 
+    }else{
+        return(data.frame())
+    }
+  }else{
+    return(data.frame())
+  }
+}
 #####################Functions-End################################
 
 #####################Read count data and pars it##################
@@ -1553,7 +1662,7 @@ if (opt$COUNT_SOURCE=='RSEM'){
   }
   
   txi.rsem <- tximport(files, type = "rsem")
-  if (!is.na(opt$GENE_ID_TYPE)) {
+  if ((!is.na(opt$GENE_ID_TYPE)) & (is.na(opt$Trinotate)) ) {
     rownames(txi.rsem$abundance)=lapply(X =rownames(txi.rsem$abundance),FUN = function(x) unlist(stringi::stri_split(str = x,regex = "_"))[1] )
     rownames(txi.rsem$abundance)=lapply(X =rownames(txi.rsem$abundance),FUN = function(x) rev(unlist(stringi::stri_split(str = x,regex = ":")))[1] )
     
@@ -1700,6 +1809,7 @@ if  (!file.exists(Annotation_file)){
                                                  columns=intersect(Hub_columns, c('UNIPROT')),
                                                  keytype=stringi::stri_trans_toupper(opt$GENE_ID_TYPE))
                             colnames(Kegg_Annotation) = c(stringi::stri_trans_toupper(opt$GENE_ID_TYPE),keggConv_id_type)
+                            Kegg_Annotation = Kegg_Annotation[!is.na(Kegg_Annotation[,keggConv_id_type]),]
                         }else if ('GID' %in% Hub_columns){
                             Kegg_Annotation = select(Hub,
                                                  keys = as.character(Genes),
@@ -1707,6 +1817,7 @@ if  (!file.exists(Annotation_file)){
                                                  keytype=stringi::stri_trans_toupper(opt$GENE_ID_TYPE))
                             keggConv_id_type = 'ncbi-geneid'
                             colnames(Kegg_Annotation) = c(stringi::stri_trans_toupper(opt$GENE_ID_TYPE),keggConv_id_type)
+                            Kegg_Annotation = Kegg_Annotation[!is.na(Kegg_Annotation[,keggConv_id_type]),]
                         }
                         opt$Species      = dataset
                         Annotation_flag  = 'ensembl'
@@ -1978,7 +2089,8 @@ if  (!file.exists(Annotation_file)){
             colnames(Pathway_info)="info"
             Pathway_info["pathway"]=info
             temp=merge.data.frame(temp,Pathway_info,by = "pathway",all.x = T)
-            Kegg_Annotation=merge.data.frame(Kegg_Annotation,temp,by =keggConv_id_type ,by.y = keggConv_id_type,all.x = T)
+            Kegg_Annotation = Kegg_Annotation[!is.na(Kegg_Annotation[,keggConv_id_type]),]
+            Kegg_Annotation = merge.data.frame(Kegg_Annotation,temp,by =keggConv_id_type ,by.y = keggConv_id_type,all.x = T)
             # Kegg_Annotation=merge.data.frame(Kegg_Annotation,temp,by.x ="UNIPROT" ,by.y = "uniprot",all.x = T)
             Annotation$kegg = NULL 
             Annotation = merge.data.frame(Annotation,Kegg_Annotation,by.x =opt$GENE_ID_TYPE ,by.y = opt$GENE_ID_TYPE,all.x = T)
@@ -2616,8 +2728,8 @@ if (opt$only_clustering==FALSE){
     create_excel_output(DESeqDataSet_base,
                         opt,
                         test_count,
-                        opt$NORMALIZATION_TYPE ,
-                        paste0(opt$outDir, "summary_table"),
+                        opt$NORMALIZATION_TYPE,
+                        paste0(opt$outDir,"summary_table"),
                         linear_fc_cutoff=opt$FoldChange,
                         post_linear_fc_cutoff=opt$Post_statistical_FoldChange,
                         alpha_cutoff=opt$ALPHA,
@@ -2627,8 +2739,8 @@ if (opt$only_clustering==FALSE){
     create_excel_output(DESeqDataSet_base,
                         opt,
                         test_count,
-                        opt$NORMALIZATION_TYPE ,
-                        paste0(opt$outDir, "Only_Significant_Genes_summary_table"),
+                        opt$NORMALIZATION_TYPE,
+                        paste0(opt$outDir,"Only_Significant_Genes_summary_table"),
                         linear_fc_cutoff=opt$FoldChange,
                         post_linear_fc_cutoff=opt$Post_statistical_FoldChange,
                         alpha_cutoff=opt$ALPHA,
@@ -2903,6 +3015,7 @@ for (test2do in test_count){
           test_name = paste(contrast_list[2],contrast_list[3],sep = '_vs_')
       }
     }
+    gc()
     rmarkdown::render(input             = opt$Rmarkdown,
                       output_file       = file.path(base_out_dir,paste('Final_Report',test_name,'html', sep = '.')),
                       intermediates_dir = base_out_dir,
@@ -2924,7 +3037,7 @@ for (test2do in test_count){
                         KEGG_KAAS_flag     = KEGG_KAAS_flag,
                         GO_flag            = GO_flag
                       ))
-    
+    gc()
     if (test2do=='LRT'){ 
       opt$LRT=NA 
     }    
@@ -3358,7 +3471,7 @@ for (test2do in test_count){
       sig.genes = unlist(stringi::stri_split(str = opt$significant_genes,regex = ','))
       Normalized_counts_assay = Normalized_counts_assay[sig.genes,]
     }else if (!is.na(DESeqDataSet_Results)){
-      sig.genes=rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"padj"]<opt$ALPHA)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
+      sig.genes = rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"padj"]<opt$ALPHA)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
       up_reg    = rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"log2FoldChange"]>FC_CUTOFF_log2)&(DESeqDataSet_Results_redOrdered[,"padj"]<FDR_PVAL_CUTOFF)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
       down_reg  = rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"log2FoldChange"]<FC_CUTOFF_log2)&(DESeqDataSet_Results_redOrdered[,"padj"]<FDR_PVAL_CUTOFF)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
       #sig.genes = c(up_reg,down_reg)
@@ -3553,7 +3666,7 @@ for (test2do in test_count){
             }else if (nrow(SPLIT_Normalized_counts_Annotated_mean)<3){
               clusters=c(1)
               names(clusters)=rownames((SPLIT_Normalized_counts_Annotated_mean))
-              sprintf("<h4>%s</h4>",'Since only 2 significant genes were detected, No clustering was performed')
+              sprintf("<h4>%s</h4>","Since only 2 significant genes were detected, No clustering was performed")
             }else if (nrow(SPLIT_Normalized_counts_Annotated_mean)==2){
               Clustering <- eclust(as.matrix(SPLIT_Normalized_counts_Annotated_mean),stand = F,
                                    FUNcluster= 'kmeans',
@@ -3562,7 +3675,7 @@ for (test2do in test_count){
                                    nboot = opt$nboot,
                                    gap_maxSE = list(method= opt$gap_maxSE_method, SE.factor = opt$gap_maxSE_SE.factor) )
               clusters=Clustering$cluster
-              sprintf("%s",'Since only 2 significant genes were detected, the clustering was performed using the kmeans method')
+              sprintf("%s","Since only 2 significant genes were detected, the clustering was performed using the kmeans method")
               
             }else{
               clusters=c()
@@ -3771,6 +3884,21 @@ for (test2do in test_count){
             if (opt$Enriched_terms_overlap){
               plot_sheard_genes(allRes@compareClusterResult,opt$outDir,'Clusters_GO_Enrichment')
             }
+            
+            if (((length(down_reg)>0) || (length(up_reg)>0)) && (is.na(opt$LRT))){
+                up_down_clusters = clusters
+                if (length(down_reg)>0){
+                    up_down_clusters[down_reg]='Down'
+                }
+                if (length(up_reg)>0){
+                    up_down_clusters[up_reg]='UP'
+                }
+
+                allRes <- clusters_enricher(opt$outDir,up_down_clusters,"GO",opt$Annotation_db,Annotation$ENTREZID,"ENTREZID",paste('GO_Biological_Process_Enrichment_of_Up_and_Down_Clusters',SPLIT,sep="_"))
+                if (opt$Enriched_terms_overlap){
+                    plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'GO_Biological_Process_Enrichment_of_Up_and_Down_Clusters')
+                }
+            }
             One_cluster=clusters_for_GO
             One_cluster[]=1
             allRes <- clusters_enricher(opt$outDir,One_cluster,"GO",opt$Annotation_db,Annotation$ENTREZID,"ENTREZID",paste('One_Cluster_GO_Enrichment_',SPLIT,".csv",sep=""))
@@ -3783,6 +3911,21 @@ for (test2do in test_count){
               if (opt$Enriched_terms_overlap){
                 plot_sheard_genes(allRes@compareClusterResult,opt$outDir,'Clusters_GO_Enrichment')
               }
+              if (((length(down_reg)>0) || (length(up_reg)>0)) && (is.na(opt$LRT))){
+                    up_down_clusters = clusters
+                    if (length(down_reg)>0){
+                        up_down_clusters[down_reg]='Down'
+                    }
+                    if (length(up_reg)>0){
+                        up_down_clusters[up_reg]='UP'
+                    }
+
+                    allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,GO2name_BP,GO2gene_BP,paste('GO_Biological_Process_Enrichment_of_Up_and_Down_Clusters',SPLIT,sep="_"),"GO",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                    if (opt$Enriched_terms_overlap){
+                        plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'GO_Biological_Process_Enrichment_of_Up_and_Down_Clusters')
+                    }
+                }
+              
               One_cluster=clusters
               One_cluster[]=1
               allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,GO2name_BP,GO2gene_BP,paste('One_Cluster_GO_Enrichment_',SPLIT,".csv",sep=""),"GO",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
@@ -3796,6 +3939,29 @@ for (test2do in test_count){
             if (opt$Enriched_terms_overlap){
               plot_sheard_genes(allRes@compareClusterResult,opt$outDir,'KEGG_Clusters_Enrichment_Analysis_')
             }
+            
+            
+            if (((length(down_reg)>0) || (length(up_reg)>0)) && (is.na(opt$LRT))){
+                up_down_clusters = clusters
+                if (length(down_reg)>0){
+                    up_down_clusters[down_reg]='Down'
+                }
+                if (length(up_reg)>0){
+                    up_down_clusters[up_reg]='UP'
+                }
+
+                allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,Pathway2name,Pathway2gene,paste('KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                if (opt$Enriched_terms_overlap){
+                    plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters')
+                }
+                
+                 if (((length(down_reg)>0) || (length(up_reg)>0)) && (is.na(opt$LRT))){
+                    pathway_table = create_pathway_table(opt$outDir,up_reg,down_reg,Annotation,Pathway2name,Pathway2gene,Pathway_show_cutoff,F,Pathway_up_color,Pathway_down_color)
+                } else{
+                    pathway_table = create_pathway_table(opt$outDir,sig.genes,c(),Annotation,Pathway2name,Pathway2gene,Pathway_show_cutoff,F,Pathway_up_color,Pathway_down_color)
+                }
+            }
+            
             One_cluster=clusters
             One_cluster[]=1
             allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,Pathway2name,Pathway2gene,paste('KEGG_One_Clusters_Enrichment_Analysis_',SPLIT,".csv",sep=""),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
@@ -3808,11 +3974,33 @@ for (test2do in test_count){
             if (opt$Enriched_terms_overlap){
               plot_sheard_genes(allRes@compareClusterResult,opt$outDir,'KEGG_Clusters_Enrichment_Analysis_')
             }
+            
+            if (((length(down_reg)>0) || (length(up_reg)>0)) && (is.na(opt$LRT))){
+                up_down_clusters = clusters
+                if (length(down_reg)>0){
+                    up_down_clusters[down_reg]='Down'
+                }
+                if (length(up_reg)>0){
+                    up_down_clusters[up_reg]='UP'
+                }
+
+                allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,ORGANISM_Pathway2name,ORGANISM_Pathway2gene,paste(ORGANISM,'KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                if (opt$Enriched_terms_overlap){
+                    plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters')
+                }
+
+            }
             One_cluster=clusters
             One_cluster[]=1
             allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,ORGANISM_Pathway2name,ORGANISM_Pathway2gene,paste(ORGANISM,'_KEGG_One_Clusters_Enrichment_Analysis_',SPLIT,".csv",sep=""),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
             if (opt$Enriched_terms_overlap){
               plot_sheard_genes(allRes@compareClusterResult,opt$outDir,'KEGG_One_Clusters_Enrichment_Analysis_')
+            }
+                 
+            if (((length(down_reg)>0) || (length(up_reg)>0)) && (is.na(opt$LRT))){
+                pathway_table = create_pathway_table(opt$outDir,up_reg,down_reg,Annotation,ORGANISM_Pathway2name,ORGANISM_Pathway2gene,Pathway_show_cutoff,F,Pathway_up_color,Pathway_down_color,F)
+            } else{
+                pathway_table = create_pathway_table(opt$outDir,sig.genes,c(),Annotation,ORGANISM_Pathway2name,ORGANISM_Pathway2gene,Pathway_show_cutoff,F,Pathway_up_color,Pathway_down_color,F)
             }
           }
           if (KEGG_KAAS_flag){
@@ -3820,20 +4008,44 @@ for (test2do in test_count){
             if (opt$Enriched_terms_overlap){
               plot_sheard_genes(allRes@compareClusterResult,opt$outDir,'KASS_KEGG_Clusters_Enrichment_Analysis_')
             }
+            
+            if (((length(down_reg)>0) || (length(up_reg)>0)) && (is.na(opt$LRT))){
+                up_down_clusters = clusters
+                if (length(down_reg)>0){
+                    up_down_clusters[down_reg]='Down'
+                }
+                if (length(up_reg)>0){
+                    up_down_clusters[up_reg]='UP'
+                }
+
+                allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,KASS_Pathway2name,KASS_Pathway2gene,paste('KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                if (opt$Enriched_terms_overlap){
+                    plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters')
+                }
+
+            }
             One_cluster=clusters
             One_cluster[]=1
             allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,KASS_Pathway2name,KASS_Pathway2gene,paste('KAAS_KEGG_One_Clusters_Enrichment_Analysis_',SPLIT,".csv",sep=""),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
             if (opt$Enriched_terms_overlap){
               plot_sheard_genes(allRes@compareClusterResult,opt$outDir,'KAAS_KEGG_One_Clusters_Enrichment_Analysis_')
             }
+       
+            
+            if (((length(down_reg)>0) || (length(up_reg)>0)) && (is.na(opt$LRT))){
+                pathway_table = create_pathway_table(opt$outDir,up_reg,down_reg,Annotation,KASS_Pathway2name,KASS_Pathway2gene,Pathway_show_cutoff,F,Pathway_up_color,Pathway_down_color)
+            } else{
+                pathway_table = create_pathway_table(opt$outDir,sig.genes,c(),Annotation,KASS_Pathway2name,KASS_Pathway2gene,Pathway_show_cutoff,F,Pathway_up_color,Pathway_down_color)
+            }
+            
           }        
           ##################GO/KEGG-End####################################    
         }
       }else{
-        print('No significant genes were detected')
+        print("No significant genes were detected")
       }
     }else{
-      print('The "X_AXIS" parameter must be given for clustering analysis')
+      print("The 'X_AXIS' parameter must be given for clustering analysis ")
     }
     colData   = Original_colData   
     countData = Original_countData 
@@ -3843,7 +4055,4 @@ for (test2do in test_count){
   }
   
 }
-
-
-
 

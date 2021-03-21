@@ -132,9 +132,11 @@ class Step_Qualimap(Step):
             if (len(self.sample_data["samples"])>10):
                 self.script += "script_dir=$(which %s) \n\n" % self.params["original_script_path"]
                 self.script += "script_dir=${script_dir%%/*}/scripts/%s \n\n" % 'countsQC.r'
-                self.script += "sed -i 's/image.width <- 3\*480/image.width <- 10\*480/g' $script_dir \n\n" 
-                self.script += "sed -i 's/image.height <- 3\*480/image.height <- 10\*480/g' $script_dir \n\n" 
-            
+                self.script += "if [ -f  '$script_dir' ]; then\n"
+                self.script += "sed -i 's/image.width <- 3\*480/image.width <- 10\*480/g' $script_dir ; \n" 
+                self.script += "sed -i 's/image.height <- 3\*480/image.height <- 10\*480/g' $script_dir ; \n" 
+                self.script += "fi\n\n"
+                
             if "gff2infofile" not in list(self.params.keys()):
                 self.params["gff2infofile"]=None
             if self.params["gff2infofile"]==None:

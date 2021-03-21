@@ -352,7 +352,9 @@ qiime tools export \\
                                                          method=self.method,
                                                          outp=edit_qiime_params(outp)))
 
-
+                    self.sample_data[sample][typ+'.export'] = os.path.join(sample_dir,"{title}.{method}.{outp}".format(title=self.sample_data["Title"],
+                                                                     method=self.method,
+                                                                     outp=edit_qiime_params(outp)),'')
         self.local_finish(use_dir, sample_dir)
         self.create_low_level_script()
 

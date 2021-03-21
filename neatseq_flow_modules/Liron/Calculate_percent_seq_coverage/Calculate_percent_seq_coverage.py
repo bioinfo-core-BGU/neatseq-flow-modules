@@ -43,6 +43,7 @@ Lines for parameter file
         script_path:                            # Not needed
         scope:                                  # project or sample the default is project.
         env:                                    # env parameters that needs to be in the PATH for running this module
+        use_project_fasta                       # If scope is sample use the project level fasta for all samples
         qsub_params:
             -pe:                                # Number of CPUs to reserve for this analysis
         redirects:
@@ -84,12 +85,19 @@ class Step_Calculate_percent_seq_coverage(Step):
                     "In %s:\tThere are no mapping results (bam) for sample %s.\n" % (self.get_step_name(), sample)
             if self.params["scope"] != 'project':
                 # Testing for existance of fasta nucleotide file 
-                assert "fasta.nucl" in list(self.sample_data[sample].keys()), \
-                    "In %s:\tThere is no nucleotide fasta file (fasta.nucl) for sample %s.\n" % (self.get_step_name(), sample)
+                if "use_project_fasta" in list(self.params.keys()):
+                    pass
+                else:
+                    assert "fasta.nucl" in list(self.sample_data[sample].keys()), \
+                        "In %s:\tThere is no nucleotide fasta file (fasta.nucl) for sample %s.\n" % (self.get_step_name(), sample)
         if self.params["scope"] == 'project':
             # Testing for existance of fasta nucleotide file 
             assert "fasta.nucl" in list(self.sample_data["project_data"].keys()), \
                 "In %s:\tThere is no project level nucleotide fasta file (fasta.nucl) \n" % self.get_step_name()
+        else:
+            if "use_project_fasta" in list(self.params.keys()):
+                assert "fasta.nucl" in list(self.sample_data["project_data"].keys()), \
+                    "In %s:\tThere is no project level nucleotide fasta file (fasta.nucl) \n" % self.get_step_name()
         assert "-t" in list(self.params["redir_params"].keys()), \
                 "In %s:\tYou must specify a -t redirects option !! \n" % self.get_step_name()
         pass
@@ -134,11 +142,11 @@ class Step_Calculate_percent_seq_coverage(Step):
         self.script += "-s %s \\\n\t"   % os.path.join(use_dir,'Samples')
         self.script += "-r %s \\\n\t"   % self.sample_data["project_data"]["fasta.nucl"]
         self.script += "-o %s \n\n"     % os.path.join( use_dir,output_filename)
-       
         
         # Wrapping up function. Leave these lines at the end of every iteration:
         self.local_finish(use_dir,self.base_dir)       # Sees to copying local files to final destination (and other stuff)
 
+        self.sample_data["project_data"]["coverage"] = os.path.join( self.base_dir,output_filename)
         
         self.create_low_level_script()
     
@@ -177,13 +185,17 @@ class Step_Calculate_percent_seq_coverage(Step):
             
             
             self.script += "-s %s \\\n\t"   % os.path.join(use_dir,'Samples')
-            self.script += "-r %s \\\n\t"   % self.sample_data[sample]["fasta.nucl"]
+            if "use_project_fasta" in list(self.params.keys()):
+                self.script += "-r %s \\\n\t"   % self.sample_data["project_data"]["fasta.nucl"]
+            else:
+                self.script += "-r %s \\\n\t"   % self.sample_data[sample]["fasta.nucl"]
             self.script += "-o %s \n\n"     % os.path.join( use_dir,output_filename)
        
             
             # Wrapping up function. Leave these lines at the end of every iteration:
             self.local_finish(use_dir,sample_dir)       # Sees to copying local files to final destination (and other stuff)
-           
+            
+            self.sample_data[sample]["coverage"] = os.path.join( self.base_dir,output_filename)
             
             self.create_low_level_script()
 

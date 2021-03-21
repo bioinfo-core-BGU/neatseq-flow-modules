@@ -27,6 +27,10 @@ Requires
     * self.sample_data["project_data"]["blast.nucl"],
 * Results of ``hmmscan`` of protein file against pfam database:
     * self.sample_data["project_data"]["hmmscan.prot"])
+* Results of ``signalp`` of protein file using signalp program: [ optional ]
+    * self.sample_data["project_data"]["signalp"])
+* Results of ``rnammer`` of protein file using signalp program: [ optional ]
+    * self.sample_data["project_data"]["rnammer"])
     
 .. Attention:: If ``scope`` is set to ``sample``, all of the above files should be in the sample scope!
 
@@ -210,6 +214,11 @@ class Step_Trinotate(Step):
             self.script += "{trino_cmd}LOAD_rnammer {rnammer}\n\n".format(trino_cmd=trino_cmd_sqlite,
                                                                     rnammer=self.sample_data["project_data"]["rnammer"])
 
+        if "signalp" in self.sample_data["project_data"]:
+            self.script += "{trino_cmd}LOAD_signalp {signalp}\n\n".format(trino_cmd=trino_cmd_sqlite,
+                                                                    signalp=self.sample_data["project_data"]["signalp"])
+        
+
         ################################ Step 4. Report
         self.script += "### Step 4: Create report\n\n"
         self.script += """
@@ -299,6 +308,10 @@ class Step_Trinotate(Step):
             if "rnammer" in self.sample_data[sample]:
                 self.script += "{trino_cmd}LOAD_rnammer {rnammer}\n\n".format(trino_cmd=trino_cmd_sqlite,
                                                                               rnammer=self.sample_data[sample]["rnammer"])
+
+            if "signalp" in self.sample_data[sample]:
+                self.script += "{trino_cmd}LOAD_signalp {signalp}\n\n".format(trino_cmd=trino_cmd_sqlite,
+                                                                              signalp=self.sample_data[sample]["signalp"])
 
             ################################ Step 4. Report
             self.script += "### Step 4: Create report\n\n"
