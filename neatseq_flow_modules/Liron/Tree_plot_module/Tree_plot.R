@@ -78,9 +78,11 @@ option_list = list(
               help="Use only variable columns in the heatmap", metavar="character"),
   make_option("--tree_by_heatmap", action="store_true",default=FALSE, 
               help="Generate tree using Hierarchical Clustering of the heatmap", metavar="character"),
+  make_option("--heatmap_binary", action="store_true",default=FALSE, 
+              help="Heatmap data will transform in to binary [0,1]", metavar="character"),
   make_option("--heatmap_HC_dist", type="character", default = 'maximum', 
               help="The heatmap Hierarchical Clustering dist method", metavar="character"),
-  make_option("--heatmap_HC_agg", type="character", default = 'average', 
+  make_option("--heatmap_HC_agg", type="character", default = 'ward.D2', 
               help="The heatmap Hierarchical Clustering agglomeration method", metavar="character"),
   make_option("--ID_heatmap_field", type="character", default=NA,  
               help="Column name for IDs found in the tips of the tree in the heatmap Data file", metavar="character")
@@ -98,7 +100,11 @@ opt = optparse::parse_args(opt_parser);
 if (is.na(opt$heatmap)==F){
     
     if (is.na(opt$H_Excel)){
-      More_Data<- read.csv(opt$heatmap,check.names = F, sep="\t",row.names = opt$ID_heatmap_field)
+      if (is.na(opt$ID_heatmap_field)){
+         More_Data<- read.csv(opt$heatmap,check.names = F, sep="\t",row.names =1)   
+      } else {
+         More_Data<- read.csv(opt$heatmap,check.names = F, sep="\t",row.names = opt$ID_heatmap_field)
+      }
     }else {
       if(!(all(c("openxlsx") %in% installed.packages()))) {
         if (Sys.getenv("CONDA_PREFIX")!=""){
@@ -133,6 +139,7 @@ if (is.na(opt$heatmap)==F){
     colnames(More_Data)=unlist(lapply(X =colnames(More_Data),FUN = function(x)  stringr::str_trim(gsub('"','',gsub("'",'',x))))  )
     More_Data=More_Data[,opt$cols_to_use_heatmap]
     if (is.na(opt$heatmap_count_by_sep)==FALSE){
+      More_Data[More_Data=='']=NA
       More_Data=as.data.frame(row.names=rownames(More_Data),x=apply(X = More_Data,MARGIN = c(1,2),FUN =function(x) stringr::str_count(x,opt$heatmap_count_by_sep)+1) )
       More_Data=as.data.frame(row.names=rownames(More_Data),x=apply(X = More_Data,MARGIN = c(1,2),FUN =function(x)  if (is.na(x)) 0 else x) )
     } else if (all(apply(X = More_Data,MARGIN = c(1,2),FUN =function(x) is.numeric(x)))==FALSE){
@@ -142,6 +149,11 @@ if (is.na(opt$heatmap)==F){
       }else{
         More_Data=as.data.frame(row.names=rownames(More_Data),x=apply(X = More_Data,MARGIN = c(1,2),FUN =function(x) if (length(x)>0) 1 else 0 ) )
       }
+    }
+    
+    if (opt$heatmap_binary){
+        More_Data[More_Data>0]=1
+        More_Data[More_Data!=1]=0
     }
     
     h=hclust(dist(t.data.frame(More_Data),method=opt$heatmap_HC_dist),method=opt$heatmap_HC_agg )
@@ -186,7 +198,9 @@ if (is.na(opt$M_Excel)){
 Meta_Data=as.data.frame(apply(X = Meta_Data,MARGIN = 2,FUN =function(x) as.character(gsub(" ", "-", stringr::str_trim(x)) )))
 Meta_Data[Meta_Data==""]=NA
 
-
+if ((opt$ID_field %in% colnames(Meta_Data))==F){ 
+  Meta_Data[opt$ID_field]=row.names(Meta_Data)
+}
 
 tree$tip.label=unlist(lapply(X =tree$tip.label,FUN = function(x)  stringr::str_trim(gsub('"','',gsub("'",'',x)))))
 #tree=root(tree,outgroup ="",resolve.root=T,edgelabel = TRUE)
@@ -293,16 +307,22 @@ if (opt$labels){
   p=p+ geom_label(size=size*0.4,aes(label=as.integer(branch.length)))  
 }
 
-p =p+geom_tippoint(data=p$data,aes_string(x="xx+(j*xx)",shape="str"),color='white',size=0,na.rm=T) 
-p=p+scale_shape_manual(values = c(11:24))+scale_color_discrete(direction=-1,na.value=NA)+guides(color="none",shape=guide_legend(title="Annotation",title.position = "top"  ))+ theme(legend.position = "bottom",legend.box.margin=margin(0, 30, 0, 0))
-
-
+if ("str" %in% colnames(p$data)){
+    p =p+geom_tippoint(data=p$data,aes_string(x="xx+(j*xx)",shape="str"),color='white',size=0,na.rm=T) 
+    p=p+scale_shape_manual(values = c(11:24))+scale_color_discrete(direction=-1,na.value=NA)+guides(color="none",shape=guide_legend(title="Annotation",title.position = "top"  ))+ theme(legend.position = "bottom",legend.box.margin=margin(0, 30, 0, 0))
+}
+tree_size = max(max(p$data$x)+(max(p$data$x)*p$data$j))
+print(tree_size)
 if (is.na(opt$heatmap)==F){
-
     if (opt$layout!='fan'){
       if (length(More_Data)>0){
-        p2=gheatmap( p,More_Data,colnames_position='bottom',colnames_offset_y=0.4, width=size*0.5, hjust='left', colnames_angle=-15, font.size=size*0.3,offset = max(p$data$x)*max(p$data$j),color =opt$heatmap_cell_border,low = opt$heatmap_lowest_value,high = opt$heatmap_highest_value)
-        ggsave(opt$output,p2,device='pdf',dpi = 600,width=6*length(names2write)+(length(More_Data)*size*0.05),height=0.5*length(tree$tip.label)+10,units='cm',limitsize = FALSE)
+        p2=gheatmap( p,More_Data,colnames_position='bottom',colnames_offset_y=0.4,colnames_offset_x=0, width=size*(100/tree_size), hjust='left', colnames_angle=-90, font.size=size*0.06,offset = max(p$data$x)*max(p$data$j),color =opt$heatmap_cell_border,low = opt$heatmap_lowest_value,high = opt$heatmap_highest_value)
+        width=6*length(names2write)+(length(More_Data)*size*0.05)
+        if (width>45){
+            width= 45
+        }
+        write.csv(More_Data,file=paste(opt$output,'.csv'))
+        ggsave(opt$output,p2,device='pdf',dpi = 600,width=width,height=0.5*length(tree$tip.label)+10,units='cm',limitsize = FALSE)
       }else{
         ggsave(opt$output,p,device='pdf',dpi = 600,width=6*length(names2write),height=0.5*length(tree$tip.label)+10,units='cm',limitsize = FALSE)
       }

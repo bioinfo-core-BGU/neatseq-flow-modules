@@ -27,6 +27,8 @@ parser.add_argument('--sep', dest='sep', type=str,default="\t",
                     help='Columns separator for input file')
 parser.add_argument('-T', dest='Trans', action='store_true',default=False,
                     help='write Transpose output')
+parser.add_argument('--col_names', dest='col_names', nargs='+', type=str, default=[],
+                    help='Add column names [colname1 colname2]')
 parser.add_argument('--ignore_shared_col', dest='ignore', action='store_true',default=False,
                     help='Ignore shared columns when merging using the --Merge_by option')
 args = parser.parse_args()
@@ -100,7 +102,10 @@ else:
         for file_name in files:
             if os.stat(file_name).st_size > 0:
                 print(file_name)
-                temp_data = pd.read_table(file_name, sep=args.sep,header=header)
+                if len(args.col_names)==0:
+                    temp_data = pd.read_table(file_name, sep=args.sep,header=header)
+                else:
+                    temp_data = pd.read_table(file_name, sep=args.sep,names=args.col_names)
                 if temp_data.shape[0]==0:
                     print(file_name +" is empty!!!!")
                 if args.samples_names:
