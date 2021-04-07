@@ -321,7 +321,9 @@ if (is.na(opt$heatmap)==F){
         if (width>45){
             width= 45
         }
-        write.csv(More_Data,file=paste(opt$output,'.csv'))
+        new_order=p2$data[p2$data$isTip,c('label','y')]
+        
+        write.csv(More_Data[new_order$label[order(new_order$y,decreasing=TRUE)],],file=paste(opt$output,'.csv'))
         ggsave(opt$output,p2,device='pdf',dpi = 600,width=width,height=0.5*length(tree$tip.label)+10,units='cm',limitsize = FALSE)
       }else{
         ggsave(opt$output,p,device='pdf',dpi = 600,width=6*length(names2write),height=0.5*length(tree$tip.label)+10,units='cm',limitsize = FALSE)
