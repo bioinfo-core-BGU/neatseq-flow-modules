@@ -29,8 +29,11 @@ Requires
         * ``sample_data[<sample>]["fastq.F"]``
         * ``sample_data[<sample>]["fastq.R"]``
         * ``sample_data[<sample>]["fastq.S"]``
-
-    
+        
+* ``bam`` file for Genome Guided assembly in:
+        
+        * ``sample_data["bam"]``
+        * ``sample_data[<sample>]["bam"]``
 Output:
 ~~~~~~~~~~~~~
 
@@ -57,7 +60,7 @@ Parameters that can be set
     "skip_gene_to_trans_map", "", "Set to skip construction of the transcript map. You can use a dedicated module, ``Trinity_gene_to_trans_map``. Both put the map in the same slot (gene_trans_map)"
     "get_Trinity_gene_to_trans_map", "", "Path to get_Trinity_gene_to_trans_map.pl. If not passed, will try guessing from Trinity path"
     "TrinityStats", "", "block with 'path:' set to `TrinityStats.pl` executable"
-
+    "genome_guided", "", "Use if you have a project level BAM file with reads mapped to a reference genome and it is coordinate sorted"
 
     
 Lines for parameter file
@@ -114,25 +117,40 @@ class Step_trinity(Step):
             Here you should do testing for dependency output. These will NOT exist at initiation of this instance. They are set only following sample_data updating
         """
         
-        
-        # Assert that all samples have reads files:
-        for sample in self.sample_data["samples"]:    
-            if not {"fastq.F", "fastq.R", "fastq.S"} & set(self.sample_data[sample].keys()):
-                raise AssertionExcept("No read files\n",sample)
-         
-        if "scope" in self.params:
-          
-            if self.params["scope"]=="project":
-                pass
-
-            elif self.params["scope"]=="sample":
-                
-                for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-                    pass
+        if "genome_guided" in list(self.params.keys()):
+            if "scope" in self.params:
+                if self.params["scope"]=="project":
+                    if "bam" not in list(self.sample_data["project_data"].keys()):
+                        raise AssertionExcept("You do not have a project level bam file to use with genome_guided")
+                elif self.params["scope"]=="sample":
+                    for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
+                        if 'bam' not in list(self.sample_data[sample].keys()):
+                            raise AssertionExcept("You do not have a sample level bam file to use with genome_guided\n",sample)
+                else:
+                    raise AssertionExcept("'scope' must be either 'sample' or 'project'")
             else:
-                raise AssertionExcept("'scope' must be either 'sample' or 'project'")
+                raise AssertionExcept("No 'scope' specified.")
+            if "--genome_guided_max_intron" not in list(self.params["redir_params"].keys()):
+                raise AssertionExcept("When using genome_guided option you must include the '--genome_guided_max_intron' option within the redirects")
         else:
-            raise AssertionExcept("No 'scope' specified.")
+        # Assert that all samples have reads files:
+            for sample in self.sample_data["samples"]:    
+                if not {"fastq.F", "fastq.R", "fastq.S"} & set(self.sample_data[sample].keys()):
+                    raise AssertionExcept("No read files\n",sample)
+             
+            if "scope" in self.params:
+              
+                if self.params["scope"]=="project":
+                    pass
+
+                elif self.params["scope"]=="sample":
+                    
+                    for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
+                        pass
+                else:
+                    raise AssertionExcept("'scope' must be either 'sample' or 'project'")
+            else:
+                raise AssertionExcept("No 'scope' specified.")
         
         
         ##########################
@@ -174,58 +192,64 @@ class Step_trinity(Step):
 
             # Adding 'trinity' to output dir:
             # "output directory must contain the word 'trinity' as a safety precaution, given that auto-deletion can take place."
+        
             output_basename = "{title}_trinity".format(title=sample
                                                                 if sample != "project_data"
                                                                 else self.sample_data["Title"])
 
-            forward = list()  # List of all forward files
-            reverse = list()  # List of all reverse files
-            single = list()  # List of all single files
-
-            if sample=="project_data":
-                # Loop over samples and concatenate read files to $forward and $reverse respectively
-                # add cheack if paiered or single !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                for sample_k in self.sample_data["samples"]:  # Getting list of samples out of samples_hash
-                    # If both F and R reads exist, adding them to forward and reverse
-                    # Assuming upstream input testing to check that if there are F reads then there are also R reads.
-                    if "fastq.F" in self.sample_data[sample_k]:
-                        forward.append(self.sample_data[sample_k]["fastq.F"])
-                    if "fastq.R" in self.sample_data[sample_k]:
-                        reverse.append(self.sample_data[sample_k]["fastq.R"])
-                    if "fastq.S" in self.sample_data[sample_k]:
-                        single.append(self.sample_data[sample_k]["fastq.S"])
-
-                # Concatenate all filenames separated by commas:
-                single = ",".join(single) if (len(single) > 0) else None
-                forward = ",".join(forward) if (len(forward) > 0) else None
-                reverse = ",".join(reverse) if (len(reverse) > 0) else None
-
-            else:
-                if "fastq.F" in self.sample_data[sample]:
-                    forward = self.sample_data[sample]["fastq.F"]
-                if "fastq.R" in self.sample_data[sample]:
-                    reverse = self.sample_data[sample]["fastq.R"]
-                if "fastq.S" in self.sample_data[sample]:
-                    single = self.sample_data[sample]["fastq.S"]
-
-            # Adding single reads to end of left (=forward) reads
-            if single and forward:
-                forward = ",".join([forward, single])
-
             self.script += self.get_script_const()
             self.script += "--output %s \\\n\t" % os.path.join(use_dir, output_basename)
 
-            if forward and reverse:
-                self.script += "--left %s \\\n\t" % forward
-                self.script += "--right %s \\\n\t" % reverse
-            elif forward:
-                self.script += "--single %s \\\n\t" % forward
-            elif reverse:
-                self.script += "--single %s \\\n\t" % reverse
-            elif single:
-                self.script += "--single %s \\\n\t" % single
+            if "genome_guided" in list(self.params.keys()):
+                self.script += "--genome_guided_bam %s \\\n\t" % self.sample_data[sample]['bam']
             else:
-                raise AssertionExcept("Weird. No reads...")
+                
+                forward = list()  # List of all forward files
+                reverse = list()  # List of all reverse files
+                single = list()  # List of all single files
+            
+                if sample=="project_data":
+                    # Loop over samples and concatenate read files to $forward and $reverse respectively
+                    # add cheack if paiered or single !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    for sample_k in self.sample_data["samples"]:  # Getting list of samples out of samples_hash
+                        # If both F and R reads exist, adding them to forward and reverse
+                        # Assuming upstream input testing to check that if there are F reads then there are also R reads.
+                        if "fastq.F" in self.sample_data[sample_k]:
+                            forward.append(self.sample_data[sample_k]["fastq.F"])
+                        if "fastq.R" in self.sample_data[sample_k]:
+                            reverse.append(self.sample_data[sample_k]["fastq.R"])
+                        if "fastq.S" in self.sample_data[sample_k]:
+                            single.append(self.sample_data[sample_k]["fastq.S"])
+
+                    # Concatenate all filenames separated by commas:
+                    single = ",".join(single) if (len(single) > 0) else None
+                    forward = ",".join(forward) if (len(forward) > 0) else None
+                    reverse = ",".join(reverse) if (len(reverse) > 0) else None
+
+                else:
+                    if "fastq.F" in self.sample_data[sample]:
+                        forward = self.sample_data[sample]["fastq.F"]
+                    if "fastq.R" in self.sample_data[sample]:
+                        reverse = self.sample_data[sample]["fastq.R"]
+                    if "fastq.S" in self.sample_data[sample]:
+                        single = self.sample_data[sample]["fastq.S"]
+
+                # Adding single reads to end of left (=forward) reads
+                if single and forward:
+                    forward = ",".join([forward, single])
+
+           
+                if forward and reverse:
+                    self.script += "--left %s \\\n\t" % forward
+                    self.script += "--right %s \\\n\t" % reverse
+                elif forward:
+                    self.script += "--single %s \\\n\t" % forward
+                elif reverse:
+                    self.script += "--single %s \\\n\t" % reverse
+                elif single:
+                    self.script += "--single %s \\\n\t" % single
+                else:
+                    raise AssertionExcept("Weird. No reads...")
 
             # If there is an extra "\\\n\t" at the end of the script, remove it.
             self.script = self.script.rstrip("\\\n\t") + "\n\n"
@@ -242,7 +266,10 @@ class Step_trinity(Step):
 
             # Store results to fasta and assembly slots:
             # transcriptome = os.path.join(output_basename, "Trinity.fasta")
-            transcriptome = ".".join([output_basename, "Trinity.fasta"])
+            if "genome_guided" in list(self.params.keys()):
+                transcriptome = os.path.join(output_basename, "Trinity-GG.fasta")
+            else:
+                transcriptome = ".".join([output_basename, "Trinity.fasta"])
             self.sample_data[sample]["fasta.nucl"] = os.path.join(sample_dir, transcriptome)
             self.sample_data[sample][self.get_step_step() + ".contigs"] = self.sample_data[sample]["fasta.nucl"]
 
