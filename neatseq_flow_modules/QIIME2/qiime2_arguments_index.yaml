@@ -129,17 +129,19 @@ demux:
       --i-seqs: EMPPairedEndSequences
     outputs:
       --o-per-sample-sequences: SampleData[PairedEndSequencesWithQuality]
+      --o-error-correction-details: ErrorCorrectionDetails
     required:
     - --m-barcodes-file
     - --m-barcodes-column
   emp-single:
     inputs:
       --i-seqs:
-      - EMPPairedEndSequences
-      - EMPSingleEndSequences
-      - RawSequences
+        - EMPPairedEndSequences
+        - EMPSingleEndSequences
+        - RawSequences
     outputs:
       --o-per-sample-sequences: SampleData[SequencesWithQuality]
+      --o-error-correction-details: ErrorCorrectionDetails
     required:
     - --m-barcodes-file
     - --m-barcodes-column
@@ -277,7 +279,7 @@ diversity:
       --o-visualization: Visualization
     required:
     - --m-metadata-file
-    - --p-formula
+    - --p-formula         
   alpha-correlation:
     inputs:
       --i-alpha-diversity: SampleData[AlphaDiversity]
@@ -488,7 +490,7 @@ feature-table:
     inputs:
       --i-table: FeatureTable[Frequency]
     outputs:
-      --o-transposed-feature-table: FeatureTable[Frequency]
+      --o-transposed-feature-table: FeatureTable[Frequency]            
   core-features:
     inputs:
       --i-table: FeatureTable[Frequency]
@@ -1078,10 +1080,7 @@ vsearch:
     required: --p-perc-identity
   dereplicate-sequences:
     inputs:
-      --i-sequences:
-      - SampleData[JoinedSequencesWithQuality]
-      - SampleData[SequencesWithQuality]
-      - SampleData[Sequences]
+      --i-sequences: SampleData[JoinedSequencesWithQuality]
     outputs:
       --o-dereplicated-table: FeatureTable[Frequency]
       --o-dereplicated-sequences: FeatureData[Sequence]
@@ -1113,3 +1112,12 @@ vsearch:
       --o-chimeras: FeatureData[Sequence]
       --o-nonchimeras: FeatureData[Sequence]
       --o-stats: UchimeStats
+picrust2:
+    full-pipeline:
+        inputs:
+            --i-table: FeatureTable[Frequency]
+            --i-seq: FeatureData[Sequence]
+        outputs:
+            --o-ec-metagenome: FeatureTable[Frequency].ec
+            --o-pathway-abundance: FeatureTable[Frequency].pathway
+            --o-ko-metagenome: FeatureTable[Frequency]

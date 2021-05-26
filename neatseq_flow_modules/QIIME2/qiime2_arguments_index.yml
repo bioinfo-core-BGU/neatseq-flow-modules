@@ -272,6 +272,14 @@ diversity:
     outputs:
       --o-transformed-reference: PCoAResults
       --o-transformed-other: PCoAResults
+  adonis:
+    inputs:
+      --i-distance-matrix: DistanceMatrix
+    outputs:
+      --o-visualization: Visualization
+    required:
+    - --m-metadata-file
+    - --p-formula         
   alpha-correlation:
     inputs:
       --i-alpha-diversity: SampleData[AlphaDiversity]
@@ -478,6 +486,11 @@ feature-table:
     required:
     - --p-subsampling-depth
     - --p-axis
+  transpose:
+    inputs:
+      --i-table: FeatureTable[Frequency]
+    outputs:
+      --o-transposed-feature-table: FeatureTable[Frequency]            
   core-features:
     inputs:
       --i-table: FeatureTable[Frequency]
@@ -1099,3 +1112,12 @@ vsearch:
       --o-chimeras: FeatureData[Sequence]
       --o-nonchimeras: FeatureData[Sequence]
       --o-stats: UchimeStats
+picrust2:
+    full-pipeline:
+        inputs:
+            --i-table: FeatureTable[Frequency]
+            --i-seq: FeatureData[Sequence]
+        outputs:
+            --o-ec-metagenome: FeatureTable[Frequency].ec
+            --o-pathway-abundance: FeatureTable[Frequency].pathway
+            --o-ko-metagenome: FeatureTable[Frequency]

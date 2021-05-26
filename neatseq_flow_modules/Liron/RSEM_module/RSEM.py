@@ -69,7 +69,7 @@ Lines for parameter file
         rsem_prepare_reference_script_path:                      # Location of preparing reference script
         plot_stat:                                               # Generate statistical plots
         plot_stat_script_path:                                   # Location of statistical plot generating script
-        reference:                                               # The reference genome/transcriptome location [FASTA file]
+        reference:                                               # The reference genome/transcriptome location [FASTA file]. If empty will search for project level fasta.nucl
         rsem_generate_data_matrix_script_path:                   # Location of the final matrix generating script
                                                                  # If this line is empty or missing it will try using the module's associated script
         redirects:
@@ -139,7 +139,7 @@ class Step_RSEM(Step):
                     sys.exit("No Mapping or bam file information!!! \n")
                     
         if "reference" not in list(self.params.keys()):
-            if 'reference' in list(self.sample_data["project_data"].keys()):
+            if 'REFERENCE' in list(self.sample_data["project_data"].keys()):
                 self.params["reference"] = self.sample_data["project_data"]['REFERENCE']
             elif 'fasta.nucl' in list(self.sample_data["project_data"].keys()):
                 self.params["reference"] = self.sample_data["project_data"]['fasta.nucl']

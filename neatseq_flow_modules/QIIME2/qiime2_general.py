@@ -166,46 +166,49 @@ class Step_qiime2_general(Step):
             all_inputs.update(self.method_index["inputs"])
         if "optional_inputs" in self.method_index:
             all_inputs.update(self.method_index["optional_inputs"])
-
+        
         # for inpflag,inptype in self.method_index["inputs"].iteritems():
 
         for inpflag,inptype in all_inputs.items():
-            # Convert single value strings into lists:
-            if isinstance(inptype,str):
-                inptype = [inptype]
+            if inpflag in self.params["redir_params"]:
+                pass
+            else:
+                # Convert single value strings into lists:
+                if isinstance(inptype,str):
+                    inptype = [inptype]
 
-            # Make sure at least one of the list members exists in sample_data
-            # (only for required inputs!)
-            if inpflag in self.method_index["inputs"]:
-                if not any([itype
-                            in self.sample_data["project_data"]
-                            for itype
-                            in inptype]):
-                    raise AssertionExcept("For {meth}, you need one of '{type}' defined.".format(meth=self.method,
-                                                                                             type=", ".join(inptype)))
-            # inptype = list(set(inptype) or set(self.sample_data["project_data"].keys()))[0]
-            # Get list of types that exist in sample_data:
-            inptype = list(set(inptype) & set(self.sample_data["project_data"].keys()))
+                # Make sure at least one of the list members exists in sample_data
+                # (only for required inputs!)
+                if inpflag in self.method_index["inputs"]:
+                    if not any([itype
+                                in self.sample_data["project_data"]
+                                for itype
+                                in inptype]):
+                        raise AssertionExcept("For {meth}, you need one of '{type}' defined.".format(meth=self.method,
+                                                                                                 type=", ".join(inptype)))
+                # inptype = list(set(inptype) or set(self.sample_data["project_data"].keys()))[0]
+                # Get list of types that exist in sample_data:
+                inptype = list(set(inptype) & set(self.sample_data["project_data"].keys()))
 
-            # If type in params, try using type or fail
-            if "type" in self.params:
-                if not isinstance(self.params["type"],str):
-                    raise AssertionExcept("'type' parameter must be a single value.")
-                if self.params["type"] in inptype:
-                    inptype = self.params["type"]
-                else:
-                    raise AssertionExcept("Type '{type}' not defined!".format(type=self.params["type"]))
-            else:     # If not, and there are more than one available type, raise except
-                if len(inptype)>1:
-                    raise AssertionExcept("The following types are available for {flag}: {types}. Please specify which "
-                                          "one to use with a 'type' parameter".format(flag=inpflag,
-                                                                                      types=", ".join(inptype)))
-                elif len(inptype) == 0:  # Type does not exist in project_data:
-                    continue
-                else:
-                    # Convert single-value list inptype to string
-                    inptype = inptype[0]
-            self.input_dict[inpflag] = inptype
+                # If type in params, try using type or fail
+                if "type" in self.params:
+                    if not isinstance(self.params["type"],str):
+                        raise AssertionExcept("'type' parameter must be a single value.")
+                    if self.params["type"] in inptype:
+                        inptype = self.params["type"]
+                    else:
+                        raise AssertionExcept("Type '{type}' not defined!".format(type=self.params["type"]))
+                else:     # If not, and there are more than one available type, raise except
+                    if len(inptype)>1:
+                        raise AssertionExcept("The following types are available for {flag}: {types}. Please specify which "
+                                              "one to use with a 'type' parameter".format(flag=inpflag,
+                                                                                          types=", ".join(inptype)))
+                    elif len(inptype) == 0:  # Type does not exist in project_data:
+                        continue
+                    else:
+                        # Convert single-value list inptype to string
+                        inptype = inptype[0]
+                self.input_dict[inpflag] = inptype
 
         # for redir,redir_val in self.params["redir_params"].iteritems():
         #     if isinstance(redir_val, str) and redir_val in self.sample_data["project_data"]:
