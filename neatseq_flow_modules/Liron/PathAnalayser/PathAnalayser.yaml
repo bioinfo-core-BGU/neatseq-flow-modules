@@ -1,0 +1,78 @@
+"Documentation": |4-
+
+    WorkFlow's Documentation
+    =========================
+    Here you can document your workflow and add notes.
+    ---------------------------------------------------
+    * **important:**
+
+        1.  **DON'T** use the hash **#** symbol!!!
+            2. Don't forget to **save** the workflow at the Design tab!!!
+Global_params:
+    Executor: SGE
+    Default_wait: '10'
+    Qsub_opts: -cwd
+    Qsub_path: /storage/SGE6U8/bin/lx24-amd64/
+    Qsub_q: fairshare.q,intel_all.q
+    conda:
+        path: '{Vars.conda.base}'
+        env: '{Vars.conda.env}'
+Vars:
+    Programs:
+        PathAnalayser: /gpfs0/system/conda/Non_CONDA_Programs/PathAnalayser/PathAnalayser.R
+    Genome: null
+    conda:
+        base: null
+        env: PathAnalayserR
+Step_params:
+    Import:
+        module: Import
+        script_path: cat
+    PathAnalayser:
+        module: Generic
+        base: Import
+        script_path: Rscript  {Vars.Programs.PathAnalayser}
+        scope: sample
+        inputs:
+            --MATRIX:
+                scope: sample
+                File_Type: vcf
+                base: null
+        outputs:
+            -O:
+                File_Type: results
+                constant_file_name: /
+                suffix: null
+        redirects:
+            -T: metabolic
+            --GENES_CUTOFF: 1000
+            --CPUs: 30
+        conda:
+            env: PathAnalayserR
+        qsub_params:
+            -pe: shared 30
+    PathAnalayser_with_Reference:
+        module: Generic
+        base: Import
+        script_path: Rscript  {Vars.Programs.PathAnalayser}
+        scope: sample
+        inputs:
+            --MATRIX:
+                scope: sample
+                File_Type: vcf
+                base: null
+        outputs:
+            -O:
+                File_Type: results
+                constant_file_name: /
+                suffix: null
+        redirects:
+            --PATHWAY_Reference: '''path:map01100'''
+            -T: metabolic
+            --GENES_CUTOFF: 1000
+            --CPUs: 30
+        conda:
+            env: PathAnalayserR
+        qsub_params:
+            -pe: shared 30
+        SKIP: null

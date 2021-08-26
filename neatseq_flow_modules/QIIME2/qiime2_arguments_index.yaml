@@ -1064,7 +1064,7 @@ vsearch:
     inputs:
       --i-sequences: FeatureData[Sequence]
       --i-table: FeatureTable[Frequency]
-      --i-reference-sequences: FeatureData[Sequence]
+      --i-reference-sequences: FeatureData[Reference_Sequence]
     outputs:
       --o-clustered-table: FeatureTable[Frequency]
       --o-clustered-sequences: FeatureData[Sequence]

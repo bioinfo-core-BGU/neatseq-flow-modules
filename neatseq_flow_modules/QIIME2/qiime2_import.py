@@ -271,7 +271,7 @@ class Step_qiime2_import(Step):
                 self.spec_script_name = self.jid_name_sep.join([self.step, self.name, edit_qiime_types(qtype)])
 
                 self.script = ""
-
+                self.script += self.get_setenv_part()
                 # Make a dir for the current sample:
                 sample_dir = self.make_folder_for_sample(sample="project_data")
 
@@ -302,7 +302,7 @@ class Step_qiime2_import(Step):
                     input_format = "\n\t--input-format {inform} \\".format(inform=input_format)
 
                 # Create script
-                self.script = """\
+                self.script += """\
 {script_path} \\
 \t--type {qtype} \\
 \t--input-path {inp_path} \\{inp_format}

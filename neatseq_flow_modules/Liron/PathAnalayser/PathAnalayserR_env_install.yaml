@@ -1,0 +1,22 @@
+name: PathAnalayserR
+channels:
+    - bioconda
+    - conda-forge
+dependencies:
+
+# R
+    - r-base=3.5.1
+    - r-optparse=1.6.0
+    - r-ggplot2=3.1.0
+    - r-pheatmap=1.0.10
+    - r-doparallel=1.0.14
+    - r-tcltk2=1.2_11
+    - r-igraph=1.2.4
+    - r-reshape2=1.4.3
+    - r-rcolorbrewer=1.1_2
+    - r-visnetwork
+    - pandoc
+    - bioconductor-keggrest=1.22.0
+    - bioconductor-kegggraph=1.42.0
+    - bioconductor-pathview=1.22.0
+    - bioconductor-netpathminer=1.20.0

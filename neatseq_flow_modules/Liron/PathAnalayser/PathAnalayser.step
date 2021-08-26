@@ -1,0 +1,25 @@
+PathAnalayser_Project:
+    module: Generic
+    base: null
+    script_path: Rscript  {Vars.Programs.PathAnalayser}
+    scope: project
+    inputs:
+        -D:
+            scope: project
+            File_Type: GFF_dir
+            base: null
+    outputs:
+        -O:
+            File_Type: temp
+            constant_file_name: /
+            suffix: null
+    redirects:
+        --PATHWAYS_2_USE: '''path:map01100'''
+        -T: metabolic
+        -P: '"*.gff"'
+        --GENES_CUTOFF: 1000
+        --CPUs: 30
+    conda:
+        env: PathAnalayserR
+    qsub_params:
+        -pe: shared 30
