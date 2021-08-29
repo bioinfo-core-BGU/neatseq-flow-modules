@@ -21,7 +21,11 @@ option_list = list(
   make_option(c("--SAMPLES"), type="character", default=NA, 
               help="If the COUNT_SOURCE is RSEM/HTSEQ it is possible to link the count files to samples by listing [comma sep] samples names in the same order as the files [sample1,sample2...]", metavar="character"),
   make_option(c("-s", "--SAMPLE_DATA_FILE"), type="character", default=NA, 
-              help="Path to Samples Information File", metavar="character"),    
+              help="Path to Samples Information File", metavar="character"),  
+  make_option(c("--SUBSET_SAMPLES"), type="character", default=NA, 
+              help="Use a Subset of Samples from SAMPLE_DATA_FILE. Character vector with samples name [comma sep]", metavar="character"),
+  make_option(c("--EXCLUDE_SAMPLES"), type="character", default=NA, 
+              help="Exclude Samples from SAMPLE_DATA_FILE. Character vector with samples name [comma sep]", metavar="character"),			  
   make_option(c("-o","--outDir"), type="character", default=NA, 
               help="path to the output directory", metavar="character"),
   make_option(c("-t", "--GENE_ID_TYPE"), type="character", default=NA, 
@@ -1823,6 +1827,9 @@ if  (!file.exists(Annotation_file)){
                         Annotation_flag  = 'ensembl'
                         opt$GENE_ID_TYPE = stringi::stri_trans_toupper(opt$GENE_ID_TYPE)
                         
+                    }else{
+                        print('Could not find your Gene Type ID, These are the available options:')
+                        print(columns(Hub))
                     }
                 }
                 unlink(cache,recursive=TRUE)
@@ -2540,6 +2547,14 @@ colData <- read.csv(opt$SAMPLE_DATA_FILE, sep="\t", row.names=1)
 rownames(colData) = make.names(rownames(colData))
 
 used_samples = intersect(rownames(colData),colnames(countData))
+if (!is.na(opt$SUBSET_SAMPLES)) {
+  sub_samples = unlist(stringi::stri_split(str = opt$SUBSET_SAMPLES,fixed = ','))
+  used_samples = intersect(used_samples, sub_samples)
+}
+if (!is.na(opt$EXCLUDE_SAMPLES)) {
+  exclude_samples = unlist(stringi::stri_split(str = opt$EXCLUDE_SAMPLES,fixed = ','))
+  used_samples = setdiff(used_samples, exclude_samples)
+}
 colData_col <- colnames(colData)
 countData <- countData[, used_samples]
 colData   <- as.data.frame(colData[used_samples ,])

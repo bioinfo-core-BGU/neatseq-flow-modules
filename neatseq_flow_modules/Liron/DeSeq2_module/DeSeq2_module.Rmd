@@ -371,6 +371,7 @@ plot_clusters<-function(clusters,vs_ano,color_group=c('Type','Time'),titles=c("T
                            stat_smooth(method="loess",
                                        fullrange=F,
                                        size=0.5,
+									   span=1,
                                        aes(linetype=Type,color=Type)) ),
                     silent = T)
         if (inherits(res,"try-error")){
@@ -431,12 +432,21 @@ plot_clusters<-function(clusters,vs_ano,color_group=c('Type','Time'),titles=c("T
   # shareY = F) %>%
   # layout(title='Clusters',legend = list(orientation = 'h', y = -0.2))
   gp2=plot_list[1]
+  num_of_plots=length(plot_list)
+  if (num_of_plots <= 2) {
+    grob_rows=1
+    grob_cols=num_of_plots
+  } else if (num_of_plots <= 4) {
+    grob_rows = grob_cols = 2
+  } else {
+    grob_rows=2
+    grob_cols=3
+  }
   if (color_group[1]==color_group[2]){
-    ml<-marrangeGrob(plot_list, nrow=2, ncol=3, top=NULL)
-  }else{
+    ml<-marrangeGrob(plot_list, nrow=grob_rows, ncol=grob_cols, top=NULL)
+  } else {
     legend <- get_legend(gp2[[1]] + theme(legend.position  ="right")+guides(color=guide_legend(title=titles[1]),linetype=guide_legend(title=titles[1])))
-    ml<-marrangeGrob(plot_list, nrow=2, ncol=3,right=legend, top=NULL)
-    
+    ml<-marrangeGrob(plot_list, nrow=grob_rows, ncol=grob_cols,right=legend, top=NULL)
   }
   
   return(list(ml))#,ml_plotly))
@@ -991,21 +1001,23 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                         }
                         #test_name = paste(contrast_list[2],contrast_list[3],sep = ' vs ')
                         plotTitle = paste('Volcano Plot (', test_name, ')', sep="")
-                       
-                        
                         topT <- na.omit(as.data.frame(DESeqDataSet_Results))
-                        volcano=ggplot(data = topT,mapping = aes(x=log2FoldChange, y=-log10(padj), fill=padj<FDR_PVAL_CUTOFF)) + 
-                        geom_point(size=1,pch=21)+
-                        scale_fill_manual(values = c('black','red'))+
-                        geom_hline(yintercept =-log10(max(topT$padj[topT$padj<FDR_PVAL_CUTOFF], na.rm=TRUE)) ,size=0.2)+
-                        geom_vline(xintercept = -1*FC_CUTOFF_log2,linetype="dotted",size=0.2)+
-                        geom_vline(xintercept =  FC_CUTOFF_log2,linetype="dotted",size=0.2)+
-                        coord_cartesian(xlim=c(max(abs(topT$log2FoldChange)),-1*max(abs(topT$log2FoldChange))) )+
-                        labs(x=bquote(~Log[2]~fold~change),y=bquote(~-log[10]~'FDR p-'~value))+
-                        theme_light()+      
-                        ggtitle(plotTitle)+
-                        theme(plot.margin = margin(25,30,5,5),plot.title = element_text(size=9,hjust = 0.5,vjust=5,face = "bold"))+
-                        theme(panel.grid = element_blank(),legend.position  ="none")
+                        fill = topT['padj']<FDR_PVAL_CUTOFF
+                        fill[fill==F] = 'Not_SIG'
+                        fill[fill == T & topT$log2FoldChange > FC_CUTOFF_log2] = 'UP'
+                        fill[fill == T & topT$log2FoldChange < (-1)*FC_CUTOFF_log2] = 'DOWN'
+                        volcano=ggplot(data = topT,mapping = aes(x=log2FoldChange, y=-log10(padj), fill=fill)) +
+                            geom_point(size=1,pch=21)+
+                            scale_fill_manual(values = c('blue','black','red'))+
+                            geom_hline(yintercept =-log10(max(topT$padj[topT$padj<FDR_PVAL_CUTOFF], na.rm=TRUE)) ,size=0.2)+
+                            geom_vline(xintercept = -1*FC_CUTOFF_log2,linetype="dotted",size=0.2)+
+                            geom_vline(xintercept =  FC_CUTOFF_log2,linetype="dotted",size=0.2)+
+                            coord_cartesian(xlim=c((-1)*max(abs(topT$log2FoldChange)),max(abs(topT$log2FoldChange))) )+
+                            labs(x=bquote(~Log[2]~fold~change),y=bquote(~-log[10]~'FDR p-'~value))+
+                            theme_light()+     
+                            ggtitle(plotTitle)+
+                            theme(plot.margin = margin(25,30,5,5),plot.title = element_text(size=9,hjust = 0.5,vjust=5,face = "bold"))+
+                            theme(panel.grid = element_blank(),legend.position  ="none")
                         volcano+ggsave(filename = file.path(opt$outDir,paste(c(plotTitle,".pdf"),collapse ="")),width = 4,height = 4)
                         
                         grid::grid.newpage()
@@ -1081,23 +1093,24 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                 plotTitle = paste('MA Plot (', test_name, ')', sep="")
                 ylimit=5
                 MA=ggplot()+
-                geom_point(data = subset(topT,(padj>=FDR_PVAL_CUTOFF)&(abs(log2FoldChange)<=ylimit) ),mapping = aes(x=baseMean,y=log2FoldChange),size=0.5,pch=21,fill="black",colour="black")+ 
-                geom_point(data = subset(topT,(padj<FDR_PVAL_CUTOFF)&(abs(log2FoldChange)<=ylimit) ),mapping = aes(x=baseMean,y=log2FoldChange),size=1,pch=21,fill="red",colour="black")+
-                geom_point(data = subset(topT,(padj>=FDR_PVAL_CUTOFF)&(log2FoldChange>ylimit) ),mapping = aes(x=baseMean),y=ylimit,size=0.5,pch=24,fill="black",colour="black")+
-                geom_point(data = subset(topT,(padj>=FDR_PVAL_CUTOFF)&(log2FoldChange<=-1*ylimit) ),mapping = aes(x=baseMean),y=-1*ylimit,size=0.5,pch=25,fill="black",colour="black")+
-                geom_point(data = subset(topT,(padj<FDR_PVAL_CUTOFF)&(log2FoldChange>ylimit) ),mapping = aes(x=baseMean),y=ylimit,size=1,pch=24,fill="red",colour="black")+
-                geom_point(data = subset(topT,(padj<FDR_PVAL_CUTOFF)&(log2FoldChange<=-1*ylimit) ),mapping = aes(x=baseMean),y=-1*ylimit,size=1,pch=25,fill="red",colour="black")+
-                scale_fill_manual(values = c('black','red'))+
-                geom_hline(yintercept = -1*FC_CUTOFF_log2,linetype="dotted",size=0.2)+
-                geom_hline(yintercept =  FC_CUTOFF_log2,linetype="dotted",size=0.2)+
-                #coord_cartesian(ylim=c(max(abs(topT$log2FoldChange)),-1*max(abs(topT$log2FoldChange))) )+
-                coord_cartesian(ylim=c(ylimit,-1*ylimit))+
-                labs(y=bquote(~Log[2]~fold~change),x='Mean Normalized Counts')+
-                theme_light()+      
-                ggtitle(plotTitle)+
-                scale_x_log10(labels = scales::comma)+
-                theme(plot.margin = margin(25,30,5,5),plot.title = element_text(size=9,hjust = 0.5,vjust=5,face = "bold"))+
-                theme(panel.grid = element_blank(),legend.position  ="none")
+                    geom_point(data = subset(topT,(padj>=FDR_PVAL_CUTOFF)&(abs(log2FoldChange)<=ylimit) ),mapping = aes(x=baseMean,y=log2FoldChange),size=0.5,pch=21,fill="black",colour="black")+
+                    geom_point(data = subset(topT,(padj<FDR_PVAL_CUTOFF)&(log2FoldChange>FC_CUTOFF_log2)&(abs(log2FoldChange)<=ylimit) ),mapping = aes(x=baseMean,y=log2FoldChange),size=1,pch=21,fill="red",colour="black")+
+                    geom_point(data = subset(topT,(padj<FDR_PVAL_CUTOFF)&(log2FoldChange<(-1)*FC_CUTOFF_log2)&(abs(log2FoldChange)<=ylimit) ),mapping = aes(x=baseMean,y=log2FoldChange),size=1,pch=21,fill="blue",colour="black")+
+                    geom_point(data = subset(topT,(padj>=FDR_PVAL_CUTOFF)&(log2FoldChange>ylimit) ),mapping = aes(x=baseMean),y=ylimit,size=0.5,pch=24,fill="black",colour="black")+
+                    geom_point(data = subset(topT,(padj>=FDR_PVAL_CUTOFF)&(log2FoldChange<=-1*ylimit) ),mapping = aes(x=baseMean),y=-1*ylimit,size=0.5,pch=25,fill="black",colour="black")+
+                    geom_point(data = subset(topT,(padj<FDR_PVAL_CUTOFF)&(log2FoldChange>ylimit) ),mapping = aes(x=baseMean),y=ylimit,size=1,pch=24,fill="red",colour="black")+
+                    geom_point(data = subset(topT,(padj<FDR_PVAL_CUTOFF)&(log2FoldChange<=-1*ylimit) ),mapping = aes(x=baseMean),y=-1*ylimit,size=1,pch=25,fill="blue",colour="black")+
+                    scale_fill_manual(values = c('black','red'))+
+                    geom_hline(yintercept = -1*FC_CUTOFF_log2,linetype="dotted",size=0.2)+
+                    geom_hline(yintercept =  FC_CUTOFF_log2,linetype="dotted",size=0.2)+
+                    #coord_cartesian(ylim=c(max(abs(topT$log2FoldChange)),-1*max(abs(topT$log2FoldChange))) )+
+                    coord_cartesian(ylim=c(-1*ylimit,ylimit))+
+                    labs(y=bquote(~Log[2]~fold~change),x='Mean Normalized Counts')+
+                    theme_light()+     
+                    ggtitle(plotTitle)+
+                    scale_x_log10(labels = scales::comma)+
+                    theme(plot.margin = margin(25,30,5,5),plot.title = element_text(size=9,hjust = 0.5,vjust=5,face = "bold"))+
+                    theme(panel.grid = element_blank(),legend.position  ="none")
                 MA+ggsave(filename = file.path(opt$outDir,paste(c(plotTitle,".pdf"),collapse ="")),width = 4,height = 4)
                 grid::grid.newpage()
                 grid::grid.draw(MA)
@@ -2201,6 +2214,8 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                             
                             
                         }
+						
+						
     
     
                         save(list=ls(all.names = TRUE),file =file.path(opt$outDir,'Session.RSession'))
