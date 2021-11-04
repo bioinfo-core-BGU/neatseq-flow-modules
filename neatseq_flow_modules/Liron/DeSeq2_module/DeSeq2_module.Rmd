@@ -583,21 +583,26 @@ plot_sheard_genes<-function(allRes,outDir,file_name){
 
 
 Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
-      writeLines(text =  paste(dim(mat)[1],dim(mat)[2],sep = ' ' ),con = file.path(outDir,'clickInput.orig'))
-      write.table(x = mat,append = T,file = file.path(outDir,'clickInput.orig'),sep = '\t',col.names = F)
+      InputFile = file.path(outDir,'clickInput.orig')
+      writeLines(text =  paste(dim(mat)[1],dim(mat)[2],sep = ' ' ),con = InputFile)
+      write.table(x = mat,append = T,file = InputFile ,sep = '\t',col.names = F)
       lines=c()
-      lines = c(lines,'DATA_TYPE')
+      lines = c(lines,'DATA_TYPE ')
       lines = c(lines,'FP ')
-      lines = c(lines,'INPUT_FILES_PREFIX')
+      lines = c(lines,'INPUT_FILES_PREFIX ')
       lines = c(lines,file.path(outDir,'clickInput '))
-      lines = c(lines,'OUTPUT_FILE_PREFIX')
+      lines = c(lines,'OUTPUT_FILE_PREFIX ')
       lines = c(lines,file.path(outDir,'clickOutput '))
-      lines = c(lines,'SIMILARITY_TYPE')
+      lines = c(lines,'SIMILARITY_TYPE ')
       lines = c(lines,'CORRELATION ')
-      lines = c(lines,'HOMOGENEITY')
+      lines = c(lines,'HOMOGENEITY ')
       lines = c(lines,as.character(HOMOGENEITY))
       writeLines(text =  lines,con = file.path(outDir,'params.txt'))
-      system(command = paste(click_path,file.path(outDir,'params.txt'),sep = ' ') )
+      system(command = paste('chmod 777 ',InputFile,sep = ' ') )
+      system(command = paste('chmod 777 ',file.path(outDir,'params.txt'),sep = ' ') )
+      Sys.sleep(1)
+      system(command = paste(click_path,file.path(outDir,'params.txt'),sep = ' '),wait = T )
+      Sys.sleep(50)
       clusters = read.table(file = file.path(outDir,'clickOutput.res.sol'),sep = '\t',header = F,row.names = 1)
       clusters = setNames(unlist(as.list(clusters)), row.names(clusters))
       return(clusters)
@@ -1745,8 +1750,15 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
             down_reg = c()
             if (!is.na(opt$significant_genes)){ 
                 sig.genes = unlist(stringi::stri_split(str = opt$significant_genes,regex = ','))
-                Normalized_counts_assay = Normalized_counts_assay[sig.genes,]
+                sig.genes = intersect(sig.genes$V1,row.names(Normalized_counts_assay))
+                #Normalized_counts_assay = Normalized_counts_assay[sig.genes,]
                 cat(sprintf("<h3>%s</h3>", "NOTE: Clustering Analysis is done on the user defined significant genes !!!!"))
+            }else if (!is.na(opt$significant_genes_file)) {
+                sig.genes = read.delim(opt$significant_genes_file,header = F)
+                sig.genes = intersect(sig.genes$V1,row.names(Normalized_counts_assay))
+                
+                #Normalized_counts_assay = Normalized_counts_assay[sig.genes,]
+                cat(sprintf("<h3>%s</h3>", "NOTE: Clustering Analysis is done on the user defined significant genes !!!!")) 
             }else if (!is.na(DESeqDataSet_Results)){
                 sig.genes = rownames(DESeqDataSet_Results_redOrdered)[(DESeqDataSet_Results_redOrdered[,"padj"]<FDR_PVAL_CUTOFF)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"]))]
                 up_reg    = rownames(DESeqDataSet_Results_redOrdered)[(DESeqDataSet_Results_redOrdered[,"log2FoldChange"]>FC_CUTOFF_log2)&(DESeqDataSet_Results_redOrdered[,"padj"]<FDR_PVAL_CUTOFF)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"]))]

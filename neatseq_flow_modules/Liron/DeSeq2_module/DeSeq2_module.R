@@ -42,6 +42,8 @@ option_list = list(
               help="Filter Samples with Low Number of expressed genes OR with Small Library size using 'scater' package ", metavar="character"),
   make_option(c("--FILTER_GENES"), action="store_true",default=FALSE, 
               help="Filter Low-Abundance Genes using 'scater' package ", metavar="character"),
+  make_option(c("--FILTER_GENES_CUTOFF"), type="numeric", default = 1, 
+              help="Filter Low-Abundance Genes having average read count lower then this cutoff. Only when FILTER_GENES is set", metavar="character"),
   make_option(c( "--Trinotate"), type="character", default=NA, 
               help="Path to a Trinotate annotation file in which the first column is the genes names", metavar="character"),
   make_option(c( "--Rmarkdown"), type="character", default=NA, 
@@ -127,7 +129,9 @@ option_list = list(
   make_option(c("--only_clustering"), action="store_true",default=FALSE, 
               help="Don't Perform Differential Analysis!!!", metavar="character"), 
   make_option(c("--significant_genes"), type="character", default=NA,
-              help="Use these genes as the set of significant genes [a comma separated list]", metavar="character")
+              help="Use these genes as the set of significant genes [a comma separated list]", metavar="character"),
+  make_option(c("--significant_genes_file"), type="character", default=NA,
+              help="Use these genes as the set of significant genes [gene per line in this file]", metavar="character")
 ); 
 
 
@@ -648,25 +652,31 @@ plot_sheard_genes<-function(allRes,outDir,file_name){
 }
 
 
+
 Run_click<-function(mat,click_path,outDir,HOMOGENEITY = 0.5){
-  writeLines(text =  paste(dim(mat)[1],dim(mat)[2],sep = ' ' ),con = file.path(outDir,'clickInput.orig'))
-  write.table(x = mat,append = T,file = file.path(outDir,'clickInput.orig'),sep = '\t',col.names = F)
-  lines=c()
-  lines = c(lines,'DATA_TYPE')
-  lines = c(lines,'FP ')
-  lines = c(lines,'INPUT_FILES_PREFIX')
-  lines = c(lines,file.path(outDir,'clickInput '))
-  lines = c(lines,'OUTPUT_FILE_PREFIX')
-  lines = c(lines,file.path(outDir,'clickOutput '))
-  lines = c(lines,'SIMILARITY_TYPE')
-  lines = c(lines,'CORRELATION ')
-  lines = c(lines,'HOMOGENEITY')
-  lines = c(lines,as.character(HOMOGENEITY))
-  writeLines(text =  lines,con = file.path(outDir,'params.txt'))
-  system(command = paste(click_path,file.path(outDir,'params.txt'),sep = ' ') )
-  clusters = read.table(file = file.path(outDir,'clickOutput.res.sol'),sep = '\t',header = F,row.names = 1)
-  clusters = setNames(unlist(as.list(clusters)), row.names(clusters))
-  return(clusters)
+      InputFile = file.path(outDir,'clickInput.orig')
+      writeLines(text =  paste(dim(mat)[1],dim(mat)[2],sep = ' ' ),con = InputFile)
+      write.table(x = mat,append = T,file = InputFile ,sep = '\t',col.names = F)
+      lines=c()
+      lines = c(lines,'DATA_TYPE ')
+      lines = c(lines,'FP ')
+      lines = c(lines,'INPUT_FILES_PREFIX ')
+      lines = c(lines,file.path(outDir,'clickInput '))
+      lines = c(lines,'OUTPUT_FILE_PREFIX ')
+      lines = c(lines,file.path(outDir,'clickOutput '))
+      lines = c(lines,'SIMILARITY_TYPE ')
+      lines = c(lines,'CORRELATION ')
+      lines = c(lines,'HOMOGENEITY ')
+      lines = c(lines,as.character(HOMOGENEITY))
+      writeLines(text =  lines,con = file.path(outDir,'params.txt'))
+      system(command = paste('chmod 777 ',InputFile,sep = ' ') )
+      system(command = paste('chmod 777 ',file.path(outDir,'params.txt'),sep = ' ') )
+      Sys.sleep(1)
+      system(command = paste(click_path,file.path(outDir,'params.txt'),sep = ' '),wait = T )
+      Sys.sleep(50)
+      clusters = read.table(file = file.path(outDir,'clickOutput.res.sol'),sep = '\t',header = F,row.names = 1)
+      clusters = setNames(unlist(as.list(clusters)), row.names(clusters))
+      return(clusters)
 }
 
 
@@ -2612,7 +2622,7 @@ if ((opt$FILTER_SAMPLES) | (opt$FILTER_GENES)){
         print('Before Filtering:')
         print(dim(sce))
         ave.counts <- rowMeans(counts(sce))
-        keep <- ave.counts >= 1
+        keep <- ave.counts >= opt$FILTER_GENES_CUTOFF
         #print(sum(keep))
         sce <- sce[names(keep[keep==T]),]
         print('After Filtering:')
@@ -2700,14 +2710,6 @@ if (opt$only_clustering==FALSE){
                                                 colData = colData,
                                                 design = as.formula(opt$DESIGN))
   }
-  if (opt$modelMatrixType=='standard'){ 
-    DESeqDataSet_base <- DESeq(DESeqDataSet_base,parallel=F)
-  }else{
-    DESeqDataSet_base <- DESeq(DESeqDataSet_base,
-                               parallel=F,
-                               betaPrior = TRUE,
-                               modelMatrixType=opt$modelMatrixType)
-  }
   
   if (!is.na(opt$collapseReplicates)){
     if (opt$collapseReplicates %in% colnames(colData)){
@@ -2725,6 +2727,16 @@ if (opt$only_clustering==FALSE){
     }
   }
   
+  if (opt$modelMatrixType=='standard'){ 
+    DESeqDataSet_base <- DESeq(DESeqDataSet_base,parallel=F)
+  }else{
+    DESeqDataSet_base <- DESeq(DESeqDataSet_base,
+                               parallel=F,
+                               betaPrior = TRUE,
+                               modelMatrixType=opt$modelMatrixType)
+  }
+  
+  
   
   test_count=list()
   
@@ -2735,35 +2747,39 @@ if (opt$only_clustering==FALSE){
   
   if (!is.na(opt$significant_genes)){ 
         sig.genes = unlist(stringi::stri_split(str = opt$significant_genes,regex = ','))
+  }else if (!is.na(opt$significant_genes_file)) {
+        sig.genes = read.delim(opt$significant_genes_file,header = F)
+        sig.genes = sig.genes$V1
   }else{
         sig.genes = c()
   }
-
+  
   if (is.na(opt$LRT)){
-    create_excel_output(DESeqDataSet_base,
-                        opt,
-                        test_count,
-                        opt$NORMALIZATION_TYPE,
-                        paste0(opt$outDir,"summary_table"),
-                        linear_fc_cutoff=opt$FoldChange,
-                        post_linear_fc_cutoff=opt$Post_statistical_FoldChange,
-                        alpha_cutoff=opt$ALPHA,
-                        post_alpha=opt$Post_statistical_ALPHA,
-                        Annotation = Annotation)
-                        
-    create_excel_output(DESeqDataSet_base,
-                        opt,
-                        test_count,
-                        opt$NORMALIZATION_TYPE,
-                        paste0(opt$outDir,"Only_Significant_Genes_summary_table"),
-                        linear_fc_cutoff=opt$FoldChange,
-                        post_linear_fc_cutoff=opt$Post_statistical_FoldChange,
-                        alpha_cutoff=opt$ALPHA,
-                        post_alpha=opt$Post_statistical_ALPHA,
-                        use_only_sig_gene=T,
-                        Sig_Gene = sig.genes,
-                        Annotation = Annotation)
-                    
+    if (length(test_count)>0){
+        create_excel_output(DESeqDataSet_base,
+                            opt,
+                            test_count,
+                            opt$NORMALIZATION_TYPE,
+                            paste0(opt$outDir,"summary_table"),
+                            linear_fc_cutoff=opt$FoldChange,
+                            post_linear_fc_cutoff=opt$Post_statistical_FoldChange,
+                            alpha_cutoff=opt$ALPHA,
+                            post_alpha=opt$Post_statistical_ALPHA,
+                            Annotation = Annotation)
+                            
+        create_excel_output(DESeqDataSet_base,
+                            opt,
+                            test_count,
+                            opt$NORMALIZATION_TYPE,
+                            paste0(opt$outDir,"Only_Significant_Genes_summary_table"),
+                            linear_fc_cutoff=opt$FoldChange,
+                            post_linear_fc_cutoff=opt$Post_statistical_FoldChange,
+                            alpha_cutoff=opt$ALPHA,
+                            post_alpha=opt$Post_statistical_ALPHA,
+                            use_only_sig_gene=T,
+                            Sig_Gene = sig.genes,
+                            Annotation = Annotation)
+    }
     genral_test_name <- "GENERAL"
   }
   else {
@@ -2806,6 +2822,15 @@ if (opt$only_clustering==FALSE){
 }else{
   DESeqDataSet_base=NA
   test_count=c('only_clustering')
+  if (!is.na(opt$significant_genes)){ 
+        sig.genes = unlist(stringi::stri_split(str = opt$significant_genes,regex = ','))
+  }else if (!is.na(opt$significant_genes_file)) {
+        sig.genes = read.delim(opt$significant_genes_file,header = F)
+        sig.genes = sig.genes$V1
+  }else{
+        sig.genes = c()
+  }
+  opt$sig.genes = sig.genes
 }
 
 
@@ -2918,30 +2943,32 @@ if (!is.na(DESeqDataSet)){
     
     if (opt$only_clustering==FALSE){
         if (is.na(opt$LRT)){
-          create_excel_output(DESeqDataSet,
-                              opt,
-                              test_count,
-                              opt$NORMALIZATION_TYPE ,
-                              paste0(opt$outDir, "summary_table_batch_effect"),
-                              fixed_norm_counts     = assay(Normalized_counts),
-                              linear_fc_cutoff      = opt$FoldChange,
-                              post_linear_fc_cutoff = opt$Post_statistical_FoldChange,
-                              alpha_cutoff          = opt$ALPHA,
-                              post_alpha            = opt$Post_statistical_ALPHA,
-                              Annotation            = Annotation)
-          create_excel_output(DESeqDataSet,
-                              opt,
-                              test_count,
-                              opt$NORMALIZATION_TYPE ,
-                              paste0(opt$outDir, "Only_Significant_Genes_summary_table_batch_effect"),
-                              fixed_norm_counts     = assay(Normalized_counts),
-                              linear_fc_cutoff      = opt$FoldChange,
-                              post_linear_fc_cutoff = opt$Post_statistical_FoldChange,
-                              alpha_cutoff          = opt$ALPHA,
-                              post_alpha            = opt$Post_statistical_ALPHA,
-                              use_only_sig_gene     = T,
-                              Sig_Gene              = sig.genes,
-                              Annotation            = Annotation)
+            if (length(test_count)>0){
+                  create_excel_output(DESeqDataSet,
+                                      opt,
+                                      test_count,
+                                      opt$NORMALIZATION_TYPE ,
+                                      paste0(opt$outDir, "summary_table_batch_effect"),
+                                      fixed_norm_counts     = assay(Normalized_counts),
+                                      linear_fc_cutoff      = opt$FoldChange,
+                                      post_linear_fc_cutoff = opt$Post_statistical_FoldChange,
+                                      alpha_cutoff          = opt$ALPHA,
+                                      post_alpha            = opt$Post_statistical_ALPHA,
+                                      Annotation            = Annotation)
+                  create_excel_output(DESeqDataSet,
+                                      opt,
+                                      test_count,
+                                      opt$NORMALIZATION_TYPE ,
+                                      paste0(opt$outDir, "Only_Significant_Genes_summary_table_batch_effect"),
+                                      fixed_norm_counts     = assay(Normalized_counts),
+                                      linear_fc_cutoff      = opt$FoldChange,
+                                      post_linear_fc_cutoff = opt$Post_statistical_FoldChange,
+                                      alpha_cutoff          = opt$ALPHA,
+                                      post_alpha            = opt$Post_statistical_ALPHA,
+                                      use_only_sig_gene     = T,
+                                      Sig_Gene              = sig.genes,
+                                      Annotation            = Annotation)
+            }
           genral_test_name <- "GENERAL"
         }
         else {
@@ -3483,12 +3510,16 @@ for (test2do in test_count){
     
     ##################Clustering##################################    
     if (!is.na(opt$significant_genes)){ 
-      sig.genes = unlist(stringi::stri_split(str = opt$significant_genes,regex = ','))
-      Normalized_counts_assay = Normalized_counts_assay[sig.genes,]
+        sig.genes = unlist(stringi::stri_split(str = opt$significant_genes,regex = ','))
+        sig.genes = intersect(sig.genes$V1,row.names(Normalized_counts_assay))
+        #Normalized_counts_assay = Normalized_counts_assay[sig.genes,]
+    }else if (!is.na(opt$significant_genes_file)) {
+        sig.genes = read.delim(opt$significant_genes_file,header = F)
+        sig.genes = intersect(sig.genes$V1,row.names(Normalized_counts_assay))
     }else if (!is.na(DESeqDataSet_Results)){
-      sig.genes = rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"padj"]<opt$ALPHA)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
-      up_reg    = rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"log2FoldChange"]>FC_CUTOFF_log2)&(DESeqDataSet_Results_redOrdered[,"padj"]<FDR_PVAL_CUTOFF)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
-      down_reg  = rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"log2FoldChange"]<FC_CUTOFF_log2)&(DESeqDataSet_Results_redOrdered[,"padj"]<FDR_PVAL_CUTOFF)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
+        sig.genes = rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"padj"]<opt$ALPHA)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
+        up_reg    = rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"log2FoldChange"]>FC_CUTOFF_log2)&(DESeqDataSet_Results_redOrdered[,"padj"]<FDR_PVAL_CUTOFF)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
+        down_reg  = rownames(DESeqDataSet_Results_redOrdered[(DESeqDataSet_Results_redOrdered[,"log2FoldChange"]<FC_CUTOFF_log2)&(DESeqDataSet_Results_redOrdered[,"padj"]<FDR_PVAL_CUTOFF)&(!is.na(DESeqDataSet_Results_redOrdered[,"padj"])),])
       #sig.genes = c(up_reg,down_reg)
     }else{
       sig.genes=rownames(countData)
