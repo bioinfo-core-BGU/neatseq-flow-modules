@@ -126,6 +126,15 @@ option_list = list(
   make_option(c("--PCA_SIZE"), type="character", default='Library_sizes',
               help="The Filed In the Sample Data To Determine Size In The PCA Plot", metavar="character"),
   
+  make_option(c("--RandomForest"), type="character", default=NA,
+              help="Filed In the Sample Data To Classify By Using Random-Forest. ", metavar="character"), 
+  make_option(c("--RF-Importance"), type="numeric", default=0,
+              help="The Random-Forest Importance Cutoff to choose Genes. The default is 0", metavar="character"),
+  make_option(c("--RF-Trees"), type="numeric", default=500,
+              help="The Random-Forest Number of Trees to Generate. The default is 500", metavar="character"),
+  
+  
+  
   make_option(c("--only_clustering"), action="store_true",default=FALSE, 
               help="Don't Perform Differential Analysis!!!", metavar="character"), 
   make_option(c("--significant_genes"), type="character", default=NA,
@@ -1800,6 +1809,25 @@ if  (!file.exists(Annotation_file)){
                     print(dataset)
                     Hub = query(ah, c('OrgDb',dataset))
                     Hub = Hub[[length(Hub$title)]]
+                    Hub_columns = columns(Hub)
+                    fields2use  = c('GENENAME','SYMBOL','PFAM') 
+                    print('Cloumns in DB:')
+                    print(Hub_columns)
+                    if (is.na(opt$GENE_ID_TYPE)){
+                        genes  = rownames(countData)
+                        max_overlap = list()
+                        for (col in Hub_columns){
+                            if (sum(stringi::stri_startswith(fixed =col  ,str = Hub_columns))<2){
+                                max_overlap[col] = length(intersect(genes,keys(Hub, keytype=col)))
+                            }
+                        }
+                        GENE_ID_TYPE = names(max_overlap)[max_overlap == max(unlist(max_overlap))]
+                        if (length(GENE_ID_TYPE)>0 ){
+                            opt$GENE_ID_TYPE = GENE_ID_TYPE[1]
+                            print('Gene ID That Was Chosen:')
+                            print(opt$GENE_ID_TYPE)
+                        }
+                    }
                     if ( stringi::stri_trans_toupper(opt$GENE_ID_TYPE) %in% columns(Hub)){
                         if (opt$USE_INPUT_GENES_AS_BACKGROUND){
                             genes  = rownames(countData)
@@ -1807,15 +1835,21 @@ if  (!file.exists(Annotation_file)){
                             Genes  = keys(Hub, keytype=stringi::stri_trans_toupper(opt$GENE_ID_TYPE))
                         }
                         
-                        Hub_columns = columns(Hub)
-                        # c('GENENAME','GO','ONTOLOGY','SYMBOL','UNIPROT','GID','PFAM','PATH')
+                        if (('GOALL' %in% Hub_columns) & ('GO' %in% Hub_columns) ){
+                            fields2use = c(fields2use,'GOALL')
+                        }else{
+                            fields2use = c(fields2use,'GO')
+                        }
                         Annotation  = select(Hub,
                                              keys = as.character(Genes),
-                                             columns=intersect(Hub_columns, c('GENENAME','GO','SYMBOL','PFAM')),
+                                             columns=intersect(Hub_columns, fields2use),
                                              keytype=stringi::stri_trans_toupper(opt$GENE_ID_TYPE))
                         print(dim(Annotation))
                         if ('GO' %in% Hub_columns) {
-                            colnames(Annotation)['GO' == colnames(Annotation)] = 'go_id'
+                            colnames(Annotation)['GO'    == colnames(Annotation)] = 'go_id'
+                        }
+                        if ('GOALL' %in% Hub_columns) {
+                            colnames(Annotation)['GOALL' == colnames(Annotation)] = 'go_id'
                         }
                         if ('UNIPROT' %in% Hub_columns) {
                             Kegg_Annotation = select(Hub,
@@ -2735,9 +2769,7 @@ if (opt$only_clustering==FALSE){
                                betaPrior = TRUE,
                                modelMatrixType=opt$modelMatrixType)
   }
-  
-  
-  
+   
   test_count=list()
   
   if ((!is.na(opt$CONTRAST)) & (opt$CONTRAST != "") & (opt$CONTRAST != "No_DESIGN")){
@@ -3019,6 +3051,10 @@ if (!is.na(DESeqDataSet)){
     test_count = c('No_DESIGN')
   }
   
+   if ((!is.na(opt$RandomForest))){
+    test_count = c(test_count,'Random_Forest')
+  }
+  
   # rmarkdown::render(input             = opt$Rmarkdown,
                     # output_file       = file.path(base_out_dir,paste('Final_Report','GENERAL','html', sep = '.')),
                     # intermediates_dir = base_out_dir,
@@ -3047,7 +3083,7 @@ if (!is.na(DESeqDataSet)){
 for (test2do in test_count){
   print(test2do)
   if (Rmarkdown_flag){
-    if ((test2do=='LRT')||(test2do=='No_DESIGN')||(test2do=='only_clustering') ||(test2do=='No_Statistics') ){
+    if ((test2do=='LRT')||(test2do=='No_DESIGN')||(test2do=='only_clustering') ||(test2do=='No_Statistics') ||(test2do=='Random_Forest') ){
       test_name=test2do
     }else{
       contrast_list = unlist(stringi::stri_split(str = test2do,regex = ','))
