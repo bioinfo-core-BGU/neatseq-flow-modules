@@ -115,10 +115,19 @@ option_list = list(
   make_option(c("--Mclust"), action="store_true",default=FALSE, 
               help="Use Mclust for determining the number of clusters", metavar="character"), 
   
+  make_option(c("--Enrichment_pvaluecutoff"), type="numeric",default=0.05, 
+              help="Enrichment Pvalue Cutoff [If set to 1 will output all terms]", metavar="character"),
+  make_option(c("--Enrichment_padjustmethod"), type="character",default='fdr', 
+              help="Enrichment Method for multiple testing correction", metavar="character"),
+  make_option(c("--KEGG_Enrichment_of"), type="character",default='pathway', 
+              help="Find Enrichment of pathways or KOs", metavar="character"),
+  make_option(c("--Filter_KEGG_pathways_by_taxon"), type="character",default=NA, 
+              help="Only Test Enrichment for KEGG Pathways found in a Taxon", metavar="character"),
   make_option(c("--Enriched_terms_overlap"), action="store_true",default=FALSE, 
               help="Test for genes overlap in enriched terms", metavar="character"),
   make_option(c("--USE_INPUT_GENES_AS_BACKGROUND"), action="store_true",default=FALSE, 
               help="Use The input Genes as the Background for Enrichment Analysis", metavar="character"),
+              
   make_option(c("--PCA_COLOR"), type="character", default=NA,
               help="The Filed In the Sample Data To Determine Color In The PCA Plot", metavar="character"),
   make_option(c("--PCA_SHAPE"), type="character", default=NA,
@@ -140,7 +149,9 @@ option_list = list(
   make_option(c("--significant_genes"), type="character", default=NA,
               help="Use these genes as the set of significant genes [a comma separated list]", metavar="character"),
   make_option(c("--significant_genes_file"), type="character", default=NA,
-              help="Use these genes as the set of significant genes [gene per line in this file]", metavar="character")
+              help="Use these genes as the set of significant genes [gene per line in this file]", metavar="character"),
+  make_option(c("--Genes_file"), type="character", default=NA,
+              help="Use only these genes in the analysis [gene per line in this file]", metavar="character")
 ); 
 
 
@@ -1651,6 +1662,25 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
     return(data.frame())
   }
 }
+
+Filter_Pathways_By_Taxa <- function(taxon){
+    ko_paths_names_all = KEGGREST::keggList("pathway", "ko")
+    kegg_organisms     = KEGGREST::keggList("organism")
+    kegg_organisms     = as.data.frame(kegg_organisms)
+    organisms          = kegg_organisms[str_detect(kegg_organisms$phylogeny,taxon),'organism']
+    
+    paths = c()  #initialize paths vector
+    for (org in organisms) {
+        a = unique(KEGGREST::keggLink("pathway", org))  #get all pathways per species, make the list nonredundant
+        print (paste (org, length(a), "pathways"))
+        a = str_replace(a, "path:[a-z]+", "path:ko")  #replace species-specific with ko path name
+        paths = c(paths, a)  #add to paths vector
+    }
+    paths_unique = unique(paths)  #remove redundancy
+    print (paste ("No of unique KO pathways retrieved:", length(paths_unique)))
+    paths_unique = str_replace(paths_unique, "ko", "map")
+    return(paths_unique)
+}
 #####################Functions-End################################
 
 #####################Read count data and pars it##################
@@ -2530,7 +2560,7 @@ if  (!file.exists(Annotation_file)){
           }
     }
 
-    Annotation <- read.delim(Annotation_file, sep="\t", row.names=1)
+    Annotation <- read.delim(Annotation_file, sep="\t", row.names=1,quote = "")
     KEGG_flag          = FALSE
     ORGANISM_KEGG_flag = FALSE
     KEGG_KAAS_flag     = FALSE
@@ -2585,6 +2615,19 @@ if  (!file.exists(Annotation_file)){
     }
 }
 
+if (!is.na(opt$Filter_KEGG_pathways_by_taxon)){
+    if (KEGG_KAAS_flag){
+        Pathways2Filter = Filter_Pathways_By_Taxa(opt$Filter_KEGG_pathways_by_taxon)
+        KASS_Pathway2name = KASS_Pathway2name[KASS_Pathway2name[1] %in% Pathways2Filter,]
+        KASS_Pathway2gene = KASS_Pathway2gene[KASS_Pathway2gene[1] %in% Pathways2Filter,]
+        
+    } else if (KEGG_flag ) {
+        Pathways2Filter = Filter_Pathways_By_Taxa(opt$Filter_KEGG_pathways_by_taxon)
+        Pathway2name = Pathway2name[Pathway2name[1] %in% Pathways2Filter,]
+        Pathway2gene = Pathway2gene[Pathway2gene[1] %in% Pathways2Filter,]
+    }
+}
+
 print('Reading samples data...')    
 #Read Sample Data
 colData <- read.csv(opt$SAMPLE_DATA_FILE, sep="\t", row.names=1)
@@ -2605,6 +2648,58 @@ colData   <- as.data.frame(colData[used_samples ,])
 rownames(colData) <- used_samples
 colnames(colData) <- colData_col
 all(rownames(colData) == colnames(countData))
+
+if (!is.na(opt$Genes_file)) {
+    genes = read.delim(opt$Genes_file,header = F)
+    genes = genes$V1
+    genes2use = intersect(unique(genes),rownames(countData))
+    print('Before Gene Filtering by a user List:')
+    print(dim(countData))
+    countData <- countData[genes2use, ]
+    print('After Gene Filtering by a user List:')
+    print(dim(countData))
+}
+
+
+
+
+if (opt$USE_INPUT_GENES_AS_BACKGROUND){
+    if (KEGG_flag == TRUE){
+        print('Before INPUT GENES AS BACKGROUND Filtering:')
+        print(dim(Pathway2gene))
+        genes2use = intersect(unique(Pathway2gene[,2]),rownames(countData))
+        Pathway2gene = Pathway2gene[Pathway2gene[,2] %in% genes2use,]
+        print('After INPUT GENES AS BACKGROUND Filtering:')
+        print(dim(Pathway2gene))
+    }
+    if (KEGG_KAAS_flag == TRUE){
+        print('Before INPUT GENES AS BACKGROUND Filtering:')
+        print(dim(KASS_Pathway2gene))
+        genes2use = intersect(unique(KASS_Pathway2gene[,2]),rownames(countData))
+        KASS_Pathway2gene = KASS_Pathway2gene[KASS_Pathway2gene[,2] %in% genes2use,]
+        print('After INPUT GENES AS BACKGROUND Filtering:')
+        print(dim(KASS_Pathway2gene))
+    }
+    
+    if (ORGANISM_KEGG_flag == TRUE){
+        print('Before INPUT GENES AS BACKGROUND Filtering:')
+        print(dim(ORGANISM_Pathway2gene))
+        genes2use = intersect(unique(ORGANISM_Pathway2gene[,2]),rownames(countData))
+        ORGANISM_Pathway2gene = ORGANISM_Pathway2gene[ORGANISM_Pathway2gene[,2] %in% genes2use,]
+        print('After INPUT GENES AS BACKGROUND Filtering:')
+        print(dim(ORGANISM_Pathway2gene))
+    }
+    
+    if (GO_flag == TRUE){
+        print('Before INPUT GENES AS BACKGROUND Filtering:')
+        print(dim(GO2gene_BP))
+        genes2use = intersect(unique(GO2gene_BP[,2]),rownames(countData))
+        GO2gene_BP = GO2gene_BP[GO2gene_BP[,2] %in% genes2use,]
+        print('After INPUT GENES AS BACKGROUND Filtering:')
+        print(dim(GO2gene_BP))
+    }
+
+}
 Library_sizes=apply(X = countData,MARGIN = 2,FUN = sum)
 colData=merge(colData,as.data.frame(Library_sizes),by="row.names",sort=F)
 rownames(colData)=colData$Row.names
@@ -2674,7 +2769,7 @@ if ((opt$FILTER_SAMPLES) | (opt$FILTER_GENES)){
       dev.off()
   }else{
       sce = SingleCellExperiment(list(counts=countData))
-      dim(sce)
+      print(dim(sce))
       sce_cell <- perCellQCMetrics(sce)
       pdf(file = file.path(opt$outDir,"Pre_QA_hist.pdf"))
       par(mfrow=c(1,2))
@@ -2719,6 +2814,9 @@ if ((opt$FILTER_SAMPLES) | (opt$FILTER_GENES)){
   }
 }        
 ##################Filttering the data END######################
+
+write.csv(x =countData ,file = file.path(opt$outDir,"CountData.tab"),sep = '\t')
+
 
 ##################DeSeq- design and normalization ########################################
 

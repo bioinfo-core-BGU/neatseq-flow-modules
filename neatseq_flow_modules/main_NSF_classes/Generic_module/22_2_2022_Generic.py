@@ -437,14 +437,6 @@ class Step_Generic(Step):
                         value =get_File_Type_data(self.params["inputs"],[inputs,"constant_value"],'')
                         value = value.replace('{{sample_name}}',sample)
                         value = value.replace('{{project_name}}',self.sample_data["Title"])
-                        if 'type' in list(self.sample_data[sample].keys()):
-                            if len(get_File_Type_data(self.params["inputs"],[inputs,"sep"]))>0:
-                                sep = get_File_Type_data(self.params["inputs"],[inputs,"sep"])
-                            else:
-                                sep = self.params['arg_separator']
-                            value = value.replace('{{type}}',sep.join(map(str,self.sample_data[sample]['type'])))
-                        else:
-                            value = value.replace('{{type}}','')
                         if value!='':
                             if inputs.startswith("Empty".lower()):
                                 inputs_script +="%s   \\\n\t"    % value
@@ -465,13 +457,6 @@ class Step_Generic(Step):
                         
                         prefix       = get_File_Type_data(self.params["inputs"],[inputs,"prefix"])
                         suffix       = get_File_Type_data(self.params["inputs"],[inputs,"suffix"])
-                        
-                        prefix = prefix.replace('{{sample_name}}',sample)
-                        prefix = prefix.replace('{{project_name}}',self.sample_data["Title"])
-                        
-                        suffix = suffix.replace('{{sample_name}}',sample)
-                        suffix = suffix.replace('{{project_name}}',self.sample_data["Title"])
-                        
                         
                         if len(get_File_Type_data(self.params["inputs"],[inputs,"sep"]))>0:
                             sep=get_File_Type_data(self.params["inputs"],[inputs,"sep"])
@@ -524,12 +509,6 @@ class Step_Generic(Step):
                             prefix       = get_File_Type_data(self.params["inputs"],[inputs,"prefix"])
                             suffix       = get_File_Type_data(self.params["inputs"],[inputs,"suffix"])
                             
-                            prefix = prefix.replace('{{sample_name}}',sample)
-                            prefix = prefix.replace('{{project_name}}',self.sample_data["Title"])
-                            
-                            suffix = suffix.replace('{{sample_name}}',sample)
-                            suffix = suffix.replace('{{project_name}}',self.sample_data["Title"])
-                            
                             for File_Type_slot in str(get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])).replace("'",'').replace(" ",'').strip('[').strip(']').strip('"').split(','):
                                 if get_File_Type_data(self.params["inputs"],[inputs,"scope"])=="project":
                                     if 'use_dirname' in self.params["inputs"][inputs].keys():
@@ -570,12 +549,6 @@ class Step_Generic(Step):
                     else:
                         output_filename = "".join([use_dir ,get_File_Type_data(self.params["outputs"],[outputs,"constant_file_name"])])
                         real_filename   = "".join([sample_dir ,get_File_Type_data(self.params["outputs"],[outputs,"constant_file_name"])])
-                    
-                    real_filename   = real_filename.replace('{{project_name}}',self.sample_data["Title"])
-                    output_filename = output_filename.replace('{{project_name}}',self.sample_data["Title"])
-                    real_filename   = real_filename.replace('{{sample_name}}',sample)
-                    output_filename = output_filename.replace('{{sample_name}}',sample)
-                    
                     File_Type=""
                     if outputs.startswith("No_run")==False:
                         if outputs.startswith("Empty".lower()):
@@ -642,30 +615,11 @@ class Step_Generic(Step):
         # Adds inputs files
         if len(get_File_Type_data(self.params,["inputs"]))>0:
             for inputs in list(self.params["inputs"].keys()):
+                
                 if "constant_value" in list(self.params["inputs"][inputs].keys()):
                     value =get_File_Type_data(self.params["inputs"],[inputs,"constant_value"],'')
-                    if get_File_Type_data(self.params["inputs"],[inputs,"scope"])=="sample":
-                        if len(get_File_Type_data(self.params["inputs"],[inputs,"sep"]))>0:
-                            sep=get_File_Type_data(self.params["inputs"],[inputs,"sep"])
-                        else:
-                            sep = self.params['arg_separator']
-                            
-                        value =  value.replace('{{sample_name}}', sep.join(self.sample_data["samples"]))
-                        
-                        if len(get_File_Type_data(self.params["inputs"],[inputs,"sep"]))>0:
-                            sep = get_File_Type_data(self.params["inputs"],[inputs,"sep"])
-                        else:
-                            sep = self.params['arg_separator']
-                        type = []
-                        for sample in self.sample_data["samples"]:
-                            if 'type' in list(self.sample_data[sample].keys()):
-                                type.append(self.sample_data[sample]['type'])
-                        value = value.replace('{{type}}',sep.join(map(str,type)))
-                        
                     value = value.replace('{{sample_name}}',self.sample_data["Title"])
                     value = value.replace('{{project_name}}',self.sample_data["Title"])
-                    if 'type' in list(self.sample_data["project_data"].keys()):
-                        value = value.replace('{{type}}',self.sample_data["project_data"]['type'])
                     if value!='':
                         if inputs.startswith("Empty".lower()):
                             inputs_script +="%s   \\\n\t"    % value
@@ -684,9 +638,8 @@ class Step_Generic(Step):
                     else:
                         base=self.step
                     
-                    # prefix    = get_File_Type_data(self.params["inputs"],[inputs,"prefix"])
-                    # suffix    = get_File_Type_data(self.params["inputs"],[inputs,"suffix"])
-                    
+                    prefix    = get_File_Type_data(self.params["inputs"],[inputs,"prefix"])
+                    suffix    = get_File_Type_data(self.params["inputs"],[inputs,"suffix"])
                     File_Type = ""
                     
                     if len(get_File_Type_data(self.params["inputs"],[inputs,"sep"]))>0:
@@ -698,16 +651,6 @@ class Step_Generic(Step):
                             sep=" \\\n\t"+inputs + self.params['arg_separator']
                     
                     if get_File_Type_data(self.params["inputs"],[inputs,"scope"])=="project":
-                        
-                        prefix    = get_File_Type_data(self.params["inputs"],[inputs,"prefix"])
-                        suffix    = get_File_Type_data(self.params["inputs"],[inputs,"suffix"])
-                        
-                        prefix = prefix.replace('{{sample_name}}',self.sample_data["Title"])
-                        prefix = prefix.replace('{{project_name}}',self.sample_data["Title"])
-                        
-                        suffix = suffix.replace('{{sample_name}}',self.sample_data["Title"])
-                        suffix = suffix.replace('{{project_name}}',self.sample_data["Title"])
-                        
                         for File_Type_slot in str(get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])).replace("'",'').replace(" ",'').strip('[').strip(']').strip('"').split(','):
                             if len(File_Type)>0:
                                 File_Type+=sep
@@ -718,16 +661,6 @@ class Step_Generic(Step):
                                 File_Type+=              os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  , ( prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).lstrip(os.sep) )
                     else:
                         for sample in self.sample_data["samples"]:
-                            
-                            prefix    = get_File_Type_data(self.params["inputs"],[inputs,"prefix"])
-                            suffix    = get_File_Type_data(self.params["inputs"],[inputs,"suffix"])
-                            
-                            prefix = prefix.replace('{{sample_name}}',sample)
-                            prefix = prefix.replace('{{project_name}}',self.sample_data["Title"])
-                            
-                            suffix = suffix.replace('{{sample_name}}',sample)
-                            suffix = suffix.replace('{{project_name}}',self.sample_data["Title"])
-                            
                             for File_Type_slot in str(get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])).replace("'",'').replace(" ",'').strip('[').strip(']').strip('"').split(','):
                                 if len(File_Type)>0:
                                     File_Type+=sep
@@ -806,9 +739,6 @@ class Step_Generic(Step):
                 else:
                     output_filename = "".join([use_dir ,get_File_Type_data(self.params["outputs"],[outputs,"constant_file_name"])])            
                     real_filename   = "".join([self.base_dir ,get_File_Type_data(self.params["outputs"],[outputs,"constant_file_name"])])    
-                
-                real_filename   = real_filename.replace('{{project_name}}',self.sample_data["Title"])
-                output_filename = output_filename.replace('{{project_name}}',self.sample_data["Title"])
                 if outputs.startswith("No_run")==False:
                     if outputs.startswith("Empty".lower()):
                         outputs_script +="%s   \\\n\t"    % output_filename

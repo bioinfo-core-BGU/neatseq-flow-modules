@@ -137,6 +137,11 @@ class Step_kaiju2table(Step):
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
+        if self.params["scope"] == "project":
+            sample_list = ["project_data"]
+        elif self.params["scope"] == "sample":
+            sample_list = self.sample_data["samples"]
+            
         if "merge_count_tables" in self.params:
             if not self.params["merge_count_tables"]:
                 self.params["merge_count_tables"] = "perl " + os.path.join(os.path.dirname(os.path.realpath(__file__)), "merge_count_tables.pl")
@@ -155,8 +160,8 @@ class Step_kaiju2table(Step):
 \t{outfn}
 
             """.format(path=self.params["merge_count_tables"],
-                       samples=",".join(self.sample_data["samples"]),
-                       files=",".join([self.sample_data[sample]["kaiju.report."+tax_level] for sample in self.sample_data["samples"]]),
+                       samples=",".join([sample for sample in sample_list]),
+                       files=",".join([self.sample_data[sample]["kaiju.report."+tax_level] for sample in sample_list]),
                        outfn=self.base_dir+output_filename)
 
                 self.sample_data["project_data"]["kaiju.report."+tax_level] = self.base_dir+output_filename

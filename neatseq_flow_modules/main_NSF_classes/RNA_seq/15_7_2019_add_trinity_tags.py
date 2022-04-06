@@ -110,11 +110,10 @@ class Step_add_trinity_tags(Step):
                     use_dir = self.local_start(self.base_dir)
 
                     
-                    # baseFN = os.path.basename(self.sample_data[sample][file_slot])
-                    baseFN = sample
+                    baseFN = os.path.basename(self.sample_data[sample][file_slot])
                     # TODO: Remove ".fq" in middle of file name
                     # Setting filenames before adding output arguments to script
-                    fq_fn = ".".join([baseFN,direction, self.file_tag])  #The filename containing the end result. Used both 
+                    fq_fn = ".".join([baseFN, self.file_tag])  #The filename containing the end result. Used both 
                     
                     
                     

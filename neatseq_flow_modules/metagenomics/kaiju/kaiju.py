@@ -49,6 +49,7 @@ Parameters that can be set
 
     "ktImportText", "", "A block with a ``path:`` element containing the path to ``ktImportText``, and a optionally a ``redirects`` element. If the path is left empty, will assume ``ktImportText`` is in the same dir as ``kaiju``"
     "kaiju2krona",  "", "A block with a ``path:`` element containing the path to ``kaiju2krona``, and a ``redirects`` element with ``-t`` and ``-n`` defined. If the path is left empty, will assume ``kaiju2krona`` is in the same dir as ``kaiju``"
+    "use_fasta",  "", "Will use a ``fasta.nucl`` and NOT reads files"
 
 .. Attention::
    Make sure to provide ``-t`` (nodes file) to kaiju via the (main) redirects block.
@@ -106,8 +107,8 @@ class Step_kaiju(Step):
         """
         self.shell = "bash"      # Can be set to "bash" by inheriting instances
         self.file_tag = ".kaiju.out"
-
-
+        if "scope" not in list(self.params.keys()):
+            self.params["scope"]="sample"
             
         # Checking this once and then applying to each sample:
         try:
@@ -150,28 +151,35 @@ class Step_kaiju(Step):
         """ A place to do initiation stages following setting of sample_data
         """
 
-        # if self.params["scope"] == "project":
-        #     sample_list = ["project_data"]
-        # elif self.params["scope"] == "sample":
-        #     sample_list = self.sample_data["samples"]
-        # else:
-        #     raise AssertionExcept("'scope' must be either 'sample' or 'project'")
-        sample_list = self.sample_data["samples"]
+        if self.params["scope"] == "project":
+            sample_list = ["project_data"]
+        elif self.params["scope"] == "sample":
+            sample_list = self.sample_data["samples"]
+        else:
+            raise AssertionExcept("'scope' must be either 'sample' or 'project'")
+        #sample_list = self.sample_data["samples"]
         for sample in sample_list:  # Getting list of samples out of samples_hash
+            if 'use_fasta' in list(self.params.keys()):
+                if "fasta.nucl" not in list(self.sample_data[sample].keys()):
+                    raise AssertionExcept("No Nucleotide FASTA in: \n", sample)
+            else:
+                if len({"fastq.F", "fastq.R"} & set(self.sample_data[sample].keys())) == 1:
+                    raise AssertionExcept(
+                        "Sample has only forward or reverse reads. It must have either pairs or single reads\n", sample)
 
-            if len({"fastq.F", "fastq.R"} & set(self.sample_data[sample].keys())) == 1:
-                raise AssertionExcept(
-                    "Sample has only forward or reverse reads. It must have either pairs or single reads\n", sample)
-
-            if len({"fastq.F", "fastq.R", "fastq.S"} & set(self.sample_data[sample].keys())) ==3:
-                raise AssertionExcept("Kaiju is not defined for mixed paired and single reads\n", sample)
+                if len({"fastq.F", "fastq.R", "fastq.S"} & set(self.sample_data[sample].keys())) ==3:
+                    raise AssertionExcept("Kaiju is not defined for mixed paired and single reads\n", sample)
 
 
 
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
-
+        if self.params["scope"] == "project":
+            sample_list = ["project_data"]
+        elif self.params["scope"] == "sample":
+            sample_list = self.sample_data["samples"]
+            
         if "ktImportText" in self.params:
             if "redirects" in self.params["ktImportText"]:
                 redirects = " \\\n\t".join(
@@ -190,7 +198,7 @@ class Step_kaiju(Step):
             if redirects:
                 self.script += "%s \\\n\t" % redirects
             self.script += "-o %s \\\n\t" % krona_report_fn
-            for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
+            for sample in sample_list:      # Getting list of samples out of samples_hash
                 self.script += "%s,%s \\\n\t" % (self.sample_data[sample]["classification"],sample)
             # Removing extra \\
             self.script = self.script.rstrip("\\\n\t") 
@@ -208,8 +216,12 @@ class Step_kaiju(Step):
             Most, if not all, editing should be done here 
             HOWEVER, DON'T FORGET TO CHANGE THE CLASS NAME AND THE FILENAME!
         """
-
-        for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
+        if self.params["scope"] == "project":
+            sample_list = ["project_data"]
+        elif self.params["scope"] == "sample":
+            sample_list = self.sample_data["samples"]
+            
+        for sample in sample_list:      # Getting list of samples out of samples_hash
             
             # Name of specific script:
             self.spec_script_name = self.set_spec_script_name(sample)
@@ -226,15 +238,17 @@ class Step_kaiju(Step):
             output_filename = "".join([use_dir , sample , self.file_tag])
 
             self.script += self.get_script_const()
-            
-            # Adding reads
-            if "fastq.F" in self.sample_data[sample]:
-                self.script += "-i %s \\\n\t" % self.sample_data[sample]["fastq.F"]
-                self.script += "-j %s \\\n\t" % self.sample_data[sample]["fastq.R"]
-            elif "fastq.S" in self.sample_data[sample]:
-                self.script += "-i %s \\\n\t" % self.sample_data[sample]["fastq.S"]
+            if 'use_fasta' in list(self.params.keys()):
+                  self.script += "-i %s \\\n\t" % self.sample_data[sample]["fasta.nucl"]
             else:
-                raise AssertionExcept("Weird cmobination of reads!\n")
+                # Adding reads
+                if "fastq.F" in self.sample_data[sample]:
+                    self.script += "-i %s \\\n\t" % self.sample_data[sample]["fastq.F"]
+                    self.script += "-j %s \\\n\t" % self.sample_data[sample]["fastq.R"]
+                elif "fastq.S" in self.sample_data[sample]:
+                    self.script += "-i %s \\\n\t" % self.sample_data[sample]["fastq.S"]
+                else:
+                    raise AssertionExcept("Weird cmobination of reads!\n")
 
             self.script += "-o %s\n\n" % output_filename
 

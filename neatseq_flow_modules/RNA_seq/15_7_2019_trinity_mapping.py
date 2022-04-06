@@ -355,10 +355,7 @@ cp -rsf \\
                 self.script += "mv {dir}{src} {dir}{trg}\n".format(**mv_data)
                 self.sample_data[sample]["genes.results"] = "{dir}{trg}".format(**mv_data)
                 self.stamp_file(self.sample_data[sample]["genes.results"])
-            
-            if self.est_method.lower() == 'rsem':
-                self.script += "mv {src} {trg}.cnt\n".format(src = os.path.join(use_dir,'RSEM.stat','RSEM.cnt'),
-                                                             trg = os.path.join(use_dir,'RSEM.stat',sample))
+
             
             # Store bam files
             if self.est_method.lower() in ["rsem","express"]: 

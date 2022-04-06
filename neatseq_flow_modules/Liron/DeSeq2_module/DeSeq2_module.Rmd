@@ -619,6 +619,27 @@ convert_agregate<-function(df,index,subject,sep){
 }
 
 
+create_gene2kegg <- function(Annotation,useKO=F){
+    kegg_id=''
+    if (('KEGG' %in% stringr::str_to_upper(colnames(Annotation))) & (useKO==F) ){
+      kegg_id =colnames(Annotation)[which('KEGG' == stringr::str_to_upper(colnames(Annotation)))[1]]
+    }else{
+      if ('KO' %in% stringr::str_to_upper(colnames(Annotation))){
+        kegg_id =colnames(Annotation)[which('KO' == stringr::str_to_upper(colnames(Annotation)))[1]]
+      }
+    }
+    if (kegg_id!=''){
+        Annotation2USE=Annotation
+        Annotation2USE['row.names'] = row.names(Annotation2USE)
+        gene2Kegg = convert_agregate(Annotation2USE,'row.names',kegg_id,"/")
+        colnames(gene2Kegg) = c('Gene','Kegg')
+        info = KEGGREST::keggList(gene2Kegg$Kegg)
+        kegg2names = data.frame(genes = names(info),info=info)
+        return(c(gene2Kegg,kegg2names))
+    }
+    return(c('',''))
+}
+
 create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,Pathway2gene,show_cutoff=1,HTML=T,up_color='HotPink',down_color='DeepSkyBlue',useKO=T, Base_URL = "https://www.kegg.jp/pathway/"){
   
   
@@ -652,8 +673,8 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
         if (sum(DOWN)>0){
           Pathway2gene_filterd[DOWN,"URL"] = paste(Pathway2gene_filterd[DOWN,'Kegg'] , down_color ,sep = ' ')     
         }
-        Pathway2gene_count = aggregate.data.frame(x = Pathway2gene_filterd[,'Kegg'], by = list(Pathway2gene_filterd[,'Pathway']),FUN = length )
-        colnames(Pathway2gene_count) = c('Pathway','#Genes')
+        Pathway2gene_count = aggregate.data.frame(x = Pathway2gene_filterd[,'Kegg'], by = list(Pathway2gene_filterd[,'Pathway']),FUN = function(x) length(unique(na.omit(x))))
+        colnames(Pathway2gene_count) = c('Pathway','#KOs')
         Pathway = aggregate.data.frame(x =Pathway2gene_filterd ,
                                        by = list(Pathway2gene_filterd[,'Pathway']),
                                        FUN =function(x) paste(unique(na.omit(x)),sep = "+",collapse = "+"))
@@ -665,8 +686,8 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
         
         Pathway = merge.data.frame(x = Pathway,y = Pathway2gene_count,by = "Pathway" )
         row.names(Pathway) = Pathway$Pathway
-        Pathway = Pathway[Pathway[,'#Genes']>=show_cutoff,c("Info","#Genes","Kegg_URL","Gene","Kegg")]
-        Pathway =Pathway[order(Pathway[,'#Genes'],decreasing = T), ]
+        Pathway = Pathway[Pathway[,'#KOs']>=show_cutoff,c("Info","#KOs","Kegg_URL","Gene","Kegg")]
+        Pathway =Pathway[order(Pathway[,'#KOs'],decreasing = T), ]
         write.table(Pathway,
                     file = file.path(outDir,paste('Kegg_Pathways_Links_With_Min_of',show_cutoff,'genes.tab', sep = '_')) ,
                     quote = F,
@@ -783,6 +804,11 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
               opt$CONTRAST=NA
             }else if (test2do=='No_Statistics'){
               opt$outDir=file.path(base_out_dir,'No_Statistics')
+              dir.create(opt$outDir, showWarnings = FALSE)
+              opt$CONTRAST=NA
+            }else if (test2do=='Random_Forest'){
+              library('randomForest')
+              opt$outDir=file.path(base_out_dir,'Random_Forest')
               dir.create(opt$outDir, showWarnings = FALSE)
               opt$CONTRAST=NA
             }else{
@@ -2226,10 +2252,6 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                             
                             
                         }
-						
-						
-    
-    
                         save(list=ls(all.names = TRUE),file =file.path(opt$outDir,'Session.RSession'))
                         ##################Clustering-End##################################    
     
@@ -2246,7 +2268,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                             clusters_for_GO= gene2entrez$CLUSTERS
                             names(clusters_for_GO)=gene2entrez$ENTREZID
     
-                            allRes <- clusters_enricher(opt$outDir,clusters_for_GO,"GO",opt$Annotation_db,Annotation$ENTREZID,"ENTREZID",paste('GO_Biological_Process_Enrichment_of_Clusters',SPLIT,sep="_"))
+                            allRes <- clusters_enricher(opt$outDir,clusters_for_GO,"GO",opt$Annotation_db,Annotation$ENTREZID,"ENTREZID",paste('GO_Biological_Process_Enrichment_of_Clusters',SPLIT,sep="_"),pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff)
                             main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                             if (opt$Enriched_terms_overlap){
                               heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'GO_Biological_Process_Enrichment_of_Clusters')
@@ -2262,7 +2284,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                         up_down_clusters[up_reg]='UP'
                                     }
     
-                                    allRes <- clusters_enricher(opt$outDir,up_down_clusters,"GO",opt$Annotation_db,Annotation$ENTREZID,"ENTREZID",paste('GO_Biological_Process_Enrichment_of_Up_and_Down_Clusters',SPLIT,sep="_"))
+                                    allRes <- clusters_enricher(opt$outDir,up_down_clusters,"GO",opt$Annotation_db,Annotation$ENTREZID,"ENTREZID",paste('GO_Biological_Process_Enrichment_of_Up_and_Down_Clusters',SPLIT,sep="_"),pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff)
                                     main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                                     if (opt$Enriched_terms_overlap){
                                       heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'GO_Biological_Process_Enrichment_of_Up_and_Down_Clusters')
@@ -2273,7 +2295,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
      
                             One_cluster=clusters_for_GO
                             One_cluster[]=1
-                            allRes <- clusters_enricher(opt$outDir,One_cluster,"GO",opt$Annotation_db,Annotation$ENTREZID,"ENTREZID",paste('GO_Biological_Process_Enrichment_of_All_Significant_Genes',SPLIT,sep="_"))
+                            allRes <- clusters_enricher(opt$outDir,One_cluster,"GO",opt$Annotation_db,Annotation$ENTREZID,"ENTREZID",paste('GO_Biological_Process_Enrichment_of_All_Significant_Genes',SPLIT,sep="_"),pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff)
                             main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                             if (opt$Enriched_terms_overlap){
                               heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'GO_Biological_Process_Enrichment_of_All_Significant_Genes')
@@ -2283,7 +2305,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                             
                         }else{
                             if (GO_flag){
-                                allRes <- Clusters_Enrichment_Test(opt$outDir,clusters,GO2name_BP,GO2gene_BP,paste('GO_Biological_Process_Enrichment_of_Clusters',SPLIT,sep="_"),"GO",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                                allRes <- Clusters_Enrichment_Test(opt$outDir,clusters,GO2name_BP,GO2gene_BP,paste('GO_Biological_Process_Enrichment_of_Clusters',SPLIT,sep="_"),"GO",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
                                 main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                                 if (opt$Enriched_terms_overlap){
                                     heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'GO_Biological_Process_Enrichment_of_Clusters')
@@ -2299,7 +2321,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                         up_down_clusters[up_reg]='UP'
                                     }
     
-                                    allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,GO2name_BP,GO2gene_BP,paste('GO_Biological_Process_Enrichment_of_Up_and_Down_Clusters',SPLIT,sep="_"),"GO",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                                    allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,GO2name_BP,GO2gene_BP,paste('GO_Biological_Process_Enrichment_of_Up_and_Down_Clusters',SPLIT,sep="_"),"GO",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
                                     main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                                     if (opt$Enriched_terms_overlap){
                                         heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'GO_Biological_Process_Enrichment_of_Up_and_Down_Clusters')
@@ -2310,7 +2332,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
      
                                 One_cluster=clusters
                                 One_cluster[]=1
-                                allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,GO2name_BP,GO2gene_BP,paste('GO_Biological_Process_Enrichment_of_All_Significant_Genes',SPLIT,sep="_"),"GO",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                                allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,GO2name_BP,GO2gene_BP,paste('GO_Biological_Process_Enrichment_of_All_Significant_Genes',SPLIT,sep="_"),"GO",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
                                 main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                                 if (opt$Enriched_terms_overlap){
                                     heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'GO_Biological_Process_Enrichment_of_All_Significant_Genes')
@@ -2320,9 +2342,25 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                 
                             }
                         }
-                    pathway_table = data.frame()
-                    if (KEGG_flag){
-                            allRes <- Clusters_Enrichment_Test(opt$outDir,clusters,Pathway2name,Pathway2gene,paste('KEGG_Enrichment_Analysis_of_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                        pathway_table = data.frame()
+                        if (KEGG_flag){
+                            if (opt$KEGG_Enrichment_of == 'ko'){
+                                TERMS_Info= create_gene2kegg(Annotation,T)
+                                TERMS2GENES = TERMS_Info[1]
+                                TERMS2NAMES = TERMS_Info[2]
+                                if ((length(GENES2TERMS)>0)&&(length(TERMS2NAMES)>0) ){
+                                    Pathway2name_ = TERMS2NAMES
+                                    Pathway2gene_ = TERMS2GENES
+                                }else{
+                                    Pathway2name_ = Pathway2name
+                                    Pathway2gene_ = Pathway2gene
+                                }
+                                
+                            }else{
+                                Pathway2name_ = Pathway2name
+                                Pathway2gene_ = Pathway2gene
+                            }
+                            allRes <- Clusters_Enrichment_Test(opt$outDir,clusters,Pathway2name_,Pathway2gene_,paste('KEGG_Enrichment_Analysis_of_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
                             main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                             if (opt$Enriched_terms_overlap){
                                 heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_Clusters')
@@ -2338,7 +2376,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                     up_down_clusters[up_reg]='UP'
                                 }
     
-                                allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,Pathway2name,Pathway2gene,paste('KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                                allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,Pathway2name_,Pathway2gene_,paste('KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
                                 main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                                 if (opt$Enriched_terms_overlap){
                                     heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters')
@@ -2349,7 +2387,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
      
                             One_cluster=clusters
                             One_cluster[]=1
-                            allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,Pathway2name,Pathway2gene,paste('KEGG_Enrichment_Analysis_of_All_Significant_Genes',SPLIT,sep="_"),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                            allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,Pathway2name_,Pathway2gene_,paste('KEGG_Enrichment_Analysis_of_All_Significant_Genes',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
                             main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                             if (opt$Enriched_terms_overlap){
                                 heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_All_Significant_Genes')
@@ -2363,7 +2401,24 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                             }
                         }
                         if (ORGANISM_KEGG_flag){
-                            allRes  <- Clusters_Enrichment_Test(opt$outDir,clusters,ORGANISM_Pathway2name,ORGANISM_Pathway2gene,paste(ORGANISM,'KEGG_Enrichment_Analysis_of_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                            if (opt$KEGG_Enrichment_of == 'ko'){
+                                TERMS_Info= create_gene2kegg(Annotation,F)
+                                TERMS2GENES = TERMS_Info[1]
+                                TERMS2NAMES = TERMS_Info[2]
+                                if ((length(GENES2TERMS)>0)&&(length(TERMS2NAMES)>0) ){
+                                    ORGANISM_Pathway2name_ = TERMS2NAMES
+                                    ORGANISM_Pathway2gene_ = TERMS2GENES
+                                }else{
+                                    ORGANISM_Pathway2name_ = ORGANISM_Pathway2name
+                                    ORGANISM_Pathway2gene_ = ORGANISM_Pathway2gene
+                                }
+                                
+                            }else{
+                                ORGANISM_Pathway2name_ = ORGANISM_Pathway2name
+                                ORGANISM_Pathway2gene_ = ORGANISM_Pathway2gene
+                            }
+                            
+                            allRes  <- Clusters_Enrichment_Test(opt$outDir,clusters,ORGANISM_Pathway2name_,ORGANISM_Pathway2gene_,paste(ORGANISM,'KEGG_Enrichment_Analysis_of_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
                             main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                             if (opt$Enriched_terms_overlap){
                                 heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_Clusters')
@@ -2379,7 +2434,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                     up_down_clusters[up_reg]='UP'
                                 }
     
-                                allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,ORGANISM_Pathway2name,ORGANISM_Pathway2gene,paste(ORGANISM,'KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                                allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,ORGANISM_Pathway2name_,ORGANISM_Pathway2gene_,paste(ORGANISM,'KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
                                 main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                                 if (opt$Enriched_terms_overlap){
                                     heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters')
@@ -2390,7 +2445,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
     
                             One_cluster=clusters
                             One_cluster[]=1
-                            allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,ORGANISM_Pathway2name,ORGANISM_Pathway2gene,paste(ORGANISM,'KEGG_Enrichment_Analysis_of_All_Significant_Genes',SPLIT,sep="_"),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                            allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,ORGANISM_Pathway2name_,ORGANISM_Pathway2gene_,paste(ORGANISM,'KEGG_Enrichment_Analysis_of_All_Significant_Genes',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
                             main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                             if (opt$Enriched_terms_overlap){
                                 heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_All_Significant_Genes')
@@ -2404,7 +2459,24 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                             }
                         }
                         if (KEGG_KAAS_flag){
-                            allRes <- Clusters_Enrichment_Test(opt$outDir,clusters,KASS_Pathway2name,KASS_Pathway2gene,paste('KEGG_Enrichment_Analysis_of_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                            if (opt$KEGG_Enrichment_of == 'ko'){
+                                TERMS_Info= create_gene2kegg(Annotation,T)
+                                TERMS2GENES = TERMS_Info[1]
+                                TERMS2NAMES = TERMS_Info[2]
+                                if ((length(GENES2TERMS)>0)&&(length(TERMS2NAMES)>0) ){
+                                    KASS_Pathway2name_ = TERMS2NAMES
+                                    KASS_Pathway2gene_ = TERMS2GENES
+                                }else{
+                                    KASS_Pathway2name_ = KASS_Pathway2name
+                                    KASS_Pathway2gene_ = KASS_Pathway2gene
+                                }
+                                
+                            }else{
+                                KASS_Pathway2name_ = KASS_Pathway2name
+                                KASS_Pathway2gene_ = KASS_Pathway2gene
+                            }
+                            
+                            allRes <- Clusters_Enrichment_Test(opt$outDir,clusters,KASS_Pathway2name_,KASS_Pathway2gene_,paste('KEGG_Enrichment_Analysis_of_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
                             main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                             if (opt$Enriched_terms_overlap){
                                 heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_Clusters')
@@ -2421,7 +2493,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                     up_down_clusters[up_reg]='UP'
                                 }
     
-                                allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,KASS_Pathway2name,KASS_Pathway2gene,paste('KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                                allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,KASS_Pathway2name_,KASS_Pathway2gene_,paste('KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
                                 main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                                 if (opt$Enriched_terms_overlap){
                                     heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters')
@@ -2431,7 +2503,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
     
                             One_cluster=clusters
                             One_cluster[]=1
-                            allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,KASS_Pathway2name,KASS_Pathway2gene,paste('KEGG_Enrichment_Analysis_of_All_Significant_Genes',SPLIT,sep="_"),"KEGG",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
+                            allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,KASS_Pathway2name_,KASS_Pathway2gene_,paste('KEGG_Enrichment_Analysis_of_All_Significant_Genes',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
                             main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                             if (opt$Enriched_terms_overlap){
                                 heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_All_Significant_Genes')

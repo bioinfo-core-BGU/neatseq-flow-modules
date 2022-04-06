@@ -153,7 +153,7 @@ class Step_Prokka(Step):
             # Store Prokka result files:
             #set_Sample_data(self,sample,["GFF"],os.path.join(sample_dir,sample+".gff"))
             self.sample_data[sample]["GFF"]=os.path.join(sample_dir,sample+".gff")
-            self.sample_data[sample]["fasta.nucl"]=os.path.join(sample_dir,sample+".fna")
+            self.sample_data[sample]["fasta.nucl"]=os.path.join(sample_dir,sample+".ffn")
             self.sample_data[sample]["fasta.prot"]=os.path.join(sample_dir,sample+".faa")
 
             self.sample_data[sample]["prokka.err"] = os.path.join(sample_dir, sample + ".err")

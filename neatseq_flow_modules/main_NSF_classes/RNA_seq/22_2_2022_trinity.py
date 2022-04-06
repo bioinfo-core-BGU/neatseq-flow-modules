@@ -118,23 +118,20 @@ class Step_trinity(Step):
         """
         
         if "genome_guided" in list(self.params.keys()):
-            if "Group_by" not in list(self.params.keys()):
-                if "scope" in self.params:
-                    if self.params["scope"]=="project":
-                        if "bam" not in list(self.sample_data["project_data"].keys()):
-                            raise AssertionExcept("You do not have a project level bam file to use with genome_guided")
-                    elif self.params["scope"]=="sample":
-                        for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
-                            if 'bam' not in list(self.sample_data[sample].keys()):
-                                raise AssertionExcept("You do not have a sample level bam file to use with genome_guided\n",sample)
-                    else:
-                        raise AssertionExcept("'scope' must be either 'sample' or 'project'")
+            if "scope" in self.params:
+                if self.params["scope"]=="project":
+                    if "bam" not in list(self.sample_data["project_data"].keys()):
+                        raise AssertionExcept("You do not have a project level bam file to use with genome_guided")
+                elif self.params["scope"]=="sample":
+                    for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
+                        if 'bam' not in list(self.sample_data[sample].keys()):
+                            raise AssertionExcept("You do not have a sample level bam file to use with genome_guided\n",sample)
                 else:
-                    raise AssertionExcept("No 'scope' specified.")
-                if "--genome_guided_max_intron" not in list(self.params["redir_params"].keys()):
-                    raise AssertionExcept("When using genome_guided option you must include the '--genome_guided_max_intron' option within the redirects")
+                    raise AssertionExcept("'scope' must be either 'sample' or 'project'")
             else:
-                raise AssertionExcept("You can not use both options : 'genome_guided' and 'Group_by' together")
+                raise AssertionExcept("No 'scope' specified.")
+            if "--genome_guided_max_intron" not in list(self.params["redir_params"].keys()):
+                raise AssertionExcept("When using genome_guided option you must include the '--genome_guided_max_intron' option within the redirects")
         else:
         # Assert that all samples have reads files:
             for sample in self.sample_data["samples"]:    
@@ -175,27 +172,27 @@ class Step_trinity(Step):
         """
         self.Samples_Data = "Samples_Data.txt"
         if "Group_by" in list(self.params.keys()):
-            self.Group_Dic = {}
+            self.Samples_Data_dir = self.make_folder_for_sample("Samples_Data")
+            
+            # This line should be left before every new script. It sees to local issues.
+            # Use the dir it returns as the base_dir for this step.
+            use_dir = self.local_start(self.Samples_Data_dir)
+            #initiating new script 
+            self.script = "cd %s\n\n" % use_dir
+            self.script += "echo -n ""  > {File}\n\n".format(File=self.Samples_Data)
+            Group_Dic = {}
             for sample in self.sample_data["samples"]:
                 Group=self.sample_data[sample]["..grouping.."][self.params["Group_by"]]
-                if Group not in list(self.Group_Dic.keys()):
-                    self.Group_Dic[Group] = {}
-                if sample not in list(self.Group_Dic[Group].keys()):
-                    self.Group_Dic[Group][sample] = ''
-            
-            self.script = ''
-            for Group in list(self.Group_Dic.keys()):
-                self.Samples_Data_dir = self.make_folder_for_sample("Samples_Data_"+Group)
-                # This line should be left before every new script. It sees to local issues.
-                # Use the dir it returns as the base_dir for this step.
-                use_dir = self.local_start(self.Samples_Data_dir)
-                #initiating new script 
-                self.script += "cd %s\n\n" % use_dir
-                self.script += "echo -n ""  > {File}\n\n".format(File=self.Samples_Data)
-                
+                if Group not in list(Group_Dic.keys()):
+                    Group_Dic[Group] = {}
+                if sample in list(Group_Dic[Group].keys()):
+                    Group_Dic[Group][sample]+= 1
+                else:
+                    Group_Dic[Group][sample] = 1
+
+            for Group in list(Group_Dic.keys()):
                 Num = 0
-                for sample in list(self.Group_Dic[Group].keys()):
-                    self.Group_Dic[Group][sample] = os.path.join(self.Samples_Data_dir,self.Samples_Data)
+                for sample in list(Group_Dic[Group].keys()):
                     if "fastq.S" in self.sample_data[sample]:
                         Num +=1
                         self.script += "echo -e '{Group}\\t{Group}_rep{Num}\\t{FW}\\t{RV} >> {File}\n".format(Group = Group,
@@ -210,8 +207,9 @@ class Step_trinity(Step):
                                                                                                            FW    = self.sample_data[sample]["fastq.F"],
                                                                                                            RV    = self.sample_data[sample]["fastq.R"],
                                                                                                            File  = self.Samples_Data )
-                self.script += "\n\n"
-                self.local_finish(use_dir,self.Samples_Data_dir) 
+            self.script += "\n\n"
+            self.local_finish(use_dir,self.Samples_Data_dir) 
+            self.Samples_Data = os.path.join(self.Samples_Data_dir,self.Samples_Data)
         pass
     
     def create_spec_wrapping_up_script(self):
@@ -223,15 +221,8 @@ class Step_trinity(Step):
     def build_scripts(self):
     
         if self.params["scope"] == "project":
-            if "Group_by" in list(self.params.keys()):
-                sample_list = list(self.Group_Dic.keys())
-                self.stash_sample_list(sample_list)
-                # Creating data container for subsamples:
-                for sample in self.sample_data["samples"]:
-                    self.sample_data[sample] = dict()
-            else:
-                sample_list = ["project_data"]
-                # self.build_scripts_project()
+            sample_list = ["project_data"]
+            # self.build_scripts_project()
         elif self.params["scope"] == "sample":
             sample_list = self.sample_data["samples"]
             # self.build_scripts_sample()
@@ -265,7 +256,8 @@ class Step_trinity(Step):
                 self.script += "--genome_guided_bam %s \\\n\t" % self.sample_data[sample]['bam']
             else:
                 if "Group_by" in list(self.params.keys()):
-                    self.script += "--samples_file %s \\\n\t" % self.Group_Dic[sample][list(self.Group_Dic[sample].keys())[0]]
+                    self.script += "--samples_file %s \\\n\t" % self.Samples_Data
+                
                 else:
                     forward = list()  # List of all forward files
                     reverse = list()  # List of all reverse files
@@ -314,31 +306,9 @@ class Step_trinity(Step):
                     else:
                         raise AssertionExcept("Weird. No reads...")
 
-            
-            if '--grid_exec' in list(self.params["redir_params"].keys()):
-                if "qsub_params" in list(self.params.keys()):
-                    if "-V" not in list(self.params["qsub_params"].keys()):
-                        self.params["qsub_params"]["-V"]=None
-                else:
-                    self.params["qsub_params"] = {}
-                    self.params["qsub_params"]["-V"]=None
-                temp_script = self.script
-                self.script += "--no_distributed_trinity_exec \\\n\n"
-                
-                self.script += "cd  %s \n\n" % os.path.join(use_dir, output_basename)
-                
-                self.script += "{grid_cmd} {cmd_file} \n\n\n".format(grid_cmd = self.params["redir_params"]["--grid_exec"].strip('"').strip("'"),
-                                                                     cmd_file = os.path.join(use_dir, output_basename,"recursive_trinity.cmds")) 
-                self.script += temp_script
-                
                 # If there is an extra "\\\n\t" at the end of the script, remove it.
                 self.script = self.script.rstrip("\\\n\t") + "\n\n"
-                self.script += 'rm -rf {tempdir}\n'.format(tempdir= os.path.join(use_dir, output_basename,"farmit.J*"))
-                self.script += 'rm -f {tempdir}\n'.format(tempdir= os.path.join(use_dir, output_basename,"*.sh.e*"))
-                self.script += 'rm -f {tempdir}\n'.format(tempdir= os.path.join(use_dir, output_basename,"*.sh.o*"))
-            # If there is an extra "\\\n\t" at the end of the script, remove it.
-            self.script = self.script.rstrip("\\\n\t") + "\n\n"
-            
+
             if "TrinityStats" in self.params:
                 self.script += """  
 {TrinityStats} \\
@@ -347,16 +317,14 @@ class Step_trinity(Step):
 """.format(TrinityStats=self.params["TrinityStats"]["path"],
            fasta=use_dir + ".".join([output_basename, "Trinity.fasta"]),
            fasta_stats=use_dir + ".".join([output_basename, "Trinity.fasta.stats"]),)
-           
                 self.sample_data[sample]["trinity.stats"] = ".".join([sample_dir, output_basename, "Trinity.fasta.stats"])
 
             # Store results to fasta and assembly slots:
-            transcriptome = os.path.join(output_basename, "Trinity.fasta")
+            # transcriptome = os.path.join(output_basename, "Trinity.fasta")
             if "genome_guided" in list(self.params.keys()):
                 transcriptome = os.path.join(output_basename, "Trinity-GG.fasta")
             else:
                 transcriptome = ".".join([output_basename, "Trinity.fasta"])
-            
             self.sample_data[sample]["fasta.nucl"] = os.path.join(sample_dir, transcriptome)
             self.sample_data[sample][self.get_step_step() + ".contigs"] = self.sample_data[sample]["fasta.nucl"]
 

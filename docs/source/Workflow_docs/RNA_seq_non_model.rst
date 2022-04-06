@@ -15,8 +15,8 @@ Human and model organisms, such as mouse and *Arabidopsis*, typically have high 
 
 
 .. contents:: Table of content
-   :local:
-   :depth: 1
+    :local:
+    :depth: 1
 
 
 Pipeline Schema
