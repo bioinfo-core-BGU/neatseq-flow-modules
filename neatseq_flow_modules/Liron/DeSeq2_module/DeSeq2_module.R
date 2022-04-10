@@ -115,6 +115,8 @@ option_list = list(
   make_option(c("--Mclust"), action="store_true",default=FALSE, 
               help="Use Mclust for determining the number of clusters", metavar="character"), 
   
+  make_option(c("--GO_Enrichment_Type"), type="character",default='BP', 
+              help="GO Enrichment Type To Perform, Can be a comma separated list [The Default is BP, Options include BP,MF and CC]", metavar="character"),
   make_option(c("--Enrichment_pvaluecutoff"), type="numeric",default=0.05, 
               help="Enrichment Pvalue Cutoff [If set to 1 will output all terms]", metavar="character"),
   make_option(c("--Enrichment_padjustmethod"), type="character",default='fdr', 
@@ -2499,13 +2501,17 @@ if  (!file.exists(Annotation_file)){
           
           GO2name_MF        = GO2name[GO2name$Ontology=="MF",c('GO','Term')]
           GO2name_BP        = GO2name[GO2name$Ontology=="BP",c('GO','Term')]
+          GO2name_CC        = GO2name[GO2name$Ontology=="CC",c('GO','Term')]
           GO2name_MF        = GO2name_MF[!duplicated.data.frame(GO2name_MF),]
           GO2name_BP        = GO2name_BP[!duplicated.data.frame(GO2name_BP),]
+          GO2name_CC        = GO2name_CC[!duplicated.data.frame(GO2name_CC),]
           
           GO2gene_MF        = GO2name[GO2name$Ontology=="MF",c('GO','Gene')]
           GO2gene_BP        = GO2name[GO2name$Ontology=="BP",c('GO','Gene')]
+          GO2gene_CC        = GO2name[GO2name$Ontology=="CC",c('GO','Gene')]
           GO2gene_MF        = GO2gene_MF[!duplicated.data.frame(GO2gene_MF),]
           GO2gene_BP        = GO2gene_BP[!duplicated.data.frame(GO2gene_BP),]
+          GO2gene_CC        = GO2gene_CC[!duplicated.data.frame(GO2gene_CC),]
           
           GO_flag           = TRUE
           write.table(GO2gene_MF,
@@ -2529,6 +2535,18 @@ if  (!file.exists(Annotation_file)){
           
           write.table(GO2name_BP,
                       file = file.path(opt$outDir,paste('GO2name_BP','tab', sep = '.')) ,
+                      quote = F,
+                      row.names = F,
+                      sep = "\t")
+                      
+          write.table(GO2gene_CC,
+                      file = file.path(opt$outDir,paste('GO2gene_CC','tab', sep = '.')) ,
+                      quote = F,
+                      row.names = F,
+                      sep = "\t")
+          
+          write.table(GO2name_CC,
+                      file = file.path(opt$outDir,paste('GO2name_CC','tab', sep = '.')) ,
                       quote = F,
                       row.names = F,
                       sep = "\t")
@@ -2595,10 +2613,33 @@ if  (!file.exists(Annotation_file)){
     GO2name_MF_file = file.path(opt$outDir,paste('GO2name_MF','tab', sep = '.'))
     GO2gene_BP_file = file.path(opt$outDir,paste('GO2gene_BP','tab', sep = '.'))
     GO2name_BP_file = file.path(opt$outDir,paste('GO2name_BP','tab', sep = '.'))
+    GO2gene_CC_file = file.path(opt$outDir,paste('GO2gene_CC','tab', sep = '.'))
+    GO2name_CC_file = file.path(opt$outDir,paste('GO2name_CC','tab', sep = '.'))
+    
+    GO2gene_MF = NA
+    GO2name_MF = NA
+    
+    GO2gene_BP = NA
+    GO2name_BP = NA
+    
+    GO2gene_CC = NA
+    GO2name_CC = NA
     
     if ((file.exists(GO2gene_BP_file)) & (file.exists(GO2name_BP_file))){
         GO2gene_BP = read.delim(GO2gene_BP_file, sep="\t", row.names=NULL)
         GO2name_BP = read.delim(GO2name_BP_file, sep="\t", row.names=NULL)
+        GO_flag  = TRUE
+    }
+    
+    if ((file.exists(GO2gene_MF_file)) & (file.exists(GO2name_MF_file))){
+        GO2gene_MF = read.delim(GO2gene_MF_file, sep="\t", row.names=NULL)
+        GO2name_MF = read.delim(GO2name_MF_file, sep="\t", row.names=NULL)
+        GO_flag  = TRUE
+    }
+    
+    if ((file.exists(GO2gene_CC_file)) & (file.exists(GO2name_CC_file))){
+        GO2gene_CC = read.delim(GO2gene_CC_file, sep="\t", row.names=NULL)
+        GO2name_CC = read.delim(GO2name_CC_file, sep="\t", row.names=NULL)
         GO_flag  = TRUE
     }
     
@@ -2691,12 +2732,26 @@ if (opt$USE_INPUT_GENES_AS_BACKGROUND){
     }
     
     if (GO_flag == TRUE){
-        print('Before INPUT GENES AS BACKGROUND Filtering:')
+        print('GO BP : Before INPUT GENES AS BACKGROUND Filtering:')
         print(dim(GO2gene_BP))
         genes2use = intersect(unique(GO2gene_BP[,2]),rownames(countData))
         GO2gene_BP = GO2gene_BP[GO2gene_BP[,2] %in% genes2use,]
-        print('After INPUT GENES AS BACKGROUND Filtering:')
+        print('GO BP : After INPUT GENES AS BACKGROUND Filtering:')
         print(dim(GO2gene_BP))
+        
+        print('GO MF : Before INPUT GENES AS BACKGROUND Filtering:')
+        print(dim(GO2gene_MF))
+        genes2use = intersect(unique(GO2gene_MF[,2]),rownames(countData))
+        GO2gene_MF = GO2gene_MF[GO2gene_MF[,2] %in% genes2use,]
+        print('GO BP : After INPUT GENES AS BACKGROUND Filtering:')
+        print(dim(GO2gene_MF))
+        
+        print('GO CC : Before INPUT GENES AS BACKGROUND Filtering:')
+        print(dim(GO2gene_CC))
+        genes2use = intersect(unique(GO2gene_CC[,2]),rownames(countData))
+        GO2gene_CC = GO2gene_CC[GO2gene_CC[,2] %in% genes2use,]
+        print('GO BP : After INPUT GENES AS BACKGROUND Filtering:')
+        print(dim(GO2gene_CC))
     }
 
 }
@@ -3211,7 +3266,13 @@ for (test2do in test_count){
                         KEGG_flag          = KEGG_flag,
                         ORGANISM_KEGG_flag = ORGANISM_KEGG_flag,
                         KEGG_KAAS_flag     = KEGG_KAAS_flag,
-                        GO_flag            = GO_flag
+                        GO_flag            = GO_flag,
+                        GO2gene_MF         = GO2gene_MF,
+                        GO2name_MF         = GO2name_MF,
+                        GO2gene_BP         = GO2gene_BP,
+                        GO2name_BP         = GO2name_BP,
+                        GO2gene_CC         = GO2gene_CC,
+                        GO2name_CC         = GO2name_CC
                       ))
     gc()
     if (test2do=='LRT'){ 
@@ -3291,7 +3352,7 @@ for (test2do in test_count){
         test_name = 'LRT'
         
       }else{
-        if ((!is.na(opt$CONTRAST))  & (opt$CONTRAST != "")){
+        if ((!is.na(opt$CONTRAST))  && (opt$CONTRAST != "")){
           Results_for_print = Results_for_print[,c('log2FoldChange','pvalue','padj')]
           contrast_list = unlist(stringi::stri_split(str =  opt$CONTRAST,regex = ','))
           if (length(contrast_list)==2){
@@ -3327,7 +3388,7 @@ for (test2do in test_count){
       if (!is.na(opt$LRT)){
         print('No Volcano plot for LRT')
       }else{
-        if ((!is.na(opt$CONTRAST))  & (opt$CONTRAST != "")){
+        if ((!is.na(opt$CONTRAST))  && (opt$CONTRAST != "")){
           contrast_list = unlist(stringi::stri_split(str =  opt$CONTRAST,regex = ','))
           if (length(contrast_list)==2){
              test_name = paste(contrast_list[1],contrast_list[2],sep = ' vs ')
@@ -3386,6 +3447,8 @@ for (test2do in test_count){
       }
       
       if (is.na(opt$PCA_SHAPE)){
+        PCA_data[,opt$PCA_COLOR] = factor(PCA_data[,opt$PCA_COLOR] , levels = unique(PCA_data[,opt$PCA_COLOR]))
+        #PCA_data[,opt$PCA_SHAPE] = factor(PCA_data[,opt$PCA_SHAPE] , levels = unique(PCA_data[,opt$PCA_SHAPE]))
         pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),size=make.names(opt$PCA_SIZE)) )+
           geom_count()+
           scale_shape_discrete(solid=F)+
@@ -3406,6 +3469,8 @@ for (test2do in test_count){
         ggsave(file.path(opt$outDir,paste(c('TOP500_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
         
       }else{
+        PCA_data[,opt$PCA_COLOR] = factor(PCA_data[,opt$PCA_COLOR] , levels = unique(PCA_data[,opt$PCA_COLOR]))
+        PCA_data[,opt$PCA_SHAPE] = factor(PCA_data[,opt$PCA_SHAPE] , levels = unique(PCA_data[,opt$PCA_SHAPE]))
         pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
           geom_count()+
           scale_shape_discrete(solid=F)+
@@ -3440,6 +3505,8 @@ for (test2do in test_count){
       }
       
       if (is.na(opt$PCA_SHAPE)){
+        PCA_data[,opt$PCA_COLOR] = factor(PCA_data[,opt$PCA_COLOR] , levels = unique(PCA_data[,opt$PCA_COLOR]))
+        #PCA_data[,opt$PCA_SHAPE] = factor(PCA_data[,opt$PCA_SHAPE] , levels = unique(PCA_data[,opt$PCA_SHAPE]))
         pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),size=make.names(opt$PCA_SIZE)) )+
           geom_count()+
           scale_shape_discrete(solid=F)+
@@ -3460,6 +3527,8 @@ for (test2do in test_count){
         ggsave(file.path(opt$outDir,paste(c('ALL_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
         
       }else{
+        PCA_data[,opt$PCA_COLOR] = factor(PCA_data[,opt$PCA_COLOR] , levels = unique(PCA_data[,opt$PCA_COLOR]))
+        PCA_data[,opt$PCA_SHAPE] = factor(PCA_data[,opt$PCA_SHAPE] , levels = unique(PCA_data[,opt$PCA_SHAPE]))
         pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
           geom_count()+
           scale_shape_discrete(solid=F)+
@@ -3505,6 +3574,8 @@ for (test2do in test_count){
       }
       
       if (is.na(opt$PCA_SHAPE)){
+        PCA_data[,opt$PCA_COLOR] = factor(PCA_data[,opt$PCA_COLOR] , levels = unique(PCA_data[,opt$PCA_COLOR]))
+        #PCA_data[,opt$PCA_SHAPE] = factor(PCA_data[,opt$PCA_SHAPE] , levels = unique(PCA_data[,opt$PCA_SHAPE]))
         pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),size=make.names(opt$PCA_SIZE)) )+
           geom_count()+
           scale_shape_discrete(solid=F)+
@@ -3525,6 +3596,8 @@ for (test2do in test_count){
         ggsave(file.path(opt$outDir,paste(c(extra_string,'TOP500_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
         
       }else{
+        PCA_data[,opt$PCA_COLOR] = factor(PCA_data[,opt$PCA_COLOR] , levels = unique(PCA_data[,opt$PCA_COLOR]))
+        PCA_data[,opt$PCA_SHAPE] = factor(PCA_data[,opt$PCA_SHAPE] , levels = unique(PCA_data[,opt$PCA_SHAPE]))
         pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
           geom_count()+
           scale_shape_discrete(solid=F)+
@@ -3559,6 +3632,8 @@ for (test2do in test_count){
       }
       
       if (is.na(opt$PCA_SHAPE)){
+        PCA_data[,opt$PCA_COLOR] = factor(PCA_data[,opt$PCA_COLOR] , levels = unique(PCA_data[,opt$PCA_COLOR]))
+        #PCA_data[,opt$PCA_SHAPE] = factor(PCA_data[,opt$PCA_SHAPE] , levels = unique(PCA_data[,opt$PCA_SHAPE]))
         pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),size=make.names(opt$PCA_SIZE)) )+
           geom_count()+
           scale_shape_discrete(solid=F)+
@@ -3579,6 +3654,8 @@ for (test2do in test_count){
         ggsave(file.path(opt$outDir,paste(c(extra_string,'ALL_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
         
       }else{
+        PCA_data[,opt$PCA_COLOR] = factor(PCA_data[,opt$PCA_COLOR] , levels = unique(PCA_data[,opt$PCA_COLOR]))
+        PCA_data[,opt$PCA_SHAPE] = factor(PCA_data[,opt$PCA_SHAPE] , levels = unique(PCA_data[,opt$PCA_SHAPE]))
         pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
           geom_count()+
           scale_shape_discrete(solid=F)+
@@ -3609,7 +3686,7 @@ for (test2do in test_count){
     
     ##################Plot Counts################################    
     if (!is.na(Normalized_counts)){
-      if (!is.na(opt$GENES_PLOT)&(!is.na(opt$X_AXIS)   )){
+      if (!is.na(opt$GENES_PLOT)&&(!is.na(opt$X_AXIS)   )){
         intgroup=c(opt$X_AXIS,opt$GROUP)
         intgroup=intgroup[!is.na(intgroup)]
         X_AXIS=opt$X_AXIS
@@ -3671,7 +3748,7 @@ for (test2do in test_count){
         }
         
         if (is.na(opt$SPLIT_BY)){
-          if ((!is.na(opt$CONTRAST))  & (opt$CONTRAST != "")){
+          if ((!is.na(opt$CONTRAST))  && (opt$CONTRAST != "")){
             if (opt$SPLIT_BY_CONTRAST){
               contrast_list_split = unlist(stringi::stri_split(str =  opt$CONTRAST,regex = ','))
               if (length(contrast_list_split)==3){
@@ -3815,7 +3892,7 @@ for (test2do in test_count){
               }else{
                 k.max=opt$k.max
               }
-              if ((opt$FUNcluster=='click')&(!is.na(opt$CLICK_PATH))){
+              if ((opt$FUNcluster=='click')&&(!is.na(opt$CLICK_PATH))){
                 clusters = Run_click(mat =as.matrix(SPLIT_Normalized_counts_Annotated_mean),click_path = opt$CLICK_PATH,outDir = opt$outDir,HOMOGENEITY = opt$CLICK_HOMOGENEITY)
               }else{
                 if (opt$Mclust){
@@ -4087,31 +4164,59 @@ for (test2do in test_count){
             }
           }else{
             if (GO_flag){
-              allRes <- Clusters_Enrichment_Test(opt$outDir,clusters,GO2name_BP,GO2gene_BP,paste('Clusters_GO_Enrichment_',SPLIT,".csv",sep=""),"GO",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
-              if (opt$Enriched_terms_overlap){
-                plot_sheard_genes(allRes@compareClusterResult,opt$outDir,'Clusters_GO_Enrichment')
-              }
-              if (((length(down_reg)>0) || (length(up_reg)>0)) && (is.na(opt$LRT))){
-                    up_down_clusters = clusters
-                    if (length(down_reg)>0){
-                        up_down_clusters[down_reg]='Down'
+                GOTypes = unlist(stringi::stri_split(str = opt$GO_Enrichment_Type,regex = ','))
+                for (GOType in GOTypes){
+                    GO2gene = NA
+                    GO2name = NA
+                    if (GOType == 'BP'){
+                      if ((!is.na(GO2gene_BP)) && (!is.na(GO2name_BP))) {
+                        GO2gene = GO2gene_BP
+                        GO2name = GO2name_BP
+                      }
                     }
-                    if (length(up_reg)>0){
-                        up_down_clusters[up_reg]='UP'
+                    if (GOType == 'MF'){
+                      if ((!is.na(GO2gene_MF)) && (!is.na(GO2name_MF))) {
+                        GO2gene = GO2gene_MF
+                        GO2name = GO2name_MF
+                      }
                     }
-
-                    allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,GO2name_BP,GO2gene_BP,paste('GO_Biological_Process_Enrichment_of_Up_and_Down_Clusters',SPLIT,sep="_"),"GO",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
-                    if (opt$Enriched_terms_overlap){
-                        plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'GO_Biological_Process_Enrichment_of_Up_and_Down_Clusters')
+                    
+                    if (GOType == 'CC'){
+                      if ((!is.na(GO2gene_CC)) && (!is.na(GO2name_CC))) {
+                        GO2gene = GO2gene_CC
+                        GO2name = GO2name_CC
+                      }
+                    }
+                    
+                    
+                    if ((!is.na(GO2gene)) && (!is.na(GO2name))) {
+                      allRes <- Clusters_Enrichment_Test(opt$outDir,clusters,GO2name,GO2gene,paste(GOType,'_Clusters_GO_Enrichment_',SPLIT,".csv",sep=""),"GO",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
+                      if (opt$Enriched_terms_overlap){
+                        plot_sheard_genes(allRes@compareClusterResult,opt$outDir,'Clusters_GO_Enrichment')
+                      }
+                      if (((length(down_reg)>0) || (length(up_reg)>0)) && (is.na(opt$LRT))){
+                            up_down_clusters = clusters
+                            if (length(down_reg)>0){
+                                up_down_clusters[down_reg]='Down'
+                            }
+                            if (length(up_reg)>0){
+                                up_down_clusters[up_reg]='UP'
+                            }
+                            
+                            allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,GO2name,GO2gene,paste(GOType,'_GO_Biological_Process_Enrichment_of_Up_and_Down_Clusters',SPLIT,sep="_"),"GO",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
+                            if (opt$Enriched_terms_overlap){
+                                plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,GOType,'_GO_Biological_Process_Enrichment_of_Up_and_Down_Clusters')
+                            }
+                        }
+                      
+                      One_cluster=clusters
+                      One_cluster[]=1
+                      allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,GO2name,GO2gene,paste(GOType,'_One_Cluster_GO_Enrichment_',SPLIT,".csv",sep=""),"GO",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
+                      if (opt$Enriched_terms_overlap){
+                        plot_sheard_genes(allRes@compareClusterResult,opt$outDir,GOType,'_One_Cluster_GO_Enrichment')
+                      }
                     }
                 }
-              
-              One_cluster=clusters
-              One_cluster[]=1
-              allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,GO2name_BP,GO2gene_BP,paste('One_Cluster_GO_Enrichment_',SPLIT,".csv",sep=""),"GO",pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE)
-              if (opt$Enriched_terms_overlap){
-                plot_sheard_genes(allRes@compareClusterResult,opt$outDir,'One_Cluster_GO_Enrichment')
-              }
             }
           }
           if (KEGG_flag){

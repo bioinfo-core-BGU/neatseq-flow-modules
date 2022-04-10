@@ -26,7 +26,12 @@ params:
     ORGANISM_KEGG_flag: FALSE
     KEGG_KAAS_flag: FALSE
     GO_flag: FALSE
-    
+    GO2gene_MF: NA
+    GO2name_MF: NA
+    GO2gene_BP: NA
+    GO2name_BP: NA
+    GO2gene_CC: NA
+    GO2name_CC: NA
 ---
 
 <style>
@@ -738,6 +743,13 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
     ORGANISM_KEGG_flag = params$ORGANISM_KEGG_flag
     KEGG_KAAS_flag     = params$KEGG_KAAS_flag
     GO_flag            = params$GO_flag
+    GO2gene_MF         = params$GO2gene_MF
+    GO2name_MF         = params$GO2name_MF
+    GO2gene_BP         = params$GO2gene_BP
+    GO2name_BP         = params$GO2name_BP
+    GO2gene_CC         = params$GO2gene_CC
+    GO2name_CC         = params$GO2name_CC
+    
     
     Original_colData   = colData
     Original_countData = countData
@@ -1197,6 +1209,8 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
             }
 
             if (is.na(opt$PCA_SHAPE)){
+                PCA_data[,opt$PCA_COLOR] = factor(PCA_data[,opt$PCA_COLOR] , levels = unique(PCA_data[,opt$PCA_COLOR]))
+                #PCA_data[,opt$PCA_SHAPE] = factor(PCA_data[,opt$PCA_SHAPE] , levels = unique(PCA_data[,opt$PCA_SHAPE]))
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),size=make.names(opt$PCA_SIZE)) )+
                     geom_count()+
                     scale_shape_discrete(solid=F)+
@@ -1204,7 +1218,9 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                     guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
                     xlab(paste0("PC1: ",percentVar[1],"% variance")) +
                     ylab(paste0("PC2: ",percentVar[2],"% variance")) +
-                    coord_fixed()
+                    coord_fixed() +
+                    scale_y_continuous(expand = c(0.25,0.25))
+                    
                 ggsave(file.path(opt$outDir,paste(c('TOP500_PCA_pc1_pc2',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
 
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC3', color=make.names(opt$PCA_COLOR),size=make.names(opt$PCA_SIZE)) )+
@@ -1213,7 +1229,9 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                     guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
                     xlab(paste0("PC1: ",percentVar[1],"% variance")) +
                     ylab(paste0("PC3: ",percentVar[3],"% variance")) +
-                    coord_fixed()
+                    coord_fixed() +
+                    scale_y_continuous(expand = c(0.25,0.25))
+                    
                 ggsave(file.path(opt$outDir,paste(c('TOP500_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
                 
                 PCA_plot = plot_ly(PCA_data, x = ~PC1, y = ~PC3, z = ~PC2,
@@ -1245,6 +1263,8 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                                         zaxis = list(title = paste0("PC2: ",percentVar[2],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE))) 
                 PCA_plot
             }else{
+                PCA_data[,opt$PCA_COLOR] = factor(PCA_data[,opt$PCA_COLOR] , levels = unique(PCA_data[,opt$PCA_COLOR]))
+                PCA_data[,opt$PCA_SHAPE] = factor(PCA_data[,opt$PCA_SHAPE] , levels = unique(PCA_data[,opt$PCA_SHAPE]))
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
                     geom_count()+
                     scale_shape_discrete(solid=F)+
@@ -1253,7 +1273,9 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                     guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
                     xlab(paste0("PC1: ",percentVar[1],"% variance")) +
                     ylab(paste0("PC2: ",percentVar[2],"% variance")) +
-                    coord_fixed()
+                    coord_fixed() +
+                    scale_y_continuous(expand = c(0.25,0.25))
+                    
                 ggsave(file.path(opt$outDir,paste(c('TOP500_PCA_pc1_pc2',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
 
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC3', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
@@ -1263,7 +1285,9 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                     guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
                     xlab(paste0("PC1: ",percentVar[1],"% variance")) +
                     ylab(paste0("PC3: ",percentVar[3],"% variance")) +
-                    coord_fixed()
+                    coord_fixed() +
+                    scale_y_continuous(expand = c(0.25,0.25))
+                    
                 ggsave(file.path(opt$outDir,paste(c('TOP500_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
                 
                 PCA_plot = plot_ly(PCA_data, x = ~PC1, y = ~PC3, z = ~PC2,
@@ -1323,6 +1347,8 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
             }
 
             if (is.na(opt$PCA_SHAPE)){
+                PCA_data[,opt$PCA_COLOR] = factor(PCA_data[,opt$PCA_COLOR] , levels = unique(PCA_data[,opt$PCA_COLOR]))
+                # PCA_data[,opt$PCA_SHAPE] = factor(PCA_data[,opt$PCA_SHAPE] , levels = unique(PCA_data[,opt$PCA_SHAPE]))
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),size=make.names(opt$PCA_SIZE)) )+
                     geom_count()+
                     scale_shape_discrete(solid=F)+
@@ -1330,7 +1356,9 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                     guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
                     xlab(paste0("PC1: ",percentVar[1],"% variance")) +
                     ylab(paste0("PC2: ",percentVar[2],"% variance")) +
-                    coord_fixed()
+                    coord_fixed() +
+                    scale_y_continuous(expand = c(0.25,0.25))
+                    
                 ggsave(file.path(opt$outDir,paste(c('ALL_PCA_pc1_pc2',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
 
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC3', color=make.names(opt$PCA_COLOR),size=make.names(opt$PCA_SIZE)) )+
@@ -1339,7 +1367,9 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                     guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
                     xlab(paste0("PC1: ",percentVar[1],"% variance")) +
                     ylab(paste0("PC3: ",percentVar[3],"% variance")) +
-                    coord_fixed()
+                    coord_fixed() +
+                    scale_y_continuous(expand = c(0.25,0.25))
+                    
                 ggsave(file.path(opt$outDir,paste(c('ALL_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
                 
                 PCA_plot_ALL = plot_ly(PCA_data, x = ~PC1, y = ~PC3, z = ~PC2,
@@ -1371,6 +1401,8 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                                         zaxis = list(title = paste0("PC2: ",percentVar[2],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE))) 
                 PCA_plot_ALL
             }else{
+                PCA_data[,opt$PCA_COLOR] = factor(PCA_data[,opt$PCA_COLOR] , levels = unique(PCA_data[,opt$PCA_COLOR]))
+                PCA_data[,opt$PCA_SHAPE] = factor(PCA_data[,opt$PCA_SHAPE] , levels = unique(PCA_data[,opt$PCA_SHAPE]))
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
                     geom_count()+
                     scale_shape_discrete(solid=F)+
@@ -1379,7 +1411,9 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                     guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
                     xlab(paste0("PC1: ",percentVar[1],"% variance")) +
                     ylab(paste0("PC2: ",percentVar[2],"% variance")) +
-                    coord_fixed()
+                    coord_fixed() +
+                    scale_y_continuous(expand = c(0.25,0.25))
+                    
                 ggsave(file.path(opt$outDir,paste(c('ALL_PCA_pc1_pc2',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
               
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC3', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
@@ -1389,7 +1423,9 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                     guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
                     xlab(paste0("PC1: ",percentVar[1],"% variance")) +
                     ylab(paste0("PC3: ",percentVar[3],"% variance")) +
-                    coord_fixed()
+                    coord_fixed() +
+                    scale_y_continuous(expand = c(0.25,0.25))
+                    
                 ggsave(file.path(opt$outDir,paste(c('ALL_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
                 
                 PCA_plot_ALL = plot_ly(PCA_data, x = ~PC1, y = ~PC3, z = ~PC2,
@@ -1461,6 +1497,8 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
             }
 
             if (is.na(opt$PCA_SHAPE)){
+                PCA_data[,opt$PCA_COLOR] = factor(PCA_data[,opt$PCA_COLOR] , levels = unique(PCA_data[,opt$PCA_COLOR]))
+                # PCA_data[,opt$PCA_SHAPE] = factor(PCA_data[,opt$PCA_SHAPE] , levels = unique(PCA_data[,opt$PCA_SHAPE]))
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),size=make.names(opt$PCA_SIZE)) )+
                     geom_count()+
                     scale_shape_discrete(solid=F)+
@@ -1468,7 +1506,9 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                     guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
                     xlab(paste0("PC1: ",percentVar[1],"% variance")) +
                     ylab(paste0("PC2: ",percentVar[2],"% variance")) +
-                    coord_fixed()
+                    coord_fixed() +
+                    scale_y_continuous(expand = c(0.25,0.25))
+                    
                 ggsave(file.path(opt$outDir,paste(c(extra_string,'TOP500_PCA_pc1_pc2',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
 
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC3', color=make.names(opt$PCA_COLOR),size=make.names(opt$PCA_SIZE)) )+
@@ -1477,7 +1517,9 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                     guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
                     xlab(paste0("PC1: ",percentVar[1],"% variance")) +
                     ylab(paste0("PC3: ",percentVar[3],"% variance")) +
-                    coord_fixed()
+                    coord_fixed() +
+                    scale_y_continuous(expand = c(0.25,0.25))
+                    
                 ggsave(file.path(opt$outDir,paste(c(extra_string,'TOP500_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
                 
                 PCA_plot = plot_ly(PCA_data, x = ~PC1, y = ~PC3, z = ~PC2,
@@ -1509,6 +1551,8 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                                         zaxis = list(title = paste0("PC2: ",percentVar[2],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE))) 
                 PCA_plot
             }else{
+                PCA_data[,opt$PCA_COLOR] = factor(PCA_data[,opt$PCA_COLOR] , levels = unique(PCA_data[,opt$PCA_COLOR]))
+                PCA_data[,opt$PCA_SHAPE] = factor(PCA_data[,opt$PCA_SHAPE] , levels = unique(PCA_data[,opt$PCA_SHAPE]))
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
                     geom_count()+
                     scale_shape_discrete(solid=F)+
@@ -1517,7 +1561,9 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                     guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
                     xlab(paste0("PC1: ",percentVar[1],"% variance")) +
                     ylab(paste0("PC2: ",percentVar[2],"% variance")) +
-                    coord_fixed()
+                    coord_fixed() +
+                    scale_y_continuous(expand = c(0.25,0.25))
+                    
                 ggsave(file.path(opt$outDir,paste(c(extra_string,'TOP500_PCA_pc1_pc2',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
 
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC3', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
@@ -1527,7 +1573,9 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                     guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
                     xlab(paste0("PC1: ",percentVar[1],"% variance")) +
                     ylab(paste0("PC3: ",percentVar[3],"% variance")) +
-                    coord_fixed()
+                    coord_fixed() +
+                    scale_y_continuous(expand = c(0.25,0.25))
+                    
                 ggsave(file.path(opt$outDir,paste(c(extra_string,'TOP500_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
                 
                 PCA_plot = plot_ly(PCA_data, x = ~PC1, y = ~PC3, z = ~PC2,
@@ -1594,7 +1642,9 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                     guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
                     xlab(paste0("PC1: ",percentVar[1],"% variance")) +
                     ylab(paste0("PC2: ",percentVar[2],"% variance")) +
-                    coord_fixed()
+                    coord_fixed() +
+                    scale_y_continuous(expand = c(0.25,0.25))
+                    
                 ggsave(file.path(opt$outDir,paste(c(extra_string,'ALL_PCA_pc1_pc2',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
 
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC3', color=make.names(opt$PCA_COLOR),size=make.names(opt$PCA_SIZE)) )+
@@ -1603,7 +1653,9 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                     guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
                     xlab(paste0("PC1: ",percentVar[1],"% variance")) +
                     ylab(paste0("PC3: ",percentVar[3],"% variance")) +
-                    coord_fixed()
+                    coord_fixed() +
+                    scale_y_continuous(expand = c(0.25,0.25))
+                    
                 ggsave(file.path(opt$outDir,paste(c(extra_string,'ALL_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
                 
                 PCA_plot_ALL = plot_ly(PCA_data, x = ~PC1, y = ~PC3, z = ~PC2,
@@ -1643,7 +1695,9 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                     guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
                     xlab(paste0("PC1: ",percentVar[1],"% variance")) +
                     ylab(paste0("PC2: ",percentVar[2],"% variance")) +
-                    coord_fixed()
+                    coord_fixed() +
+                    scale_y_continuous(expand = c(0.25,0.25))
+                    
                 ggsave(file.path(opt$outDir,paste(c(extra_string,'ALL_PCA_pc1_pc2',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
               
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC3', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
@@ -1653,7 +1707,9 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                     guides(size=guide_legend(order  = 2,title=opt$PCA_SIZE))+
                     xlab(paste0("PC1: ",percentVar[1],"% variance")) +
                     ylab(paste0("PC3: ",percentVar[3],"% variance")) +
-                    coord_fixed()
+                    coord_fixed() +
+                    scale_y_continuous(expand = c(0.25,0.25))
+                    
                 ggsave(file.path(opt$outDir,paste(c(extra_string,'ALL_PCA_pc1_pc3',".pdf"),collapse ="")),pca_res,dpi = 600, width = 6.99, height =6.99, units = "in")
                 
                 PCA_plot_ALL = plot_ly(PCA_data, x = ~PC1, y = ~PC3, z = ~PC2,
@@ -1711,7 +1767,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
         if (!is.na(Normalized_counts)){
             plot_list = list()
             figure_count = 1
-            if (!is.na(opt$GENES_PLOT)&(!is.na(opt$X_AXIS)   )){
+            if (!is.na(opt$GENES_PLOT)&&(!is.na(opt$X_AXIS)   )){
                 intgroup=c(opt$X_AXIS,opt$GROUP)
                 intgroup=intgroup[!is.na(intgroup)]
                 X_AXIS=opt$X_AXIS
@@ -1957,7 +2013,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                 }else{
                                     k.max=opt$k.max
                                 }
-                                if ((opt$FUNcluster=='click')&(!is.na(opt$CLICK_PATH))){
+                                if ((opt$FUNcluster=='click') && (!is.na(opt$CLICK_PATH))){
                                     clusters = Run_click(mat =as.matrix(SPLIT_Normalized_counts_Annotated_mean),click_path = opt$CLICK_PATH,outDir = opt$outDir,HOMOGENEITY = opt$CLICK_HOMOGENEITY)
                                 }else{
                                     if (opt$Mclust){
@@ -2305,40 +2361,64 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                             
                         }else{
                             if (GO_flag){
-                                allRes <- Clusters_Enrichment_Test(opt$outDir,clusters,GO2name_BP,GO2gene_BP,paste('GO_Biological_Process_Enrichment_of_Clusters',SPLIT,sep="_"),"GO",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
-                                main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
-                                if (opt$Enriched_terms_overlap){
-                                    heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'GO_Biological_Process_Enrichment_of_Clusters')
-                                    main_plot_list <- c(main_plot_list ,list(heatmaps))
-                                }
-     
-                                if (((length(down_reg)>0) || (length(up_reg)>0)) && (is.na(opt$LRT))){
-                                    up_down_clusters = clusters
-                                    if (length(down_reg)>0){
-                                        up_down_clusters[down_reg]='Down'
+                                GOTypes = unlist(stringi::stri_split(str = opt$GO_Enrichment_Type,regex = ','))
+                                for (GOType in GOTypes){
+                                    GO2gene = NA
+                                    GO2name = NA
+                                    if (GOType == 'BP'){
+                                      if ((!is.na(GO2gene_BP)) && (!is.na(GO2name_BP))) {
+                                        GO2gene = GO2gene_BP
+                                        GO2name = GO2name_BP
+                                      }
                                     }
-                                    if (length(up_reg)>0){
-                                        up_down_clusters[up_reg]='UP'
+                                    if (GOType == 'MF'){
+                                      if ((!is.na(GO2gene_MF)) && (!is.na(GO2name_MF))) {
+                                        GO2gene = GO2gene_MF
+                                        GO2name = GO2name_MF
+                                      }
                                     }
-    
-                                    allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,GO2name_BP,GO2gene_BP,paste('GO_Biological_Process_Enrichment_of_Up_and_Down_Clusters',SPLIT,sep="_"),"GO",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
-                                    main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
-                                    if (opt$Enriched_terms_overlap){
-                                        heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'GO_Biological_Process_Enrichment_of_Up_and_Down_Clusters')
-                                        main_plot_list <- c(main_plot_list ,list(heatmaps))
+                                    
+                                    if (GOType == 'CC'){
+                                      if ((!is.na(GO2gene_CC)) && (!is.na(GO2name_CC))) {
+                                        GO2gene = GO2gene_CC
+                                        GO2name = GO2name_CC
+                                      }
                                     }
-    
+                                    
+                                    if ((!is.na(GO2gene)) && (!is.na(GO2name))) {
+                                        allRes <- Clusters_Enrichment_Test(opt$outDir,clusters,GO2name,GO2gene,paste(GOType,'_GO_Enrichment_of_Clusters',SPLIT,sep="_"),"GO",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
+                                        main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
+                                        if (opt$Enriched_terms_overlap){
+                                            heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,GOType,'_GO_Enrichment_of_Clusters')
+                                            main_plot_list <- c(main_plot_list ,list(heatmaps))
+                                        }
+                                        
+                                        if (((length(down_reg)>0) || (length(up_reg)>0)) && (is.na(opt$LRT))){
+                                            up_down_clusters = clusters
+                                            if (length(down_reg)>0){
+                                                up_down_clusters[down_reg]='Down'
+                                            }
+                                            if (length(up_reg)>0){
+                                                up_down_clusters[up_reg]='UP'
+                                            }
+                                            
+                                            allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,GO2name,GO2gene,paste(GOType,'_GO_Enrichment_of_Up_and_Down_Clusters',SPLIT,sep="_"),"GO",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
+                                            main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
+                                            if (opt$Enriched_terms_overlap){
+                                                heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,GOType,'_GO_Enrichment_of_Up_and_Down_Clusters')
+                                                main_plot_list <- c(main_plot_list ,list(heatmaps))
+                                            }
+                                        }
+                                        One_cluster=clusters
+                                        One_cluster[]=1
+                                        allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,GO2name,GO2gene,paste(GOType,'_GO_Enrichment_of_All_Significant_Genes',SPLIT,sep="_"),"GO",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
+                                        main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
+                                        if (opt$Enriched_terms_overlap){
+                                            heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,GOType,'_GO_Enrichment_of_All_Significant_Genes')
+                                            main_plot_list <- c(main_plot_list ,list(heatmaps))
+                                        }
+                                    }
                                 }
-     
-                                One_cluster=clusters
-                                One_cluster[]=1
-                                allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,GO2name_BP,GO2gene_BP,paste('GO_Biological_Process_Enrichment_of_All_Significant_Genes',SPLIT,sep="_"),"GO",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
-                                main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
-                                if (opt$Enriched_terms_overlap){
-                                    heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'GO_Biological_Process_Enrichment_of_All_Significant_Genes')
-                                    main_plot_list <- c(main_plot_list ,list(heatmaps))
-                                }
-                                
                                 
                             }
                         }
