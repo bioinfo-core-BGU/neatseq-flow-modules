@@ -2891,26 +2891,30 @@ if (opt$USE_INPUT_GENES_AS_BACKGROUND){
     }
     
     if (GO_flag == TRUE){
-        print('GO BP : Before INPUT GENES AS BACKGROUND Filtering:')
-        print(dim(GO2gene_BP))
-        genes2use = intersect(unique(GO2gene_BP[,2]),rownames(countData))
-        GO2gene_BP = GO2gene_BP[GO2gene_BP[,2] %in% genes2use,]
-        print('GO BP : After INPUT GENES AS BACKGROUND Filtering:')
-        print(dim(GO2gene_BP))
-        
-        print('GO MF : Before INPUT GENES AS BACKGROUND Filtering:')
-        print(dim(GO2gene_MF))
-        genes2use = intersect(unique(GO2gene_MF[,2]),rownames(countData))
-        GO2gene_MF = GO2gene_MF[GO2gene_MF[,2] %in% genes2use,]
-        print('GO BP : After INPUT GENES AS BACKGROUND Filtering:')
-        print(dim(GO2gene_MF))
-        
-        print('GO CC : Before INPUT GENES AS BACKGROUND Filtering:')
-        print(dim(GO2gene_CC))
-        genes2use = intersect(unique(GO2gene_CC[,2]),rownames(countData))
-        GO2gene_CC = GO2gene_CC[GO2gene_CC[,2] %in% genes2use,]
-        print('GO BP : After INPUT GENES AS BACKGROUND Filtering:')
-        print(dim(GO2gene_CC))
+        if (!is.na(GO2gene_BP)){
+            print('GO BP : Before INPUT GENES AS BACKGROUND Filtering:')
+            print(dim(GO2gene_BP))
+            genes2use = intersect(unique(GO2gene_BP[,2]),rownames(countData))
+            GO2gene_BP = GO2gene_BP[GO2gene_BP[,2] %in% genes2use,]
+            print('GO BP : After INPUT GENES AS BACKGROUND Filtering:')
+            print(dim(GO2gene_BP))
+        }
+        if (!is.na(GO2gene_MF)){
+            print('GO MF : Before INPUT GENES AS BACKGROUND Filtering:')
+            print(dim(GO2gene_MF))
+            genes2use = intersect(unique(GO2gene_MF[,2]),rownames(countData))
+            GO2gene_MF = GO2gene_MF[GO2gene_MF[,2] %in% genes2use,]
+            print('GO BP : After INPUT GENES AS BACKGROUND Filtering:')
+            print(dim(GO2gene_MF))
+        }
+        if (!is.na(GO2gene_CC)){
+            print('GO CC : Before INPUT GENES AS BACKGROUND Filtering:')
+            print(dim(GO2gene_CC))
+            genes2use = intersect(unique(GO2gene_CC[,2]),rownames(countData))
+            GO2gene_CC = GO2gene_CC[GO2gene_CC[,2] %in% genes2use,]
+            print('GO BP : After INPUT GENES AS BACKGROUND Filtering:')
+            print(dim(GO2gene_CC))
+        }
     }
 
 }
