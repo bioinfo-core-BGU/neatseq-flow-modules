@@ -400,7 +400,7 @@ Clusters_Enrichment_Test=function(outDir,clusters,TERM2NAME,TERM2GENE,file_name,
 }
 
 
-plot_clusters<-function(clusters,vs_ano,color_group=c('Type','Time'),titles=c("Type","Time","Normalized counts"),split_by=c(),smooth=T,X_AXIS_ORDER=NA){
+OLD_plot_clusters<-function(clusters,vs_ano,color_group=c('Type','Time'),titles=c("Type","Time","Normalized counts"),split_by=c(),smooth=T,X_AXIS_ORDER=NA){
   plot_list  = list()
   title_list = list()
   count=1
@@ -543,6 +543,165 @@ plot_clusters<-function(clusters,vs_ano,color_group=c('Type','Time'),titles=c("T
     legend <- get_legend(gp2[[1]] + theme(legend.position  ="right")+guides(color=guide_legend(title=titles[1]),linetype=guide_legend(title=titles[1])))
     ml<-marrangeGrob(plot_list, nrow=2, ncol=3,right=legend, top=NULL)
     
+  }
+  
+  return(list(ml))#,ml_plotly))
+}
+
+
+plot_clusters<-function(clusters,vs_ano,color_group=c('Type','Time'),titles=c("Type","Time","Normalized counts"),split_by=c(),smooth=T,X_AXIS_ORDER=NA){
+  plot_list  = list()
+  title_list = list()
+  count=1
+  for (i in sort(unique(clusters))){
+    Df=data.frame()
+    genes=names(clusters[clusters==i])
+    for (j in genes){
+      if (length(split_by)>0){
+        temp=subset.data.frame(x =vs_ano,,c(split_by,color_group,j))
+        colnames(temp)=c("split_by","Type","Time","EXP")
+        Df=rbind(Df,temp)
+      }else{
+        temp=subset.data.frame(x =vs_ano,,c(color_group,j))
+        colnames(temp)=c("Type","Time","EXP")
+        Df=rbind(Df,temp)
+      }
+    }
+    if (color_group[1]==color_group[2]){
+      Df$Type='Trend'
+    }
+    if (length(X_AXIS_ORDER)>1){
+      Df$Time <-factor(Df$Time,levels=intersect(X_AXIS_ORDER,unique(Df$Time)))
+    }
+    if (length(split_by)>0){
+      title_list[count]=list(c(i,length(genes)) ) 
+      plot_list[count]=list(ggplot(data=Df, aes(x=Time, y=EXP, group=Type)) + 
+                              facet_wrap(~split_by, ncol=1,scales = "free_y",strip.position = c("right"))+
+                              theme(strip.text.y = element_text(size = 7, colour = "black"))+#,face="bold" ,angle = 90))+
+                              #theme(strip.background = element_blank())+
+                              ggtitle( paste(paste("Cluster ", i  ,sep="") ,length(genes) ,sep="\n")) +
+                              #theme(plot.title = element_text(colour = "black", size = 12)) + 
+                              theme(legend.position  ="none")+
+                              xlab(titles[2]) +
+                              ylab(titles[3]) +
+                              theme(axis.title   = element_text(colour = "black", size = 10) )+
+                              theme(legend.title = element_text(colour = "black", size = 10) )+
+                              theme(legend.text  = element_text(colour = "black", size = 8) )+
+                              theme(axis.text.y  = element_text(colour = "black", size = 6))+
+                              theme(axis.text.x  = element_text(colour = "black", size = 6))+
+                              theme(plot.margin  = unit(c(0.5,0.2,0.5,0.2),"cm")  )+
+                              #scale_color_discrete(name=titles[1])+
+                              #scale_linetype_manual(name=titles[1],values=c(1,5))+
+                              scale_x_discrete(limits=unique(Df$Time))+
+                              theme(legend.key.width =unit(3,"line")) 
+                            #scale_y_continuous(breaks=c(seq(0,10,by=2)) )
+      )
+    }else{
+      title_list[count]=list(c(i,length(genes)) ) 
+      plot_list[count]=list(ggplot(data=Df, aes(x=Time, y=EXP, group=Type)) + 
+                              ggtitle( paste(paste("Cluster ", i  ,sep="") ,length(genes) ,sep="\n")) +
+                              #theme(plot.title = element_text(colour = "black", size = 12)) + 
+                              theme(legend.position  ="none")+
+                              xlab(titles[2]) +
+                              ylab(titles[3]) +
+                              theme(axis.title   = element_text(colour = "black", size = 10) )+
+                              theme(legend.title = element_text(colour = "black", size = 10) )+
+                              theme(legend.text  = element_text(colour = "black", size = 8) )+
+                              theme(axis.text.y  = element_text(colour = "black", size = 6))+
+                              theme(axis.text.x  = element_text(colour = "black", size = 6))+
+                              theme(plot.margin  = unit(c(0.5,0.2,0.5,0.2),"cm")  )+
+                              #scale_color_discrete(name=titles[1])+
+                              #scale_linetype_manual(name=titles[1],values=c(1,5))+
+                              scale_x_discrete(limits=unique(Df$Time))+
+                              theme(legend.key.width = unit(3,"line")) 
+                            #scale_y_continuous(breaks=c(seq(0,10,by=2)) )
+      )
+    }
+    
+    
+    if (smooth){
+      if ( (dim(Df)[1]<30000) && (length(unique(Df$Time))>3)){
+        old_plot = plot_list[[count]] 
+        res <- try( list(plot_list[[count]] + 
+                           stat_smooth(method="loess",
+                                       fullrange=F,
+                                       size=0.5,
+                                       span=1,
+                                       aes(linetype=Type,color=Type)) ),
+                    silent = T)
+        if (inherits(res,"try-error")){
+          plot_list[count]=list(old_plot +
+                           stat_smooth(method='glm',
+                                       formula = y ~ poly(x, length(unique(Df$Time))-1),
+                                       fullrange=F,
+                                       size=0.5,
+                                       aes(linetype=Type,color=Type)) 
+                                )
+          # plot_list[count]=list(plot_list[[count]] + 
+          # stat_smooth(method="loess", span = 0.1 ,fullrange=F, size=0.5 ,aes(linetype=Type,color=Type)) 
+          # )
+        }else{
+          plot_list[count]=res
+          
+        }
+      }else{
+        plot_list[count]=list(plot_list[[count]]+
+                                stat_smooth(method='glm',
+                                            formula = y ~ poly(x, length(unique(Df$Time))-1),
+                                            fullrange=F,
+                                            size=0.5,
+                                            aes(linetype=Type,color=Type)) 
+        )
+      }
+      gp2=plot_list[count]
+      res<-try(get_legend(gp2[[1]] + theme(legend.position  ="right")+guides(color=guide_legend(title=titles[1]),linetype=guide_legend(title=titles[1]))) ,silent = T)
+      if (inherits(res,"try-error")){
+        plot_list[count]=list(plot_list[[count]]+
+                                stat_summary(fun.y=mean, geom="point", size = 3,aes(color=Type))+
+                                stat_summary(fun.data = "mean_se", geom = "errorbar", width = .3,size = 1,aes(color=Type),show.legend = F)
+        )
+      }
+    }else{
+      plot_list[count]=list(plot_list[[count]]+
+                              stat_summary(fun.y=mean, geom="line", size = 1.3,aes(linetype=Type,color=Type))+
+                              stat_summary(fun.data = "mean_se", geom = "errorbar", width = .3,size = 1,aes(color=Type),show.legend = F)
+      )
+    }
+    
+    count=count+1  
+  }
+  
+  # ml_plotly = sapply(X =c(1:length(plot_list)),
+  # FUN = function(x) list(ggplotly(plot_list[[x]]) %>% 
+  # style(text=paste(
+  # paste("Cluster:",title_list[[x]][1],sep=" ") ,
+  # paste("Number of Genes:",title_list[[x]][2],sep=" ") ,
+  # sep = "<br />" ),
+  # hoverinfo = "text")))
+  
+  # ml_plotly = subplot(c(ml_plotly),
+  # nrows = ceiling(length(plot_list)/3),
+  # titleX = T,
+  # titleY  = F,
+  # shareX = T,
+  # shareY = F) %>%
+  # layout(title='Clusters',legend = list(orientation = 'h', y = -0.2))
+  gp2=plot_list[1]
+  num_of_plots=length(plot_list)
+  if (num_of_plots <= 2) {
+    grob_rows=1
+    grob_cols=num_of_plots
+  } else if (num_of_plots <= 4) {
+    grob_rows = grob_cols = 2
+  } else {
+    grob_rows=2
+    grob_cols=3
+  }
+  if (color_group[1]==color_group[2]){
+    ml<-marrangeGrob(plot_list, nrow=grob_rows, ncol=grob_cols, top=NULL)
+  } else {
+    legend <- get_legend(gp2[[1]] + theme(legend.position  ="right")+guides(color=guide_legend(title=titles[1]),linetype=guide_legend(title=titles[1])))
+    ml<-marrangeGrob(plot_list, nrow=grob_rows, ncol=grob_cols,right=legend, top=NULL)
   }
   
   return(list(ml))#,ml_plotly))

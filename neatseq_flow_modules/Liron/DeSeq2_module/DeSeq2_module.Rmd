@@ -370,13 +370,13 @@ plot_clusters<-function(clusters,vs_ano,color_group=c('Type','Time'),titles=c("T
     
     
     if (smooth){
-      if (dim(Df)[1]<30000){
+      if ( (dim(Df)[1]<30000) && (length(unique(Df$Time))>3)){
         old_plot = plot_list[[count]] 
         res <- try( list(plot_list[[count]] + 
                            stat_smooth(method="loess",
                                        fullrange=F,
                                        size=0.5,
-									   span=1,
+                                       span=1,
                                        aes(linetype=Type,color=Type)) ),
                     silent = T)
         if (inherits(res,"try-error")){
@@ -2308,7 +2308,8 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                             
                             
                         }
-                        save(list=ls(all.names = TRUE),file =file.path(opt$outDir,'Session.RSession'))
+                        # save(list=ls(all.names = TRUE),file =file.path(opt$outDir,'SSession.RSession'))
+                        save.image(file.path(opt$outDir,'Session.RSession'))
                         ##################Clustering-End##################################    
     
                         ##################GO/KEGG STAR####################################
