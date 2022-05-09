@@ -2390,7 +2390,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                         allRes <- Clusters_Enrichment_Test(opt$outDir,clusters,GO2name,GO2gene,paste(GOType,'_GO_Enrichment_of_Clusters',SPLIT,sep="_"),"GO",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
                                         main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                                         if (opt$Enriched_terms_overlap){
-                                            heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,GOType,'_GO_Enrichment_of_Clusters')
+                                            heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,paste(GOType,'_GO_Enrichment_of_Clusters'))
                                             main_plot_list <- c(main_plot_list ,list(heatmaps))
                                         }
                                         
@@ -2406,7 +2406,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                             allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,GO2name,GO2gene,paste(GOType,'_GO_Enrichment_of_Up_and_Down_Clusters',SPLIT,sep="_"),"GO",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
                                             main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                                             if (opt$Enriched_terms_overlap){
-                                                heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,GOType,'_GO_Enrichment_of_Up_and_Down_Clusters')
+                                                heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,paste(GOType,'_GO_Enrichment_of_Up_and_Down_Clusters'))
                                                 main_plot_list <- c(main_plot_list ,list(heatmaps))
                                             }
                                         }
@@ -2415,7 +2415,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                         allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,GO2name,GO2gene,paste(GOType,'_GO_Enrichment_of_All_Significant_Genes',SPLIT,sep="_"),"GO",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
                                         main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                                         if (opt$Enriched_terms_overlap){
-                                            heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,GOType,'_GO_Enrichment_of_All_Significant_Genes')
+                                            heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,paste(GOType,'_GO_Enrichment_of_All_Significant_Genes'))
                                             main_plot_list <- c(main_plot_list ,list(heatmaps))
                                         }
                                     }
