@@ -58,6 +58,7 @@ Lines for parameter file
         qsub_params:
             -pe:                                                 # Number of CPUs to reserve for this analysis
         mode:                                                    # transcriptome or genome
+        export_transcriptome:                                    # In genome mode set the extracted transcriptome as the new project level fasta.nucl and extract the ranscript-to-gene-map file as project level gene_trans_map
         annotation:                                              # For Genome mode: the location of GTF file [the default] , for GFF3 use the gff3 flag. For Transcriptome mode: transcript-to-gene-map file.
                                                                  # If annotation is set to Trinity the transcript-to-gene-map file will be generated using the from_Trinity_to_gene_map script
                                                                  # If not set will use only the reference file as unrelated transcripts
@@ -226,7 +227,8 @@ class Step_RSEM(Step):
                                            % os.sep.join([REF_dir.rstrip(os.sep),"REF"])
         #update the reference slot to the new reference folder location and the reference files prefix 
         self.params["reference"]= os.sep.join([REF_dir.rstrip(os.sep),"REF"])        
-                
+        if "export_transcriptome" in list(self.params.keys()):
+            self.sample_data["project_data"]["fasta.nucl"] = self.params["reference"] + ".transcripts.fa"
         pass
         
     def create_spec_wrapping_up_script(self):
@@ -271,6 +273,13 @@ class Step_RSEM(Step):
                                                         % (self.sample_data[sample]["RSEM"]) \
                                                         % (results_dir+sample+"_diagnostic.pdf")
         
+        if "export_transcriptome" in list(self.params.keys()):
+            if len(self.sample_data["samples"])>0:
+                sample = self.sample_data["samples"][0]
+                self.script += "cut -f 1,2 %s | tail -n +2 > '%%s'  \n\n" % (self.sample_data[sample]["genes.results"]) \
+                                                                          % (os.sep.join([results_dir.rstrip(os.sep),"transcript_to_gene_map.map"]))
+                self.sample_data["project_data"]['gene_trans_map'] = os.sep.join([results_dir.rstrip(os.sep),"transcript_to_gene_map.map"])
+                
         # if "del_unsorted_bam" in self.params.keys():
             # for sample in self.sample_data["samples"]:
                 # try:  # Does a unsorted_bam slot exist? 
