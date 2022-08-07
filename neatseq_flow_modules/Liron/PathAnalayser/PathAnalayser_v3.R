@@ -39,8 +39,6 @@ option_list = list(
               help="The  Number of CPUs to Use , The Default is 5", metavar="character"),
   make_option(c("--PATHWAY_Reference"), type="character", default=NA, 
               help="A KEGG Pathay to use as a reference for sub-setting all other available pathways ", metavar="character"),
-  make_option(c("--OVERRIDE"), action="store_true",default=FALSE, 
-              help="Override Analysis [Default is to Not Override]", metavar="character"),
   make_option(c("--PATHWAYS_2_USE"), type="character", default=NA,
               help="List of KEGG Pathways to use [a comma separated list of IDs]", metavar="character")
 ); 
@@ -604,7 +602,7 @@ KOMatrix             = opt$MATRIX
 PATHWAYS_2_USE       = opt$PATHWAYS_2_USE
 Minimal_PATHWAY_SIZE = opt$Minimal_PATHWAY_SIZE
 PATHWAY_Reference    = opt$PATHWAY_Reference
-OVERRIDE             = opt$OVERRIDE
+
 # path                 = NA
 # pattern              = '*.gff'
 # base_output_dir      = 'C://Users//levinl//Documents//PathAnalayser//New4' 
@@ -620,7 +618,7 @@ OVERRIDE             = opt$OVERRIDE
 
 xml_dir = file.path(base_output_dir,'XML') 
 dir.create(xml_dir, showWarnings = FALSE)
-cl = NULL
+
 RUN=TRUE
 while (RUN){
     ko2path=try(KEGGREST::keggLink('pathway','ko'),silent = T)
@@ -654,74 +652,65 @@ if (Type=='metabolic'){
     }else{
       if ( file.exists(file.path(KOMatrix))) {
         pivot_table = read.delim(file =KOMatrix,sep = '\t' ,row.names = 1)
-        if (!((dim(pivot_table)[1]>1) & (dim(pivot_table)[2]>1))){
-            print('The Matrix File is not a TSV file or Dose not contain Data')
-            stop()
-        }
-        row.names(pivot_table) = stringi::stri_replace(str = row.names(pivot_table) ,regex =  '.+:',replacement = '')
         row.names(pivot_table) = paste('ko:',row.names(pivot_table),sep = '')
       }else{
-        if (!is.na(path)){
-              file.names <- dir(path, pattern = pattern)
-              dir.create(output_dir, showWarnings = FALSE)
+          
+          file.names <- dir(path, pattern = pattern)
+          dir.create(output_dir, showWarnings = FALSE)
+          run=TRUE
+          while (run){
+            cl <- try(makeCluster(round(cpus/2)),silent = T)
+            if (!inherits(cl,"try-error")){
+              run=FALSE
+            }else{
               run=TRUE
-              while (run){
-                cl <- try(makeCluster(round(cpus/2)),silent = T)
-                if (!inherits(cl,"try-error")){
-                  run=FALSE
-                }else{
-                  run=TRUE
-                }
-              }
+            }
+          }
+          run=TRUE
+          while (run){
+            test <- try(registerDoParallel(cl),silent = T)
+            if (!inherits(test,"try-error")){
+              run=FALSE
+            }else{
               run=TRUE
-              while (run){
-                test <- try(registerDoParallel(cl),silent = T)
-                if (!inherits(test,"try-error")){
-                  run=FALSE
-                }else{
-                  run=TRUE
-                }
-              }
-              # cl <- makeCluster(round(cpus/2))
-              # registerDoParallel(cl)
-              getDoParWorkers()
-              print(file.names)
-              ko_matrix <- foreach(x=1:length(file.names) , .combine=rbind) %dopar% {
-                              GFF = read_GFF( FILE = file.path(path,file.names[x]),Uniprot_ID_type=Uniprot_ID_type,Genes_cutoff=Genes_cutoff)
-                              if (dim(GFF)[1]>0){
-                                result = GFF
-                              } else {
-                                result = matrix(nrow = 0,ncol = 3)
-                              }
-                           }
-                print(2)
-                stopCluster(cl)
-              # ko_matrix=data.frame()
-              # for (FILE in file.names){
-                # GFF=read_GFF(file.path(path,FILE),Uniprot_ID_type=Uniprot_ID_type,Genes_cutoff=Genes_cutoff)
-                # print(dim(GFF))
-                # if (dim(GFF)[1]>0){
-                    # ko_matrix=rbind(ko_matrix,GFF)
-                # }
-              # }
-              
-              # cl <- makeCluster(round(cpus))
-              # registerDoParallel(cl)
-              # getDoParWorkers()
-              
-              write.table(x = ko_matrix,
-                          file = file.path(output_dir,'GFF.tab'),
-                          sep='\t')
-              
-              ko_matrix['Count']=1
-              pivot_table=reshape2::dcast(ko_matrix,KO ~ Bin,value.var = 'Count' ,fun.aggregate = sum)
-              rownames(pivot_table)=pivot_table$KO
-              pivot_table$KO=NULL
-        }else{
-            print('You need a Matrix file Or a GFF dir')
-            stop()
+            }
+          }
+          # cl <- makeCluster(round(cpus/2))
+          # registerDoParallel(cl)
+          getDoParWorkers()
+          print(file.names)
+          ko_matrix <- foreach(x=1:length(file.names) , .combine=rbind) %dopar% {
+                          GFF = read_GFF( FILE = file.path(path,file.names[x]),Uniprot_ID_type=Uniprot_ID_type,Genes_cutoff=Genes_cutoff)
+                          if (dim(GFF)[1]>0){
+                            result = GFF
+                          } else {
+                            result = matrix(nrow = 0,ncol = 3)
+                          }
+                       }
+            print(2)
+            stopCluster(cl)
+          # ko_matrix=data.frame()
+          # for (FILE in file.names){
+            # GFF=read_GFF(file.path(path,FILE),Uniprot_ID_type=Uniprot_ID_type,Genes_cutoff=Genes_cutoff)
+            # print(dim(GFF))
+            # if (dim(GFF)[1]>0){
+                # ko_matrix=rbind(ko_matrix,GFF)
+            # }
+          # }
+          
+          # cl <- makeCluster(round(cpus))
+          # registerDoParallel(cl)
+          # getDoParWorkers()
+          
+          write.table(x = ko_matrix,
+                      file = file.path(output_dir,'GFF.tab'),
+                      sep='\t')
+          
+          ko_matrix['Count']=1
+          pivot_table=reshape2::dcast(ko_matrix,KO ~ Bin,value.var = 'Count' ,fun.aggregate = sum)
+          rownames(pivot_table)=pivot_table$KO
+          pivot_table$KO=NULL
         }
-      }
        if (length(pivot_table)>0){
           
           pivot_table_bin=pivot_table
@@ -756,51 +745,36 @@ if (Type=='metabolic'){
     
     pathway.id_list = c()
     
-    pathways    = as.vector(na.omit(unique(ko2path_data_frame[ko2path_data_frame$KO %in% row.names(pivot_table),'pathway'])))
-    pathway.id  = stringi::stri_replace(str = pathways,regex = 'path:((map)|(ko))',replacement = '')
-    pathways_DF = data.frame(pathways = pathways,pathway.id = pathway.id)
-    pathways_DF = pathways_DF[!duplicated(pathways_DF$pathway.id),]
-    for (pathway in sample(pathways_DF$pathways)){
+    pathways = as.vector(na.omit(unique(ko2path_data_frame[ko2path_data_frame$KO %in% row.names(pivot_table),'pathway'])))
+    for (pathway in pathways){
+      print(pathway)
       pivot_table     = original_pivot_table
       output_dir      = original_base_output_dir
       pivot_table     = pivot_table[row.names(pivot_table) %in% ko2path_data_frame[ko2path_data_frame$pathway == pathway,'KO'],]
       pathway_data    = data.frame()
-      
-      pathway.id = stringi::stri_replace(str = pathway,regex = 'path:((map)|(ko))',replacement = '')
-      if (!is.na(PATHWAY_Reference)){
-        REF_pathway.id = stringi::stri_replace(str = PATHWAY_Reference,regex = 'path:((map)|(ko))',replacement = '')
+      if (is.na(PATHWAY_Reference)){
+        pathway.id = stringi::stri_replace(str = pathway,regex = 'path:((map)|(ko))',replacement = '')
+      }else{
+        pathway.id = stringi::stri_replace(str = PATHWAY_Reference,regex = 'path:((map)|(ko))',replacement = '')
       }
       
       print(dim(pivot_table)[1])
-
       if ((dim(pivot_table)[1]>=Minimal_PATHWAY_SIZE)&((pathway.id %in% pathway.id_list)==F)){
         
             pathway.id_list = c(pathway.id_list,pathway.id)
+
+            xml.file = paste('ko',pathway.id,'.xml',collapse = '', sep = '')
             
-            
-            if (is.na(PATHWAY_Reference)){
-                xml.file = paste('ko',pathway.id,'.xml',collapse = '', sep = '')
-                met.file = paste(Type,'_',pathway.id,'.RData',sep = '',collapse = '')
-            }else{
-                xml.file = paste('ko',REF_pathway.id,'.xml',collapse = '', sep = '')
-                met.file = paste(Type,'_',REF_pathway.id,'.RData',sep = '',collapse = '')
-            }
-            
+            met.file = paste(Type,'_',pathway.id,'.RData',sep = '',collapse = '')
             if (!(met.file %in% dir(xml_dir))){
               if (!(xml.file %in% dir(xml_dir))){
                   while (!(xml.file %in% dir(xml_dir))){
-                        if (is.na(PATHWAY_Reference)){
-                            pathview_test = try(pathview::download.kegg(pathway.id = pathway.id,
-                                                                        species = 'ko',
-                                                                        kegg.dir = xml_dir),silent = T)
-                        }else{
-                            pathview_test = try(pathview::download.kegg(pathway.id = REF_pathway.id,
-                                                                        species = 'ko',
-                                                                        kegg.dir = xml_dir),silent = T)
-                        }
+                      pathview_test = try(pathview::download.kegg(pathway.id = pathway.id,
+                                                                  species = 'ko',
+                                                                  kegg.dir = xml_dir),silent = T)
                   }
                   
-              }
+              }  
               xml.file = file.path(xml_dir,xml.file)
             
               #pathway_data=KEGGgraph::parseKGML2DataFrame(xml.file,genesOnly=FALSE,reactions=T)
@@ -872,14 +846,11 @@ if (Type=='metabolic'){
                 }
               }
             }else{
-                print(file.path(xml_dir,met.file))
                 load(file.path(xml_dir,met.file)  )
-            }
-            if (!is.na(PATHWAY_Reference)){
-                pathway.id = paste(pathway.id,'UsingReference',REF_pathway.id,collapse = '', sep = '_')
             }
             
             if (nrow(pathway_data)>0){ 
+      
                 # pathway_data = na.omit(pathway_data)
                 Cooperation_index_matrix            = matrix(nrow = ncol(pivot_table),ncol = ncol(pivot_table))
                 row.names(Cooperation_index_matrix) = colnames(pivot_table)
@@ -898,18 +869,18 @@ if (Type=='metabolic'){
                 Overlap_Edges_data_frame  = data.frame()
                 Original_Edges_data_frame = data.frame()
                 pathway_info =list()
-                # Bin_covarege=data.frame()
+                Bin_covarege=data.frame()
       
-                  # for (bin in colnames(pivot_table)){
-                      # ko_list=c()
-                      # ko_list=row.names(pivot_table[pivot_table[,bin]>=1,])
-                      # ko_list=unique(ko_list)
-                      # if (Type =='signaling'){
-                        # Bin_covarege[pathway,bin]=nrow(covareg_pathway(pathway_data,ko_list))
-                      # }else{
-                        # Bin_covarege[pathway,bin]=nrow(covareg_pathway_metabolic(pathway_data,ko_list))
-                      # }
-                  # }
+                  for (bin in colnames(pivot_table)){
+                      ko_list=c()
+                      ko_list=row.names(pivot_table[pivot_table[,bin]>=1,])
+                      ko_list=unique(ko_list)
+                      if (Type =='signaling'){
+                        Bin_covarege[pathway,bin]=nrow(covareg_pathway(pathway_data,ko_list))
+                      }else{
+                        Bin_covarege[pathway,bin]=nrow(covareg_pathway_metabolic(pathway_data,ko_list))
+                      }
+                  }
                   
                 
                 
@@ -937,14 +908,14 @@ if (Type=='metabolic'){
                   output_dir = file.path(output_dir,stringi::stri_replace(str = pathway,fixed = 'path:',replacement = '')) 
                   dir.create(output_dir, showWarnings = FALSE)    
                   pivot_table_colnames = colnames(pivot_table)
-                  if ((!file.exists( file.path(output_dir,paste(pathway.id,"_Total_Data",'.RData',sep = '',collapse = '')) )) | OVERRIDE){
+                  if (!file.exists( file.path(output_dir,paste(pathway.id,"_Total_Data",'.RData',sep = '',collapse = '')) )){
                   #Cooperation_data_Total = foreach(i=1:length(pivot_table_colnames) ,.combine=rbind) %do% {
                                               #library(doParallel)
                                           Cooperation_data_Total=c()
-                                          for(i in sample( 1:length(pivot_table_colnames) )){
+                                          for(i in 1:length(pivot_table_colnames) ){
                                               print(pivot_table_colnames[i])
                                               file = file.path(output_dir,paste(pathway.id,pivot_table_colnames[i],'.RData',sep = '',collapse = ''))
-                                              if ((!file.exists(file)) | OVERRIDE ){
+                                              if (!file.exists(file)){
                                                   Cooperation_data_line = foreach(j=1:length(pivot_table_colnames) ,.combine=c) %dopar% {
                                                                               ko_list1=row.names(pivot_table[pivot_table[,pivot_table_colnames[i]]>=1,])
                                                                               ko_list2=row.names(pivot_table[pivot_table[,pivot_table_colnames[j]]>=1,])
@@ -961,7 +932,7 @@ if (Type=='metabolic'){
                                               }
                                               Cooperation_data_Total[pivot_table_colnames[i]]=file
                                           }
-                      Cooperation_data_Total = Cooperation_data_Total[pivot_table_colnames]
+                                          
                       save(Cooperation_data_Total,file = file.path(output_dir,paste(pathway.id,"_Total_Data",'.RData',sep = '',collapse = '')))
                   }else{
                       load(file.path(output_dir,paste(pathway.id,"_Total_Data",'.RData',sep = '',collapse = '')))
@@ -1114,213 +1085,198 @@ if (Type=='metabolic'){
                   
                   Graph_dir = file.path(output_dir,'Graphs') 
                   dir.create(Graph_dir, showWarnings = FALSE)
-                  file = file.path(Graph_dir,paste(sample_name,pathway.id,'Graphs.RData',sep = '',collapse = ''))
                   
-                  if ( (!file.exists(file)) | OVERRIDE ){
-                      
-                      Graph_data_frame      = foreach(i=1:length(Cooperation_data_Total) ,.combine=rbind) %dopar% {
-                                                I = names(Cooperation_data_Total)[i]
-                                                file_name           = Cooperation_data_Total[I]
-                                                print(file_name)
-                                                load(file_name)
-                                                Graph_data = data.frame()
-                                                for (j in names(Cooperation_data_line)){ 
-                                                    Cooperation_data   = Cooperation_data_line[[j]]
-                                                    original_path      = Cooperation_data[[1]]
-                                                    merge_path         = Cooperation_data[[2]]
-                                                    #Cooperation_index  = Cooperation_data[[3]]
-                                                    #overlap            = Cooperation_data[[4]]
-                                                    #new_edges          = Cooperation_data[[5]]
-                                                    #total_edges        = Cooperation_data[[6]]
-                                                    overlap_edges      = Cooperation_data[[7]]
-                                                    if (I==j){
-                                                          #Cooperation_index_matrix[i,j]      = NA
-                                                          Graph_data[I,j]          = NA
-                                                          #Overlap_data_frame[i,j]            = NA
-                                                          #original_data_frame[i,j]           = NA
-                                                    }else{
-                                                          #Cooperation_index_matrix[i,j]      = Cooperation_index
-                                                          graph <- try(list(Create_Graph_metabolic(merge_path,pathway_data,original_path,overlap_edges)),silent = T)
-                                                          if (!inherits(graph,"try-error")){
-                                                            Graph_data[I,j] =  graph
-                                                            # visNetwork::visSave(graph = visNetwork(Graph_data[[I,j]]$nodes, Graph_data[[I,j]]$edges, width = 1800,height = 1800),
-                                                                                  # selfcontained = TRUE,
-                                                                                  # file = file.path(Graph_dir,paste(sample_name,pathway.id,'_',I,'__',j,'.html',sep = '',collapse = '')) )
-                                                            # visNetwork::visExport(graph = visNetwork(Graph_data[[I,j]]$nodes, Graph_data[[I,j]]$edges, width = 1800,height = 1800),
-                                                                                  # type = 'pdf',
-                                                                                  # name = paste(sample_name,pathway.id,'_',I,'__',j,sep = '',collapse = '')  )
-                                                            # save(graph,file = file.path(Graph_dir,paste(sample_name,pathway.id,'_',I,'__',j,'.Graphs.RData',sep = '',collapse = '')))
-                                                          }else{
-                                                            Graph_data[I,j] = NA
-                                                          }
-                                                          
-                                                          #Overlap_data_frame[i,j]            = overlap
-                                                          #original_data_frame[i,j]           = nrow(original_path)
-                                                          
-                                                        # if (!is.na(Cooperation_index_matrix[j,i])){
-                                                            # Cooperation_index_matrix2[i,j] = Cooperation_index_matrix[i,j]*Cooperation_index_matrix[j,i]
-                                                        # }
-                                                    }
+                  Graph_data_frame      = foreach(i=1:length(Cooperation_data_Total) ,.combine=rbind) %dopar% {
+                                            I = names(Cooperation_data_Total)[i]
+                                            file_name           = Cooperation_data_Total[I]
+                                            print(file_name)
+                                            load(file_name)
+                                            Graph_data = data.frame()
+                                            for (j in names(Cooperation_data_line)){ 
+                                                Cooperation_data   = Cooperation_data_line[[j]]
+                                                original_path      = Cooperation_data[[1]]
+                                                merge_path         = Cooperation_data[[2]]
+                                                #Cooperation_index  = Cooperation_data[[3]]
+                                                #overlap            = Cooperation_data[[4]]
+                                                #new_edges          = Cooperation_data[[5]]
+                                                #total_edges        = Cooperation_data[[6]]
+                                                overlap_edges      = Cooperation_data[[7]]
+                                                if (I==j){
+                                                      #Cooperation_index_matrix[i,j]      = NA
+                                                      Graph_data[I,j]          = NA
+                                                      #Overlap_data_frame[i,j]            = NA
+                                                      #original_data_frame[i,j]           = NA
+                                                }else{
+                                                      #Cooperation_index_matrix[i,j]      = Cooperation_index
+                                                      graph <- try(list(Create_Graph_metabolic(merge_path,pathway_data,original_path,overlap_edges)),silent = T)
+                                                      if (!inherits(graph,"try-error")){
+                                                        Graph_data[I,j] =  graph
+                                                        # visNetwork::visSave(graph = visNetwork(Graph_data[[I,j]]$nodes, Graph_data[[I,j]]$edges, width = 1800,height = 1800),
+                                                                              # selfcontained = TRUE,
+                                                                              # file = file.path(Graph_dir,paste(sample_name,pathway.id,'_',I,'__',j,'.html',sep = '',collapse = '')) )
+                                                        # visNetwork::visExport(graph = visNetwork(Graph_data[[I,j]]$nodes, Graph_data[[I,j]]$edges, width = 1800,height = 1800),
+                                                                              # type = 'pdf',
+                                                                              # name = paste(sample_name,pathway.id,'_',I,'__',j,sep = '',collapse = '')  )
+                                                        # save(graph,file = file.path(Graph_dir,paste(sample_name,pathway.id,'_',I,'__',j,'.Graphs.RData',sep = '',collapse = '')))
+                                                      }else{
+                                                        Graph_data[I,j] = NA
+                                                      }
+                                                      
+                                                      #Overlap_data_frame[i,j]            = overlap
+                                                      #original_data_frame[i,j]           = nrow(original_path)
+                                                      
+                                                    # if (!is.na(Cooperation_index_matrix[j,i])){
+                                                        # Cooperation_index_matrix2[i,j] = Cooperation_index_matrix[i,j]*Cooperation_index_matrix[j,i]
+                                                    # }
                                                 }
-                                                Graph_data
                                             }
-                      save(Graph_data_frame,file = file)
-                    }  
-                    
+                                            Graph_data
+                                        }
+                  save(Graph_data_frame,file = file.path(Graph_dir,paste(sample_name,pathway.id,'Graphs.RData'                  ,sep = '',collapse = '')))
                   
-                  file = file.path(output_dir,paste(sample_name,pathway.id,'_New_Edges.tab',sep = '',collapse = ''))
-                  if ( (!file.exists(file)) | OVERRIDE ){
-                  
-                          New_Edges_data_frame = foreach(i=1:length(Cooperation_data_Total) ,.combine=rbind) %dopar% {
-                                                    I                     = names(Cooperation_data_Total)[i]
-                                                    file_name             = Cooperation_data_Total[I]
-                                                    print(file_name)
-                                                    load(file_name)
-                                                    New_Edges_data = data.frame()
-                                                    for (j in names(Cooperation_data_line)){ 
-                                                        Cooperation_data   = Cooperation_data_line[[j]]
-                                                        #original_path      = Cooperation_data[[1]]
-                                                        #merge_path         = Cooperation_data[[2]]
-                                                        #Cooperation_index  = Cooperation_data[[3]]
-                                                        #overlap            = Cooperation_data[[4]]
-                                                        new_edges          = Cooperation_data[[5]]
-                                                        #total_edges        = Cooperation_data[[6]]
-                                                        #overlap_edges      = Cooperation_data[[7]]
-                                                        if (I==j){
-                                                              #Cooperation_index_matrix[i,j]      = NA
-                                                              New_Edges_data[I,j]          = NA
-                                                              #Overlap_data_frame[i,j]            = NA
-                                                              #original_data_frame[i,j]           = NA
-                                                        }else{
-                                                              #Cooperation_index_matrix[i,j]      = Cooperation_index
-                                                              New_Edges_data[I,j]          = new_edges
-                                                              #Overlap_data_frame[i,j]            = overlap
-                                                              #original_data_frame[i,j]           = nrow(original_path)
-                                                              
-                                                            # if (!is.na(Cooperation_index_matrix[j,i])){
-                                                                # Cooperation_index_matrix2[i,j] = Cooperation_index_matrix[i,j]*Cooperation_index_matrix[j,i]
-                                                            # }
-                                                        }
-                                                    }
-                                                    New_Edges_data
+                  New_Edges_data_frame = foreach(i=1:length(Cooperation_data_Total) ,.combine=rbind) %dopar% {
+                                            I                     = names(Cooperation_data_Total)[i]
+                                            file_name             = Cooperation_data_Total[I]
+                                            print(file_name)
+                                            load(file_name)
+                                            New_Edges_data = data.frame()
+                                            for (j in names(Cooperation_data_line)){ 
+                                                Cooperation_data   = Cooperation_data_line[[j]]
+                                                #original_path      = Cooperation_data[[1]]
+                                                #merge_path         = Cooperation_data[[2]]
+                                                #Cooperation_index  = Cooperation_data[[3]]
+                                                #overlap            = Cooperation_data[[4]]
+                                                new_edges          = Cooperation_data[[5]]
+                                                #total_edges        = Cooperation_data[[6]]
+                                                #overlap_edges      = Cooperation_data[[7]]
+                                                if (I==j){
+                                                      #Cooperation_index_matrix[i,j]      = NA
+                                                      New_Edges_data[I,j]          = NA
+                                                      #Overlap_data_frame[i,j]            = NA
+                                                      #original_data_frame[i,j]           = NA
+                                                }else{
+                                                      #Cooperation_index_matrix[i,j]      = Cooperation_index
+                                                      New_Edges_data[I,j]          = new_edges
+                                                      #Overlap_data_frame[i,j]            = overlap
+                                                      #original_data_frame[i,j]           = nrow(original_path)
+                                                      
+                                                    # if (!is.na(Cooperation_index_matrix[j,i])){
+                                                        # Cooperation_index_matrix2[i,j] = Cooperation_index_matrix[i,j]*Cooperation_index_matrix[j,i]
+                                                    # }
                                                 }
-                          write.table(x = New_Edges_data_frame,
-                                    file = file,
-                                    sep = '\t')
-                                    
-                          try(pheatmap(mat =New_Edges_data_frame ,# fontsize = 1,fontsize_number = 2,
-                                   cluster_rows = F,
-                                   cluster_cols = F,
-                                   display_numbers = F,
-                                   main = pathway,
-                                   #breaks = mybreaks,
-                                   #color = color,
-                                   silent = T,
-                                   filename = file.path(output_dir,paste(Type,'_',pathway.id,'_heatmap_New_Edges.pdf',sep = '',collapse = ''))
-                          ),silent = T   )       
-                    }
-                    
-                  file = file.path(output_dir,paste(sample_name,pathway.id,'_Overlap.tab',sep = '',collapse = ''))
-                  if ( (!file.exists(file)) | OVERRIDE ){
-                          Overlap_data_frame = foreach(i=1:length(Cooperation_data_Total) ,.combine=rbind) %dopar% {
-                                                  I                     = names(Cooperation_data_Total)[i]
-                                                  file_name             = Cooperation_data_Total[I]
-                                                  print(file_name)
-                                                  load(file_name)
-                                                  New_data = data.frame()
-                                                  for (j in names(Cooperation_data_line)){ 
-                                                      Cooperation_data   = Cooperation_data_line[[j]]
-                                                      #original_path      = Cooperation_data[[1]]
-                                                      #merge_path         = Cooperation_data[[2]]
-                                                      #Cooperation_index  = Cooperation_data[[3]]
-                                                      overlap            = Cooperation_data[[4]]
-                                                      #new_edges          = Cooperation_data[[5]]
-                                                      #total_edges        = Cooperation_data[[6]]
-                                                      #overlap_edges      = Cooperation_data[[7]]
-                                                      if (I==j){
-                                                            #Cooperation_index_matrix[i,j]      = NA
-                                                            New_data[I,j]          = NA
-                                                            #Overlap_data_frame[i,j]            = NA
-                                                            #original_data_frame[i,j]           = NA
-                                                      }else{
-                                                            #Cooperation_index_matrix[i,j]      = Cooperation_index
-                                                            New_data[I,j]          = overlap
-                                                            #Overlap_data_frame[i,j]            = overlap
-                                                            #original_data_frame[i,j]           = nrow(original_path)
-                                                            
-                                                          # if (!is.na(Cooperation_index_matrix[j,i])){
-                                                              # Cooperation_index_matrix2[i,j] = Cooperation_index_matrix[i,j]*Cooperation_index_matrix[j,i]
-                                                          # }
-                                                      }
-                                                  }
-                                                  New_data
+                                            }
+                                            New_Edges_data
+                                        }
+                  write.table(x = New_Edges_data_frame,
+                            file = file.path(output_dir,paste(sample_name,pathway.id,'_New_Edges.tab',sep = '',collapse = '')),
+                            sep = '\t')
+                            
+                  try(pheatmap(mat =New_Edges_data_frame ,# fontsize = 1,fontsize_number = 2,
+                           cluster_rows = F,
+                           cluster_cols = F,
+                           display_numbers = F,
+                           main = pathway,
+                           #breaks = mybreaks,
+                           #color = color,
+                           silent = T,
+                           filename = file.path(output_dir,paste(Type,'_',pathway.id,'_heatmap_New_Edges.pdf',sep = '',collapse = ''))
+                  ),silent = T   )       
+                            
+                  Overlap_data_frame = foreach(i=1:length(Cooperation_data_Total) ,.combine=rbind) %dopar% {
+                                          I                     = names(Cooperation_data_Total)[i]
+                                          file_name             = Cooperation_data_Total[I]
+                                          print(file_name)
+                                          load(file_name)
+                                          New_data = data.frame()
+                                          for (j in names(Cooperation_data_line)){ 
+                                              Cooperation_data   = Cooperation_data_line[[j]]
+                                              #original_path      = Cooperation_data[[1]]
+                                              #merge_path         = Cooperation_data[[2]]
+                                              #Cooperation_index  = Cooperation_data[[3]]
+                                              overlap            = Cooperation_data[[4]]
+                                              #new_edges          = Cooperation_data[[5]]
+                                              #total_edges        = Cooperation_data[[6]]
+                                              #overlap_edges      = Cooperation_data[[7]]
+                                              if (I==j){
+                                                    #Cooperation_index_matrix[i,j]      = NA
+                                                    New_data[I,j]          = NA
+                                                    #Overlap_data_frame[i,j]            = NA
+                                                    #original_data_frame[i,j]           = NA
+                                              }else{
+                                                    #Cooperation_index_matrix[i,j]      = Cooperation_index
+                                                    New_data[I,j]          = overlap
+                                                    #Overlap_data_frame[i,j]            = overlap
+                                                    #original_data_frame[i,j]           = nrow(original_path)
+                                                    
+                                                  # if (!is.na(Cooperation_index_matrix[j,i])){
+                                                      # Cooperation_index_matrix2[i,j] = Cooperation_index_matrix[i,j]*Cooperation_index_matrix[j,i]
+                                                  # }
                                               }
-                          write.table(x = Overlap_data_frame,
-                                    file = file,
-                                    sep = '\t')      
-                          
-                          try(pheatmap(mat =Overlap_data_frame ,# fontsize = 1,fontsize_number = 2,
-                                   cluster_rows = F,
-                                   cluster_cols = F,
-                                   display_numbers = F,
-                                   main = pathway,
-                                   #breaks = mybreaks,
-                                   #color = color,
-                                   silent = T,
-                                   filename = file.path(output_dir,paste(Type,'_',pathway.id,'_heatmap_Overlap.pdf',sep = '',collapse = ''))
-                              ) ,silent = T)
-                    }
-                    
-                    file = file.path(output_dir,paste(sample_name,pathway.id,'_Original.tab',sep = '',collapse = ''))
-                    if ( (!file.exists(file)) | OVERRIDE ){
-                          Original_data_frame = foreach(i=1:length(Cooperation_data_Total) ,.combine=rbind) %dopar% {
-                                                  I = names(Cooperation_data_Total)[i]
-                                                  file_name           = Cooperation_data_Total[I]
-                                                  print(file_name)
-                                                  load(file_name)
-                                                  New_data = data.frame()
-                                                  for (j in names(Cooperation_data_line)){ 
-                                                      Cooperation_data   = Cooperation_data_line[[j]]
-                                                      original_path      = Cooperation_data[[1]]
-                                                      #merge_path         = Cooperation_data[[2]]
-                                                      #Cooperation_index  = Cooperation_data[[3]]
-                                                      #overlap            = Cooperation_data[[4]]
-                                                      #new_edges          = Cooperation_data[[5]]
-                                                      #total_edges        = Cooperation_data[[6]]
-                                                      #overlap_edges      = Cooperation_data[[7]]
-                                                      if (I==j){
-                                                            #Cooperation_index_matrix[i,j]      = NA
-                                                            New_data[I,j]          = NA
-                                                            #Overlap_data_frame[i,j]            = NA
-                                                            #original_data_frame[i,j]           = NA
-                                                      }else{
-                                                            #Cooperation_index_matrix[i,j]      = Cooperation_index
-                                                            New_data[I,j]          = dim(original_path)[1]
-                                                            #Overlap_data_frame[i,j]            = overlap
-                                                            #original_data_frame[i,j]           = nrow(original_path)
-                                                            
-                                                          # if (!is.na(Cooperation_index_matrix[j,i])){
-                                                              # Cooperation_index_matrix2[i,j] = Cooperation_index_matrix[i,j]*Cooperation_index_matrix[j,i]
-                                                          # }
-                                                      }
-                                                  }
-                                                  New_data
+                                          }
+                                          New_data
+                                      }
+                  write.table(x = Overlap_data_frame,
+                            file = file.path(output_dir,paste(sample_name,pathway.id,'_Overlap.tab',sep = '',collapse = '')),
+                            sep = '\t')      
+                  
+                  try(pheatmap(mat =Overlap_data_frame ,# fontsize = 1,fontsize_number = 2,
+                           cluster_rows = F,
+                           cluster_cols = F,
+                           display_numbers = F,
+                           main = pathway,
+                           #breaks = mybreaks,
+                           #color = color,
+                           silent = T,
+                           filename = file.path(output_dir,paste(Type,'_',pathway.id,'_heatmap_Overlap.pdf',sep = '',collapse = ''))
+                      ) ,silent = T)
+                  
+                  Original_data_frame = foreach(i=1:length(Cooperation_data_Total) ,.combine=rbind) %dopar% {
+                                          I = names(Cooperation_data_Total)[i]
+                                          file_name           = Cooperation_data_Total[I]
+                                          print(file_name)
+                                          load(file_name)
+                                          New_data = data.frame()
+                                          for (j in names(Cooperation_data_line)){ 
+                                              Cooperation_data   = Cooperation_data_line[[j]]
+                                              original_path      = Cooperation_data[[1]]
+                                              #merge_path         = Cooperation_data[[2]]
+                                              #Cooperation_index  = Cooperation_data[[3]]
+                                              #overlap            = Cooperation_data[[4]]
+                                              #new_edges          = Cooperation_data[[5]]
+                                              #total_edges        = Cooperation_data[[6]]
+                                              #overlap_edges      = Cooperation_data[[7]]
+                                              if (I==j){
+                                                    #Cooperation_index_matrix[i,j]      = NA
+                                                    New_data[I,j]          = NA
+                                                    #Overlap_data_frame[i,j]            = NA
+                                                    #original_data_frame[i,j]           = NA
+                                              }else{
+                                                    #Cooperation_index_matrix[i,j]      = Cooperation_index
+                                                    New_data[I,j]          = dim(original_path)[1]
+                                                    #Overlap_data_frame[i,j]            = overlap
+                                                    #original_data_frame[i,j]           = nrow(original_path)
+                                                    
+                                                  # if (!is.na(Cooperation_index_matrix[j,i])){
+                                                      # Cooperation_index_matrix2[i,j] = Cooperation_index_matrix[i,j]*Cooperation_index_matrix[j,i]
+                                                  # }
                                               }
-                          write.table(x = t(Original_data_frame),
-                                    file = file,
-                                    sep = '\t')          
-              
-                          try(pheatmap(mat =t(Original_data_frame) ,# fontsize = 1,fontsize_number = 2,
-                                   cluster_rows = F,
-                                   cluster_cols = F,
-                                   display_numbers = F,
-                                   main = pathway,
-                                   #breaks = mybreaks,
-                                   #color = color,
-                                   silent = T,
-                                   filename = file.path(output_dir,paste(Type,'_',pathway.id,'_heatmap_Original.pdf',sep = '',collapse = ''))
-                             ),silent = T)          
-                    }
+                                          }
+                                          New_data
+                                      }
+                  write.table(x = t(Original_data_frame),
+                            file = file.path(output_dir,paste(sample_name,pathway.id,'_Original.tab',sep = '',collapse = '')),
+                            sep = '\t')          
+      
+                  try(pheatmap(mat =t(Original_data_frame) ,# fontsize = 1,fontsize_number = 2,
+                           cluster_rows = F,
+                           cluster_cols = F,
+                           display_numbers = F,
+                           main = pathway,
+                           #breaks = mybreaks,
+                           #color = color,
+                           silent = T,
+                           filename = file.path(output_dir,paste(Type,'_',pathway.id,'_heatmap_Original.pdf',sep = '',collapse = ''))
+                     ),silent = T)          
                   # write.table(x = Overlap_data_frame,
                             # file = file.path(output_dir,paste(sample_name,pathway.id,'_Overlap_Edges.tab',sep = '',collapse = '')),
                             # sep = '\t')
@@ -1397,8 +1353,6 @@ if (Type=='metabolic'){
      }
     }
     
-    if (!is.na(cl)){
-       stopCluster(cl)
-    }
+    stopCluster(cl)
     #save(total_pathway_info,file = file.path(output_dir,paste(Type,'_',sample_name,'.RData',sep = '',collapse = ''),fsep = '\\'))
     

@@ -645,7 +645,7 @@ create_gene2kegg <- function(Annotation,useKO=F){
     return(c('',''))
 }
 
-create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,Pathway2gene,show_cutoff=1,HTML=T,up_color='HotPink',down_color='DeepSkyBlue',useKO=T, Base_URL = "https://www.kegg.jp/pathway/"){
+create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,Pathway2gene,show_cutoff=1,HTML=T,up_color='red',down_color='blue',useKO=T, Base_URL = "https://www.kegg.jp/kegg-bin/show_pathway?"){
   
   
   if ((length(down_reg)>0) || (length(up_reg)>0)){
@@ -672,21 +672,21 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
         colnames(Pathway2gene_filterd) = c('Gene','Pathway','Info','Kegg')
         UP = Pathway2gene_filterd[,'Gene'] %in% up_reg
         if (sum(UP)>0){
-          Pathway2gene_filterd[UP,"URL"] = paste(Pathway2gene_filterd[UP,'Kegg'] , up_color ,sep = ' ')     
+          Pathway2gene_filterd[UP,"URL"] = paste(Pathway2gene_filterd[UP,'Kegg'] , up_color ,sep = '%09,')     
         }
         DOWN = Pathway2gene_filterd[,'Gene'] %in% down_reg
         if (sum(DOWN)>0){
-          Pathway2gene_filterd[DOWN,"URL"] = paste(Pathway2gene_filterd[DOWN,'Kegg'] , down_color ,sep = ' ')     
+          Pathway2gene_filterd[DOWN,"URL"] = paste(Pathway2gene_filterd[DOWN,'Kegg'] , down_color ,sep = '%09,')     
         }
         Pathway2gene_count = aggregate.data.frame(x = Pathway2gene_filterd[,'Kegg'], by = list(Pathway2gene_filterd[,'Pathway']),FUN = function(x) length(unique(na.omit(x))))
         colnames(Pathway2gene_count) = c('Pathway','#KOs')
         Pathway = aggregate.data.frame(x =Pathway2gene_filterd ,
                                        by = list(Pathway2gene_filterd[,'Pathway']),
-                                       FUN =function(x) paste(unique(na.omit(x)),sep = "+",collapse = "+"))
+                                       FUN =function(x) paste(unique(na.omit(x)),sep = "/",collapse = "/"))
         Pathway['Base_URL'] = Base_URL
         
         Pathway[,'Kegg_URL'] = apply(X = Pathway,MARGIN = 1,FUN = function(x) paste(x['Base_URL'],x['Pathway'],sep = '',collapse = ''))
-        Pathway[,'Kegg_URL'] = apply(X = Pathway,MARGIN = 1,FUN = function(x) paste(x['Kegg_URL'],x['URL'],sep = '+',collapse = '+'))
+        Pathway[,'Kegg_URL'] = apply(X = Pathway,MARGIN = 1,FUN = function(x) paste(x['Kegg_URL'],x['URL'],sep = '/',collapse = '/'))
         
         
         Pathway = merge.data.frame(x = Pathway,y = Pathway2gene_count,by = "Pathway" )
@@ -755,8 +755,8 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
     Original_countData = countData
     
     Pathway_show_cutoff = 1
-    Pathway_up_color    = 'HotPink'
-    Pathway_down_color  = 'DeepSkyBlue'
+    Pathway_up_color    = 'red'
+    Pathway_down_color  = 'blue'
     
     if (!is.na(opt$Post_statistical_ALPHA)){
         FDR_PVAL_CUTOFF = opt$Post_statistical_ALPHA
@@ -799,6 +799,10 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
               opt$outDir=file.path(base_out_dir,'LRT')
               dir.create(opt$outDir, showWarnings = FALSE)
               
+              pdf(file.path(opt$outDir,paste('PlotDisp','pdf', sep = '.')))
+              plotDispEsts(DESeqDataSet) 
+              dev.off()
+              
               DESeqDataSet <- DESeq(DESeqDataSet, test="LRT",
                                     reduced = as.formula(opt$LRT),
                                     parallel=F)
@@ -824,6 +828,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
               dir.create(opt$outDir, showWarnings = FALSE)
               opt$CONTRAST=NA
             }else{
+                
                 opt$CONTRAST=test2do
                 contrast_list = unlist(stringi::stri_split(str =  opt$CONTRAST,regex = ','))
                 if (length(contrast_list)==2){
@@ -834,6 +839,11 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                 }
                 opt$outDir=file.path(base_out_dir,test_name)
                 dir.create(opt$outDir, showWarnings = FALSE)
+                
+                pdf(file.path(opt$outDir,paste('PlotDisp','pdf', sep = '.')))
+                plotDispEsts(DESeqDataSet) 
+                dev.off()
+                
                 DESeqDataSet_Results <- results(DESeqDataSet,
                                                 contrast     = contrast_list ,
                                                 alpha        = opt$ALPHA,
@@ -1211,6 +1221,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
             if (is.na(opt$PCA_SHAPE)){
                 PCA_data[,opt$PCA_COLOR] = factor(PCA_data[,opt$PCA_COLOR] , levels = unique(PCA_data[,opt$PCA_COLOR]))
                 #PCA_data[,opt$PCA_SHAPE] = factor(PCA_data[,opt$PCA_SHAPE] , levels = unique(PCA_data[,opt$PCA_SHAPE]))
+                write.csv(x = PCA_data ,file = file.path(opt$outDir,paste(c('TOP500_PCA',".csv"),collapse ="")))
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),size=make.names(opt$PCA_SIZE)) )+
                     geom_count()+
                     scale_shape_discrete(solid=F)+
@@ -1265,6 +1276,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
             }else{
                 PCA_data[,opt$PCA_COLOR] = factor(PCA_data[,opt$PCA_COLOR] , levels = unique(PCA_data[,opt$PCA_COLOR]))
                 PCA_data[,opt$PCA_SHAPE] = factor(PCA_data[,opt$PCA_SHAPE] , levels = unique(PCA_data[,opt$PCA_SHAPE]))
+                write.csv(x = PCA_data ,file = file.path(opt$outDir,paste(c('TOP500_PCA',".csv"),collapse ="")))
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
                     geom_count()+
                     scale_shape_discrete(solid=F)+
@@ -1349,6 +1361,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
             if (is.na(opt$PCA_SHAPE)){
                 PCA_data[,opt$PCA_COLOR] = factor(PCA_data[,opt$PCA_COLOR] , levels = unique(PCA_data[,opt$PCA_COLOR]))
                 # PCA_data[,opt$PCA_SHAPE] = factor(PCA_data[,opt$PCA_SHAPE] , levels = unique(PCA_data[,opt$PCA_SHAPE]))
+                write.csv(x = PCA_data ,file = file.path(opt$outDir,paste(c('ALL_PCA',".csv"),collapse ="")))
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),size=make.names(opt$PCA_SIZE)) )+
                     geom_count()+
                     scale_shape_discrete(solid=F)+
@@ -1403,6 +1416,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
             }else{
                 PCA_data[,opt$PCA_COLOR] = factor(PCA_data[,opt$PCA_COLOR] , levels = unique(PCA_data[,opt$PCA_COLOR]))
                 PCA_data[,opt$PCA_SHAPE] = factor(PCA_data[,opt$PCA_SHAPE] , levels = unique(PCA_data[,opt$PCA_SHAPE]))
+                write.csv(x = PCA_data ,file = file.path(opt$outDir,paste(c('ALL_PCA',".csv"),collapse ="")))
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
                     geom_count()+
                     scale_shape_discrete(solid=F)+
@@ -1499,6 +1513,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
             if (is.na(opt$PCA_SHAPE)){
                 PCA_data[,opt$PCA_COLOR] = factor(PCA_data[,opt$PCA_COLOR] , levels = unique(PCA_data[,opt$PCA_COLOR]))
                 # PCA_data[,opt$PCA_SHAPE] = factor(PCA_data[,opt$PCA_SHAPE] , levels = unique(PCA_data[,opt$PCA_SHAPE]))
+                write.csv(x = PCA_data ,file = file.path(opt$outDir,paste(c(extra_string,'TOP500_PCA',".csv"),collapse ="")))
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),size=make.names(opt$PCA_SIZE)) )+
                     geom_count()+
                     scale_shape_discrete(solid=F)+
@@ -1553,6 +1568,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
             }else{
                 PCA_data[,opt$PCA_COLOR] = factor(PCA_data[,opt$PCA_COLOR] , levels = unique(PCA_data[,opt$PCA_COLOR]))
                 PCA_data[,opt$PCA_SHAPE] = factor(PCA_data[,opt$PCA_SHAPE] , levels = unique(PCA_data[,opt$PCA_SHAPE]))
+                write.csv(x = PCA_data ,file = file.path(opt$outDir,paste(c(extra_string,'TOP500_PCA',".csv"),collapse ="")))
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
                     geom_count()+
                     scale_shape_discrete(solid=F)+
@@ -1635,6 +1651,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
             }
 
             if (is.na(opt$PCA_SHAPE)){
+                write.csv(x = PCA_data ,file = file.path(opt$outDir,paste(c(extra_string,'ALL_PCA',".csv"),collapse ="")))
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),size=make.names(opt$PCA_SIZE)) )+
                     geom_count()+
                     scale_shape_discrete(solid=F)+
@@ -1687,6 +1704,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                                         zaxis = list(title = paste0("PC2: ",percentVar[2],"% variance"),showspikes = FALSE , autorange = TRUE, showgrid = TRUE, zeroline = FALSE, showline = FALSE, autotick = TRUE, ticks = '', showticklabels = FALSE))) 
                 PCA_plot_ALL
             }else{
+                write.csv(x = PCA_data ,file = file.path(opt$outDir,paste(c(extra_string,'ALL_PCA',".csv"),collapse ="")))
                 pca_res=ggplot(PCA_data, aes_string('PC1', 'PC2', color=make.names(opt$PCA_COLOR),shape=make.names(opt$PCA_SHAPE),size=make.names(opt$PCA_SIZE)) )+
                     geom_count()+
                     scale_shape_discrete(solid=F)+

@@ -166,9 +166,8 @@ class Step_kaiju(Step):
                 if len({"fastq.F", "fastq.R"} & set(self.sample_data[sample].keys())) == 1:
                     raise AssertionExcept(
                         "Sample has only forward or reverse reads. It must have either pairs or single reads\n", sample)
-
-                if len({"fastq.F", "fastq.R", "fastq.S"} & set(self.sample_data[sample].keys())) ==3:
-                    raise AssertionExcept("Kaiju is not defined for mixed paired and single reads\n", sample)
+                # if len({"fastq.F", "fastq.R", "fastq.S"} & set(self.sample_data[sample].keys())) ==3:
+                    # raise AssertionExcept("Kaiju is not defined for mixed paired and single reads\n", sample)
 
 
 
@@ -242,13 +241,13 @@ class Step_kaiju(Step):
                   self.script += "-i %s \\\n\t" % self.sample_data[sample]["fasta.nucl"]
             else:
                 # Adding reads
-                if "fastq.F" in self.sample_data[sample]:
+                if ("fastq.F" in self.sample_data[sample]) and ("fastq.R" in self.sample_data[sample]):
                     self.script += "-i %s \\\n\t" % self.sample_data[sample]["fastq.F"]
                     self.script += "-j %s \\\n\t" % self.sample_data[sample]["fastq.R"]
                 elif "fastq.S" in self.sample_data[sample]:
                     self.script += "-i %s \\\n\t" % self.sample_data[sample]["fastq.S"]
                 else:
-                    raise AssertionExcept("Weird cmobination of reads!\n")
+                    raise AssertionExcept("Weird combination of reads!\n")
 
             self.script += "-o %s\n\n" % output_filename
 

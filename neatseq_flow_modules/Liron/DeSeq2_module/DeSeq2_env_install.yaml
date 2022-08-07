@@ -33,3 +33,4 @@ dependencies:
     - r-openxlsx=4.2.2
     - r-rcolorbrewer=1.1_2
     - r-colorspace=1.4_1
+    - r-devtools

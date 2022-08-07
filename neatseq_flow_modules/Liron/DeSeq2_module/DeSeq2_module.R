@@ -30,6 +30,8 @@ option_list = list(
               help="path to the output directory", metavar="character"),
   make_option(c("-t", "--GENE_ID_TYPE"), type="character", default=NA, 
               help="The Gene ID Type i.e 'ENSEMBL'[for Bioconductor] OR 'ensembl_gene_id'/'ensembl_transcript_id' [for ENSEMBL] DON'T USE IF IT IS DE-NOVO ASSEMBLY ", metavar="character"),
+  make_option(c("--SPLIT_GENE_NAME_BY"), type="character", default=NA, 
+              help="The Each gene name will be split by this character and only keep the first part ", metavar="character"),
   make_option(c("-d", "--Annotation_db"), type="character", default=NA, 
               help="Bioconductor Annotation Data Base Name from https://bioconductor.org/packages/release/BiocViews.html#___OrgDb  ", metavar="character"),
   make_option(c("--Species"), type="character", default=NA, 
@@ -44,6 +46,8 @@ option_list = list(
               help="Filter Low-Abundance Genes using 'scater' package ", metavar="character"),
   make_option(c("--FILTER_GENES_CUTOFF"), type="numeric", default = 1, 
               help="Filter Low-Abundance Genes having average read count lower then this cutoff. Only when FILTER_GENES is set", metavar="character"),
+  make_option(c("--Add2Count"), type="numeric", default = 0, 
+              help="Add This Number to All the Count Data ", metavar="character"),
   make_option(c( "--Trinotate"), type="character", default=NA, 
               help="Path to a Trinotate annotation file in which the first column is the genes names", metavar="character"),
   make_option(c( "--Rmarkdown"), type="character", default=NA, 
@@ -1931,9 +1935,23 @@ if (opt$COUNT_SOURCE=='RSEM'){
   
 }
 
+if (!is.na(opt$SPLIT_GENE_NAME_BY)){
+    row.names(countData) = sapply(row.names(countData),FUN =  function(x) unlist(stringi::stri_split(str = x,fixed =  opt$SPLIT_GENE_NAME_BY) )[1] )
+}
+
 Annotation_flag = ''
 keggConv_id_type = "uniprot"
 Annotation_file=file.path(opt$outDir,paste('Annotation','tab', sep = '.'))
+
+GO2gene_MF = NA
+GO2name_MF = NA
+
+GO2gene_BP = NA
+GO2name_BP = NA
+
+GO2gene_CC = NA
+GO2name_CC = NA
+
 
 if  (!file.exists(Annotation_file)){
 #Get Annotation
@@ -2260,6 +2278,10 @@ if  (!file.exists(Annotation_file)){
       
       if(!(all(c('KEGGREST') %in% installed.packages()))) {
         if (Sys.getenv("CONDA_PREFIX")!=""){
+          # if(!(all(c('devtools') %in% installed.packages()))) {
+               # install.packages('devtools')
+          # }
+          # devtools::install_github('Bioconductor/KEGGREST',upgrade = 'never' )
           source("https://bioconductor.org/biocLite.R")
           biocLite('KEGGREST')
         }else{
@@ -3032,6 +3054,10 @@ if ((opt$FILTER_SAMPLES) | (opt$FILTER_GENES)){
   }
 }        
 ##################Filttering the data END######################
+
+#################Add Number to Count Data######################
+
+countData = countData + opt$Add2Count
 
 write.csv(x =countData ,file = file.path(opt$outDir,"CountData.tab"),sep = '\t')
 

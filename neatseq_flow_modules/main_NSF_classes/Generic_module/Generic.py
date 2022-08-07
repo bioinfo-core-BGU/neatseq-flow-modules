@@ -74,6 +74,7 @@ Lines for parameter file
         inputs_last:                # The inputs arguments will be at the end of the command. [The default is inputs arguments at the beginning of the command]
         use_base_dir:               # Use the base step directory as the output for this step, it is possible to specify the base to use.
         cd:                         # Change current working directory to the output location.
+        no_sample_dir:              # In Sample Scope: will NOT create a dedicated folder for each sample.
         inputs:                     # The inputs for this module
             STR:                    # Input argument, e.g. -i, --input [could be also 'empty1', 'empty2'.. for no input argument string]
                 scope:              # The scope of this input argument could be sample/project
@@ -413,11 +414,17 @@ class Step_Generic(Step):
             
             
             if 'use_base_dir' in list(self.params.keys()):
-                sample_dir    = self.base_step_to_use.make_folder_for_sample(sample)
+                if "no_sample_dir" in list(self.params.keys()):
+                    sample_dir = self.base_dir
+                else:
+                    sample_dir = self.base_step_to_use.make_folder_for_sample(sample)
                 self.base_dir = self.base_step_to_use.base_dir
             else:
-                # Make a dir for the current sample:
-                sample_dir = self.make_folder_for_sample(sample)
+                if "no_sample_dir" in list(self.params.keys()):
+                    sample_dir = self.base_dir
+                else:
+                    # Make a dir for the current sample:
+                    sample_dir = self.make_folder_for_sample(sample)
                 
                 
             # This line should be left before every new script. It sees to local issues.
