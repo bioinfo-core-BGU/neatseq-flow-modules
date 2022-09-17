@@ -243,9 +243,17 @@ class Step_trinity(Step):
             # Name of specific script:
             self.spec_script_name = self.set_spec_script_name(sample)
             self.script = ""
-
-            # Make a dir for the current sample:
-            sample_dir = self.make_folder_for_sample(sample)
+            
+            if '--grid_exec' in list(self.params["redir_params"].keys()):
+                if ("recover" in list(self.params.keys())) or ("finish" in list(self.params.keys())):
+                    self.base_step_to_use = self.get_base_step_list()[0]
+                    sample_dir = self.base_step_to_use.make_folder_for_sample(sample)
+                else:
+                    # Make a dir for the current sample:
+                    sample_dir = self.make_folder_for_sample(sample)
+            else:
+                # Make a dir for the current sample:
+                sample_dir = self.make_folder_for_sample(sample)
 
             # This line should be left before every new script. It sees to local issues.
             # Use the dir it returns as the base_dir for this step.
@@ -323,19 +331,31 @@ class Step_trinity(Step):
                     self.params["qsub_params"] = {}
                     self.params["qsub_params"]["-V"]=None
                 temp_script = self.script
-                self.script += "--no_distributed_trinity_exec \\\n\n"
+                if "recover" in list(self.params.keys()):
+                    self.script = ''
+                    self.script += "cd  %s \n\n" % os.path.join(use_dir, output_basename)
+                    
+                    self.script += "{grid_cmd} {cmd_file} \n\n\n".format(grid_cmd = self.params["redir_params"]["--grid_exec"].strip('"').strip("'"),
+                                                                         cmd_file = os.path.join(use_dir, output_basename,"recursive_trinity.cmds.hpc-cache_success.__failures")) 
+                elif "finish" in list(self.params.keys()):
+                    # self.script += temp_script
+                    # If there is an extra "\\\n\t" at the end of the script, remove it.
+                    self.script += "--FORCE \\\n\n"
+                    self.script = self.script.rstrip("\\\n\t") + "\n\n"
+                    self.script += 'rm -rf {tempdir}\n'.format(tempdir= os.path.join(use_dir, output_basename,"farmit.J*"))
+                    self.script += 'rm -f  {tempdir}\n'.format(tempdir= os.path.join(use_dir, output_basename,"*.sh.e*"))
+                    self.script += 'rm -f  {tempdir}\n'.format(tempdir= os.path.join(use_dir, output_basename,"*.sh.o*"))
+                else:
+                    self.script += "--no_distributed_trinity_exec \\\n\n"
+                    
+                    self.script += "cd  %s \n\n" % os.path.join(use_dir, output_basename)
+                    
+                    self.script += "{grid_cmd} {cmd_file} \n\n\n".format(grid_cmd = self.params["redir_params"]["--grid_exec"].strip('"').strip("'"),
+                                                                         cmd_file = os.path.join(use_dir, output_basename,"recursive_trinity.cmds")) 
                 
-                self.script += "cd  %s \n\n" % os.path.join(use_dir, output_basename)
                 
-                self.script += "{grid_cmd} {cmd_file} \n\n\n".format(grid_cmd = self.params["redir_params"]["--grid_exec"].strip('"').strip("'"),
-                                                                     cmd_file = os.path.join(use_dir, output_basename,"recursive_trinity.cmds")) 
-                self.script += temp_script
                 
-                # If there is an extra "\\\n\t" at the end of the script, remove it.
-                self.script = self.script.rstrip("\\\n\t") + "\n\n"
-                self.script += 'rm -rf {tempdir}\n'.format(tempdir= os.path.join(use_dir, output_basename,"farmit.J*"))
-                self.script += 'rm -f {tempdir}\n'.format(tempdir= os.path.join(use_dir, output_basename,"*.sh.e*"))
-                self.script += 'rm -f {tempdir}\n'.format(tempdir= os.path.join(use_dir, output_basename,"*.sh.o*"))
+                
             # If there is an extra "\\\n\t" at the end of the script, remove it.
             self.script = self.script.rstrip("\\\n\t") + "\n\n"
             

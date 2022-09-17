@@ -75,6 +75,8 @@ Lines for parameter file
         use_base_dir:               # Use the base step directory as the output for this step, it is possible to specify the base to use.
         cd:                         # Change current working directory to the output location.
         no_sample_dir:              # In Sample Scope: will NOT create a dedicated folder for each sample.
+        remove_subsamples:          # Will remove subsamples created by previous steps (split_fasta for example)
+        subsamples_string:          # A string to identify a subsample, all subsample will start with this string. [default: 'subsample']
         inputs:                     # The inputs for this module
             STR:                    # Input argument, e.g. -i, --input [could be also 'empty1', 'empty2'.. for no input argument string]
                 scope:              # The scope of this input argument could be sample/project
@@ -149,11 +151,24 @@ class Step_Generic(Step):
             if self.params['arg_separator']==None:
                 self.params['arg_separator']=""
         self.params['arg_separator'] = get_File_Type_data(self.params,["arg_separator"]," ")
+        
+        if 'subsamples_string' in self.params.keys():
+            if self.params['subsamples_string']==None:
+                self.params['subsamples_string']=""
+        self.params['subsamples_string'] = get_File_Type_data(self.params,["subsamples_string"],"subsample")
         pass
         
     def step_sample_initiation(self):
         """ A place to do initiation stages following setting of sample_data
         """
+        if 'remove_subsamples' in self.params.keys():
+            New_Sample_List = list()
+            for sample in self.sample_data["samples"]:
+                if sample.startswith(self.params['subsamples_string']):
+                    self.sample_data.pop(sample)
+                else:
+                    New_Sample_List.append(sample)
+            self.sample_data["samples"] = New_Sample_List
         
         if len(get_File_Type_data(self.params,["copy_File_Types"]))>0:
             for transfer in self.params["copy_File_Types"]:
