@@ -39,7 +39,7 @@ option_list = list(
   make_option(c("--KEGG_Species"), type="character", default=NA, 
               help="Species Name to Retrieve Annotation Data from KEGG", metavar="character"),
   make_option(c("--KEGG_KAAS"), type="character", default=NA, 
-              help="Gene to KO file from KEGG KAAS [first column gene id, second column KO number]", metavar="character"),
+              help="Gene to KO file from KEGG KAAS [Tab delimited file: first column gene id, second column KO number]", metavar="character"),
   make_option(c("--FILTER_SAMPLES"), action="store_true",default=FALSE, 
               help="Filter Samples with Low Number of expressed genes OR with Small Library size using 'scater' package ", metavar="character"),
   make_option(c("--FILTER_GENES"), action="store_true",default=FALSE, 
@@ -3059,7 +3059,7 @@ if ((opt$FILTER_SAMPLES) | (opt$FILTER_GENES)){
 
 countData = countData + opt$Add2Count
 
-write.csv(x =countData ,file = file.path(opt$outDir,"CountData.tab"),sep = '\t')
+write.csv(x =countData ,file = file.path(opt$outDir,"CountData.tab"))
 
 
 ##################DeSeq- design and normalization ########################################
