@@ -133,7 +133,11 @@ option_list = list(
               help="Test for genes overlap in enriched terms", metavar="character"),
   make_option(c("--USE_INPUT_GENES_AS_BACKGROUND"), action="store_true",default=FALSE, 
               help="Use The input Genes as the Background for Enrichment Analysis", metavar="character"),
-              
+  make_option(c("--GO_Heatmap"), type="character", default=NA,
+              help="Use these GO IDs list to create a heatmap per-GO-ID showing only significant genes that belong to this GO term [a comma separated list]", metavar="character"),
+  make_option(c("--Max_Dotplot"), type="numeric", default=100,
+              help="The maximal number of terms that will be plot in the enrichment dotplot per cluster", metavar="character"),
+
   make_option(c("--PCA_COLOR"), type="character", default=NA,
               help="The Filed In the Sample Data To Determine Color In The PCA Plot", metavar="character"),
   make_option(c("--PCA_SHAPE"), type="character", default=NA,

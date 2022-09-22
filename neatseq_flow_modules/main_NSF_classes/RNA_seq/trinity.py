@@ -324,6 +324,10 @@ class Step_trinity(Step):
 
             
             if '--grid_exec' in list(self.params["redir_params"].keys()):
+                if "genome_guided" in list(self.params.keys()):
+                    base_grid_cmd = "trinity_GG.cmds"
+                else:
+                    base_grid_cmd = "recursive_trinity.cmds"
                 if "qsub_params" in list(self.params.keys()):
                     if "-V" not in list(self.params["qsub_params"].keys()):
                         self.params["qsub_params"]["-V"]=None
@@ -336,7 +340,7 @@ class Step_trinity(Step):
                     self.script += "cd  %s \n\n" % os.path.join(use_dir, output_basename)
                     
                     self.script += "{grid_cmd} {cmd_file} \n\n\n".format(grid_cmd = self.params["redir_params"]["--grid_exec"].strip('"').strip("'"),
-                                                                         cmd_file = os.path.join(use_dir, output_basename,"recursive_trinity.cmds.hpc-cache_success.__failures")) 
+                                                                         cmd_file = os.path.join(use_dir, output_basename,base_grid_cmd + ".hpc-cache_success.__failures")) 
                 elif "finish" in list(self.params.keys()):
                     # self.script += temp_script
                     # If there is an extra "\\\n\t" at the end of the script, remove it.
@@ -351,7 +355,7 @@ class Step_trinity(Step):
                     self.script += "cd  %s \n\n" % os.path.join(use_dir, output_basename)
                     
                     self.script += "{grid_cmd} {cmd_file} \n\n\n".format(grid_cmd = self.params["redir_params"]["--grid_exec"].strip('"').strip("'"),
-                                                                         cmd_file = os.path.join(use_dir, output_basename,"recursive_trinity.cmds")) 
+                                                                         cmd_file = os.path.join(use_dir, output_basename,base_grid_cmd)) 
                 
                 
                 

@@ -125,7 +125,7 @@ cluster_enricher<-function(clusters,num,Type,organism,universe,keyType,Ontology=
 }
 
 
-clusters_enricher=function(outDir, clusters,Type,organism,universe,keyType,file_name,Ontology="BP",pvalueCutoff=0.05,pAdjustMethod='fdr',qvalueCutoff=0.05){
+clusters_enricher=function(outDir, clusters,Type,organism,universe,keyType,file_name,Ontology="BP",pvalueCutoff=0.05,pAdjustMethod='fdr',qvalueCutoff=0.05,maxCategory=1000){
     allRes=list()
     original_allRes=list()
     cluster_names=list()
@@ -189,7 +189,7 @@ clusters_enricher=function(outDir, clusters,Type,organism,universe,keyType,file_
 
         if (dim(allRes@compareClusterResult)[1]>0){
             #cat(sprintf("<h4>%s</h4>", paste(unlist(stringi::stri_split(str = file_name,fixed='_')),collapse = " ") ))
-            x=enrichplot::dotplot(allRes,x=allRes@compareClusterResult$Cluster,showCategory=10000,font.size =font.size)+
+            x=enrichplot::dotplot(allRes,x=allRes@compareClusterResult$Cluster,showCategory=maxCategory,font.size =font.size)+
             ggplot2::ggsave(filename = file.path(outDir,paste(file_name,".pdf",sep='',collapse = "")),dpi = 600,device = "pdf",width = 20,height = 20)
             grid::grid.newpage()
             return(list(original_allRes,list(htmltools::h4(paste(unlist(stringi::stri_split(str = file_name,fixed='_')),collapse = " ")),ggplotly(x),Simplify_title,Enrichment_table)))
@@ -224,7 +224,7 @@ generat_urls<-function(allRes,gene2ko){
 }
 
 
-Clusters_Enrichment_Test=function(outDir,clusters,TERM2NAME,TERM2GENE,file_name,Type,pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE){
+Clusters_Enrichment_Test=function(outDir,clusters,TERM2NAME,TERM2GENE,file_name,Type,pAdjustMethod='fdr',pvalueCutoff=0.05,gene2ko=FALSE,maxCategory=1000){
     allRes=list()
     original_allRes = list()
     cluster_names=list()
@@ -290,7 +290,7 @@ Clusters_Enrichment_Test=function(outDir,clusters,TERM2NAME,TERM2GENE,file_name,
 
     if (dim(allRes@compareClusterResult)[1]>0){
         #cat(sprintf("<h4>%s</h4>", paste(unlist(stringi::stri_split(str = file_name,fixed='_')),collapse = " ") ))
-        x=enrichplot::dotplot(allRes,showCategory=10000,font.size=font.size)+ 
+        x=enrichplot::dotplot(allRes,showCategory=maxCategory,font.size=font.size)+ 
         ggplot2::ggsave(filename = file.path(outDir,paste(file_name,".pdf",sep='',collapse = "")),dpi = 600,device = "pdf",width = 20,height = 20)
         grid::grid.newpage()
         return(list(original_allRes,list(htmltools::h4(paste(unlist(stringi::stri_split(str = file_name,fixed='_')),collapse = " ")),ggplotly(x),Simplify_title,Enrichment_table)))
@@ -2151,13 +2151,38 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                         # main_figure_count = main_figure_count + 1
                         #print(environmentName(environment()))
                         
-    
-                        genes=sig.genes
-                        for (Heatmap_Type in c('Mean','Raw')){
-                        
+                        if (!is.na(opt$GO_Heatmap)){
+                            GO_Heatmap = unlist(stringi::stri_split(str = opt$GO_Heatmap,regex = ','))
+                        }else{
+                            GO_Heatmap = c()
+                        }
+                        Extra_annotation_row = data.frame(row.names = sig.genes)
+                        Original_clusters = clusters
+                        for (Heatmap_Type in c(GO_Heatmap,'Mean','Raw')){
+                            annotation_row_COLORS = list()
+                            genes    = sig.genes
+                            clusters = Original_clusters
+                            annotation_row = data.frame()
                             if (Heatmap_Type=='Mean'){
                                 mat = as.matrix(Heatmap_Normalized_counts_Annotated_mean[genes,])
                             }else{
+                                if ( stringi::stri_startswith(str = Heatmap_Type,fixed = 'GO:') ){
+                                    New_genes = c()
+                                    if (!is.na(GO2gene_MF)){
+                                       New_genes = c(New_genes , GO2gene_MF[GO2gene_MF$GO %in% Heatmap_Type,'Gene'])
+                                    }
+                                    if (!is.na(GO2gene_BP)){
+                                       New_genes = c(New_genes , GO2gene_BP[GO2gene_BP$GO %in% Heatmap_Type,'Gene'])
+                                    }
+                                    if (!is.na(GO2gene_CC)){
+                                       New_genes = c(New_genes , GO2gene_CC[GO2gene_CC$GO %in% Heatmap_Type ,'Gene'])
+                                    }
+                                    
+                                    genes    = genes[ genes %in% unique(New_genes)]
+                                    Extra_annotation_row[Heatmap_Type] = 0
+                                    Extra_annotation_row[genes,Heatmap_Type] = 1
+                                    clusters = clusters[names(clusters) %in% genes]
+                                }
                                 mat = apply(X =Heatmap_Normalized_counts_Annotated[genes,] ,MARGIN = c(1,2),FUN = as.numeric)
                                 
                                 New_clusters=c()
@@ -2210,11 +2235,20 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                 new_order = order(annotation_col[,GROUP],annotation_col[,X_AXIS])
                                 annotation_col = annotation_col[new_order,,drop=FALSE]
                                 mat = mat[,new_order,drop=FALSE]
-    
+                                annotation_row = data.frame("Clusters" = factor(clusters))
+                                if (Heatmap_Type %in% c('Mean','Raw')){
+                                    for (Extra_annotation in colnames(Extra_annotation_row)){
+                                       annotation_row[Extra_annotation] = Extra_annotation_row[names(clusters),Extra_annotation]
+                                       color_category = c("#FFFFFF","#000000")
+                                       names(color_category) = c(0,1)
+                                       annotation_row_COLORS[Extra_annotation] = list(color_category)
+                                    }
+                                }
                                 heat_map=pheatmap(mat =mat ,
                                                 cluster_rows= F,show_rownames=F,
                                                 cluster_cols=F,scale = "row",
-                                                annotation_row=data.frame("Clusters"=factor(clusters) ),
+                                                annotation_row = annotation_row,
+                                                annotation_colors = annotation_row_COLORS,
                                                 #annotation_names_row=F,
                                                 border_color=NA,
                                                 silent = T,
@@ -2236,12 +2270,22 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                 new_order = order(annotation_col[,X_AXIS])
                                 annotation_col = annotation_col[new_order,,drop=FALSE]
                                 mat = mat[,new_order,drop=FALSE]
+                                annotation_row = data.frame("Clusters" = factor(clusters))
+                                if (Heatmap_Type %in% c('Mean','Raw')){
+                                   for (Extra_annotation in colnames(Extra_annotation_row)){
+                                       annotation_row[Extra_annotation] = Extra_annotation_row[names(clusters),Extra_annotation]
+                                       color_category = c("#3f3fc","#000000")
+                                       names(color_category) = c(0,1)
+                                       annotation_row_COLORS[Extra_annotation] = list(color_category)
+                                   }
+                                }
                                 if (opt$stand){
                                     heat_map=pheatmap(mat = mat ,
                                                       cluster_rows= F,show_rownames=F,
                                                       cluster_cols=F,scale = "row",
                                                       silent = T,
-                                                      annotation_row=data.frame("Clusters"=factor(clusters) ),
+                                                      annotation_row=annotation_row,
+                                                      annotation_colors = annotation_row_COLORS,
                                                       #annotation_names_row=T,
                                                       annotation_col=annotation_col,
                                                       show_colnames = T,
@@ -2254,7 +2298,8 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                                       cluster_rows= F,show_rownames=F,
                                                       cluster_cols=F,
                                                       silent = T,
-                                                      annotation_row=data.frame("Clusters"=factor(clusters) ),
+                                                      annotation_row=annotation_row,
+                                                      annotation_colors = annotation_row_COLORS,
                                                       #annotation_names_row=T,
                                                       annotation_col=annotation_col,
                                                       show_colnames = T,
@@ -2270,7 +2315,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                 grid::grid.newpage()
                                 grid::grid.draw(heat_map$gtable)
                                 grid::grid.newpage()
-                            }else{
+                            }else if (Heatmap_Type=='Mean') {
                                 cat(sprintf("<h4>%s</h4>",paste('The Next Figure is of the', SPLIT ,'Significant Genes relative expression [Mean over biological replicates] Clustered and plotted as a HeatMap',sep=" ")))
                                 grid::grid.newpage()
                                 grid::grid.draw(heat_map$gtable)
@@ -2280,6 +2325,15 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
     
                             mat2=t(scale(t(mat)))
                             mat3=cbind(clusters[rownames(mat2)],mat2)
+                            if (Heatmap_Type %in% c('Mean','Raw')){
+                                for (Extra_annotation in colnames(Extra_annotation_row)){
+                                    if (!Extra_annotation=="Clusters"){
+                                        Extra_annotation_temp = data.frame(Extra_annotation = Extra_annotation_row[rownames(mat2),Extra_annotation])
+                                        colnames(Extra_annotation_temp) = Extra_annotation 
+                                        mat3=cbind(mat3,Extra_annotation_temp)
+                                    }
+                                }
+                            }
                             if (!is.na(DESeqDataSet_Results)){
                                 mat3=cbind(mat3,DESeqDataSet_Results_redOrdered[rownames(mat3),c('log2FoldChange',"padj")])
                             }
@@ -2300,30 +2354,29 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                       row.names = TRUE)
                                       
                             
-                            
-                            
-                            HeatMap_table  =  datatable(mat3,
-                                                        caption = htmltools::tags$caption(style = 'caption-side: bottom; text-align: center;',
-                                                                                                'Table: ', 
-                                                                                                htmltools::em(paste('This Table is of the ',SPLIT,'Significant Genes Clusterd [as in the HeatMap Figure] and Annotated',sep=""))
-                                                                                        ),
-                                                        options = list(keys = TRUE ,
-                                                                     scrollX = TRUE,
-                                                                     fixedHeader = FALSE,
-                                                                     fixedColumns = TRUE,
-                                                                     pageLength = 5,
-                                                                     scrollY = 300,
-                                                                     orderClasses=TRUE,
-                                                                     autoWidth = TRUE,
-                                                                     scroller = TRUE,
-                                                                     dom = 'Bfrtip',
-                                                                     buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
-                                                                     deferRender = TRUE),
-                                                        class = 'cell-border stripe',
-                                                        filter = 'top',
-                                                        extensions = c('Buttons','FixedColumns','FixedHeader','KeyTable','Scroller'))
-                            main_plot_list <- c(main_plot_list ,list(HeatMap_table) )
-                            
+                            if (Heatmap_Type %in% c('Mean','Raw') ){
+                                HeatMap_table  =  datatable(mat3,
+                                                            caption = htmltools::tags$caption(style = 'caption-side: bottom; text-align: center;',
+                                                                                                    'Table: ', 
+                                                                                                    htmltools::em(paste('This Table is of the ',SPLIT,'Significant Genes Clusterd [as in the HeatMap Figure] and Annotated',sep=""))
+                                                                                            ),
+                                                            options = list(keys = TRUE ,
+                                                                         scrollX = TRUE,
+                                                                         fixedHeader = FALSE,
+                                                                         fixedColumns = TRUE,
+                                                                         pageLength = 5,
+                                                                         scrollY = 300,
+                                                                         orderClasses=TRUE,
+                                                                         autoWidth = TRUE,
+                                                                         scroller = TRUE,
+                                                                         dom = 'Bfrtip',
+                                                                         buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                                                         deferRender = TRUE),
+                                                            class = 'cell-border stripe',
+                                                            filter = 'top',
+                                                            extensions = c('Buttons','FixedColumns','FixedHeader','KeyTable','Scroller'))
+                                main_plot_list <- c(main_plot_list ,list(HeatMap_table) )
+                            }
                             
                         }
                         # save(list=ls(all.names = TRUE),file =file.path(opt$outDir,'SSession.RSession'))
@@ -2343,7 +2396,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                             clusters_for_GO= gene2entrez$CLUSTERS
                             names(clusters_for_GO)=gene2entrez$ENTREZID
     
-                            allRes <- clusters_enricher(opt$outDir,clusters_for_GO,"GO",opt$Annotation_db,Annotation$ENTREZID,"ENTREZID",paste('GO_Biological_Process_Enrichment_of_Clusters',SPLIT,sep="_"),pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff)
+                            allRes <- clusters_enricher(opt$outDir,clusters_for_GO,"GO",opt$Annotation_db,Annotation$ENTREZID,"ENTREZID",paste('GO_Biological_Process_Enrichment_of_Clusters',SPLIT,sep="_"),pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,maxCategory = opt$Max_Dotplot)
                             main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                             if (opt$Enriched_terms_overlap){
                               heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'GO_Biological_Process_Enrichment_of_Clusters')
@@ -2370,7 +2423,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
      
                             One_cluster=clusters_for_GO
                             One_cluster[]=1
-                            allRes <- clusters_enricher(opt$outDir,One_cluster,"GO",opt$Annotation_db,Annotation$ENTREZID,"ENTREZID",paste('GO_Biological_Process_Enrichment_of_All_Significant_Genes',SPLIT,sep="_"),pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff)
+                            allRes <- clusters_enricher(opt$outDir,One_cluster,"GO",opt$Annotation_db,Annotation$ENTREZID,"ENTREZID",paste('GO_Biological_Process_Enrichment_of_All_Significant_Genes',SPLIT,sep="_"),pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,maxCategory = opt$Max_Dotplot)
                             main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                             if (opt$Enriched_terms_overlap){
                               heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'GO_Biological_Process_Enrichment_of_All_Significant_Genes')
@@ -2405,7 +2458,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                     }
                                     
                                     if ((!is.na(GO2gene)) && (!is.na(GO2name))) {
-                                        allRes <- Clusters_Enrichment_Test(opt$outDir,clusters,GO2name,GO2gene,paste(GOType,'_GO_Enrichment_of_Clusters',SPLIT,sep="_"),"GO",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
+                                        allRes <- Clusters_Enrichment_Test(opt$outDir,clusters,GO2name,GO2gene,paste(GOType,'_GO_Enrichment_of_Clusters',SPLIT,sep="_"),"GO",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE,maxCategory = opt$Max_Dotplot)
                                         main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                                         if (opt$Enriched_terms_overlap){
                                             heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,paste(GOType,'_GO_Enrichment_of_Clusters'))
@@ -2421,7 +2474,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                                 up_down_clusters[up_reg]='UP'
                                             }
                                             
-                                            allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,GO2name,GO2gene,paste(GOType,'_GO_Enrichment_of_Up_and_Down_Clusters',SPLIT,sep="_"),"GO",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
+                                            allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,GO2name,GO2gene,paste(GOType,'_GO_Enrichment_of_Up_and_Down_Clusters',SPLIT,sep="_"),"GO",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE,maxCategory = opt$Max_Dotplot)
                                             main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                                             if (opt$Enriched_terms_overlap){
                                                 heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,paste(GOType,'_GO_Enrichment_of_Up_and_Down_Clusters'))
@@ -2430,7 +2483,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                         }
                                         One_cluster=clusters
                                         One_cluster[]=1
-                                        allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,GO2name,GO2gene,paste(GOType,'_GO_Enrichment_of_All_Significant_Genes',SPLIT,sep="_"),"GO",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
+                                        allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,GO2name,GO2gene,paste(GOType,'_GO_Enrichment_of_All_Significant_Genes',SPLIT,sep="_"),"GO",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE,maxCategory = opt$Max_Dotplot)
                                         main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                                         if (opt$Enriched_terms_overlap){
                                             heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,paste(GOType,'_GO_Enrichment_of_All_Significant_Genes'))
@@ -2459,7 +2512,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                 Pathway2name_ = Pathway2name
                                 Pathway2gene_ = Pathway2gene
                             }
-                            allRes <- Clusters_Enrichment_Test(opt$outDir,clusters,Pathway2name_,Pathway2gene_,paste('KEGG_Enrichment_Analysis_of_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
+                            allRes <- Clusters_Enrichment_Test(opt$outDir,clusters,Pathway2name_,Pathway2gene_,paste('KEGG_Enrichment_Analysis_of_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE,maxCategory = opt$Max_Dotplot)
                             main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                             if (opt$Enriched_terms_overlap){
                                 heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_Clusters')
@@ -2475,7 +2528,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                     up_down_clusters[up_reg]='UP'
                                 }
     
-                                allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,Pathway2name_,Pathway2gene_,paste('KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
+                                allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,Pathway2name_,Pathway2gene_,paste('KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE,maxCategory = opt$Max_Dotplot)
                                 main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                                 if (opt$Enriched_terms_overlap){
                                     heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters')
@@ -2486,7 +2539,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
      
                             One_cluster=clusters
                             One_cluster[]=1
-                            allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,Pathway2name_,Pathway2gene_,paste('KEGG_Enrichment_Analysis_of_All_Significant_Genes',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
+                            allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,Pathway2name_,Pathway2gene_,paste('KEGG_Enrichment_Analysis_of_All_Significant_Genes',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE,maxCategory = opt$Max_Dotplot)
                             main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                             if (opt$Enriched_terms_overlap){
                                 heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_All_Significant_Genes')
@@ -2517,7 +2570,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                 ORGANISM_Pathway2gene_ = ORGANISM_Pathway2gene
                             }
                             
-                            allRes  <- Clusters_Enrichment_Test(opt$outDir,clusters,ORGANISM_Pathway2name_,ORGANISM_Pathway2gene_,paste(ORGANISM,'KEGG_Enrichment_Analysis_of_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
+                            allRes  <- Clusters_Enrichment_Test(opt$outDir,clusters,ORGANISM_Pathway2name_,ORGANISM_Pathway2gene_,paste(ORGANISM,'KEGG_Enrichment_Analysis_of_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE,maxCategory = opt$Max_Dotplot)
                             main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                             if (opt$Enriched_terms_overlap){
                                 heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_Clusters')
@@ -2533,7 +2586,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                     up_down_clusters[up_reg]='UP'
                                 }
     
-                                allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,ORGANISM_Pathway2name_,ORGANISM_Pathway2gene_,paste(ORGANISM,'KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
+                                allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,ORGANISM_Pathway2name_,ORGANISM_Pathway2gene_,paste(ORGANISM,'KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE,maxCategory = opt$Max_Dotplot)
                                 main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                                 if (opt$Enriched_terms_overlap){
                                     heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters')
@@ -2544,7 +2597,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
     
                             One_cluster=clusters
                             One_cluster[]=1
-                            allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,ORGANISM_Pathway2name_,ORGANISM_Pathway2gene_,paste(ORGANISM,'KEGG_Enrichment_Analysis_of_All_Significant_Genes',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
+                            allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,ORGANISM_Pathway2name_,ORGANISM_Pathway2gene_,paste(ORGANISM,'KEGG_Enrichment_Analysis_of_All_Significant_Genes',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE,maxCategory = opt$Max_Dotplot)
                             main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                             if (opt$Enriched_terms_overlap){
                                 heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_All_Significant_Genes')
@@ -2575,7 +2628,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                 KASS_Pathway2gene_ = KASS_Pathway2gene
                             }
                             
-                            allRes <- Clusters_Enrichment_Test(opt$outDir,clusters,KASS_Pathway2name_,KASS_Pathway2gene_,paste('KEGG_Enrichment_Analysis_of_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
+                            allRes <- Clusters_Enrichment_Test(opt$outDir,clusters,KASS_Pathway2name_,KASS_Pathway2gene_,paste('KEGG_Enrichment_Analysis_of_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE,maxCategory = opt$Max_Dotplot)
                             main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                             if (opt$Enriched_terms_overlap){
                                 heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_Clusters')
@@ -2592,7 +2645,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                     up_down_clusters[up_reg]='UP'
                                 }
     
-                                allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,KASS_Pathway2name_,KASS_Pathway2gene_,paste('KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
+                                allRes <- Clusters_Enrichment_Test(opt$outDir,up_down_clusters,KASS_Pathway2name_,KASS_Pathway2gene_,paste('KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE,maxCategory = opt$Max_Dotplot)
                                 main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                                 if (opt$Enriched_terms_overlap){
                                     heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_Up_and_Down_Clusters')
@@ -2602,7 +2655,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
     
                             One_cluster=clusters
                             One_cluster[]=1
-                            allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,KASS_Pathway2name_,KASS_Pathway2gene_,paste('KEGG_Enrichment_Analysis_of_All_Significant_Genes',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE)
+                            allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,KASS_Pathway2name_,KASS_Pathway2gene_,paste('KEGG_Enrichment_Analysis_of_All_Significant_Genes',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE,maxCategory = opt$Max_Dotplot)
                             main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
                             if (opt$Enriched_terms_overlap){
                                 heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_All_Significant_Genes')
