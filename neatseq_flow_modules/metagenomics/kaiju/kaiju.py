@@ -258,13 +258,15 @@ class Step_kaiju(Step):
             if "kaiju2krona" in self.params:
 
                 if "redirects" in self.params["kaiju2krona"]:
+                    if "-u" not in self.params["kaiju2krona"]["redirects"].keys():
+                        self.params["kaiju2krona"]["redirects"]["-u"] = ""
                     redirects = " \\\n\t".join(
                         [key + " " + (val if val else "")
                          for key, val
                          in self.params["kaiju2krona"]["redirects"].items()])
                     redirects = "\n\t{redirs}\\".format(redirs=redirects)
                 else:
-                    redirects = ""
+                    redirects = " \\\n\t".join("-u")
                 self.script += """
 
 # Creating text report for krona
