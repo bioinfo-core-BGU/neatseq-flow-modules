@@ -300,13 +300,33 @@ class Step_Generic(Step):
                                 elif not isinstance(inputs_sample_data["project_data"][File_Type],str):
                                     raise AssertionExcept("The File_Type %s in the PROJECT level is empty !!  in step %%s" % File_Type  % base)
                         else:
-                            for sample in self.sample_data["samples"]:
-                                for File_Type in str(get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])).replace("'",'').replace(" ",'').strip('[').strip(']').strip('"').split(','):
-                                    if File_Type not in list(inputs_sample_data[sample].keys()):
-                                        raise AssertionExcept("The File_Type %s is not found in the SAMPLE level [in sample name %%s] \n\t File_Types available are : %%%%s in step %%%%%%%%s" % File_Type % sample % list(inputs_sample_data[sample].keys()) % base )
-                                    elif not isinstance(inputs_sample_data[sample][File_Type],str):
-                                        raise AssertionExcept("The File_Type %s in SAMPLE %%s is empty !!  in step %%%%s" % File_Type % sample % base)
+                            if "control" in self.params["scope"]:
+                                try:
+                                    self.sample_data["Controls"]
+                                except KeyError:
+                                    raise AssertionExcept("You must define sample:control pairs\n")
                                     
+                                for samples in list(self.sample_data["Controls"].keys()):
+                                    if get_File_Type_data(self.params["inputs"],[inputs,"scope"])=="control":
+                                        sample = self.sample_data["Controls"][samples]
+                                    else:
+                                        sample = samples
+                                    for File_Type in str(get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])).replace("'",'').replace(" ",'').strip('[').strip(']').strip('"').split(','):
+                                        if File_Type not in list(inputs_sample_data[sample].keys()):
+                                            raise AssertionExcept("The File_Type %s is not found in the SAMPLE level [in sample name %%s] \n\t File_Types available are : %%%%s in step %%%%%%%%s" % File_Type % sample % list(inputs_sample_data[sample].keys()) % base )
+                                        elif not isinstance(inputs_sample_data[sample][File_Type],str):
+                                            raise AssertionExcept("The File_Type %s in SAMPLE %%s is empty !!  in step %%%%s" % File_Type % sample % base)
+                                    
+                            else:
+                                if get_File_Type_data(self.params["inputs"],[inputs,"scope"])=="control":
+                                    raise AssertionExcept("You can not use a control scope File_Type if the Step %s scope is not set to control " % base)
+                                for sample in self.sample_data["samples"]:
+                                    for File_Type in str(get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])).replace("'",'').replace(" ",'').strip('[').strip(']').strip('"').split(','):
+                                        if File_Type not in list(inputs_sample_data[sample].keys()):
+                                            raise AssertionExcept("The File_Type %s is not found in the SAMPLE level [in sample name %%s] \n\t File_Types available are : %%%%s in step %%%%%%%%s" % File_Type % sample % list(inputs_sample_data[sample].keys()) % base )
+                                        elif not isinstance(inputs_sample_data[sample][File_Type],str):
+                                            raise AssertionExcept("The File_Type %s in SAMPLE %%s is empty !!  in step %%%%s" % File_Type % sample % base)
+                                        
                     if "del" in list(self.params["inputs"][inputs].keys()):
                         self.write_warning("!!! The file/directory in the input File_Type %s in step %%s will be DELETED at the end of this step!!! " % get_File_Type_data(self.params["inputs"],[inputs,"File_Type"]) % base)
             
@@ -314,14 +334,28 @@ class Step_Generic(Step):
             # Test if the output File_Types
             for outputs in list(self.params["outputs"].keys()):
                 if get_File_Type_data(self.params["outputs"],[outputs,"File_Type"],None)!=None: #Test if the user specify a File_Type for the output argument
-                    for sample in self.sample_data["samples"]:
-                        if get_File_Type_data(self.params["outputs"],[outputs,"File_Type"]) in list(self.sample_data[sample].keys()): #Test if the File_Type for the output argument exists
-                            if self.sample_data[sample][get_File_Type_data(self.params["outputs"],[outputs,"File_Type"])]==None: #Test if the File_Type was already defined in the output arguments
-                                raise AssertionExcept("The output File_Type %s in the SAMPLE level was defined more the once !!! " % get_File_Type_data(self.params["outputs"],[outputs,"File_Type"]) )
-                            else:
-                                self.write_warning("The output File_Type %s already exists in the SAMPLE level, its content will be override !!! " % get_File_Type_data(self.params["outputs"],[outputs,"File_Type"]) )
-                        else: # If the File_Type dose not exists, will generate empty File_Type 
-                            self.sample_data[sample][get_File_Type_data(self.params["outputs"],[outputs,"File_Type"])]=None
+                    if "control" in self.params["scope"]:
+                        try:
+                            self.sample_data["Controls"]
+                        except KeyError:
+                            raise AssertionExcept("You must define sample:control pairs\n")
+                        for sample in list(self.sample_data["Controls"].keys()):
+                            if get_File_Type_data(self.params["outputs"],[outputs,"File_Type"]) in list(self.sample_data[sample].keys()): #Test if the File_Type for the output argument exists
+                                if self.sample_data[sample][get_File_Type_data(self.params["outputs"],[outputs,"File_Type"])]==None: #Test if the File_Type was already defined in the output arguments
+                                    raise AssertionExcept("The output File_Type %s in the SAMPLE level was defined more the once !!! " % get_File_Type_data(self.params["outputs"],[outputs,"File_Type"]) )
+                                else:
+                                    self.write_warning("The output File_Type %s already exists in the SAMPLE level, its content will be override !!! " % get_File_Type_data(self.params["outputs"],[outputs,"File_Type"]) )
+                            else: # If the File_Type dose not exists, will generate empty File_Type 
+                                self.sample_data[sample][get_File_Type_data(self.params["outputs"],[outputs,"File_Type"])]=None
+                    else:
+                        for sample in self.sample_data["samples"]:
+                            if get_File_Type_data(self.params["outputs"],[outputs,"File_Type"]) in list(self.sample_data[sample].keys()): #Test if the File_Type for the output argument exists
+                                if self.sample_data[sample][get_File_Type_data(self.params["outputs"],[outputs,"File_Type"])]==None: #Test if the File_Type was already defined in the output arguments
+                                    raise AssertionExcept("The output File_Type %s in the SAMPLE level was defined more the once !!! " % get_File_Type_data(self.params["outputs"],[outputs,"File_Type"]) )
+                                else:
+                                    self.write_warning("The output File_Type %s already exists in the SAMPLE level, its content will be override !!! " % get_File_Type_data(self.params["outputs"],[outputs,"File_Type"]) )
+                            else: # If the File_Type dose not exists, will generate empty File_Type 
+                                self.sample_data[sample][get_File_Type_data(self.params["outputs"],[outputs,"File_Type"])]=None
                 if "del" in list(self.params["outputs"][outputs].keys()):
                     raise AssertionExcept("Output File_Types cannot be deleted")
         pass
@@ -416,8 +450,15 @@ class Step_Generic(Step):
         # Each iteration must define the following class variables:
             # spec_script_name
             # script
-        for sample in self.sample_data["samples"]:      # Getting list of samples out of samples_hash
             
+        if "control" in self.params["scope"]:
+            samples_list = list(self.sample_data["Controls"].keys())
+        else:
+            samples_list = self.sample_data["samples"]
+            
+        for sample in samples_list:      # Getting list of samples out of samples_hash
+            if "control" in self.params["scope"]:
+                Control_Sample = self.sample_data["Controls"][sample]
             # Name of specific script:
             self.spec_script_name = self.set_spec_script_name(sample)
             self.script = ""
@@ -452,6 +493,7 @@ class Step_Generic(Step):
             # Add the script constant args 
             self.script += self.get_script_const()
             if len(get_File_Type_data(self.params,["inputs"]))>0:
+                del_script=""
                 # Adds inputs files
                 for inputs in list(self.params["inputs"].keys()): 
                     
@@ -459,14 +501,19 @@ class Step_Generic(Step):
                         value =get_File_Type_data(self.params["inputs"],[inputs,"constant_value"],'')
                         value = value.replace('{{sample_name}}',sample)
                         value = value.replace('{{project_name}}',self.sample_data["Title"])
+                        if "control" in self.params["scope"]:
+                            value = value.replace('{{control_name}}',Control_Sample)
                         if 'type' in list(self.sample_data[sample].keys()):
                             if len(get_File_Type_data(self.params["inputs"],[inputs,"sep"]))>0:
                                 sep = get_File_Type_data(self.params["inputs"],[inputs,"sep"])
                             else:
                                 sep = self.params['arg_separator']
                             value = value.replace('{{type}}',sep.join(map(str,self.sample_data[sample]['type'])))
+                            if "control" in self.params["scope"]:
+                                value = value.replace('{{type_control}}',sep.join(map(str,self.sample_data[Control_Sample]['type'])))
                         else:
                             value = value.replace('{{type}}','')
+                            value = value.replace('{{type_control}}','')
                         if value!='':
                             if inputs.startswith("Empty".lower()):
                                 inputs_script +="%s   \\\n\t"    % value
@@ -491,9 +538,14 @@ class Step_Generic(Step):
                         prefix = prefix.replace('{{sample_name}}',sample)
                         prefix = prefix.replace('{{project_name}}',self.sample_data["Title"])
                         
+                        if "control" in self.params["scope"]:
+                            prefix = prefix.replace('{{control_name}}',Control_Sample)
+                        
                         suffix = suffix.replace('{{sample_name}}',sample)
                         suffix = suffix.replace('{{project_name}}',self.sample_data["Title"])
                         
+                        if "control" in self.params["scope"]:
+                            suffix = suffix.replace('{{control_name}}',Control_Sample)
                         
                         if len(get_File_Type_data(self.params["inputs"],[inputs,"sep"]))>0:
                             sep=get_File_Type_data(self.params["inputs"],[inputs,"sep"])
@@ -511,11 +563,32 @@ class Step_Generic(Step):
                                     File_Type += prefix + os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot]) , (suffix).lstrip(os.sep) )
                                 else:
                                     File_Type +=          os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot]) , (prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).lstrip(os.sep) )
+                                
+                                if ("del" in list(self.params["inputs"][inputs].keys()) ):
+                                    if File_Type.endswith(os.sep):
+                                        self.project_del_script.append("rm -rf %s*   \n\n"      % File_Type )
+                                    else:
+                                        self.project_del_script.append("rm -rf %s   \n\n"       % File_Type )
+                                        self.project_del_script.append("echo > %s_DELETED \n\n" % File_Type.rstrip(os.sep) )
                             else:
-                                if 'use_dirname' in self.params["inputs"][inputs].keys():
-                                    File_Type += prefix + os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]   ) , (suffix).lstrip(os.sep) )
+                                if get_File_Type_data(self.params["inputs"],[inputs,"scope"])=="control":
+                                    if 'use_dirname' in self.params["inputs"][inputs].keys():
+                                        File_Type += prefix + os.path.join(os.path.dirname(     inputs_sample_data[Control_Sample][File_Type_slot]   ) , (suffix).lstrip(os.sep) )
+                                    else:
+                                        File_Type +=          os.path.join(os.path.dirname(     inputs_sample_data[Control_Sample][File_Type_slot]   ) , (prefix + os.path.basename( inputs_sample_data[Control_Sample][File_Type_slot]       ) + suffix).lstrip(os.sep) )
                                 else:
-                                    File_Type +=          os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]   ) , (prefix + os.path.basename( inputs_sample_data[sample][File_Type_slot]       ) + suffix).lstrip(os.sep) )
+                                    if 'use_dirname' in self.params["inputs"][inputs].keys():
+                                        File_Type += prefix + os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]   ) , (suffix).lstrip(os.sep) )
+                                    else:
+                                        File_Type +=          os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]   ) , (prefix + os.path.basename( inputs_sample_data[sample][File_Type_slot]       ) + suffix).lstrip(os.sep) )
+                                    
+                                if ("del" in list(self.params["inputs"][inputs].keys()) ):
+                                    if File_Type.endswith(os.sep):
+                                        self.project_del_script.append("rm -rf %s*   \n\n"       % File_Type )
+                                    else:
+                                        del_script +="rm -rf %s   \n\n"        % File_Type
+                                        del_script +="echo > %s_DELETED  \n\n" % File_Type.rstrip(os.sep)
+                                        
                         if inputs.startswith("Empty".lower()):
                             inputs_script +="%s   \\\n\t"    % File_Type
                         else:
@@ -525,56 +598,56 @@ class Step_Generic(Step):
                 
             
             
-            if len(get_File_Type_data(self.params,["inputs"]))>0:
-                # Generating delete script for input File_Types if specified 
-                del_script=""
-                for inputs in list(self.params["inputs"].keys()):  
+            # if len(get_File_Type_data(self.params,["inputs"]))>0:
+                # # Generating delete script for input File_Types if specified 
+                # del_script=""
+                # for inputs in list(self.params["inputs"].keys()):  
                     
-                    if "constant_value" not in list(self.params["inputs"][inputs].keys()):
-                        if ("del" in list(self.params["inputs"][inputs].keys()) ):
+                    # if "constant_value" not in list(self.params["inputs"][inputs].keys()):
+                        # if ("del" in list(self.params["inputs"][inputs].keys()) ):
                             
-                            base=get_File_Type_data(self.params["inputs"],[inputs,"base"],None)                
-                            inputs_sample_data=self.sample_data
-                            if base!=None:
-                                if base in list(self.get_base_sample_data().keys()):
-                                    inputs_sample_data=self.get_base_sample_data()[base]
-                                else:
-                                    raise AssertionExcept("The step name %s is not one of the previous steps of the %%s step" % base  % self.step )
-                            else:
-                                base=self.step    
+                            # base=get_File_Type_data(self.params["inputs"],[inputs,"base"],None)                
+                            # inputs_sample_data=self.sample_data
+                            # if base!=None:
+                                # if base in list(self.get_base_sample_data().keys()):
+                                    # inputs_sample_data=self.get_base_sample_data()[base]
+                                # else:
+                                    # raise AssertionExcept("The step name %s is not one of the previous steps of the %%s step" % base  % self.step )
+                            # else:
+                                # base=self.step    
                             
-                            prefix       = get_File_Type_data(self.params["inputs"],[inputs,"prefix"])
-                            suffix       = get_File_Type_data(self.params["inputs"],[inputs,"suffix"])
+                            # prefix       = get_File_Type_data(self.params["inputs"],[inputs,"prefix"])
+                            # suffix       = get_File_Type_data(self.params["inputs"],[inputs,"suffix"])
                             
-                            prefix = prefix.replace('{{sample_name}}',sample)
-                            prefix = prefix.replace('{{project_name}}',self.sample_data["Title"])
+                            # prefix = prefix.replace('{{sample_name}}',sample)
+                            # prefix = prefix.replace('{{project_name}}',self.sample_data["Title"])
                             
-                            suffix = suffix.replace('{{sample_name}}',sample)
-                            suffix = suffix.replace('{{project_name}}',self.sample_data["Title"])
+                            # suffix = suffix.replace('{{sample_name}}',sample)
+                            # suffix = suffix.replace('{{project_name}}',self.sample_data["Title"])
                             
-                            for File_Type_slot in str(get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])).replace("'",'').replace(" ",'').strip('[').strip(']').strip('"').split(','):
-                                if get_File_Type_data(self.params["inputs"],[inputs,"scope"])=="project":
-                                    if 'use_dirname' in self.params["inputs"][inputs].keys():
-                                        file2delete = prefix + os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot]) , (suffix).lstrip(os.sep) )
-                                    else:
-                                        file2delete =          os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot]) , ( prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).lstrip(os.sep)) 
+                            # for File_Type_slot in str(get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])).replace("'",'').replace(" ",'').strip('[').strip(']').strip('"').split(','):
+                                # if get_File_Type_data(self.params["inputs"],[inputs,"scope"])=="project":
+                                    # if 'use_dirname' in self.params["inputs"][inputs].keys():
+                                        # file2delete = prefix + os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot]) , (suffix).lstrip(os.sep) )
+                                    # else:
+                                        # file2delete =          os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot]) , ( prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).lstrip(os.sep)) 
                                     
-                                    if file2delete.endswith(os.sep):
-                                        self.project_del_script.append("rm -rf %s*   \n\n"      % file2delete )
-                                    else:
-                                        self.project_del_script.append("rm -rf %s   \n\n"       % file2delete )
-                                        self.project_del_script.append("echo > %s_DELETED \n\n" % file2delete.rstrip(os.sep) )
-                                else:
-                                    if 'use_dirname' in self.params["inputs"][inputs].keys():
-                                        file2delet = prefix + os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]   ) , (suffix).lstrip(os.sep) )
-                                    else:
-                                        file2delet =          os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]   ) , ( prefix + os.path.basename(     inputs_sample_data[sample][File_Type_slot]     ) + suffix).lstrip(os.sep) )
+                                    # if file2delete.endswith(os.sep):
+                                        # self.project_del_script.append("rm -rf %s*   \n\n"      % file2delete )
+                                    # else:
+                                        # self.project_del_script.append("rm -rf %s   \n\n"       % file2delete )
+                                        # self.project_del_script.append("echo > %s_DELETED \n\n" % file2delete.rstrip(os.sep) )
+                                # else:
+                                    # if 'use_dirname' in self.params["inputs"][inputs].keys():
+                                        # file2delet = prefix + os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]   ) , (suffix).lstrip(os.sep) )
+                                    # else:
+                                        # file2delet =          os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]   ) , ( prefix + os.path.basename(     inputs_sample_data[sample][File_Type_slot]     ) + suffix).lstrip(os.sep) )
                                     
-                                    if file2delete.endswith(os.sep):
-                                        self.project_del_script.append("rm -rf %s*   \n\n"       % file2delete )
-                                    else:
-                                        del_script +="rm -rf %s   \n\n"        % file2delete
-                                        del_script +="echo > %s_DELETED  \n\n" % file2delete.rstrip(os.sep)
+                                    # if file2delete.endswith(os.sep):
+                                        # self.project_del_script.append("rm -rf %s*   \n\n"       % file2delete )
+                                    # else:
+                                        # del_script +="rm -rf %s   \n\n"        % file2delete
+                                        # del_script +="echo > %s_DELETED  \n\n" % file2delete.rstrip(os.sep)
                     
             if len(get_File_Type_data(self.params,["outputs"]))>0:
                 # Add output files
@@ -597,6 +670,10 @@ class Step_Generic(Step):
                     output_filename = output_filename.replace('{{project_name}}',self.sample_data["Title"])
                     real_filename   = real_filename.replace('{{sample_name}}',sample)
                     output_filename = output_filename.replace('{{sample_name}}',sample)
+                    
+                    if "control" in self.params["scope"]:
+                        real_filename   = real_filename.replace('{{control_name}}',Control_Sample)
+                        output_filename = output_filename.replace('{{control_name}}',Control_Sample)
                     
                     File_Type=""
                     if outputs.startswith("No_run")==False:
