@@ -1474,6 +1474,7 @@ create_excel_output <- function(dds,opt, contrusts, Norm_Type, output_path, dds_
       
       cat(paste0("Adding contrust: ", compar_print_name, "\n"))
       print(contrast_list)
+      print(resultsNames(dds))
       res_df <-
         results(dds,
                 contrast = contrast_list,
@@ -2042,12 +2043,12 @@ if  (!file.exists(Annotation_file)){
                         }
                     }
                     if ( stringi::stri_trans_toupper(opt$GENE_ID_TYPE) %in% columns(Hub)){
-                        if (opt$USE_INPUT_GENES_AS_BACKGROUND){
-                            genes  = rownames(countData)
-                        } else {
-                            Genes  = keys(Hub, keytype=stringi::stri_trans_toupper(opt$GENE_ID_TYPE))
-                        }
-                        
+                        # if (opt$USE_INPUT_GENES_AS_BACKGROUND){
+                            # Genes  = rownames(countData)
+                        # } else {
+                            # Genes  = keys(Hub, keytype=stringi::stri_trans_toupper(opt$GENE_ID_TYPE))
+                        # }
+                        Genes  = keys(Hub, keytype=stringi::stri_trans_toupper(opt$GENE_ID_TYPE))
                         if (('GOALL' %in% Hub_columns) & ('GO' %in% Hub_columns) ){
                             fields2use = c(fields2use,'GOALL')
                         }else{
@@ -2180,11 +2181,12 @@ if  (!file.exists(Annotation_file)){
             print(dataset)
             if ( opt$GENE_ID_TYPE %in% biomaRt::listAttributes(ensembl)$name){
               Total_Annotation = c()
-              if (opt$USE_INPUT_GENES_AS_BACKGROUND){
-                genes <- rownames(countData)
-              } else {
-                genes <- getBM(attributes = opt$GENE_ID_TYPE, mart = ensembl)
-              }
+              # if (opt$USE_INPUT_GENES_AS_BACKGROUND){
+                # genes <- rownames(countData)
+              # } else {
+                # genes <- getBM(attributes = opt$GENE_ID_TYPE, mart = ensembl)
+              # }
+              genes <- getBM(attributes = opt$GENE_ID_TYPE, mart = ensembl)
               attributes=c( 'go_id',
                             'namespace_1003')
               if (!opt$GENE_ID_TYPE %in% attributes){
