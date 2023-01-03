@@ -72,11 +72,9 @@ Lines for parameter file
         shell:                      # Type of shell [csh OR bash]. bash is the default. only bash can be used in conda environment  
         arg_separator:              # The separator between the arguments and values [The default is space].
         inputs_last:                # The inputs arguments will be at the end of the command. [The default is inputs arguments at the beginning of the command]
-        command_order:              # The order of the command parts as string default 'redirects,inputs,outputs' ignored if inputs_last is set.
         use_base_dir:               # Use the base step directory as the output for this step, it is possible to specify the base to use.
         cd:                         # Change current working directory to the output location.
-        no_sample_dir:              # In Sample Scope: will NOT create a dedicated folder for each sample and the location of the base folder will be stored
-                                    # in a project level 'base_dir' File_Type
+        no_sample_dir:              # In Sample Scope: will NOT create a dedicated folder for each sample.
         remove_subsamples:          # Will remove subsamples created by previous steps (split_fasta for example)
         subsamples_string:          # A string to identify a subsample, all subsample will start with this string. [default: 'subsample']
         inputs:                     # The inputs for this module
@@ -474,14 +472,12 @@ class Step_Generic(Step):
             if 'use_base_dir' in list(self.params.keys()):
                 if "no_sample_dir" in list(self.params.keys()):
                     sample_dir = self.base_dir
-                    self.sample_data["project_data"]['base_dir'] = sample_dir
                 else:
                     sample_dir = self.base_step_to_use.make_folder_for_sample(sample)
                 self.base_dir = self.base_step_to_use.base_dir
             else:
                 if "no_sample_dir" in list(self.params.keys()):
                     sample_dir = self.base_dir
-                    self.sample_data["project_data"]['base_dir'] = sample_dir
                 else:
                     # Make a dir for the current sample:
                     sample_dir = self.make_folder_for_sample(sample)
@@ -493,13 +489,9 @@ class Step_Generic(Step):
             
             if 'cd' in list(self.params.keys()):
                 self.script += "cd %s \n\n" % use_dir
-            if ("command_order" in list(self.params.keys())) and ("inputs_last" not in list(self.params.keys())):
-                self.script += self.get_script_env_path()
-            else:
-                # Add the script constant args 
-                self.script += self.get_script_const()
             
-            
+            # Add the script constant args 
+            self.script += self.get_script_const()
             if len(get_File_Type_data(self.params,["inputs"]))>0:
                 del_script=""
                 # Adds inputs files
@@ -604,6 +596,58 @@ class Step_Generic(Step):
                                                                 % self.params['arg_separator'] \
                                                                 % File_Type
                 
+            
+            
+            # if len(get_File_Type_data(self.params,["inputs"]))>0:
+                # # Generating delete script for input File_Types if specified 
+                # del_script=""
+                # for inputs in list(self.params["inputs"].keys()):  
+                    
+                    # if "constant_value" not in list(self.params["inputs"][inputs].keys()):
+                        # if ("del" in list(self.params["inputs"][inputs].keys()) ):
+                            
+                            # base=get_File_Type_data(self.params["inputs"],[inputs,"base"],None)                
+                            # inputs_sample_data=self.sample_data
+                            # if base!=None:
+                                # if base in list(self.get_base_sample_data().keys()):
+                                    # inputs_sample_data=self.get_base_sample_data()[base]
+                                # else:
+                                    # raise AssertionExcept("The step name %s is not one of the previous steps of the %%s step" % base  % self.step )
+                            # else:
+                                # base=self.step    
+                            
+                            # prefix       = get_File_Type_data(self.params["inputs"],[inputs,"prefix"])
+                            # suffix       = get_File_Type_data(self.params["inputs"],[inputs,"suffix"])
+                            
+                            # prefix = prefix.replace('{{sample_name}}',sample)
+                            # prefix = prefix.replace('{{project_name}}',self.sample_data["Title"])
+                            
+                            # suffix = suffix.replace('{{sample_name}}',sample)
+                            # suffix = suffix.replace('{{project_name}}',self.sample_data["Title"])
+                            
+                            # for File_Type_slot in str(get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])).replace("'",'').replace(" ",'').strip('[').strip(']').strip('"').split(','):
+                                # if get_File_Type_data(self.params["inputs"],[inputs,"scope"])=="project":
+                                    # if 'use_dirname' in self.params["inputs"][inputs].keys():
+                                        # file2delete = prefix + os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot]) , (suffix).lstrip(os.sep) )
+                                    # else:
+                                        # file2delete =          os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot]) , ( prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).lstrip(os.sep)) 
+                                    
+                                    # if file2delete.endswith(os.sep):
+                                        # self.project_del_script.append("rm -rf %s*   \n\n"      % file2delete )
+                                    # else:
+                                        # self.project_del_script.append("rm -rf %s   \n\n"       % file2delete )
+                                        # self.project_del_script.append("echo > %s_DELETED \n\n" % file2delete.rstrip(os.sep) )
+                                # else:
+                                    # if 'use_dirname' in self.params["inputs"][inputs].keys():
+                                        # file2delet = prefix + os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]   ) , (suffix).lstrip(os.sep) )
+                                    # else:
+                                        # file2delet =          os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]   ) , ( prefix + os.path.basename(     inputs_sample_data[sample][File_Type_slot]     ) + suffix).lstrip(os.sep) )
+                                    
+                                    # if file2delete.endswith(os.sep):
+                                        # self.project_del_script.append("rm -rf %s*   \n\n"       % file2delete )
+                                    # else:
+                                        # del_script +="rm -rf %s   \n\n"        % file2delete
+                                        # del_script +="echo > %s_DELETED  \n\n" % file2delete.rstrip(os.sep)
                     
             if len(get_File_Type_data(self.params,["outputs"]))>0:
                 # Add output files
@@ -651,14 +695,6 @@ class Step_Generic(Step):
             if "inputs_last" in list(self.params.keys()):
                 self.script+=outputs_script
                 self.script+=inputs_script
-            elif "command_order" in list(self.params.keys()):
-                for command_order in list(self.params["command_order"].split(',')):
-                    if command_order=='redirects':
-                        self.script+=self.get_redir_parameters_script()
-                    if command_order=='inputs':
-                        self.script+=inputs_script
-                    if command_order=='outputs':
-                        self.script+=outputs_script
             else:
                 self.script+=inputs_script
                 self.script+=outputs_script
@@ -700,12 +736,8 @@ class Step_Generic(Step):
         if 'cd' in list(self.params.keys()):
             self.script += "cd %s \n\n" % use_dir
         
-        if ("command_order" in list(self.params.keys())) and ("inputs_last" not in list(self.params.keys())):
-            self.script += self.get_script_env_path()
-        else:
-            # Add the script constant args 
-            self.script += self.get_script_const()
-            
+        # Add the script constant args 
+        self.script += self.get_script_const()
         # Adds inputs files
         if len(get_File_Type_data(self.params,["inputs"]))>0:
             for inputs in list(self.params["inputs"].keys()):
@@ -895,14 +927,6 @@ class Step_Generic(Step):
         if "inputs_last" in list(self.params.keys()):
             self.script+=outputs_script
             self.script+=inputs_script
-        elif "command_order" in list(self.params.keys()):
-            for command_order in list(self.params["command_order"].split(',')):
-                if command_order=='redirects':
-                    self.script+=self.get_redir_parameters_script()
-                if command_order=='inputs':
-                    self.script+=inputs_script
-                if command_order=='outputs':
-                    self.script+=outputs_script
         else:
             self.script+=inputs_script
             self.script+=outputs_script

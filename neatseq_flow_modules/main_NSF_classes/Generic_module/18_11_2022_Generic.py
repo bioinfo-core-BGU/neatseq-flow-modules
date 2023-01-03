@@ -72,7 +72,6 @@ Lines for parameter file
         shell:                      # Type of shell [csh OR bash]. bash is the default. only bash can be used in conda environment  
         arg_separator:              # The separator between the arguments and values [The default is space].
         inputs_last:                # The inputs arguments will be at the end of the command. [The default is inputs arguments at the beginning of the command]
-        command_order:              # The order of the command parts as string default 'redirects,inputs,outputs' ignored if inputs_last is set.
         use_base_dir:               # Use the base step directory as the output for this step, it is possible to specify the base to use.
         cd:                         # Change current working directory to the output location.
         no_sample_dir:              # In Sample Scope: will NOT create a dedicated folder for each sample and the location of the base folder will be stored
@@ -493,13 +492,9 @@ class Step_Generic(Step):
             
             if 'cd' in list(self.params.keys()):
                 self.script += "cd %s \n\n" % use_dir
-            if ("command_order" in list(self.params.keys())) and ("inputs_last" not in list(self.params.keys())):
-                self.script += self.get_script_env_path()
-            else:
-                # Add the script constant args 
-                self.script += self.get_script_const()
             
-            
+            # Add the script constant args 
+            self.script += self.get_script_const()
             if len(get_File_Type_data(self.params,["inputs"]))>0:
                 del_script=""
                 # Adds inputs files
@@ -651,14 +646,6 @@ class Step_Generic(Step):
             if "inputs_last" in list(self.params.keys()):
                 self.script+=outputs_script
                 self.script+=inputs_script
-            elif "command_order" in list(self.params.keys()):
-                for command_order in list(self.params["command_order"].split(',')):
-                    if command_order=='redirects':
-                        self.script+=self.get_redir_parameters_script()
-                    if command_order=='inputs':
-                        self.script+=inputs_script
-                    if command_order=='outputs':
-                        self.script+=outputs_script
             else:
                 self.script+=inputs_script
                 self.script+=outputs_script
@@ -700,12 +687,8 @@ class Step_Generic(Step):
         if 'cd' in list(self.params.keys()):
             self.script += "cd %s \n\n" % use_dir
         
-        if ("command_order" in list(self.params.keys())) and ("inputs_last" not in list(self.params.keys())):
-            self.script += self.get_script_env_path()
-        else:
-            # Add the script constant args 
-            self.script += self.get_script_const()
-            
+        # Add the script constant args 
+        self.script += self.get_script_const()
         # Adds inputs files
         if len(get_File_Type_data(self.params,["inputs"]))>0:
             for inputs in list(self.params["inputs"].keys()):
@@ -895,14 +878,6 @@ class Step_Generic(Step):
         if "inputs_last" in list(self.params.keys()):
             self.script+=outputs_script
             self.script+=inputs_script
-        elif "command_order" in list(self.params.keys()):
-            for command_order in list(self.params["command_order"].split(',')):
-                if command_order=='redirects':
-                    self.script+=self.get_redir_parameters_script()
-                if command_order=='inputs':
-                    self.script+=inputs_script
-                if command_order=='outputs':
-                    self.script+=outputs_script
         else:
             self.script+=inputs_script
             self.script+=outputs_script
