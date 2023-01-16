@@ -349,12 +349,14 @@ class Step_HUMAnN2_further_processing(Step):
 {path} \\
 \t-i {infn} \\
 \t-n {names} \\
+\t--custom {group} \\
 \t-o {outfn} \\
 \t{redirs}
 
     """.format(path=self.params["humann2_rename_table"]["path"],
                infn   = use_dir+outfn,
                names=self.type_index[grouping_ty][1],
+               group=full_grouping_ty,
                # names  = os.path.join(self.params["mpa_dir"],
                                      # self.params["humann2_rename_table"]["group_renaming_files_pattern"].format(grouping_type=self.type_index[grouping_ty][1])),
                outfn  = use_dir + "_names".join(os.path.splitext(outfn)),

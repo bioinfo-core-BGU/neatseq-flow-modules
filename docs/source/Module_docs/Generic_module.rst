@@ -4,11 +4,11 @@ Using The Generic Module
 
 :Author: Liron Levin
 :Affiliation: Bioinformatics Core Facility
-:Organization: National Institute of Biotechnology in the Negev, Ben Gurion University.
+:Organization: llse Katz Institute for Nanoscale Science and Technology, Ben-Gurion University of the Negev, Beer-Sheva, Israel
 
 .. Note:: In order to use this Tutorial first:
 
-    1. Install `NeatSeq-Flow <https://neatseq-flow3.readthedocs.io/en/latest/Installation_guide.html#install-with-script>`_ using conda 
+    1. Install `NeatSeq-Flow <https://neatseq-flow.readthedocs.io/en/latest/#quick-start>`_ using conda
     2. Make sure that conda is in your **PATH**.
     
     
@@ -128,9 +128,22 @@ Activate the GUI
 
 2. Run **NeatSeq_Flow_GUI**:
 
-   .. code-block:: bash
-   
-      NeatSeq_Flow_GUI.py
+.. code-block:: bash
+
+  NeatSeq_Flow_GUI.py --Server
+
+4. Use the information in the terminal:
+
+    .. figure:: https://github.com/bioinfo-core-BGU/NeatSeq-Flow-GUI/raw/master/doc/NeatSeq-Flow_Server.jpg
+       :align: right
+       :width: 350
+    
+    - Copy the IP address to a web-browser - (red line)
+    - A login window should appear
+    - Copy the "User Name" (blue line) from the terminal to the "User Name" form in the login window
+    - Copy the "Password" (yellow line) from the terminal to the "Password" form in the login window
+    - Click on the "Login" button.
+
 
 .. image:: ../figs/Generic_Tutorial/Design_a_Sample_file.gif
    :alt: Design_a_Sample_file.gif
