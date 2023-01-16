@@ -128,9 +128,9 @@ Activate the GUI
 
 2. Run **NeatSeq_Flow_GUI**:
 
-.. code-block:: bash
+   .. code-block:: bash
 
-  NeatSeq_Flow_GUI.py --Server
+      NeatSeq_Flow_GUI.py --Server
 
 4. Use the information in the terminal:
 
