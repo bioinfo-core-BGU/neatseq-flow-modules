@@ -1,0 +1,231 @@
+.libPaths()
+library(optparse)
+library(Seurat)
+library(dplyr)
+args = commandArgs(trailingOnly=TRUE)
+
+option_list = list(
+  make_option(c("--inputRDS"), type="character", default = NA,
+              help="Path to Seurat object RDS file", metavar = "character"),
+  make_option(c("-s", "--Sample"), type="character", default = NA,
+              help="Sample's name", metavar = "character"),
+  make_option(c("-o", "--outDir"), type="character", default = NA,
+              help="Path to the output directory", metavar = "character"),
+  make_option(c("--DietSeurat"), action="store_true", default = FALSE,
+              help="Run DietSeurat (keep counts and data)", metavar = "character"),
+  make_option(c("--Keep_reducs"), type="character", default = NA,
+              help="Which reductions to keep if running DietSeurat (Default is None)", metavar = "character"),
+  make_option(c("--Keep_assays"), type="character", default = NA,
+              help="Which assays to keep if running DietSeurat (Default is active assay)", metavar = "character"),
+  make_option(c("--Keep_graphs"), type="character", default = NA,
+              help="Which graphs to keep if running DietSeurat (Default is None)", metavar = "character"),
+  make_option(c("--Subset_Clusters"), type="character", default = NA,
+              help="Vector of clusters to keep (comma-separated)", metavar = "character"),
+  make_option(c("--Remove_Clusters"), type="character", default = NA,
+              help="Vector of clusters to remove (comma-separated)", metavar = "character"),
+  make_option(c("--Set_Idents"), type="character", default = NA,
+              help="Path to file with old and new identities (two-column matrix)", metavar = "character"),
+  make_option(c("--Set_Ident_by_Marker"), type="character", default = NA,
+              help="Set identity of cells based on marker expression using template: <MARKER>|<CUTOFF>|<Idents>|<New_Ident>", metavar = "character"),
+  make_option(c("--CleanClusters"), action="store_true", default = FALSE,
+              help="Remove clustering information from meta-data (Default is False)", metavar = "character"),
+  make_option(c("--Remove_Doublets"), type="character", default = NA,
+              help="Path to CSV file with classifications for each cell (DF.classification_homotypic column)", metavar = "character")
+);
+
+#Get user information
+opt_parser = optparse::OptionParser(usage = "usage: %prog [options]", 
+                                    option_list=option_list,
+                                    epilogue="\n\nAuthor:Gil Sorek");
+opt = optparse::parse_args(opt_parser);
+
+# Set log framework
+logfile = paste(opt$outDir,opt$Sample,'_log.txt',sep='')
+cat(paste('[',Sys.time(),']: Modify: ',opt$Sample,sep=''), file=logfile, sep='\n')
+writeLog <- function(logfile, msg) { cat(paste('(',strftime(Sys.time(), format = "%H:%M:%S"),'): ',msg,sep=''),file=logfile,append=TRUE,sep='\n') }
+saveRDS(opt, paste(opt$outDir,'opt.rds',sep=''))
+
+print("Input var:",quote = F)
+print.data.frame(as.data.frame(x = unlist(opt),row.names = names(opt)),right = F,quote = F)
+
+# Import data
+if (!is.na(opt$inputRDS)) {
+  writeLog(logfile, paste("Importing Seurat RDS object...",sep=''))
+  obj_seurat <- readRDS(opt$inputRDS)
+} else {
+  writeLog(logfile, paste("ERROR: Seurat object RDS file must be specified [--inputRDS]"))
+  stop()
+}
+if (is.na(opt$Sample)) {
+  writeLog(logfile, paste("ERROR: Samples name must be specified [--Sample]"))
+  stop()
+}
+if (is.na(opt$outDir)) {
+  writeLog(logfile, paste("ERROR: Output directory must be specified [--outDir]"))
+  stop()
+}
+if (!is.na(opt$Subset_Clusters)) {
+  writeLog(logfile, paste("Subsetting clusters..."))
+  clusters2keep <- unlist(stringi::stri_split(str = opt$Subset_Clusters,fixed = ','))
+  if (isFALSE(all(clusters2keep %in% Idents(obj_seurat)))) {
+    writeLog(logfile, paste("ERROR: Cannot find the following identities in the object: ",
+								paste(clusters2keep[which(!(clusters2keep %in% Idents(obj_seurat)))],collapse=','),sep=''))
+	writeLog(logfile, paste("The available idents are: ",paste(unique(Idents(obj_seurat)),collapse=','),sep=''))
+    stop()
+  }
+  obj_seurat = subset(obj_seurat, idents = clusters2keep, invert = FALSE)
+  writeLog(logfile, paste("Subsetting the following identities from the object: ",opt$Subset_Clusters,sep=''))
+}
+if (!is.na(opt$Remove_Clusters)) {
+  writeLog(logfile, paste("Removing clusters..."))
+  clusters2remove <- unlist(stringi::stri_split(str = opt$Remove_Clusters,fixed = ','))
+  if (isFALSE(all(clusters2remove %in% Idents(obj_seurat)))) {
+    writeLog(logfile, paste("ERROR: Cannot find the following identities in the object: ",
+								paste(clusters2remove[which(!(clusters2remove %in% Idents(obj_seurat)))],collapse=','),sep=''))
+	writeLog(logfile, paste("The available idents are: ",paste(unique(Idents(obj_seurat)),collapse=','),sep=''))
+    stop()
+  }
+  obj_seurat = subset(obj_seurat, idents = clusters2remove, invert = TRUE)
+  writeLog(logfile, paste("Removing the following identities from the object: ",opt$Remove_Clusters,sep=''))
+}
+
+# Remove Doublets
+if (!is.na(opt$Remove_Doublets)) {
+  writeLog(logfile, paste("Removing Doublets..."))
+  if (file.exists(opt$Remove_Doublets)) {
+    DF_classifications <- read.csv(opt$Remove_Doublets, header = TRUE, row.names = 1)
+    if ('DF.classification_homotypic' %in% colnames(DF_classifications)) {
+      cells2remove <- row.names(DF_classifications[which(DF_classifications$DF.classification_homotypic=="Doublet"),])
+      writeLog(logfile, paste("Removed ",length(cells2remove)," Doublets",sep=''))
+      obj_seurat <- subset(obj_seurat, cells = cells2remove, invert = TRUE)
+    } else {
+      writeLog(logfile, paste("ERROR: Missing column 'DF.classification_homotypic'"))
+      stop()
+    }
+  } else {
+    writeLog(logfile, paste("ERROR: ",opt$Remove_Doublets," does not exists.",sep=''))
+    stop()
+  }
+}
+
+# Rename Identities
+if (sum(!is.na(opt$Set_Idents),!is.na(opt$Set_Ident_by_Marker))>1) {
+  writeLog(logfile, paste("ERROR: Cannot rename identities using two methods, Please use either --Rename_Idents / --Set_Ident_by_Marker",sep=''))
+  stop()
+}
+# Rename Idents based on meta-data matrix
+if (!is.na(opt$Set_Idents)) {
+  writeLog(logfile, paste("Rename Idents using meta-data matrix"))
+  if (!file.exists(opt$Set_Idents)) {
+    writeLog(logfile, paste("ERROR: Matrix file does not exists"))
+	stop()
+  }
+  data <- read.table(opt$Set_Idents, header=TRUE)
+  if (isFALSE(all(colnames(data) == c('ident.old','ident.new')))) {
+    writeLog(logfile, paste("ERROR: Invalid column names. Please use ident.old and ident.new"))
+	stop()
+  }
+  writeLog(logfile, paste("Loaded idents matrix, will rename ",length(data$ident.old)," identities",sep=''))
+  idents2rename = data$ident.old
+  if (isFALSE(all(idents2rename %in% Idents(obj_seurat)))) {
+    writeLog(logfile, paste("ERROR: Cannot find the following identities in the object: ",
+								paste(idents2rename[which(!(idents2rename %in% Idents(obj_seurat)))],collapse=','),sep=''))
+	writeLog(logfile, paste("The available idents are: ",paste(unique(Idents(obj_seurat)),collapse=','),sep=''))
+    stop()
+  }
+  fetch_idents = Idents(obj_seurat)
+  for (i in 1:nrow(data)) {
+	ident.old = paste(data$ident.old[i])
+	ident.new = paste(data$ident.new[i])
+	cells2rename = names(fetch_idents[fetch_idents==ident.old])
+    Idents(obj_seurat, cells = cells2rename) = ident.new
+  }
+}
+# Rename Idents based on Marker Expression (--Set_Ident_by_Marker)
+if (!is.na(opt$Set_Ident_by_Marker)) {
+  writeLog(logfile, paste("Rename Cells based on Marker Expression: ",opt$Set_Ident_by_Marker,sep=''))
+  pattern_vector = unlist(stringi::stri_split(str = opt$Set_Ident_by_Marker,fixed = '|'))
+  if (length(pattern_vector)!=4) {
+    writeLog(logfile, paste("ERROR: --Set_Ident_by_Marker Invalid argument. Please use template: <MARKER>|<CUTOFF>|<Idents>|<New_Ident>",sep=''))
+	stop()
+  }
+  marker = pattern_vector[1]
+  if (marker %in% rownames(obj_seurat)) {
+    writeLog(logfile, paste("Detected marker: ",marker,sep=''))
+  } else {
+    writeLog(logfile, paste("ERROR: Unable to find marker '",marker,"'",sep=''))
+	stop()
+  }
+  threshold = pattern_vector[2]
+  writeLog(logfile, paste("Rename cells with '",marker,"' expression above ",threshold,sep=''))
+  old_idents = pattern_vector[3]
+  new_ident = pattern_vector[4]
+  idents2rename = unlist(stringi::stri_split(str = old_idents,fixed = ','))
+  if (isFALSE(all(idents2rename %in% Idents(obj_seurat)))) {
+    writeLog(logfile, paste("ERROR: Cannot find the following identities in the object: ",
+								paste(idents2rename[which(!(idents2rename %in% Idents(obj_seurat)))],collapse=','),sep=''))
+	writeLog(logfile, paste("The available idents are: ",paste(unique(Idents(obj_seurat)),collapse=','),sep=''))
+    stop()
+  }
+  writeLog(logfile, paste("Rename cells to '",new_ident,"' within idents: ",old_idents,sep=''))
+  fetch_data = FetchData(obj_seurat, vars = c('ident',marker))
+  cells2rename = rownames(fetch_data[fetch_data$ident %in% idents2rename & fetch_data[[marker]]>threshold,])
+  if (length(cells2rename)==0) {
+    writeLog(logfile, paste("ERROR: No cells within idents '",old_idents,"' express '",marker,"' above ",threshold,sep=''))
+	stop()
+  }
+  writeLog(logfile, paste("Found ",length(cells2rename)," cells, renaming to '",new_ident,"'",sep=''))
+  Idents(obj_seurat, cells=cells2rename) <- new_ident
+}
+
+# DietSeurat
+if (opt$DietSeurat) {
+  writeLog(logfile, paste("Running DietSeurat..."))
+  if (is.na(opt$Keep_assays)) {
+    writeLog(logfile, paste("DietSeurat: Active assay (",obj_seurat@active.assay,") will be kept",sep=''))
+	keep_assay = NULL
+  } else {
+    if (opt$Keep_assays %in% names(obj_seurat@assays)) {
+	  writeLog(logfile, paste("DietSeurat: '",opt$Keep_assays,"' assay will be kept",sep=''))
+	  keep_assay = opt$Keep_assays
+	} else {
+	  writeLog(logfile, paste("ERROR: Unable to find assay '",opt$Keep_assays,"'. Available assays: ",paste(names(obj_seurat@assays),collapse=','),sep=''))
+	  stop()
+	}
+  }
+  if (is.na(opt$Keep_reducs)) {
+    writeLog(logfile, paste("DietSeurat: No reductions will be kept",sep=''))
+	keep_reducs = NULL
+  } else {
+    if (opt$Keep_reducs %in% names(obj_seurat@reductions)) {
+	  writeLog(logfile, paste("DietSeurat: '",opt$Keep_reducs,"' reduction will be kept",sep=''))
+	  keep_reducs = opt$Keep_reducs
+	} else {
+	  writeLog(logfile, paste("ERROR: Unable to find reduction '",opt$Keep_reducs,"'. Available reductions: ",paste(names(obj_seurat@reductions),collapse=','),sep=''))
+	  stop()
+	}
+  }
+  if (is.na(opt$Keep_graphs)) {
+    writeLog(logfile, paste("DietSeurat: No graphs will be kept",sep=''))
+	keep_graphs = NULL
+  } else {
+    if (opt$Keep_graphs %in% names(obj_seurat@graphs)) {
+	  writeLog(logfile, paste("DietSeurat: '",opt$Keep_graphs,"' graph will be kept",sep=''))
+	  keep_graphs = opt$Keep_graphs
+	} else {
+	  writeLog(logfile, paste("ERROR: Unable to find graph '",opt$Keep_graphs,"'. Available graphs: ",paste(names(obj_seurat@graphs),collapse=','),sep=''))
+	  stop()
+	}
+  }
+  obj_seurat <- DietSeurat(obj_seurat, counts = TRUE, data = TRUE, assays = keep_assay, dimreducs = keep_reducs, graphs = keep_graphs)
+}
+
+# Clean Clusters
+if (opt$CleanClusters) {
+  writeLog(logfile, paste("Cleaning previous clusters information..."))
+  obj_seurat@meta.data[,stringr::str_detect(colnames(obj_seurat@meta.data),c('snn_res','seurat_clusters'))] <- NULL
+}
+
+# Save results
+saveRDS(obj_seurat, file = paste(opt$outDir, opt$Sample, '.rds', sep=''))
+writeLog(logfile, paste("Finished"))

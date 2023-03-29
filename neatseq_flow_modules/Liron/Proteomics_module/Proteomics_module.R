@@ -106,7 +106,8 @@ option_list = list(
               help="The path to CLICK program (Shamir et al. 2000). If your using click cite: CLICK and Expander ( Shamir et al. 2000 and Ulitsky et al. 2010) ", metavar="character"),
   make_option(c("--CLICK_HOMOGENEITY"), type="numeric", default=0.5,
               help="The HOMOGENEITY [0-1] of clusters using CLICK program (Shamir et al. 2000). The default is 0.5 ", metavar="character"),
-  
+   make_option(c("--Heatmap_Extra_Annotaions"), type="character", default=NA,
+              help="An Extra Annotation to the Heatmap using informayion from the Samples Data [a comma separated list of columns to use]", metavar="character"),
   
   make_option(c("--k.max"), type="numeric", default=20,
               help="The maximum number of clusters to consider, must be at least two. The default is 20", metavar="character"),
@@ -206,6 +207,118 @@ if (!is.na(opt$SEED)){
 
 
 #####################Functions################################
+
+get_prefix <- function(words) {
+  # Show error if input is not the required class
+  assertthat::assert_that(is.character(words))
+
+  # Show error if 'words' contains 1 or less elements
+  if(length(words) <= 1) {
+    stop("'words' should contain more than one element")
+  }
+  # Show error if 'words' contains NA
+  if(any(is.na(words))) {
+    stop("'words' contains NAs")
+  }
+
+  # Truncate words to smallest name
+  minlen <- min(nchar(words))
+  truncated <- substr(words, 1, minlen)
+
+  # Show error if one of the elements is shorter than one character
+  if(minlen < 1) {
+    stop("At least one of the elements is too short")
+  }
+
+  # Get identifical characters
+  mat <- data.frame(strsplit(truncated, ""), stringsAsFactors = FALSE)
+  identical <- apply(mat, 1, function(x) length(unique(x)) == 1)
+
+  # Obtain the longest common prefix
+  prefix <- as.logical(cumprod(identical))
+  paste(mat[prefix, 1], collapse = "")
+}
+
+
+
+delete_prefix <- function(words) {
+  # Get prefix
+  prefix <- get_prefix(words)
+  # Delete prefix from words
+  gsub(paste0("^", prefix), "", words)
+}
+
+make_se <- function (proteins_unique, columns, expdesign)
+{
+    library("tidyr")
+    assertthat::assert_that(is.data.frame(proteins_unique), is.integer(columns),
+        is.data.frame(expdesign))
+    if (any(!c("name", "ID") %in% colnames(proteins_unique))) {
+        stop("'name' and/or 'ID' columns are not present in '",
+            deparse(substitute(proteins_unique)), "'.\nRun make_unique() to obtain the required columns",
+            call. = FALSE)
+    }
+    if (any(!c("label", "condition", "replicate") %in% colnames(expdesign))) {
+        stop("'label', 'condition' and/or 'replicate' columns",
+            "are not present in the experimental design", call. = FALSE)
+    }
+    if (any(!apply(proteins_unique[, columns], 2, is.numeric))) {
+        stop("specified 'columns' should be numeric", "\nRun make_se_parse() with the appropriate columns as argument",
+            call. = FALSE)
+    }
+    if (tibble::is_tibble(proteins_unique))
+        proteins_unique <- as.data.frame(proteins_unique)
+    if (tibble::is_tibble(expdesign))
+        expdesign <- as.data.frame(expdesign)
+    rownames(proteins_unique) <- proteins_unique$name
+    raw <- proteins_unique[, columns]
+    raw[raw == 0] <- NA
+    raw <- log2(raw)
+    expdesign <- mutate(expdesign, condition = make.names(condition)) %>%
+        tidyr::unite(ID, condition, replicate, remove = FALSE)
+    rownames(expdesign) <- expdesign$ID
+    # matched <- match(make.names(delete_prefix(expdesign$label)),
+    #    make.names(delete_prefix(colnames(raw))))
+    # print(make.names(delete_prefix(expdesign$label)))
+    # print(make.names(delete_prefix(colnames(raw))))
+    temp_expdesign = expdesign
+    temp_expdesign$label = make.names(delete_prefix(expdesign$label))
+    
+    temp_raw = raw
+    colnames(temp_raw) = make.names(delete_prefix(colnames(raw)))
+    
+    matched_raw       = c()
+    matched_expdesign = c()
+    for (id in temp_expdesign$label ){
+        if (id %in% colnames(temp_raw) ){
+            matched_raw       = c(matched_raw,which(colnames(temp_raw) %in% id) )
+            matched_expdesign = c(matched_expdesign,which(temp_expdesign$label %in% id) )
+        }else{
+            print(id)
+            print(colnames(temp_raw))
+        }
+    }
+    if (length(matched_expdesign)==0){
+        stop("None of the labels in the experimental design match ")
+    }
+    raw       = raw[,matched_raw]
+    expdesign = expdesign[matched_expdesign,]
+    # if (any(is.na(matched))) {
+        # stop("None of the labels in the experimental design match ",
+            # "with column names in 'proteins_unique'", "\nRun make_se() with the correct labels in the experimental design",
+            # "and/or correct columns specification")
+    # }
+    colnames(raw) <- expdesign$ID
+    # colnames(raw)[matched] <- expdesign$ID
+    raw <- raw[, !is.na(colnames(raw))][rownames(expdesign)]
+    row_data <- proteins_unique[, -columns]
+    rownames(row_data) <- row_data$name
+    se <- SummarizedExperiment(assays = as.matrix(raw), colData = expdesign,
+        rowData = row_data)
+    return(se)
+}
+
+
 
 GetcountDataFromHTSeqCount <- function(sampleTable) # This function was modified from the original DESeq2 DESeqDataSetFromHTSeqCount function 
 {
@@ -991,11 +1104,13 @@ Prepair_Normalized_counts_for_clustering <- function(Normalized_counts_assay,col
                                                                       unlist(Heatmap_Normalized_counts_Annotated['Row.names'])),
                                                                 sep=' ')
       Heatmap_Normalized_counts_Annotated=Heatmap_Normalized_counts_Annotated[order(rownames(Heatmap_Normalized_counts_Annotated)),]
+      Groups = paste(unlist(Heatmap_Normalized_counts_Annotated[GROUP]),
+                                                                      unlist(Heatmap_Normalized_counts_Annotated[X_AXIS]))
       Heatmap_Normalized_counts_Annotated[unique(c(X_AXIS,GROUP))]=NULL
       Heatmap_Normalized_counts_Annotated[unique(c(X_AXIS,GROUP))]=NULL
       row_names=Heatmap_Normalized_counts_Annotated$Row.names
       Heatmap_Normalized_counts_Annotated$Row.names=NULL
-      row.names(Heatmap_Normalized_counts_Annotated)=row_names
+      # row.names(Heatmap_Normalized_counts_Annotated)=row_names
       
     }else{
       Normalized_counts_Annotated=merge(colData[c(X_AXIS)],t(Normalized_counts_assay),all.x = T,by="row.names",sort=F)
@@ -1010,16 +1125,18 @@ Prepair_Normalized_counts_for_clustering <- function(Normalized_counts_assay,col
       rownames(Heatmap_Normalized_counts_Annotated)=make.unique(as.character(paste(unlist(Heatmap_Normalized_counts_Annotated[X_AXIS]),
                                                                                    unlist(Heatmap_Normalized_counts_Annotated['Row.names']))) ,
                                                                 sep=' ')
+      Groups = Heatmap_Normalized_counts_Annotated[,X_AXIS]
+      
       Heatmap_Normalized_counts_Annotated=Heatmap_Normalized_counts_Annotated[order(rownames(Heatmap_Normalized_counts_Annotated)),]
       Heatmap_Normalized_counts_Annotated[X_AXIS]=NULL
       Heatmap_Normalized_counts_Annotated[X_AXIS]=NULL
       row_names=Heatmap_Normalized_counts_Annotated$Row.names
       Heatmap_Normalized_counts_Annotated$Row.names=NULL
-      row.names(Heatmap_Normalized_counts_Annotated)=row_names
+      # row.names(Heatmap_Normalized_counts_Annotated)=row_names
     }
     Heatmap_Normalized_counts_Annotated = t(Heatmap_Normalized_counts_Annotated)
     Normalized_counts_Annotated_mean    = t(Normalized_counts_Annotated_mean)
-    return(list(Normalized_counts_Annotated_mean,Heatmap_Normalized_counts_Annotated))
+    return(list(Normalized_counts_Annotated_mean,Heatmap_Normalized_counts_Annotated,Groups))
   }
 }
 
@@ -1247,7 +1364,9 @@ create_excel_output <- function(se,results,opt, contrusts, output_path, linear_f
   Normalized_counts_Annotated = Prepair_Normalized_counts_for_clustering(norm_counts,col_data,opt)
 
   norm_counts = Normalized_counts_Annotated[[2]]
-
+  
+  Groups = Normalized_counts_Annotated[[3]]
+  
   Normalized_counts_For_clustering = Normalized_counts_Annotated[[1]]
 
   #New_oder = cluster_Normalized_counts(Normalized_counts_For_clustering,opt)
@@ -1261,10 +1380,16 @@ create_excel_output <- function(se,results,opt, contrusts, output_path, linear_f
   res_df = data.frame(gene = rownames(norm_counts),
                       norm_counts)
   # Save header info:
-  res_df_compar_head = c("Gene",rep("Normalized Intensity",dim(col_data)[1]))  
+  res_df_compar_head = c("Gene")
+  res_df_grouping    = c(1)
+  for (group in unique(Groups)){
+      res_df_compar_head = c(res_df_compar_head,rep(paste(group,"Normalized Intensity"), sum( Groups==group ) ))  
+      res_df_grouping    = c(res_df_grouping  ,sum( Groups==group ))
+  }
   # Save widths of data groups:
-  res_df_grouping <- c(1,dim(norm_counts)[2])
-  
+  print(Groups)
+  print(res_df_compar_head)
+  print(res_df_grouping)
   #contr_list <- resultsNames(dds)[-1]
   if (length(contrusts)>0){
     #print(contrusts)
@@ -1682,9 +1807,13 @@ if (!is.na(opt$SAMPLE_DATA_FILE)){
         experimental_design[opt$PCA_SIZE] = 2
     }
 
-  experimental_design = experimental_design[experimental_design$label %in% used_samples,]
-  ProteinGroupsData_SE <- make_se( ProteinGroupsData , Selected_columns, experimental_design)
-  countData = SummarizedExperiment::assay(ProteinGroupsData_SE)
+  experimental_design       = experimental_design[experimental_design$label %in% used_samples,]
+  # experimental_design$label = stringi::stri_replace_all(str = experimental_design$label,fixed =' ',replacement = '.')
+  # print(experimental_design$label)
+  # print(colnames(ProteinGroupsData[Selected_columns]))
+  ProteinGroupsData_SE      = make_se( ProteinGroupsData , Selected_columns, experimental_design)
+  countData                 = SummarizedExperiment::assay(ProteinGroupsData_SE)
+  write.csv(x =countData ,file = file.path(opt$outDir,"RawCountData.csv"))
  
   print('Done Experimental Design Data')
   
@@ -2733,7 +2862,7 @@ if ((opt$FILTER_SAMPLES) | (opt$FILTER_PROTEIN)){
 countData = SummarizedExperiment::assay(ProteinGroupsData_SE)
 countData = countData + opt$Add2Count
 SummarizedExperiment::assay(ProteinGroupsData_SE) = countData
-write.csv(x =countData ,file = file.path(opt$outDir,"CountData.tab"))
+write.csv(x =countData ,file = file.path(opt$outDir,"CountData.csv"))
 
 ################## Normalizing the data    ######################
 if (opt$NORMALIZATION_TYPE == 'VSD'){
@@ -2760,15 +2889,18 @@ if (opt$NORMALIZATION_TYPE == 'VSD'){
 ################## Normalizing the data END######################
 
 ################## Impute the data    ######################
-P = plot_missval(ProteinGroupsData_SE)
-pdf(file = file.path(opt$outDir,"MissingData.pdf"))
-print(P)
-dev.off() 
 
-P = plot_detect(ProteinGroupsData_SE)
-pdf(file = file.path(opt$outDir,"MissingData_Distributions.pdf"))
-print(P)
-dev.off() 
+
+if (any(is.na(SummarizedExperiment::assay((ProteinGroupsData_SE))))) {
+    P = plot_missval(ProteinGroupsData_SE)
+    pdf(file = file.path(opt$outDir,"MissingData.pdf"))
+    print(P)
+    dev.off() 
+    
+    pdf(file = file.path(opt$outDir,"MissingData_Distributions.pdf"))
+    plot_detect(ProteinGroupsData_SE)
+    dev.off() 
+}
 
 Raw_ProteinGroupsData_SE = ProteinGroupsData_SE
 raw_Data = SummarizedExperiment::assay(Raw_ProteinGroupsData_SE)
@@ -2912,7 +3044,11 @@ if (opt$only_clustering==FALSE){
   test_count=list()
   
   if ((!is.na(opt$CONTRAST)) & (opt$CONTRAST != "") & (opt$CONTRAST != "No_DESIGN")){
-    test_count = unlist(stringi::stri_split(str = opt$CONTRAST ,fixed = "|"))
+    opt$CONTRAST = paste0(lapply(X   = unlist(stringi::stri_split(str = opt$CONTRAST ,fixed = "|")),
+                                 FUN = function(x) paste0(make.names(unlist(stringi::stri_split(str = x ,fixed = ","))),
+                                                          collapse = ','  ) ),
+                          collapse = '|'  )
+    test_count   = unlist(stringi::stri_split(str = opt$CONTRAST ,fixed = "|"))
     
   }
   

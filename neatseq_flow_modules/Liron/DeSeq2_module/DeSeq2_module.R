@@ -25,7 +25,7 @@ option_list = list(
   make_option(c("--SUBSET_SAMPLES"), type="character", default=NA, 
               help="Use a Subset of Samples from SAMPLE_DATA_FILE. Character vector with samples name [comma sep]", metavar="character"),
   make_option(c("--EXCLUDE_SAMPLES"), type="character", default=NA, 
-              help="Exclude Samples from SAMPLE_DATA_FILE. Character vector with samples name [comma sep]", metavar="character"),			  
+              help="Exclude Samples from SAMPLE_DATA_FILE. Character vector with samples name [comma sep]", metavar="character"),              
   make_option(c("-o","--outDir"), type="character", default=NA, 
               help="path to the output directory", metavar="character"),
   make_option(c("-t", "--GENE_ID_TYPE"), type="character", default=NA, 
@@ -159,7 +159,7 @@ option_list = list(
   make_option(c("--significant_genes"), type="character", default=NA,
               help="Use these genes as the set of significant genes [a comma separated list]", metavar="character"),
   make_option(c("--significant_genes_file"), type="character", default=NA,
-              help="Use these genes as the set of significant genes [gene per line in this file]", metavar="character"),
+              help="Use these genes as the set of significant genes [gene per line in this file]. If more then one column is given each column will be considered as a cluster", metavar="character"),
   make_option(c("--Genes_file"), type="character", default=NA,
               help="Use only these genes in the analysis [gene per line in this file]", metavar="character")
 ); 
@@ -3129,7 +3129,18 @@ if (opt$only_clustering==FALSE){
         sig.genes = unlist(stringi::stri_split(str = opt$significant_genes,regex = ','))
   }else if (!is.na(opt$significant_genes_file)) {
         sig.genes = read.delim(opt$significant_genes_file,header = F)
-        sig.genes = sig.genes$V1
+        if (dim(sig.genes)[2]==1){
+            sig.genes = sig.genes$V1
+        }
+        else{
+            Data = read.delim(opt$significant_genes_file,sep='\t')
+            Data[Data==""]=NA
+            sig = paste0(apply(X = Data,
+                                MARGIN = c(2),
+                                FUN = function(x) paste0(na.omit(x), sep = ',',collapse = ',')),collapse = ',')
+            sig.genes = stringi::stri_replace_all(str = sig,replacement = ',',fixed = ',,')
+            sig.genes = unlist(stringi::stri_split(str = sig.genes,regex = ','))
+        }
   }else{
         sig.genes = c()
   }
@@ -3206,7 +3217,18 @@ if (opt$only_clustering==FALSE){
         sig.genes = unlist(stringi::stri_split(str = opt$significant_genes,regex = ','))
   }else if (!is.na(opt$significant_genes_file)) {
         sig.genes = read.delim(opt$significant_genes_file,header = F)
-        sig.genes = sig.genes$V1
+        if (dim(sig.genes)[2]==1){
+            sig.genes = sig.genes$V1
+        }
+        else{
+            Data = read.delim(opt$significant_genes_file,sep='\t')
+            Data[Data==""]=NA
+            sig = paste0(apply(X = Data,
+                                MARGIN = c(2),
+                                FUN = function(x) paste0(na.omit(x), sep = ',',collapse = ',')),collapse = ',')
+            sig.genes = stringi::stri_replace_all(str = sig,replacement = ',',fixed = ',,')
+            sig.genes = unlist(stringi::stri_split(str = sig.genes,regex = ','))
+        }
   }else{
         sig.genes = c()
   }

@@ -749,7 +749,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
     GO2name_BP         = params$GO2name_BP
     GO2gene_CC         = params$GO2gene_CC
     GO2name_CC         = params$GO2name_CC
-    
+    clusters           = NA
     
     Original_colData   = colData
     Original_countData = countData
@@ -1855,7 +1855,28 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                 cat(sprintf("<h3>%s</h3>", "NOTE: Clustering Analysis is done on the user defined significant genes !!!!"))
             }else if (!is.na(opt$significant_genes_file)) {
                 sig.genes = read.delim(opt$significant_genes_file,header = F)
-                sig.genes = intersect(sig.genes$V1,row.names(Normalized_counts_assay))
+                if (dim(sig.genes)[2]==1){
+                    sig.genes = intersect(sig.genes$V1,row.names(Normalized_counts_assay))
+                }
+                else{
+                    Data = read.delim(opt$significant_genes_file,sep='\t')
+                    Data[Data==""]=NA
+                    sig = paste0(apply(X = Data,
+                                        MARGIN = c(2),
+                                        FUN = function(x) paste0(na.omit(x), sep = ',',collapse = ',')),collapse = ',')
+                    sig.genes = stringi::stri_replace_all(str = sig,replacement = ',',fixed = ',,')
+                    sig.genes = unlist(stringi::stri_split(str = sig.genes,regex = ','))
+                    sig.genes = intersect(sig.genes,row.names(Normalized_counts_assay))
+                    
+                    Data= sapply(X =  as.list(Data),FUN = na.omit)
+                    clusters = c()
+                    for (cluster in names(Data)){
+                      Temp_Data = intersect(Data[[cluster]],row.names(Normalized_counts_assay))
+                      TEMP_clusters = rep(cluster,length(Temp_Data) )
+                      names(TEMP_clusters) = Temp_Data
+                      clusters = c(clusters,TEMP_clusters)
+                    }
+                }
                 
                 #Normalized_counts_assay = Normalized_counts_assay[sig.genes,]
                 cat(sprintf("<h3>%s</h3>", "NOTE: Clustering Analysis is done on the user defined significant genes !!!!")) 
@@ -2022,76 +2043,78 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
                                                                          MARGIN = c(1,2),
                                                                          FUN = function(x) round(x,digits = 5))
                         }
-                        if (sum(duplicated(SPLIT_Normalized_counts_Annotated_mean)==F)>1){
-                            if (nrow(SPLIT_Normalized_counts_Annotated_mean)>2) {
-                               
-                                
-                                if (nrow(SPLIT_Normalized_counts_Annotated_mean)<=opt$k.max) {
-                                    k.max=nrow(SPLIT_Normalized_counts_Annotated_mean)-1
-                                }else{
-                                    k.max=opt$k.max
-                                }
-                                if ((opt$FUNcluster=='click') && (!is.na(opt$CLICK_PATH))){
-                                    clusters = Run_click(mat =as.matrix(SPLIT_Normalized_counts_Annotated_mean),click_path = opt$CLICK_PATH,outDir = opt$outDir,HOMOGENEITY = opt$CLICK_HOMOGENEITY)
-                                }else{
-                                    if (opt$Mclust){
-                                        Fit_Mclust <- Mclust( as.matrix(SPLIT_Normalized_counts_Annotated_mean) ,G=1:k.max,modelNames = mclust.options("emModelNames"))
-                                        Number_Of_Clusters=Fit_Mclust$G
-                                        Clustering <- eclust(as.matrix(SPLIT_Normalized_counts_Annotated_mean),
-                                                           stand =F, 
-                                                           FUNcluster= opt$FUNcluster,
-                                                           hc_metric =opt$hc_metric, 
-                                                           graph = FALSE,
-                                                           hc_method = opt$hc_method, 
-                                                           k=Number_Of_Clusters ) 
-                                        clusters=Clustering$cluster
+                        
+                        if (is.na(clusters)){
+                            if (sum(duplicated(SPLIT_Normalized_counts_Annotated_mean)==F)>1){
+                                if (nrow(SPLIT_Normalized_counts_Annotated_mean)>2) {
+                                   
+                                    
+                                    if (nrow(SPLIT_Normalized_counts_Annotated_mean)<=opt$k.max) {
+                                        k.max=nrow(SPLIT_Normalized_counts_Annotated_mean)-1
                                     }else{
-                                        
-                                        method = c(opt$gap_maxSE_method,"firstSEmax", "Tibs2001SEmax", "globalSEmax",
-                                                   "firstmax", "globalmax")
-                                        for (gap_maxSE_method in method){
-                                            Clustering <- try(eclust(as.matrix(SPLIT_Normalized_counts_Annotated_mean),stand =F,
+                                        k.max=opt$k.max
+                                    }
+                                    if ((opt$FUNcluster=='click') && (!is.na(opt$CLICK_PATH))){
+                                        clusters = Run_click(mat =as.matrix(SPLIT_Normalized_counts_Annotated_mean),click_path = opt$CLICK_PATH,outDir = opt$outDir,HOMOGENEITY = opt$CLICK_HOMOGENEITY)
+                                    }else{
+                                        if (opt$Mclust){
+                                            Fit_Mclust <- Mclust( as.matrix(SPLIT_Normalized_counts_Annotated_mean) ,G=1:k.max,modelNames = mclust.options("emModelNames"))
+                                            Number_Of_Clusters=Fit_Mclust$G
+                                            Clustering <- eclust(as.matrix(SPLIT_Normalized_counts_Annotated_mean),
+                                                               stand =F, 
                                                                FUNcluster= opt$FUNcluster,
-                                                               hc_metric =opt$hc_metric,
+                                                               hc_metric =opt$hc_metric, 
                                                                graph = FALSE,
-                                                               hc_method = opt$hc_method,
-                                                               k.max =  k.max,
-                                                               nboot = opt$nboot,
-                                                               gap_maxSE = list(method= gap_maxSE_method, SE.factor = opt$gap_maxSE_SE.factor) ),
-                                                    silent = T)
-                                            if ((inherits(Clustering,"try-error"))==FALSE){
-                                                clusters=Clustering$cluster
-                                                if (gap_maxSE_method != opt$gap_maxSE_method){
-                                                   cat(sprintf("<h5>%s</h5>",'The original gap_maxSE_method parameter did not work therefore it was changed to')) 
-                                                   cat(sprintf("<h5>%s</h5>",gap_maxSE_method)) 
+                                                               hc_method = opt$hc_method, 
+                                                               k=Number_Of_Clusters ) 
+                                            clusters=Clustering$cluster
+                                        }else{
+                                            
+                                            method = c(opt$gap_maxSE_method,"firstSEmax", "Tibs2001SEmax", "globalSEmax",
+                                                       "firstmax", "globalmax")
+                                            for (gap_maxSE_method in method){
+                                                Clustering <- try(eclust(as.matrix(SPLIT_Normalized_counts_Annotated_mean),stand =F,
+                                                                   FUNcluster= opt$FUNcluster,
+                                                                   hc_metric =opt$hc_metric,
+                                                                   graph = FALSE,
+                                                                   hc_method = opt$hc_method,
+                                                                   k.max =  k.max,
+                                                                   nboot = opt$nboot,
+                                                                   gap_maxSE = list(method= gap_maxSE_method, SE.factor = opt$gap_maxSE_SE.factor) ),
+                                                        silent = T)
+                                                if ((inherits(Clustering,"try-error"))==FALSE){
+                                                    clusters=Clustering$cluster
+                                                    if (gap_maxSE_method != opt$gap_maxSE_method){
+                                                       cat(sprintf("<h5>%s</h5>",'The original gap_maxSE_method parameter did not work therefore it was changed to')) 
+                                                       cat(sprintf("<h5>%s</h5>",gap_maxSE_method)) 
+                                                    }
+                                                    break
                                                 }
-                                                break
                                             }
                                         }
                                     }
+                                }else if (nrow(SPLIT_Normalized_counts_Annotated_mean)==1){
+                                    clusters=rep(1,nrow(SPLIT_Normalized_counts_Annotated_mean))
+                                    names(clusters)=rownames((SPLIT_Normalized_counts_Annotated_mean))
+                                    cat(sprintf("<h4>%s</h4>","Since only 1 significant genes were detected, No clustering was performed"))
+                                }else if (nrow(SPLIT_Normalized_counts_Annotated_mean)==2){
+                                    Clustering <- eclust(as.matrix(SPLIT_Normalized_counts_Annotated_mean),stand = F,
+                                                               FUNcluster= 'kmeans',
+                                                               graph = FALSE,
+                                                               k.max = 2,
+                                                               nboot = opt$nboot,
+                                                               gap_maxSE = list(method= opt$gap_maxSE_method, SE.factor = opt$gap_maxSE_SE.factor) )
+                                    clusters=Clustering$cluster
+                                    cat(sprintf("<h4>%s</h4>","Since only 2 significant genes were detected, the clustering was performed using the kmeans method"))
+                                    
+                                }else{
+                                    clusters=c()
                                 }
-                            }else if (nrow(SPLIT_Normalized_counts_Annotated_mean)==1){
-                                clusters=rep(1,nrow(SPLIT_Normalized_counts_Annotated_mean))
-                                names(clusters)=rownames((SPLIT_Normalized_counts_Annotated_mean))
-                                cat(sprintf("<h4>%s</h4>","Since only 1 significant genes were detected, No clustering was performed"))
-                            }else if (nrow(SPLIT_Normalized_counts_Annotated_mean)==2){
-                                Clustering <- eclust(as.matrix(SPLIT_Normalized_counts_Annotated_mean),stand = F,
-                                                           FUNcluster= 'kmeans',
-                                                           graph = FALSE,
-                                                           k.max = 2,
-                                                           nboot = opt$nboot,
-                                                           gap_maxSE = list(method= opt$gap_maxSE_method, SE.factor = opt$gap_maxSE_SE.factor) )
-                                clusters=Clustering$cluster
-                                cat(sprintf("<h4>%s</h4>","Since only 2 significant genes were detected, the clustering was performed using the kmeans method"))
-                                
                             }else{
-                                clusters=c()
+                                clusters=rep(1,nrow(SPLIT_Normalized_counts_Annotated_mean) )
+                                names(clusters)=rownames((SPLIT_Normalized_counts_Annotated_mean))
                             }
-                        }else{
-                            clusters=rep(1,nrow(SPLIT_Normalized_counts_Annotated_mean) )
-                            names(clusters)=rownames((SPLIT_Normalized_counts_Annotated_mean))
                         }
-                        
                         if (length(no_var)>0){
                           if (length(clusters)>0){
                             temp=rep(max(clusters)+1,length(no_var) )

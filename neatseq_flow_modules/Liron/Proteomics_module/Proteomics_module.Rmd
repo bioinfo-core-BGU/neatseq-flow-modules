@@ -2184,6 +2184,15 @@ plotCounts <- function (SE, gene, intgroup = "condition", normalized = TRUE,
                                                         X_AXIS=sapply(X =colnames(mat),FUN = function(x) unlist(strsplit(x =x,split = " "))[2] ),
                                                         GROUP=sapply(X =colnames(mat),FUN = function(x) unlist(strsplit(x =x,split = " "))[1]) )
                                 colnames(annotation_col)=c(X_AXIS,GROUP)
+                                if (Heatmap_Type!='Mean'){
+                                    if (!is.na(opt$Heatmap_Extra_Annotaions)){
+                                        Heatmap_Extra_Annotaions = strsplit(x = opt$Heatmap_Extra_Annotaions,split = ",")[[1]]
+                                        samples = unlist(lapply(X =colnames(mat),FUN = function(x) unlist(strsplit(x =x,split = " "))[3]))
+                                        for ( Col_Extra_Annotaions in Heatmap_Extra_Annotaions){
+                                            annotation_col[Col_Extra_Annotaions]  = coldata[samples,Col_Extra_Annotaions]
+                                        }
+                                    }
+                                }
                                 annotation_col[X_AXIS]  <- factor(annotation_col[,X_AXIS] ,levels=intersect(unique(coldata[,X_AXIS]),unique(annotation_col[,X_AXIS]) ))
                                 annotation_col[GROUP]   <- factor(annotation_col[,GROUP] ,levels=intersect(unique(coldata[,GROUP]),unique(annotation_col[,GROUP]) ))
                                 new_order = order(annotation_col[,GROUP],annotation_col[,X_AXIS])
@@ -2220,6 +2229,16 @@ plotCounts <- function (SE, gene, intgroup = "condition", normalized = TRUE,
                                 annotation_col=data.frame(row.names =colnames(mat) ,
                                                         X_AXIS=sapply(X =colnames(mat),FUN = function(x) unlist(strsplit(x =x,split = " "))[1] ))
                                 colnames(annotation_col)=c(X_AXIS)
+
+                                if (Heatmap_Type!='Mean'){
+                                    if (!is.na(opt$Heatmap_Extra_Annotaions)){
+                                        Heatmap_Extra_Annotaions = strsplit(x = opt$Heatmap_Extra_Annotaions,split = ",")[[1]]
+                                        samples = unlist(lapply(X =colnames(mat),FUN = function(x) unlist(strsplit(x =x,split = " "))[2]))
+                                        for ( Col_Extra_Annotaions in Heatmap_Extra_Annotaions){
+                                            annotation_col[Col_Extra_Annotaions]  = coldata[samples,Col_Extra_Annotaions]
+                                        }
+                                    }
+                                }
                                 annotation_col[X_AXIS]  <- factor(annotation_col[,X_AXIS] ,levels=intersect(unique(coldata[,X_AXIS]),unique(annotation_col[,X_AXIS]) ))
                                 new_order = order(annotation_col[,X_AXIS])
                                 annotation_col = annotation_col[new_order,,drop=FALSE]
@@ -2349,7 +2368,7 @@ plotCounts <- function (SE, gene, intgroup = "condition", normalized = TRUE,
                         }
                         
                         # save(list=ls(all.names = TRUE),file =file.path(opt$outDir,'SSession.RSession'))
-                        save.image(file.path(opt$outDir,'Session.RSession'))
+                        # save.image(file.path(opt$outDir,'Session.RSession'))
                         
                         
           
