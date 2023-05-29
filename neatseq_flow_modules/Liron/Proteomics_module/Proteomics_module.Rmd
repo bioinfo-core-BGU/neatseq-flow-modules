@@ -188,11 +188,24 @@ clusters_enricher=function(outDir, clusters,Type,organism,universe,keyType,file_
         }
 
         if (dim(allRes@compareClusterResult)[1]>0){
-            #cat(sprintf("<h4>%s</h4>", paste(unlist(stringi::stri_split(str = file_name,fixed='_')),collapse = " ") ))
-            x=enrichplot::dotplot(allRes,x=allRes@compareClusterResult$Cluster,showCategory=maxCategory,font.size =font.size)+
-            ggplot2::ggsave(filename = file.path(outDir,paste(file_name,".pdf",sep='',collapse = "")),dpi = 600,device = "pdf",width = 20,height = 20)
+            # cat(sprintf("<h4>%s</h4>", paste(unlist(stringi::stri_split(str = file_name,fixed='_')),collapse = " ") ))
+            fig_filename = file.path(outDir,paste(file_name,".pdf",sep='',collapse = ""))
+            fig = enrichplot::dotplot(allRes,x=allRes@compareClusterResult$Cluster,showCategory=maxCategory,font.size =font.size)
+            ggplot2::ggsave(filename = fig_filename ,fig,dpi = 600,device = "pdf",width = 20,height = 20)
+            
+            plotly_fig<-try(plotly::ggplotly(fig,dynamicTicks = T),silent = T)
+            
+            if (inherits(plotly_fig,"try-error")){
+                fig_filename = file.path(outDir,paste(file_name,".png",sep='',collapse = ""))
+                ggplot2::ggsave(filename = fig_filename,fig ,width = 6.99, height =6.99, units = "in")
+                link = xfun::embed_file(path = fig_filename ,name = '',text = '' )
+                link$name='img'
+                link$attribs$src = link$attribs$href
+                link$attribs$href = NULL
+                plotly_fig = htmltools::img(link,alt = '')
+            }
             grid::grid.newpage()
-            return(list(original_allRes,list(htmltools::h4(paste(unlist(stringi::stri_split(str = file_name,fixed='_')),collapse = " ")),ggplotly(x),Simplify_title,Enrichment_table)))
+            return(list(original_allRes,list(htmltools::h4(paste(unlist(stringi::stri_split(str = file_name,fixed='_')),collapse = " ")),plotly_fig,Simplify_title,Enrichment_table)))
         }
     }
     
@@ -289,12 +302,26 @@ Clusters_Enrichment_Test=function(outDir,clusters,TERM2NAME,TERM2GENE,file_name,
     }
 
     if (dim(allRes@compareClusterResult)[1]>0){
-        #cat(sprintf("<h4>%s</h4>", paste(unlist(stringi::stri_split(str = file_name,fixed='_')),collapse = " ") ))
-        x=enrichplot::dotplot(allRes,showCategory=maxCategory,font.size=font.size)+ 
-        ggplot2::ggsave(filename = file.path(outDir,paste(file_name,".pdf",sep='',collapse = "")),dpi = 600,device = "pdf",width = 20,height = 20)
+        # cat(sprintf("<h4>%s</h4>", paste(unlist(stringi::stri_split(str = file_name,fixed='_')),collapse = " ") ))
+        saveRDS(allRes,file=file.path(outDir,paste(file_name,".rds",sep='',collapse = "")))
+        fig_filename = file.path(outDir,paste(file_name,".pdf",sep='',collapse = ""))
+        fig = enrichplot::dotplot(allRes,showCategory=maxCategory,font.size =font.size)
+        ggplot2::ggsave(filename = fig_filename,fig ,dpi = 600,device = "pdf",width = 20,height = 20)
+        plotly_fig<-try(plotly::ggplotly(fig,dynamicTicks = T),silent = T)
+        
+        if (inherits(plotly_fig,"try-error")){
+            fig_filename = file.path(outDir,paste(file_name,".png",sep='',collapse = ""))
+            ggplot2::ggsave(filename = fig_filename,fig ,width = 6.99, height =6.99, units = "in")
+            link = xfun::embed_file(path = fig_filename ,name = '',text = '' )
+            link$name='img'
+            link$attribs$src = link$attribs$href
+            link$attribs$href = NULL
+            plotly_fig = htmltools::img(link,alt = '')
+        }
         grid::grid.newpage()
-        return(list(original_allRes,list(htmltools::h4(paste(unlist(stringi::stri_split(str = file_name,fixed='_')),collapse = " ")),ggplotly(x),Simplify_title,Enrichment_table)))
+        return(list(original_allRes,list(htmltools::h4(paste(unlist(stringi::stri_split(str = file_name,fixed='_')),collapse = " ")),plotly_fig,Simplify_title,Enrichment_table)))
     }
+    
     return(list(original_allRes,list(htmltools::h4(paste(unlist(stringi::stri_split(str = file_name,fixed='_')),collapse = " ")),Enrichment_table)))
 }
 
@@ -698,7 +725,7 @@ create_pathway_table <- function(outDir,up_reg,down_reg,Annotation,Pathway2name,
         
         Pathway[,'Kegg_URL'] = apply(X = Pathway,MARGIN = 1,FUN = function(x) paste(x['Base_URL'],x['Pathway'],sep = '',collapse = ''))
         Pathway[,'Kegg_URL'] = apply(X = Pathway,MARGIN = 1,FUN = function(x) paste(x['Kegg_URL'],x['URL'],sep = '/',collapse = '/'))
-        
+        Pathway[,'Kegg_URL'] = apply(X = Pathway,MARGIN = 1,FUN = function(x) paste(x['Kegg_URL'],"+multi",sep = '',collapse = ''))
         
         Pathway = merge.data.frame(x = Pathway,y = Pathway2gene_count,by = "Pathway" )
         row.names(Pathway) = Pathway$Pathway
@@ -798,6 +825,8 @@ plotCounts <- function (SE, gene, intgroup = "condition", normalized = TRUE,
     library("DT")
     library('DESeq2')
     
+    theme_update(text = element_text(size=6))
+    
     opt                = params$opt
     test2do            = params$test2do
     results            = params$results
@@ -865,6 +894,7 @@ plotCounts <- function (SE, gene, intgroup = "condition", normalized = TRUE,
               opt$outDir=file.path(base_out_dir,'No_DESIGN')
               dir.create(opt$outDir, showWarnings = FALSE)
               opt$CONTRAST=NA
+              results = NA
             }else if (test2do=='only_clustering'){
               opt$outDir=file.path(base_out_dir,'Only_Clustering')
               dir.create(opt$outDir, showWarnings = FALSE)
@@ -874,6 +904,7 @@ plotCounts <- function (SE, gene, intgroup = "condition", normalized = TRUE,
               opt$outDir=file.path(base_out_dir,'No_Statistics')
               dir.create(opt$outDir, showWarnings = FALSE)
               opt$CONTRAST=NA
+              results = NA
             }else if (test2do=='Random_Forest'){
               library('randomForest')
               opt$outDir=file.path(base_out_dir,'Random_Forest')
@@ -1954,6 +1985,7 @@ plotCounts <- function (SE, gene, intgroup = "condition", normalized = TRUE,
     
                         
                         
+                        
                         if (opt$stand){
                           SPLIT_Normalized_counts_Annotated_mean = t(scale(t(SPLIT_Normalized_counts_Annotated_mean)))
                           SPLIT_Normalized_counts_Annotated_mean = apply(SPLIT_Normalized_counts_Annotated_mean,
@@ -2098,6 +2130,8 @@ plotCounts <- function (SE, gene, intgroup = "condition", normalized = TRUE,
              
                         # cat(sprintf("<h4>%s</h4>",paste('The Next Figure is of the',SPLIT,"significant Genes Clusters",sep=" ")))
                         
+                        
+                        
                         # grid::grid.newpage()
                         # grid::grid.draw(Clustering_Plot)
                         # grid::grid.newpage()
@@ -2175,14 +2209,16 @@ plotCounts <- function (SE, gene, intgroup = "condition", normalized = TRUE,
                                         sep = "\t")
                             
                             
-                            
+                           
                             if (X_AXIS!=GROUP){
                                 split=sapply(X =colnames(mat),FUN = function(x) unlist(strsplit(x =x,split = " "))[1])
                                 #colnames(split)='split'
     
                                 annotation_col=data.frame(row.names =colnames(mat) ,
-                                                        X_AXIS=sapply(X =colnames(mat),FUN = function(x) unlist(strsplit(x =x,split = " "))[2] ),
-                                                        GROUP=sapply(X =colnames(mat),FUN = function(x) unlist(strsplit(x =x,split = " "))[1]) )
+                                                          X_AXIS = sapply(X =colnames(mat),FUN = function(x) unlist(strsplit(x =x,split = " "))[2] ),
+                                                          GROUP  = sapply(X =colnames(mat),FUN = function(x) unlist(strsplit(x =x,split = " "))[1] )
+                                                         )
+                                                        
                                 colnames(annotation_col)=c(X_AXIS,GROUP)
                                 if (Heatmap_Type!='Mean'){
                                     if (!is.na(opt$Heatmap_Extra_Annotaions)){
@@ -2207,22 +2243,48 @@ plotCounts <- function (SE, gene, intgroup = "condition", normalized = TRUE,
                                        annotation_row_COLORS[Extra_annotation] = list(color_category)
                                     }
                                 }
-                                heat_map=pheatmap(mat =mat ,
-                                                cluster_rows= F,show_rownames=F,
-                                                cluster_cols=F,scale = "row",
-                                                annotation_row = annotation_row,
-                                                annotation_colors = annotation_row_COLORS,
-                                                #annotation_names_row=F,
-                                                border_color=NA,
-                                                silent = T,
-                                                annotation_col=annotation_col ,
-                                                show_colnames = T,
-                                                gaps_row = cumsum(aggregate.data.frame(x = as.data.frame(clusters),by =list(clusters),FUN = length )[,"clusters"] ),
-                                                gaps_col = c(cumsum(rev(aggregate.data.frame(x = annotation_col[X_AXIS],by =annotation_col[c(X_AXIS,GROUP)],FUN = length))[,1]),
-                                                             rep(cumsum(rev(aggregate.data.frame(x = annotation_col[GROUP],by =annotation_col[c(GROUP)],FUN = length))[,1]),2)
-                                                             )
-                                                
-                                )
+                                if (Heatmap_Type!='Mean'){
+                                    colnames(mat)             = sapply(X =colnames(mat),FUN = function(x) unlist(strsplit(x =x,split = " "))[3])
+                                    row.names(annotation_col) = sapply(X =row.names(annotation_col),FUN = function(x) unlist(strsplit(x =x,split = " "))[3])
+                                    show_colnames = T
+                                }else{
+                                    show_colnames = F
+                                }
+                                if (opt$stand){
+                                    heat_map=pheatmap(mat =mat ,
+                                                    cluster_rows= F,show_rownames=F,
+                                                    cluster_cols=F,scale = "row",
+                                                    annotation_row = annotation_row,
+                                                    annotation_colors = annotation_row_COLORS,
+                                                    #annotation_names_row=F,
+                                                    border_color=NA,
+                                                    silent = T,
+                                                    fontsize_col = 7,
+                                                    annotation_col=annotation_col ,
+                                                    show_colnames = show_colnames,
+                                                    gaps_row = cumsum(aggregate.data.frame(x = as.data.frame(clusters),by =list(clusters),FUN = length )[,"clusters"] ),
+                                                    gaps_col = c(cumsum(rev(aggregate.data.frame(x = annotation_col[X_AXIS],by =annotation_col[c(X_AXIS,GROUP)],FUN = length))[,1]),
+                                                                 rep(cumsum(rev(aggregate.data.frame(x = annotation_col[GROUP],by =annotation_col[c(GROUP)],FUN = length))[,1]),2)
+                                                                 )
+                                    )
+                                }else{
+                                        heat_map=pheatmap(mat =mat ,
+                                                    cluster_rows= F,show_rownames=F,
+                                                    cluster_cols=F,scale = "row",
+                                                    annotation_row = annotation_row,
+                                                    annotation_colors = annotation_row_COLORS,
+                                                    #annotation_names_row=F,
+                                                    border_color=NA,
+                                                    silent = T,
+                                                    fontsize_col = 7,
+                                                    annotation_col=annotation_col ,
+                                                    show_colnames = show_colnames,
+                                                    gaps_row = cumsum(aggregate.data.frame(x = as.data.frame(clusters),by =list(clusters),FUN = length )[,"clusters"] ),
+                                                    gaps_col = c(cumsum(rev(aggregate.data.frame(x = annotation_col[X_AXIS],by =annotation_col[c(X_AXIS,GROUP)],FUN = length))[,1]),
+                                                                 rep(cumsum(rev(aggregate.data.frame(x = annotation_col[GROUP],by =annotation_col[c(GROUP)],FUN = length))[,1]),2)
+                                                                 )
+                                                )
+                                }
                             
                             
                             }else{
@@ -2252,16 +2314,26 @@ plotCounts <- function (SE, gene, intgroup = "condition", normalized = TRUE,
                                        annotation_row_COLORS[Extra_annotation] = list(color_category)
                                    }
                                 }
+                                
+                                if (Heatmap_Type!='Mean'){
+                                    colnames(mat)             = sapply(X =colnames(mat),FUN = function(x) unlist(strsplit(x =x,split = " "))[2])
+                                    row.names(annotation_col) = sapply(X =row.names(annotation_col),FUN = function(x) unlist(strsplit(x =x,split = " "))[2])
+                                    show_colnames = T
+                                }else{
+                                    show_colnames = F
+                                }
+                                
                                 if (opt$stand){
                                     heat_map=pheatmap(mat = mat ,
                                                       cluster_rows= F,show_rownames=F,
                                                       cluster_cols=F,scale = "row",
                                                       silent = T,
+                                                      fontsize_col = 7,
                                                       annotation_row=annotation_row,
                                                       annotation_colors = annotation_row_COLORS,
                                                       #annotation_names_row=T,
                                                       annotation_col=annotation_col,
-                                                      show_colnames = T,
+                                                      show_colnames = show_colnames,
                                                       gaps_row = cumsum(aggregate.data.frame(x = as.data.frame(clusters),by =list(clusters),FUN = length )[,"clusters"] ),
                                                       gaps_col = cumsum(aggregate.data.frame(x = annotation_col[X_AXIS],by =annotation_col[X_AXIS],FUN = length)[,-1]),
                                                       border_color=NA
@@ -2271,11 +2343,12 @@ plotCounts <- function (SE, gene, intgroup = "condition", normalized = TRUE,
                                                       cluster_rows= F,show_rownames=F,
                                                       cluster_cols=F,
                                                       silent = T,
+                                                      fontsize_col = 7,
                                                       annotation_row=annotation_row,
                                                       annotation_colors = annotation_row_COLORS,
                                                       #annotation_names_row=T,
                                                       annotation_col=annotation_col,
-                                                      show_colnames = T,
+                                                      show_colnames = show_colnames,
                                                       gaps_row = cumsum(aggregate.data.frame(x = as.data.frame(clusters),by =list(clusters),FUN = length )[,"clusters"] ),
                                                       gaps_col = cumsum(aggregate.data.frame(x = annotation_col[X_AXIS],by =annotation_col[X_AXIS],FUN = length)[,-1]),
                                                       border_color=NA
@@ -2288,7 +2361,7 @@ plotCounts <- function (SE, gene, intgroup = "condition", normalized = TRUE,
                                 # grid::grid.newpage()
                                 # grid::grid.draw(heat_map$gtable)
                                 # grid::grid.newpage()
-                                
+                                save(list=ls(all.names = TRUE),file =file.path(opt$outDir,'SSession.RSession'))
                                 main_plot_list <- c(main_plot_list ,list(htmltools::h4(paste('The Next Figure is of the', SPLIT ,'Significant Genes relative expression Clustered and plotted as a HeatMap',sep=" "))) )
                                 
                             }else if (Heatmap_Type=='Mean') {
@@ -2371,7 +2444,7 @@ plotCounts <- function (SE, gene, intgroup = "condition", normalized = TRUE,
                         # save.image(file.path(opt$outDir,'Session.RSession'))
                         
                         
-          
+                        
                         ##################Clustering-End##################################    
     
                         ##################GO/KEGG STAR####################################
@@ -2485,6 +2558,7 @@ plotCounts <- function (SE, gene, intgroup = "condition", normalized = TRUE,
                                 
                             }
                         }
+                        
                         pathway_table = data.frame()
                         if (KEGG_flag){
                             if (opt$KEGG_Enrichment_of == 'ko'){
@@ -2543,6 +2617,7 @@ plotCounts <- function (SE, gene, intgroup = "condition", normalized = TRUE,
                                 pathway_table = create_pathway_table(opt$outDir,sig.genes,c(),Annotation,Pathway2name,Pathway2gene,Pathway_show_cutoff,T,Pathway_up_color,Pathway_down_color)
                             }
                         }
+                        
                         if (ORGANISM_KEGG_flag){
                             if (opt$KEGG_Enrichment_of == 'ko'){
                                 TERMS_Info= create_gene2kegg(Annotation,F)
@@ -2562,12 +2637,14 @@ plotCounts <- function (SE, gene, intgroup = "condition", normalized = TRUE,
                             }
                             
                             allRes  <- Clusters_Enrichment_Test(opt$outDir,clusters,ORGANISM_Pathway2name_,ORGANISM_Pathway2gene_,paste(ORGANISM,'KEGG_Enrichment_Analysis_of_Clusters',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE,maxCategory = opt$Max_Dotplot)
+                            
                             main_plot_list <- c(main_plot_list ,list(allRes[[2]]) )
+                            
                             if (opt$Enriched_terms_overlap){
                                 heatmaps = plot_sheard_genes(allRes[[1]]@compareClusterResult,opt$outDir,'KEGG_Enrichment_Analysis_of_Clusters')
                                 main_plot_list <- c(main_plot_list ,list(heatmaps))
                             }
-     
+                            
                             if (((length(down_reg)>0) || (length(up_reg)>0)) ){
                                 up_down_clusters = clusters
                                 if (length(down_reg)>0){
@@ -2585,7 +2662,7 @@ plotCounts <- function (SE, gene, intgroup = "condition", normalized = TRUE,
                                 }
     
                             }
-    
+                            
                             One_cluster=clusters
                             One_cluster[]=1
                             allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,ORGANISM_Pathway2name_,ORGANISM_Pathway2gene_,paste(ORGANISM,'KEGG_Enrichment_Analysis_of_All_Significant_Genes',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE,maxCategory = opt$Max_Dotplot)
@@ -2643,7 +2720,7 @@ plotCounts <- function (SE, gene, intgroup = "condition", normalized = TRUE,
                                     main_plot_list <- c(main_plot_list ,list(heatmaps))
                                 }
                             }
-    
+                            
                             One_cluster=clusters
                             One_cluster[]=1
                             allRes <- Clusters_Enrichment_Test(opt$outDir,One_cluster,KASS_Pathway2name_,KASS_Pathway2gene_,paste('KEGG_Enrichment_Analysis_of_All_Significant_Genes',SPLIT,sep="_"),"KEGG",pAdjustMethod=opt$Enrichment_padjustmethod,pvalueCutoff=opt$Enrichment_pvaluecutoff,gene2ko=FALSE,maxCategory = opt$Max_Dotplot)

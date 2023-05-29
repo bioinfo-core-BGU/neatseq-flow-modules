@@ -106,7 +106,7 @@ option_list = list(
               help="The path to CLICK program (Shamir et al. 2000). If your using click cite: CLICK and Expander ( Shamir et al. 2000 and Ulitsky et al. 2010) ", metavar="character"),
   make_option(c("--CLICK_HOMOGENEITY"), type="numeric", default=0.5,
               help="The HOMOGENEITY [0-1] of clusters using CLICK program (Shamir et al. 2000). The default is 0.5 ", metavar="character"),
-   make_option(c("--Heatmap_Extra_Annotaions"), type="character", default=NA,
+  make_option(c("--Heatmap_Extra_Annotaions"), type="character", default=NA,
               help="An Extra Annotation to the Heatmap using informayion from the Samples Data [a comma separated list of columns to use]", metavar="character"),
   
   make_option(c("--k.max"), type="numeric", default=20,
@@ -2235,6 +2235,13 @@ if  (!file.exists(Annotation_file)){
             Pathway_info=as.data.frame(Pathway_info)
             colnames(Pathway_info)="info"
             Pathway_info["pathway"]=info
+            
+            temp$pathway = sapply(X = temp$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:map' ,replacement = '') )
+            temp$pathway = sapply(X = temp$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:' ,replacement = '') )
+            
+            Pathway_info$pathway = sapply(X = Pathway_info$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:map' ,replacement = '') )
+            Pathway_info$pathway = sapply(X = Pathway_info$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:' ,replacement = '') )
+            
             temp=merge.data.frame(temp,Pathway_info,by = "pathway",all.x = T)
             Kegg_Annotation = Kegg_Annotation[!is.na(Kegg_Annotation[,keggConv_id_type]),]
             Kegg_Annotation = merge.data.frame(Kegg_Annotation,temp,by =keggConv_id_type ,by.y = keggConv_id_type,all.x = T)
@@ -2286,6 +2293,12 @@ if  (!file.exists(Annotation_file)){
               Pathway_info=as.data.frame(Pathway_info)
               colnames(Pathway_info)="info"
               Pathway_info["pathway"]=info
+              
+              Annotation$kegg = sapply(X = Annotation$kegg,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:map' ,replacement = '') )
+              Annotation$kegg = sapply(X = Annotation$kegg,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:' ,replacement = '') )
+              
+              Pathway_info$pathway = sapply(X = Pathway_info$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:map' ,replacement = '') )
+              Pathway_info$pathway = sapply(X = Pathway_info$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:' ,replacement = '') )
               
               
               Annotation = merge.data.frame(Annotation,Pathway_info,by.x ="kegg" ,by.y = "pathway",all.x = T)
@@ -2477,6 +2490,13 @@ if  (!file.exists(Annotation_file)){
           Pathway_info=as.data.frame(Pathway_info)
           colnames(Pathway_info)="pathway_info"
           Pathway_info["pathway"]=info
+          
+          KEGG_KAAS_Data$pathway = sapply(X = KEGG_KAAS_Data$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:map' ,replacement = '') )
+          KEGG_KAAS_Data$pathway = sapply(X = KEGG_KAAS_Data$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:' ,replacement = '') )
+          
+          Pathway_info$pathway = sapply(X = Pathway_info$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:map' ,replacement = '') )
+          Pathway_info$pathway = sapply(X = Pathway_info$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:' ,replacement = '') )
+          
           KEGG_KAAS_Data = merge.data.frame(KEGG_KAAS_Data,Pathway_info,by = "pathway",all.x = T)
           
           run=TRUE
@@ -3020,6 +3040,8 @@ if (Imputed){
 
 ################## Design ########################################
 
+Sig_Gene = c()
+results  = c()
 if (opt$only_clustering==FALSE){
   if (is.na(opt$DESIGN)){
     opt$CONTRAST = 'No_DESIGN'
@@ -3127,21 +3149,37 @@ if (opt$only_clustering==FALSE){
                                 Annotation            = Annotation)
  
         }
+    }else{
+        if (!is.null(ProteinGroupsData_SE)){
+            colnames(ProteinGroupsData_SE) = ProteinGroupsData_SE$label
+        }
+        
+        if (!is.null(ProteinGroupsData_SE_BatchRemoved)){
+            colnames(ProteinGroupsData_SE_BatchRemoved) = ProteinGroupsData_SE_BatchRemoved$label
+        }
     }
+
     genral_test_name <- "GENERAL"
   
 }else{
-  DESeqDataSet_base=NA
-  test_count=c('only_clustering')
-  if (!is.na(opt$significant_genes)){ 
-        sig.genes = unlist(stringi::stri_split(str = opt$significant_genes,regex = ','))
-  }else if (!is.na(opt$significant_genes_file)) {
-        sig.genes = read.delim(opt$significant_genes_file,header = F)
-        sig.genes = sig.genes$V1
-  }else{
-        sig.genes = c()
-  }
-  # opt$sig.genes = sig.genes
+    DESeqDataSet_base=NA
+    test_count=c('only_clustering')
+    if (!is.na(opt$significant_genes)){ 
+          sig.genes = unlist(stringi::stri_split(str = opt$significant_genes,regex = ','))
+    }else if (!is.na(opt$significant_genes_file)) {
+          sig.genes = read.delim(opt$significant_genes_file,header = F)
+          sig.genes = sig.genes$V1
+    }else{
+          sig.genes = c()
+    }
+    # opt$sig.genes = sig.genes
+    if (!is.null(ProteinGroupsData_SE)){
+        colnames(ProteinGroupsData_SE) = ProteinGroupsData_SE$label
+    }
+    
+    if (!is.null(ProteinGroupsData_SE_BatchRemoved)){
+        colnames(ProteinGroupsData_SE_BatchRemoved) = ProteinGroupsData_SE_BatchRemoved$label
+    }
 }
 
 
@@ -3176,7 +3214,15 @@ save.image(file.path(base_out_dir,'Session.RSession'))
    if ((length(Sig_Gene)>0)){
     test_count = c(test_count,'only_clustering')
     opt$significant_genes = paste(Sig_Gene,collapse = ',')
+  }else{
+  
+  if ((length(sig.genes)>0)){
+    test_count = c(test_count,'only_clustering')
+    opt$significant_genes = paste(sig.genes,collapse = ',')
   }
+
+
+}
 
 
 Original_colData   = colData
@@ -3203,6 +3249,7 @@ for (test2do in test_count){
       }
     }
     gc()
+
     rmarkdown::render(input             = opt$Rmarkdown,
                       output_file       = file.path(base_out_dir,paste('Final_Report',test_name,'html', sep = '.')),
                       intermediates_dir = base_out_dir,

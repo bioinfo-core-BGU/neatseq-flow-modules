@@ -16,6 +16,8 @@ args = commandArgs(trailingOnly=TRUE)
 option_list = list(
   make_option(c("-c", "--COUNT_DATA_FILE"), type="character", default=NA, 
               help="Path to Gene Level Count Data Files [comma sep]", metavar="character"),
+  make_option(c("--OneDATA_FILE"), action="store_true",default=FALSE, 
+              help=" Indicate that the --COUNT_DATA_FILE is one Tab delim file with 2 col of samples and path ", metavar="character"),
   make_option(c("--COUNT_SOURCE"), type="character", default='Matrix', 
               help="The Source of the count Data Files ['Matrix'.'RSEM','HTSEQ']", metavar="character"),
   make_option(c("--SAMPLES"), type="character", default=NA, 
@@ -103,7 +105,8 @@ option_list = list(
               help="The path to CLICK program (Shamir et al. 2000). If your using click cite: CLICK and Expander ( Shamir et al. 2000 and Ulitsky et al. 2010) ", metavar="character"),
   make_option(c("--CLICK_HOMOGENEITY"), type="numeric", default=0.5,
               help="The HOMOGENEITY [0-1] of clusters using CLICK program (Shamir et al. 2000). The default is 0.5 ", metavar="character"),
-  
+  make_option(c("--Heatmap_Extra_Annotaions"), type="character", default=NA,
+              help="An Extra Annotation to the Heatmap using informayion from the Samples Data [a comma separated list of columns to use]", metavar="character"),
   
   make_option(c("--k.max"), type="numeric", default=20,
               help="The maximum number of clusters to consider, must be at least two. The default is 20", metavar="character"),
@@ -1872,18 +1875,28 @@ if (opt$COUNT_SOURCE=='RSEM'){
   
   
   
-  files   = unlist(stringi::stri_split(str = opt$COUNT_DATA_FILE,fixed = ','))
-  if (!is.na(opt$SAMPLES)){
-    samples = unlist(stringi::stri_split(str = opt$SAMPLES,fixed = ','))
-    if (length(files)==length(samples)){
-      names(files) = samples
-    }else{
-      stop( "Number of Sample's Names is not Equal the Number of Sample's Files" )
-    }
+  if (opt$OneDATA_FILE){
+     Data    = read.csv(opt$COUNT_DATA_FILE,sep="\t",row.names=1)
+     samples = Data[,1]
+     files   = Data[,2]
+     if (length(files)==length(samples)){
+         names(files) = samples
+     }else{
+        stop( "Number of Sample's Names is not Equal the Number of Sample's Files" )
+     }
   }else{
-    stop( "Sample's names mast be indicated! [--SAMPLES] and in the same order as in the sample's files location [--COUNT_DATA_FILE]" )
+     files   = unlist(stringi::stri_split(str = opt$COUNT_DATA_FILE,fixed = ','))
+     if (!is.na(opt$SAMPLES)){
+       samples = unlist(stringi::stri_split(str = opt$SAMPLES,fixed = ','))
+       if (length(files)==length(samples)){
+         names(files) = samples
+       }else{
+         stop( "Number of Sample's Names is not Equal the Number of Sample's Files" )
+       }
+     }else{
+       stop( "Sample's names mast be indicated! [--SAMPLES] and in the same order as in the sample's files location [--COUNT_DATA_FILE]" )
+     }
   }
-  
   txi.rsem <- tximport(files, type = "rsem")
   if ((!is.na(opt$GENE_ID_TYPE)) & (is.na(opt$Trinotate)) ) {
     rownames(txi.rsem$abundance)=lapply(X =rownames(txi.rsem$abundance),FUN = function(x) unlist(stringi::stri_split(str = x,regex = "_"))[1] )
@@ -2358,6 +2371,13 @@ if  (!file.exists(Annotation_file)){
             Pathway_info=as.data.frame(Pathway_info)
             colnames(Pathway_info)="info"
             Pathway_info["pathway"]=info
+            
+            temp$pathway = sapply(X = temp$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:map' ,replacement = '') )
+            temp$pathway = sapply(X = temp$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:' ,replacement = '') )
+            
+            Pathway_info$pathway = sapply(X = Pathway_info$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:map' ,replacement = '') )
+            Pathway_info$pathway = sapply(X = Pathway_info$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:' ,replacement = '') )
+            
             temp=merge.data.frame(temp,Pathway_info,by = "pathway",all.x = T)
             Kegg_Annotation = Kegg_Annotation[!is.na(Kegg_Annotation[,keggConv_id_type]),]
             Kegg_Annotation = merge.data.frame(Kegg_Annotation,temp,by =keggConv_id_type ,by.y = keggConv_id_type,all.x = T)
@@ -2409,6 +2429,13 @@ if  (!file.exists(Annotation_file)){
               Pathway_info=as.data.frame(Pathway_info)
               colnames(Pathway_info)="info"
               Pathway_info["pathway"]=info
+              
+              
+              Annotation$kegg = sapply(X = Annotation$kegg,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:map' ,replacement = '') )
+              Annotation$kegg = sapply(X = Annotation$kegg,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:' ,replacement = '') )
+              
+              Pathway_info$pathway = sapply(X = Pathway_info$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:map' ,replacement = '') )
+              Pathway_info$pathway = sapply(X = Pathway_info$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:' ,replacement = '') )
               
               
               Annotation = merge.data.frame(Annotation,Pathway_info,by.x ="kegg" ,by.y = "pathway",all.x = T)
@@ -2600,6 +2627,16 @@ if  (!file.exists(Annotation_file)){
           Pathway_info=as.data.frame(Pathway_info)
           colnames(Pathway_info)="pathway_info"
           Pathway_info["pathway"]=info
+          
+          
+          
+          KEGG_KAAS_Data$pathway = sapply(X = KEGG_KAAS_Data$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:map' ,replacement = '') )
+          KEGG_KAAS_Data$pathway = sapply(X = KEGG_KAAS_Data$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:' ,replacement = '') )
+          
+          Pathway_info$pathway = sapply(X = Pathway_info$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:map' ,replacement = '') )
+          Pathway_info$pathway = sapply(X = Pathway_info$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:' ,replacement = '') )
+          
+          
           KEGG_KAAS_Data = merge.data.frame(KEGG_KAAS_Data,Pathway_info,by = "pathway",all.x = T)
           
           run=TRUE
