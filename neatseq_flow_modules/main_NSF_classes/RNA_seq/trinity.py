@@ -337,6 +337,7 @@ class Step_trinity(Step):
                 temp_script = self.script
                 if "recover" in list(self.params.keys()):
                     self.script = ''
+                    self.script += self.get_script_env_path()
                     self.script += "cd  %s \n\n" % os.path.join(use_dir, output_basename)
                     
                     self.script += "{grid_cmd} {cmd_file} \n\n\n".format(grid_cmd = self.params["redir_params"]["--grid_exec"].strip('"').strip("'"),
