@@ -25,7 +25,7 @@ option_list = list(
   make_option(c("--SUBSET_SAMPLES"), type="character", default=NA, 
               help="Use a Subset of Samples from SAMPLE_DATA_FILE. Character vector with samples name [comma sep]", metavar="character"),
   make_option(c("--EXCLUDE_SAMPLES"), type="character", default=NA, 
-              help="Exclude Samples from SAMPLE_DATA_FILE. Character vector with samples name [comma sep]", metavar="character"),			  
+              help="Exclude Samples from SAMPLE_DATA_FILE. Character vector with samples name [comma sep]", metavar="character"),
   make_option(c("-o","--outDir"), type="character", default=NA, 
               help="path to the output directory", metavar="character"),
   make_option(c("-t", "--GENE_ID_TYPE"), type="character", default=NA, 
@@ -40,7 +40,7 @@ option_list = list(
               help="Protein to KO file [Tab delimited file: first column Protein id, second column KO number]", metavar="character"),
   make_option(c("--FILTER_SAMPLES"), action="store_true",default=FALSE, 
               help="Filter Samples with High Number of Missing Values", metavar="character"),
-  make_option(c("--FILTER_PROTEIN"), action="store_true",default=TRUE, 
+  make_option(c("--FILTER_PROTEIN"), action="store_true",default=FALSE, 
               help="Filter Proteins High Number of Missing Values", metavar="character"),
   make_option(c("--FILTER_PROTEIN_CUTOFF"), type="numeric", default = 0, 
               help="The dataset is filtered for proteins that have a maximum of 'X' missing values in at least one condition", metavar="character"),
@@ -55,7 +55,7 @@ option_list = list(
               help="Path to a Rmarkdown File [ usually 'Proteomics_module.Rmd' ]", metavar="character"),
   
   make_option(c("-n", "--NORMALIZATION_TYPE"), type="character", default='VSD', 
-              help="The Normalization Type To Use [VSD , LOG2] The Default is VSD", metavar="character"),
+              help="The Normalization Type To Use [VSD , LOG2 , None] The Default is VSD", metavar="character"),
   make_option(c("-i", "--IMPUTATION_METHOD"), type="character", default='MinProb', 
               help="The imputation method to use [MLE, MinProb, knn, QRILC, man] The Default is MinProb", metavar="character"),
   make_option(c("--IMPUTATION_SHIFT"), type="numeric", default = 1.8, 
@@ -272,7 +272,7 @@ make_se <- function (proteins_unique, columns, expdesign)
         expdesign <- as.data.frame(expdesign)
     rownames(proteins_unique) <- proteins_unique$name
     raw <- proteins_unique[, columns]
-    raw[raw == 0] <- NA
+    raw[raw <= 0] <- NA
     raw <- log2(raw)
     expdesign <- mutate(expdesign, condition = make.names(condition)) %>%
         tidyr::unite(ID, condition, replicate, remove = FALSE)
@@ -2476,7 +2476,7 @@ if  (!file.exists(Annotation_file)){
           pathway = pathway[!stringi::stri_startswith(str = pathway$pathway ,fixed = 'path:ko'),]
           
           KEGG_KAAS_Data = merge.data.frame(KEGG_KAAS_Data,pathway,by.x ="KO" ,by.y = "KO",all.x = T)
-          
+          print(head(KEGG_KAAS_Data))
           run=TRUE
           while (run){
               Pathway_info <- try(keggList("pathway"),silent = T)
@@ -2491,10 +2491,10 @@ if  (!file.exists(Annotation_file)){
           colnames(Pathway_info)="pathway_info"
           Pathway_info["pathway"]=info
           
-          KEGG_KAAS_Data$pathway = sapply(X = KEGG_KAAS_Data$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:map' ,replacement = '') )
+          #KEGG_KAAS_Data$pathway = sapply(X = KEGG_KAAS_Data$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:map' ,replacement = '') )
           KEGG_KAAS_Data$pathway = sapply(X = KEGG_KAAS_Data$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:' ,replacement = '') )
           
-          Pathway_info$pathway = sapply(X = Pathway_info$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:map' ,replacement = '') )
+          #Pathway_info$pathway = sapply(X = Pathway_info$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:map' ,replacement = '') )
           Pathway_info$pathway = sapply(X = Pathway_info$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:' ,replacement = '') )
           
           KEGG_KAAS_Data = merge.data.frame(KEGG_KAAS_Data,Pathway_info,by = "pathway",all.x = T)
@@ -2892,7 +2892,8 @@ if (opt$NORMALIZATION_TYPE == 'VSD'){
     pdf(file = file.path(opt$outDir,"Normalization.pdf"))
     print(P)
     dev.off() 
-}else{
+    write.csv(x = SummarizedExperiment::assay(ProteinGroupsData_SE),file = file.path(opt$outDir,"Normalized_CountData.csv"))
+}else if (opt$NORMALIZATION_TYPE == 'LOG2') {
     countData = SummarizedExperiment::assay(ProteinGroupsData_SE)
     countData = log2(countData)
     if (opt$MEDIAN_NORMALIZATION){
@@ -2904,6 +2905,12 @@ if (opt$NORMALIZATION_TYPE == 'VSD'){
     pdf(file = file.path(opt$outDir,"Normalization.pdf"))
     print(P)
     dev.off() 
+    write.csv(x = SummarizedExperiment::assay(ProteinGroupsData_SE),file = file.path(opt$outDir,"Normalized_CountData.csv"))
+} else{
+    P = plot_normalization(ProteinGroupsData_SE)
+    pdf(file = file.path(opt$outDir,"Normalization.pdf"))
+    print(P)
+    dev.off()
 }
 
 ################## Normalizing the data END######################
@@ -2953,6 +2960,7 @@ if (opt$IMPUTATION_METHOD == 'knn'){
 
 if (Imputed){
     imputed  = SummarizedExperiment::assay(ProteinGroupsData_SE)
+    write.csv(x = imputed,file = file.path(opt$outDir,"Imputed_Normalized_CountData.csv"))
     Only_imputed_ProteinGroupsData_SE = ProteinGroupsData_SE
     imputed[!is.na(raw_Data)] = NA
     SummarizedExperiment::assay(Only_imputed_ProteinGroupsData_SE) = imputed
@@ -3018,9 +3026,10 @@ if (Imputed){
         
         SummarizedExperiment::assay(ProteinGroupsData_SE_BatchRemoved) = limma::removeBatchEffect(Original_countData,
                                                             batch = Original_colData[,BatchEffects[1]])
-        
+        write.csv(x = SummarizedExperiment::assay(ProteinGroupsData_SE_BatchRemoved),file = file.path(opt$outDir,"Batch_Correct_Normalized_CountData.csv"))
       }else{
         SummarizedExperiment::assay(ProteinGroupsData_SE_BatchRemoved) = combat_edata
+        write.csv(x = SummarizedExperiment::assay(ProteinGroupsData_SE_BatchRemoved),file = file.path(opt$outDir,"Batch_Correct_Normalized_CountData.csv"))
       }   
       
     }else{
@@ -3029,9 +3038,11 @@ if (Imputed){
         SummarizedExperiment::assay(ProteinGroupsData_SE_BatchRemoved) = limma::removeBatchEffect(Original_countData,
                                                                    batch = Original_colData[,BatchEffects[1]],
                                                                    batch2= Original_colData[,BatchEffects[2]])
+        write.csv(x = SummarizedExperiment::assay(ProteinGroupsData_SE_BatchRemoved),file = file.path(opt$outDir,"Batch_Correct_Normalized_CountData.csv"))
       }else{
         SummarizedExperiment::assay(ProteinGroupsData_SE_BatchRemoved) =  limma::removeBatchEffect(Original_countData,
                                                                     batch = Original_colData[,BatchEffects[1]])
+        write.csv(x = SummarizedExperiment::assay(ProteinGroupsData_SE_BatchRemoved),file = file.path(opt$outDir,"Batch_Correct_Normalized_CountData.csv"))
       }
     }
   }
