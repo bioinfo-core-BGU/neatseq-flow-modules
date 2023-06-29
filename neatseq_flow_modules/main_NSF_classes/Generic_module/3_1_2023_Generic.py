@@ -91,7 +91,6 @@ Lines for parameter file
                                     #       All the samples inputs File_Types of this argument will be listed delimited by sep. e.g. [sep=,] -i sample1.bam,sample2.bam ... 
                                     # If more then one File_Type was specify the inputs File_Types of this argument will be listed delimited by sep.
                 prefix:             # A prefix for this input argument file name
-                preprefix:          # A prefix for this input argument file location
                 suffix:             # A suffix for this input argument file name
                 use_dirname:        # Use only the input Directory and add suffix for constant file name and prefix to add a string before the input Directory
                 del:                # Delete the files in the input File_Type after the step ends [use to save space for large files you don't need downstream]
@@ -543,7 +542,6 @@ class Step_Generic(Step):
                         
                         prefix       = get_File_Type_data(self.params["inputs"],[inputs,"prefix"])
                         suffix       = get_File_Type_data(self.params["inputs"],[inputs,"suffix"])
-                        preprefix    = get_File_Type_data(self.params["inputs"],[inputs,"preprefix"])
                         
                         prefix = prefix.replace('{{sample_name}}',sample)
                         prefix = prefix.replace('{{project_name}}',self.sample_data["Title"])
@@ -556,13 +554,6 @@ class Step_Generic(Step):
                         
                         if "control" in self.params["scope"]:
                             suffix = suffix.replace('{{control_name}}',Control_Sample)
-                        
-                        preprefix = preprefix.replace('{{sample_name}}',sample)
-                        preprefix = preprefix.replace('{{project_name}}',self.sample_data["Title"])
-                        
-                        if "control" in self.params["scope"]:
-                            preprefix = preprefix.replace('{{control_name}}',Control_Sample)
-                        
                         
                         if len(get_File_Type_data(self.params["inputs"],[inputs,"sep"]))>0:
                             sep=get_File_Type_data(self.params["inputs"],[inputs,"sep"])
@@ -577,9 +568,9 @@ class Step_Generic(Step):
                                 File_Type+=sep
                             if get_File_Type_data(self.params["inputs"],[inputs,"scope"])=="project":
                                 if 'use_dirname' in self.params["inputs"][inputs].keys():
-                                    File_Type += prefix    + os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot]) , (suffix).lstrip(os.sep) )
+                                    File_Type += prefix + os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot]) , (suffix).lstrip(os.sep) )
                                 else:
-                                    File_Type += preprefix + os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot]) , (prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).lstrip(os.sep) )
+                                    File_Type +=          os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot]) , (prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).lstrip(os.sep) )
                                 
                                 if ("del" in list(self.params["inputs"][inputs].keys()) ):
                                     if File_Type.endswith(os.sep):
@@ -590,14 +581,14 @@ class Step_Generic(Step):
                             else:
                                 if get_File_Type_data(self.params["inputs"],[inputs,"scope"])=="control":
                                     if 'use_dirname' in self.params["inputs"][inputs].keys():
-                                        File_Type += prefix    + os.path.join(os.path.dirname(     inputs_sample_data[Control_Sample][File_Type_slot]   ) , (suffix).lstrip(os.sep) )
+                                        File_Type += prefix + os.path.join(os.path.dirname(     inputs_sample_data[Control_Sample][File_Type_slot]   ) , (suffix).lstrip(os.sep) )
                                     else:
-                                        File_Type += preprefix + os.path.join(os.path.dirname(     inputs_sample_data[Control_Sample][File_Type_slot]   ) , (prefix + os.path.basename( inputs_sample_data[Control_Sample][File_Type_slot]       ) + suffix).lstrip(os.sep) )
+                                        File_Type +=          os.path.join(os.path.dirname(     inputs_sample_data[Control_Sample][File_Type_slot]   ) , (prefix + os.path.basename( inputs_sample_data[Control_Sample][File_Type_slot]       ) + suffix).lstrip(os.sep) )
                                 else:
                                     if 'use_dirname' in self.params["inputs"][inputs].keys():
-                                        File_Type += prefix    + os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]   ) , (suffix).lstrip(os.sep) )
+                                        File_Type += prefix + os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]   ) , (suffix).lstrip(os.sep) )
                                     else:
-                                        File_Type += preprefix + os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]   ) , (prefix + os.path.basename( inputs_sample_data[sample][File_Type_slot]       ) + suffix).lstrip(os.sep) )
+                                        File_Type +=          os.path.join(os.path.dirname(     inputs_sample_data[sample][File_Type_slot]   ) , (prefix + os.path.basename( inputs_sample_data[sample][File_Type_slot]       ) + suffix).lstrip(os.sep) )
                                     
                                 if ("del" in list(self.params["inputs"][inputs].keys()) ):
                                     if File_Type.endswith(os.sep):
@@ -777,7 +768,6 @@ class Step_Generic(Step):
                         
                         prefix    = get_File_Type_data(self.params["inputs"],[inputs,"prefix"])
                         suffix    = get_File_Type_data(self.params["inputs"],[inputs,"suffix"])
-                        preprefix = get_File_Type_data(self.params["inputs"],[inputs,"preprefix"])
                         
                         prefix = prefix.replace('{{sample_name}}',self.sample_data["Title"])
                         prefix = prefix.replace('{{project_name}}',self.sample_data["Title"])
@@ -785,24 +775,19 @@ class Step_Generic(Step):
                         suffix = suffix.replace('{{sample_name}}',self.sample_data["Title"])
                         suffix = suffix.replace('{{project_name}}',self.sample_data["Title"])
                         
-                        preprefix = preprefix.replace('{{sample_name}}', self.sample_data["Title"])
-                        preprefix = preprefix.replace('{{project_name}}',self.sample_data["Title"])
-                            
-                        
                         for File_Type_slot in str(get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])).replace("'",'').replace(" ",'').strip('[').strip(']').strip('"').split(','):
                             if len(File_Type)>0:
                                 File_Type+=sep
                             
                             if 'use_dirname' in self.params["inputs"][inputs].keys():
-                                File_Type+=     prefix    + os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  , (suffix).lstrip(os.sep) )
+                                File_Type+=     prefix + os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  , (suffix).lstrip(os.sep) )
                             else:
-                                File_Type+=     preprefix + os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  , ( prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).lstrip(os.sep) )
+                                File_Type+=              os.path.join(os.path.dirname(inputs_sample_data["project_data"][File_Type_slot])  , ( prefix + os.path.basename(inputs_sample_data["project_data"][File_Type_slot]) + suffix).lstrip(os.sep) )
                     else:
                         for sample in self.sample_data["samples"]:
                             
                             prefix    = get_File_Type_data(self.params["inputs"],[inputs,"prefix"])
                             suffix    = get_File_Type_data(self.params["inputs"],[inputs,"suffix"])
-                            preprefix = get_File_Type_data(self.params["inputs"],[inputs,"preprefix"])
                             
                             prefix = prefix.replace('{{sample_name}}',sample)
                             prefix = prefix.replace('{{project_name}}',self.sample_data["Title"])
@@ -810,16 +795,13 @@ class Step_Generic(Step):
                             suffix = suffix.replace('{{sample_name}}',sample)
                             suffix = suffix.replace('{{project_name}}',self.sample_data["Title"])
                             
-                            preprefix = preprefix.replace('{{sample_name}}',sample)
-                            preprefix = preprefix.replace('{{project_name}}',self.sample_data["Title"])
-                            
                             for File_Type_slot in str(get_File_Type_data(self.params["inputs"],[inputs,"File_Type"])).replace("'",'').replace(" ",'').strip('[').strip(']').strip('"').split(','):
                                 if len(File_Type)>0:
                                     File_Type+=sep
                                 if 'use_dirname' in self.params["inputs"][inputs].keys():
-                                    File_Type+=   prefix    + os.path.join(os.path.dirname(        inputs_sample_data[sample][File_Type_slot])  , (suffix).lstrip(os.sep) )
+                                    File_Type+=   prefix + os.path.join(os.path.dirname(        inputs_sample_data[sample][File_Type_slot])  , (suffix).lstrip(os.sep) )
                                 else:
-                                    File_Type+=   preprefix + os.path.join(os.path.dirname(        inputs_sample_data[sample][File_Type_slot])  , ( prefix + os.path.basename(        inputs_sample_data[sample][File_Type_slot]) + suffix).lstrip(os.sep) )
+                                    File_Type+=            os.path.join(os.path.dirname(        inputs_sample_data[sample][File_Type_slot])  , ( prefix + os.path.basename(        inputs_sample_data[sample][File_Type_slot]) + suffix).lstrip(os.sep) )
 
                     if inputs.startswith("Empty".lower()):
                         inputs_script +="%s   \\\n\t"    % File_Type
@@ -827,6 +809,8 @@ class Step_Generic(Step):
                         inputs_script +="%s%%s%%%%s \\\n\t" % inputs \
                                                                 % self.params['arg_separator'] \
                                                                 % File_Type
+            
+            
         
         if len(get_File_Type_data(self.params,["inputs"]))>0:
             # Generating delete script for input File_Types if specified 
