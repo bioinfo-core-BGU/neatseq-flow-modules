@@ -2630,10 +2630,10 @@ if  (!file.exists(Annotation_file)){
           
           
           
-          KEGG_KAAS_Data$pathway = sapply(X = KEGG_KAAS_Data$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:map' ,replacement = '') )
+          # KEGG_KAAS_Data$pathway = sapply(X = KEGG_KAAS_Data$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:map' ,replacement = '') )
           KEGG_KAAS_Data$pathway = sapply(X = KEGG_KAAS_Data$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:' ,replacement = '') )
           
-          Pathway_info$pathway = sapply(X = Pathway_info$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:map' ,replacement = '') )
+          # Pathway_info$pathway = sapply(X = Pathway_info$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:map' ,replacement = '') )
           Pathway_info$pathway = sapply(X = Pathway_info$pathway,FUN = function(X) stringr::str_replace(string = X ,pattern = 'path:' ,replacement = '') )
           
           
