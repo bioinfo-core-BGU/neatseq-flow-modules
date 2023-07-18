@@ -155,6 +155,7 @@ if (opt$DGE_Clusters_vs_all) {
 	file = paste(opt$outDir,opt$Sample,'/FindMarkers_vs_all/DGE_Markers.csv',sep='')
 	if (any(opt$Force,!file.exists(file))) {
 	  writeLog(logfile, paste("Running FindAllMarkers..."))
+	  obj_seurat = PrepSCTFindMarkers(object = obj_seurat)
 	  DGE_Markers <- FindAllMarkers(obj_seurat, only.pos = opt$Not_only_pos, min.pct = 0.1, logfc.threshold = opt$logfc_threshold,
 									test.use = opt$test_use, verbose = FALSE)
 	  writeLog(logfile, paste("Finished FindAllMarkers, Saving results..."))
@@ -217,6 +218,7 @@ if (opt$DGE_Clusters_vs_all) {
 	AllClustes_sig = row.names(counts[flag,])
 	if (length(AllClustes_sig)>0){
 		sig_genes[["All_Clustes"]] <- AllClustes_sig
+		write.csv(as.data.frame(AllClustes_sig),file = paste(opt$outDir,opt$Sample,'/FindMarkers_vs_all/Genes_expressed_in_more_then',opt$AllClustersCellCutoff,'.csv',sep=''))
 	}
 	
 	# GO Enrichment
@@ -305,7 +307,9 @@ if (opt$DGE_Within_Clusters) {
 												# logfc.threshold = opt$logfc_threshold, test.use = opt$test_use, verbose = FALSE)
 				  cluster_obj         = obj_seurat[,obj_seurat@active.ident==cluster]
 				  Idents(cluster_obj) = cluster_obj@meta.data[DGE_GroupBy]
+                  cluster_obj = PrepSCTFindMarkers(object = cluster_obj)
 				  cluster_counts = GetAssayData(object = cluster_obj, slot = "data", assay = "SCT")
+				  
 				  DGE_Markers <- FindMarkers(cluster_obj, ident.1 = ident1,ident.2 = ident2, only.pos = opt$Not_only_pos, min.pct = 0.5, 
 												logfc.threshold = opt$logfc_threshold, test.use = opt$test_use, verbose = FALSE)
 				  
@@ -458,6 +462,7 @@ if (opt$DGE_Pairwise) {
 	file = paste(dir_path,'DGE_',ident1,'_vs_',ident2,'_Markers.csv',sep='')
 	if (any(opt$Force,!file.exists(file))) {
 	  writeLog(logfile, paste("Running FindMarkers: ",ident1,' vs. ',ident2,sep=''))
+	  obj_seurat = PrepSCTFindMarkers(object = obj_seurat )
 	  DGE_Markers <- FindMarkers(obj_seurat, ident.1 = ident1, ident.2 = ident2, only.pos = opt$Not_only_pos, min.pct = 0.1, 
 									logfc.threshold = opt$logfc_threshold, test.use = opt$test_use, verbose = FALSE)
 	  DGE_Markers$gene = rownames(DGE_Markers)

@@ -20,6 +20,8 @@ option_list = list(
               help="Path to file with location of feature files to plot", metavar = "character"),
   make_option(c("--UMAP"), action="store_true", default = FALSE,
               help="Plot UMAP", metavar = "character"),
+  make_option(c("--RUNUMAP"), action="store_true", default = FALSE,
+              help="Calculate  a New UMAP", metavar = "character"),
   make_option(c("--reduction"), type="character", default = NA,
               help="Which dimensional reduction to use in FindNeighbors and RunUMAP (Default is PCA)", metavar = "character"),
   make_option(c("--dims"), type="numeric", default = 50,
@@ -175,14 +177,14 @@ if (opt$Heatmap) {
   
   
   # ComplexHeatmap
-  col_fun = circlize::colorRamp2(c(-5,0,5), c('blue','white','red'))
+  col_fun = circlize::colorRamp2(c(-5,0,5), c('yellow','black','purple'))
   heat_map = ComplexHeatmap::Heatmap(matrix = counts_scaled, cluster_rows = FALSE, cluster_columns = FALSE,
                                    col = col_fun, name = "Heatmap", show_column_names = FALSE, row_title_rot = 0,
                                    row_names_side = "right", row_names_gp = gpar(fontsize = 12), border = TRUE, show_heatmap_legend = opt$Show_Heatmap_Legend,
                                    column_split = col_clusters, row_split = row_clusters, row_gap = grid::unit(3, "mm"), column_gap = grid::unit(4, "mm"),
                                    top_annotation = HeatmapAnnotation(foo = anno_block(gp = gpar(fill = 1:length(unique(col_clusters))))),
                                    left_annotation = rowAnnotation(foo = anno_block(gp = gpar(fill = 1:length(unique(row_clusters))))))
-  jpeg(filename = paste(opt$outDir,opt$Sample,"/",src,"/",opt$Sample,"_features_heatmap.jpeg", sep = ""), width = 2000, height = 1000)
+  pdf(file = paste(opt$outDir,opt$Sample,"/",src,"/",opt$Sample,"_features_heatmap.pdf", sep = ""), width = 25, height = 15)
   draw(heat_map)
   dev.off()
   
@@ -198,7 +200,7 @@ if (opt$Heatmap) {
                                    column_split = col_smallclusters, row_split = row_clusters, row_gap = grid::unit(3, "mm"), column_gap = grid::unit(4, "mm"),
                                    top_annotation = HeatmapAnnotation(foo = anno_block(gp = gpar(fill = 1:length(unique(col_smallclusters))))),
                                    left_annotation = rowAnnotation(foo = anno_block(gp = gpar(fill = 1:length(unique(row_clusters))))))
-  jpeg(filename = paste(opt$outDir,opt$Sample,"/",src,"/",opt$Sample,"_features_heatmap_small_clusters.jpeg", sep = ""), width = 2000, height = 1000)
+  pdf(file = paste(opt$outDir,opt$Sample,"/",src,"/",opt$Sample,"_features_heatmap_small_clusters.pdf", sep = ""), width = 25, height = 15)
   draw(heat_map_small)
   dev.off()
   rm('heat_map')
@@ -224,8 +226,8 @@ if (opt$FeaturePlot) {
       feat2use = feat2use[feat2use %in% rownames(obj_seurat)]
       if (length(feat2use)>0) {
         ct_plt <- FeaturePlot(obj_seurat, features = feat2use)
-        jpeg(paste(opt$outDir,opt$Sample,"/",src,"/FeaturePlots/",opt$Sample,'_',stringr::str_replace(ct,' ','_'),'_FeaturePlot.jpeg',sep=''), 
-             width = 1600, height = 1000)
+        pdf(file = paste(opt$outDir,opt$Sample,"/",src,"/FeaturePlots/",opt$Sample,'_',stringr::str_replace(ct,' ','_'),'_FeaturePlot.pdf',sep=''), 
+             width = 25, height = 15)
         print(ct_plt)
         dev.off()
       } else {
@@ -255,8 +257,8 @@ if (opt$ViolinPlot) {
       feat2use = feat2use[feat2use %in% rownames(obj_seurat)]
       if (length(feat2use)>0) {
         ct_plt <- VlnPlot(obj_seurat, features = feat2use)
-        jpeg(paste(opt$outDir,opt$Sample,"/",src,"/ViolinPlots/",opt$Sample,'_',stringr::str_replace(ct,' ','_'),'_ViolinPlot.jpeg',sep=''), 
-             width = 1600, height = 1000)
+        pdf(paste(opt$outDir,opt$Sample,"/",src,"/ViolinPlots/",opt$Sample,'_',stringr::str_replace(ct,' ','_'),'_ViolinPlot.pdf',sep=''), 
+             width = 25, height = 15)
         print(ct_plt)
         dev.off()
       } else {
@@ -285,9 +287,9 @@ if (opt$DotPlot) {
       feat2use = featureData[featureData$CellType==ct,'Feature']
       feat2use = feat2use[feat2use %in% rownames(obj_seurat)]
       if (length(feat2use)>0) {
-        ct_plt <- DotPlot(obj_seurat, features = feat2use)
-        jpeg(paste(opt$outDir,opt$Sample,"/",src,"/DotPlots/",opt$Sample,'_',stringr::str_replace(ct,' ','_'),'_DotPlot.jpeg',sep=''), 
-             width = 1600, height = 1000)
+        ct_plt <- DotPlot(obj_seurat, features = unique(feat2use))
+        pdf(paste(opt$outDir,opt$Sample,"/",src,"/DotPlots/",opt$Sample,'_',stringr::str_replace(ct,' ','_'),'_DotPlot.pdf',sep=''), 
+             width = 25, height = 15)
         print(ct_plt)
         dev.off()
       } else {
@@ -356,11 +358,31 @@ if (opt$StackedViolinPlot) {
       dir.create(paste(opt$outDir,opt$Sample,"/",src,sep=''))
 	feat2use = featureData$Feature[featureData$Feature %in% rownames(obj_seurat)]
 	vlnplt = StackedVlnPlot(obj = obj_seurat, features = feat2use)
-	jpeg(filename = paste(opt$outDir,opt$Sample,"/",src,"/",opt$Sample,"_StackedViolinPlot.jpeg", sep = ""), width = 1200, height = 1600)
+	pdf(file = paste(opt$outDir,opt$Sample,"/",src,"/",opt$Sample,"_StackedViolinPlot.pdf", sep = ""), width = 25, height = 15)
 	print(vlnplt)
 	dev.off()
   }
 }
+
+if (opt$RUNUMAP){
+    writeLog(logfile, paste("Running UMAP..."))
+	# Reduction usage
+	if (is.na(opt$reduction)) {
+	  writeLog(logfile, paste("Using 'pca' dimensional reduction as input for FindNeighbors and RunUMAP",sep=''))
+	  use_reducs = 'pca'
+	} else {
+	  if (opt$reduction %in% names(obj_seurat@reductions)) {
+		writeLog(logfile, paste("Using '",opt$reduction,"' dimensional reduction as input for FindNeighbors and RunUMAP",sep=''))
+		use_reducs = opt$reduction
+	  } else {
+		writeLog(logfile, paste("ERROR: Unable to find reduction '",opt$reduction,"'. Available reductions: ",paste(names(obj_seurat@reductions),collapse=','),sep=''))
+		stop()
+	  }
+	}
+	obj_seurat <- RunUMAP(obj_seurat, reduction = use_reducs, dims = 1:opt$dims)
+	
+}
+
 
 if (opt$UMAP) {
 	  writeLog(logfile, paste("Plotting UMAP...",sep=''))
@@ -378,8 +400,6 @@ if (opt$UMAP) {
 		  }
 		}
 
-	writeLog(logfile, paste("Running UMAP..."))
-	obj_seurat <- RunUMAP(obj_seurat, reduction = use_reducs, dims = 1:opt$dims)
 	
 	# Plots
 	# legend_pos = "none"
@@ -388,11 +408,76 @@ if (opt$UMAP) {
 	writeLog(logfile, paste("Plotting reduction figures..."))
 	plt1 <- DimPlot(obj_seurat, reduction = "umap", label = T, pt.size = 1.5, label.size = 8)+
 	  theme(legend.position = legend_pos)
-	jpeg(paste(opt$outDir,opt$Sample,"_umapByCluster.jpeg", sep = ""), 
-		 width = 1500, height = 1250)
+	pdf(paste(opt$outDir,opt$Sample,"_umapByCluster.pdf", sep = ""),width = 20, height = 15)
 	print(plt1)
 	dev.off()
 }
+
+
+opt$ID = "Test"
+
+# Clusters distribution per Sample
+samples = unique(obj_seurat$orig.ident)
+samples = samples[order(samples)]
+df = data.frame()
+for (sample in samples) {
+  sample_df = data.frame(table(Idents(obj_seurat)[obj_seurat$orig.ident==sample]))
+  colnames(sample_df) = c('Cluster','Cells')
+  sample_df$Ratio = sample_df$Cells / length(Idents(obj_seurat)[obj_seurat$orig.ident==sample])
+  sample_df$Sample = sample
+  df = rbind(df, sample_df)
+}
+samples_plot = ggplot(df, aes(x=Cluster,y=Ratio,fill=Sample)) +
+                      geom_col(position = position_dodge()) +
+                      ggtitle("Clusters distribution per Sample")+
+                      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+ggplot2::ggsave(filename = paste(opt$outDir,opt$ID,'_ClustersDistPerSample.pdf', sep = ""),
+                samples_plot, dpi=600, width=12, height=6,device='pdf')
+
+samples_plot = ggplot(df)+ aes(x=Sample,y=Ratio,fill=Cluster) + 
+               geom_bar(stat="identity", color = 'white', size = 0.5)+
+               ggtitle("Clusters distribution per Sample")
+               
+
+# if (length(unique( df$Cluster))<12){
+    # samples_plot = samples_plot + scale_fill_brewer(palette="Paired")
+# }
+
+ggplot2::ggsave(filename = paste(opt$outDir,opt$ID,'_PerSample_ClustersDist.pdf', sep = ""),
+                samples_plot, dpi=600, width=12, height=6,device='pdf')
+write.csv(x = df,file = paste(opt$outDir,opt$ID,'ClustersDist.csv', sep = ""))
+
+# Samples distribution per Cluster
+# clusters=as.numeric(as.vector(unique(Idents(obj_seurat))))
+clusters=unique(Idents(obj_seurat))
+# clusters = clusters[order(clusters)]
+df = data.frame()
+for (cluster in clusters) {
+  # cluster_df = data.frame(table(obj_seurat$orig.ident[obj_seurat$seurat_clusters==cluster]))
+  cluster_df = data.frame(table(obj_seurat$orig.ident[Idents(obj_seurat)==cluster]))
+  colnames(cluster_df) = c('Sample','Cells')
+  cluster_df$Ratio = cluster_df$Cells / length(obj_seurat$orig.ident[Idents(obj_seurat)==cluster])
+  cluster_df$Cluster = cluster
+  df = rbind(df, cluster_df)
+}
+
+clusters_plot = ggplot(df, aes(x=Cluster,y=Ratio,fill=Sample)) +
+                       geom_col(position = position_stack()) +
+                       geom_hline(yintercept = 0.5, lty = "dashed") +
+                       # scale_x_continuous("Cluster", labels = as.character(clusters), breaks = clusters) +
+                       ggtitle("Samples distribution per Cluster")+
+                       theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+  
+ggplot2::ggsave(filename = paste(opt$outDir,opt$ID,'_SamplesDistPerCluster.pdf', sep = ""),
+                clusters_plot, dpi=600, width=12, height=6,device='pdf')
+
+
+
+
+
+
 
 
 writeLog(logfile, paste("Finished",sep=''))

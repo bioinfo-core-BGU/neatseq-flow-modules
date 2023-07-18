@@ -27,6 +27,8 @@ option_list = list(
               help="Path to file with old and new identities (two-column matrix)", metavar = "character"),
   make_option(c("--Set_Ident_by_Marker"), type="character", default = NA,
               help="Set identity of cells based on marker expression using template: <MARKER>|<CUTOFF>|<Idents>|<New_Ident>", metavar = "character"),
+  make_option(c("--Active_Assay"), type="character", default = "RNA",
+              help="Set the Active_Assay for this analysis, default = RNA" , metavar = "character"),
   make_option(c("--CleanClusters"), action="store_true", default = FALSE,
               help="Remove clustering information from meta-data (Default is False)", metavar = "character"),
   make_option(c("--Remove_Doublets"), type="character", default = NA,
@@ -52,6 +54,12 @@ print.data.frame(as.data.frame(x = unlist(opt),row.names = names(opt)),right = F
 if (!is.na(opt$inputRDS)) {
   writeLog(logfile, paste("Importing Seurat RDS object...",sep=''))
   obj_seurat <- readRDS(opt$inputRDS)
+  if ( opt$Active_Assay  %in% Seurat::Assays(obj_seurat)){
+      Seurat::DefaultAssay(obj_seurat) <- opt$Active_Assay
+    }else{
+      writeLog(logfile, paste("ERROR: Unable to find Assay '",opt$Active_Assay,"'. Available Assays: ",paste(names(Seurat::Assays(obj_seurat)),collapse=','),sep=''))
+      stop()
+    }
 } else {
   writeLog(logfile, paste("ERROR: Seurat object RDS file must be specified [--inputRDS]"))
   stop()
@@ -154,6 +162,7 @@ if (!is.na(opt$Set_Ident_by_Marker)) {
     writeLog(logfile, paste("Detected marker: ",marker,sep=''))
   } else {
     writeLog(logfile, paste("ERROR: Unable to find marker '",marker,"'",sep=''))
+	writeLog(logfile, rownames(obj_seurat))
 	stop()
   }
   threshold = pattern_vector[2]
@@ -171,7 +180,9 @@ if (!is.na(opt$Set_Ident_by_Marker)) {
   fetch_data = FetchData(obj_seurat, vars = c('ident',marker))
   cells2rename = rownames(fetch_data[fetch_data$ident %in% idents2rename & fetch_data[[marker]]>threshold,])
   if (length(cells2rename)==0) {
-    writeLog(logfile, paste("ERROR: No cells within idents '",old_idents,"' express '",marker,"' above ",threshold,sep=''))
+    writeLog(logfile, paste("ERROR: No cells within idents '",old_idents,
+	                        "' express '",marker,"' above ",threshold," Max:",max(fetch_data[fetch_data$ident %in% idents2rename,marker]),
+	                        " Min:",min(fetch_data[fetch_data$ident %in% idents2rename,marker]),sep=''))
 	stop()
   }
   writeLog(logfile, paste("Found ",length(cells2rename)," cells, renaming to '",new_ident,"'",sep=''))

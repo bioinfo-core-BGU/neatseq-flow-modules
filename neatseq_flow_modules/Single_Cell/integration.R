@@ -232,13 +232,13 @@ if (opt$SCTransform) {
     
     # JackStraw Plots
     plt1 <- JackStrawPlot(obj_i, dims = 1:SigDims)
-    jpeg(paste(opt$outDir,opt$ID,"/",opt$ID,"_jackstrawPlot.jpeg", sep = ""), 
-         width = 1300, height = 750)
+    pdf(paste(opt$outDir,opt$ID,"/",opt$ID,"_jackstrawPlot.pdf", sep = ""), 
+         width = 20, height = 15)
     print(plt1)
     dev.off()
     plt2 <- ElbowPlot(obj_i, ndims = SigDims)
-    jpeg(paste(opt$outDir,opt$ID,"/",opt$ID,"_elbowPlot.jpeg", sep = ""), 
-         width = 1000, height = 750)
+    pdf(paste(opt$outDir,opt$ID,"/",opt$ID,"_elbowPlot.pdf", sep = ""), 
+         width = 20, height = 15)
     print(plt2)
     dev.off()
   } else {
@@ -258,7 +258,7 @@ if (opt$SCTransform) {
   writeLog(logfile, paste("Plotting Harmony figures..."))
   p1 <- DimPlot(object = integ_obj, reduction = "harmony", pt.size = 0.7, group.by = "orig.ident")
   p2 <- VlnPlot(object = integ_obj, features = "harmony_1", group.by = "orig.ident", pt.size = 0)
-  jpeg(paste(opt$outDir,opt$ID,"/harmony_PCs.jpeg", sep = ""), width = 1500, height = 1500)
+  pdf(paste(opt$outDir,opt$ID,"/harmony_PCs.pdf", sep = ""), width = 20, height = 15)
   cowplot::plot_grid(p1,p2)
   dev.off()
   
@@ -270,14 +270,17 @@ if (opt$SCTransform) {
     FindClusters(resolution = opt$Resolution)
 }
 
+
+legend_pos = "right"
 writeLog(logfile, paste("Plotting Integrated object figures..."))
-p1 <- DimPlot(integ_obj, reduction = "umap", group.by = "orig.ident", pt.size = 1.5)
+p1 <- DimPlot(integ_obj, reduction = "umap", group.by = "orig.ident", pt.size = 1.5)+
+              theme(legend.position = legend_pos)
 p2 <- DimPlot(integ_obj, reduction = "umap", label = T, pt.size = 1.5, label.size = 8)+
   ggplot2::theme(legend.position = "none")
-jpeg(paste(opt$outDir,opt$ID,'/',opt$ID,'_umapBySample.jpeg', sep = ""), width = 1500, height = 1500)
+pdf(paste(opt$outDir,opt$ID,'/',opt$ID,'_umapBySample.pdf', sep = ""), width = 20, height = 15)
 print(p1)
 dev.off()
-jpeg(paste(opt$outDir,opt$ID,'/',opt$ID,'_umapByCluster.jpeg', sep = ""), width = 1500, height = 1500)
+pdf(paste(opt$outDir,opt$ID,'/',opt$ID,'_umapByCluster.pdf', sep = ""), width = 20, height = 15)
 print(p2)
 dev.off()
 
@@ -295,8 +298,19 @@ for (sample in samples) {
 samples_plot = ggplot(df, aes(x=Cluster,y=Ratio,fill=Sample)) +
   geom_col(position = position_dodge()) +
   ggtitle("Clusters distribution per Sample")
-ggplot2::ggsave(filename = paste(opt$outDir,opt$ID,'/',opt$ID,'_ClustersDistPerSample.jpeg', sep = ""),
-                samples_plot, dpi=600, width=12, height=6)
+ggplot2::ggsave(filename = paste(opt$outDir,opt$ID,'/',opt$ID,'_ClustersDistPerSample.pdf', sep = ""),
+                samples_plot, dpi=600, width=12, height=6,device='pdf')
+
+samples_plot = ggplot(df)+ aes(x=Sample,y=Ratio,fill=Cluster) + 
+               geom_bar(stat="identity", color = 'white', size = 0.5)+
+               ggtitle("Clusters distribution per Sample")
+
+if (length(unique( df$Cluster))<12){
+    samples_plot = samples_plot + scale_fill_brewer(palette="Paired")
+}
+ggplot2::ggsave(filename = paste(opt$outDir,opt$ID,'/',opt$ID,'_PerSample_ClustersDist.pdf', sep = ""),
+                samples_plot, dpi=600, width=12, height=6,device='pdf')
+write.csv(x = df,file = paste(opt$outDir,opt$ID,'/',opt$ID,'ClustersDist.csv', sep = ""))
 
 # Samples distribution per Cluster
 clusters=as.numeric(as.vector(unique(integ_obj$seurat_clusters)))
@@ -314,8 +328,8 @@ clusters_plot = ggplot(df, aes(x=Cluster,y=Ratio,fill=Sample)) +
   geom_hline(yintercept = 0.5, lty = "dashed") +
   scale_x_continuous("Cluster", labels = as.character(clusters), breaks = clusters) +
   ggtitle("Samples distribution per Cluster")
-ggplot2::ggsave(filename = paste(opt$outDir,opt$ID,'/',opt$ID,'_SamplesDistPerCluster.jpeg', sep = ""),
-                clusters_plot, dpi=600, width=12, height=6)
+ggplot2::ggsave(filename = paste(opt$outDir,opt$ID,'/',opt$ID,'_SamplesDistPerCluster.pdf', sep = ""),
+                clusters_plot, dpi=600, width=12, height=6,device='pdf')
 
 # Save results
 writeLog(logfile, paste("Saving results..."))
