@@ -29,9 +29,14 @@ Requires
     * self.sample_data["project_data"]["hmmscan.prot"])
 * Results of ``signalp`` of protein file using signalp program: [ optional ]
     * self.sample_data["project_data"]["signalp"])
-* Results of ``rnammer`` of protein file using signalp program: [ optional ]
+* Results of ``rnammer``/``infernal`` transcripts of file: [ optional, use Infernal with Trinotate-V4 ]
     * self.sample_data["project_data"]["rnammer"])
-    
+* Results of ``tmhmm`` of protein file using TmHMM program: [ optional ]
+    * self.sample_data["project_data"]["tmhmm"])
+* Results of ``eggnog`` of protein file using EggnogMapper program: [ optional only Trinotate-V4]
+    * self.sample_data["project_data"]["eggnog"])
+
+
 .. Attention:: If ``scope`` is set to ``sample``, all of the above files should be in the sample scope!
 
     
@@ -54,6 +59,7 @@ Parameters that can be set
     "scope", "sample|project", ""
     "sqlitedb","","Path to Trinotate sqlitedb"
     "cp_sqlitedb","","Create local copy of the sqlitedb, before loading teh data (recommended)"
+    "ver4","","Indicate you are using Trinotate V4"
     
 Lines for parameter file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -70,6 +76,7 @@ Lines for parameter file
         scope:              project
         sqlitedb:           {Vars.databases.trinotate.sqlitedb}
         cp_sqlitedb:    
+        ver4:
         
 References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -173,24 +180,34 @@ class Step_Trinotate(Step):
         self.sqlitedb = self.params["sqlitedb"]
 
         self.script = self.get_setenv_part()
-
+        
+        if "ver4" in self.params:
+            v4prefix = "--"
+        else:
+            v4prefix =  ""
+            
         # If requested copy, create copy and change active sqlitedb
         if "cp_sqlitedb" in self.params:
             self.script += "cp {source} {dest}\n\n".format(source=self.params["sqlitedb"],
                                                            dest=os.path.join(use_dir,os.path.basename(self.params["sqlitedb"])))
             # Setting sqlitedb to new copy of db:
             self.sqlitedb = os.path.join(use_dir, os.path.basename(self.params["sqlitedb"]))
-            
-        trino_cmd_sqlite = "{script} \\\n\t{sqlitedb} \\\n\t".format(script=self.params["script_path"],
-                                                                     sqlitedb=self.sqlitedb)
+        if "ver4" in self.params:
+            trino_cmd_sqlite = "{script} \\\n\t--db {sqlitedb} \\\n\t".format(script=self.params["script_path"],
+                                                                         sqlitedb=self.sqlitedb)
+        else:
+            trino_cmd_sqlite = "{script} \\\n\t{sqlitedb} \\\n\t".format(script=self.params["script_path"],
+                                                                         sqlitedb=self.sqlitedb)
 
         ################################ Step 1. init
         self.script += "### Step 1: init db\n\n"
         self.script += """
-{trino_cmd}init \\
+{trino_cmd} \\
+\t {v4prefix}init \\
 \t--gene_trans_map {trans_map} \\
 \t--transcript_fasta {trans_fa} \\
 \t--transdecoder_pep  {pep_fa}\n\n""".format(trino_cmd = trino_cmd_sqlite,
+                                             v4prefix  = v4prefix,
                                              trans_map = self.sample_data["project_data"]["gene_trans_map"],
                                              trans_fa  = self.sample_data["project_data"]["transcripts.fasta.nucl"],
                                              pep_fa    = self.sample_data["project_data"]["fasta.prot"])
@@ -199,34 +216,63 @@ class Step_Trinotate(Step):
         ################################ Step 2. Load
         self.script += "### Step 2: Load reports\n\n"
         self.script += """
-{trino_cmd}LOAD_swissprot_blastp {blastp} \n
-{trino_cmd}LOAD_swissprot_blastx {blastx} \n
+{trino_cmd}{v4prefix}LOAD_swissprot_blastp {blastp} \n
+{trino_cmd}{v4prefix}LOAD_swissprot_blastx {blastx} \n
 
 """.format(trino_cmd = trino_cmd_sqlite,
-           blastp  = self.sample_data["project_data"]["blast.prot"],
-           blastx = self.sample_data["project_data"]["blast.nucl"])
+           v4prefix  = v4prefix,
+           blastp    = self.sample_data["project_data"]["blast.prot"],
+           blastx    = self.sample_data["project_data"]["blast.nucl"])
 
         if "hmmscan.prot" in self.sample_data["project_data"]:
-            self.script += "{trino_cmd}LOAD_pfam {pfam}\n\n".format(trino_cmd = trino_cmd_sqlite,
-                                                                    pfam   = self.sample_data["project_data"]["hmmscan.prot"])
+            self.script += "{trino_cmd}{v4prefix}LOAD_pfam {pfam}\n\n".format(trino_cmd = trino_cmd_sqlite,
+                                                                              v4prefix  = v4prefix,
+                                                                              pfam      = self.sample_data["project_data"]["hmmscan.prot"])
 
         if "rnammer" in self.sample_data["project_data"]:
-            self.script += "{trino_cmd}LOAD_rnammer {rnammer}\n\n".format(trino_cmd=trino_cmd_sqlite,
-                                                                    rnammer=self.sample_data["project_data"]["rnammer"])
+            if "ver4" in self.params:
+                self.script += "{trino_cmd}{v4prefix}LOAD_infernal {rnammer}\n\n".format(trino_cmd = trino_cmd_sqlite,
+                                                                                         v4prefix  = v4prefix,
+                                                                                         rnammer   = self.sample_data["project_data"]["rnammer"])
+            else:
+                self.script += "{trino_cmd}LOAD_rnammer {rnammer}\n\n".format(trino_cmd = trino_cmd_sqlite,
+                                                                              rnammer   = self.sample_data["project_data"]["rnammer"])
 
         if "signalp" in self.sample_data["project_data"]:
-            self.script += "{trino_cmd}LOAD_signalp {signalp}\n\n".format(trino_cmd=trino_cmd_sqlite,
+            if "ver4" in self.params:
+                self.script += "{trino_cmd}{v4prefix}LOAD_signalp6 {signalp}\n\n".format(trino_cmd = trino_cmd_sqlite,
+                                                                              v4prefix  = v4prefix,
+                                                                              signalp   = self.sample_data["project_data"]["signalp"])
+            else:
+                self.script += "{trino_cmd}LOAD_signalp {signalp}\n\n".format(trino_cmd=trino_cmd_sqlite,
                                                                     signalp=self.sample_data["project_data"]["signalp"])
-        
 
+        if "tmhmm" in self.sample_data["project_data"]:
+            if "ver4" in self.params:
+                self.script += "{trino_cmd}{v4prefix}LOAD_tmhmmv2 {tmhmm}\n\n".format(trino_cmd = trino_cmd_sqlite,
+                                                                                      v4prefix  = v4prefix,
+                                                                                      tmhmm     = self.sample_data["project_data"]["tmhmm"])
+            else:
+                self.script += "{trino_cmd}LOAD_tmhmm {tmhmm}\n\n".format(trino_cmd=trino_cmd_sqlite,
+                                                                          tmhmm=self.sample_data["project_data"]["tmhmm"])
+                                                                          
+                                                                          
+        
+        if "eggnog" in self.sample_data["project_data"]:
+            if "ver4" in self.params:
+                self.script += "{trino_cmd}{v4prefix}LOAD_EggnogMapper {eggnog}\n\n".format(trino_cmd = trino_cmd_sqlite,
+                                                                                      v4prefix  = v4prefix,
+                                                                                      eggnog     = self.sample_data["project_data"]["eggnog"])
+        
         ################################ Step 4. Report
         self.script += "### Step 4: Create report\n\n"
         self.script += """
-{trino_cmd}report \\
+{trino_cmd}{v4prefix}report \\
 \t{redirects} > {dir}{file} \n\n""".format(trino_cmd = trino_cmd_sqlite,
-                                         redirects   = self.get_redir_parameters_script(),
-                                         dir         = use_dir, 
-                                         file        = output_basename)
+                                           v4prefix  = v4prefix,
+                                           redirects = self.get_redir_parameters_script(),
+                                           dir       = use_dir, 
+                                           file      = output_basename)
         
 
         # Store results to fasta and assembly slots:
@@ -313,6 +359,9 @@ class Step_Trinotate(Step):
                 self.script += "{trino_cmd}LOAD_signalp {signalp}\n\n".format(trino_cmd=trino_cmd_sqlite,
                                                                               signalp=self.sample_data[sample]["signalp"])
 
+            if "tmhmm" in self.sample_data[sample]:
+                self.script += "{trino_cmd}LOAD_tmhmm {tmhmm}\n\n".format(trino_cmd=trino_cmd_sqlite,
+                                                                          tmhmm=self.sample_data[sample]["tmhmm"])
             ################################ Step 4. Report
             self.script += "### Step 4: Create report\n\n"
             self.script += """
