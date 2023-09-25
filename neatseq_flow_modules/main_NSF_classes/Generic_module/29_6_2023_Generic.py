@@ -91,6 +91,7 @@ Lines for parameter file
                                     #       All the samples inputs File_Types of this argument will be listed delimited by sep. e.g. [sep=,] -i sample1.bam,sample2.bam ... 
                                     # If more then one File_Type was specify the inputs File_Types of this argument will be listed delimited by sep.
                 prefix:             # A prefix for this input argument file name
+                preprefix:          # A prefix for this input argument file location
                 suffix:             # A suffix for this input argument file name
                 use_dirname:        # Use only the input Directory and add suffix for constant file name and prefix to add a string before the input Directory
                 del:                # Delete the files in the input File_Type after the step ends [use to save space for large files you don't need downstream]
@@ -122,11 +123,6 @@ Lines for parameter file
                 target:
                     File_Type:      # Copy the content of source File_Type to the target File_Type [copy to here]
                     scope:          # Copy to the target File_Type in this scope [if not specified the default is sample]
-        collect_results:            # Will copy (symbolic link) selected files to a Results folder
-            sample:                 # 
-                File_Type:          # list of sample scope File_Type separated by comma to copy ['fastq.F,fastq.R']
-            project:                # 
-                File_Type:          # list of project scope File_Type separated by comma to copy ['fastq.F,fastq.R']
         qsub_params:                # Parameters for qsub [number of cpus or memory to reserve etc ]
             STR: 
         redirects:                  # Parameters to pass directly to the command
@@ -429,76 +425,9 @@ class Step_Generic(Step):
     def create_spec_wrapping_up_script(self):
         """ Add stuff to check and agglomerate the output data
         """
-        write_script = False
-        self.results_script = []
-        
-        if "collect_results" in list(self.params.keys()):
-            results_dir = os.path.join(self.pipe_data["home_dir"],'Results') + os.sep
-            if not os.path.isdir(results_dir):
-                self.write_warning("Making dir at %s \n" % results_dir, admonition = "ATTENTION")
-                os.makedirs(results_dir) 
-            
-            results_sample_data=self.sample_data
-            if "base" in list(self.params["collect_results"].keys()):
-                base=get_File_Type_data(self.params["collect_results"],["base"],None)
-                if base!=None:
-                    if base in list(self.get_base_sample_data().keys()):
-                        results_sample_data=self.get_base_sample_data()[base]
-                    else:
-                        raise AssertionExcept("The step name %s is not one of the previous steps of the %%s step" % base  % self.step )
-                            
-            if "sample" in list(self.params["collect_results"].keys()):
-                samples_list = self.sample_data["samples"]
-                for File_Type_slot in str(get_File_Type_data(self.params["collect_results"],["sample","File_Type"])).replace("'",'').replace(" ",'').strip('[').strip(']').strip('"').split(','):
-                    for sample in samples_list:
-                        if File_Type_slot in list(results_sample_data[sample].keys()):
-                            File_Type = get_File_Type_data(results_sample_data[sample],[File_Type_slot],None) 
-                            if File_Type!=None:
-                                dir_name  = os.path.dirname(File_Type)
-                                basename  = os.path.basename(File_Type)
-                                dirs  = set(dir_name.split(os.sep))
-                                steps = list(self.get_base_sample_data().keys())
-                                steps.append(self.get_step_name())
-                                step = list(dirs.intersection(steps))
-                                if len(step)==1:
-                                    step_name = step[0]
-                                else:
-                                    step_name = ''
-                                New_file_name = sample + "." + step_name + "." + basename
-                                if not File_Type.endswith(os.sep):
-                                    self.results_script.append("cp -s  %s   %%s \n\n"       % File_Type %  os.path.join(results_dir,New_file_name) )
-            
-            if "project" in list(self.params["collect_results"].keys()):
-                for File_Type_slot in str(get_File_Type_data(self.params["collect_results"],["project","File_Type"])).replace("'",'').replace(" ",'').strip('[').strip(']').strip('"').split(','):
-                    sample = "project_data"
-                    if File_Type_slot in list(results_sample_data[sample].keys()):
-                        File_Type = get_File_Type_data(results_sample_data[sample],[File_Type_slot],None) 
-                        if File_Type!=None:
-                            dir_name  = os.path.dirname(File_Type)
-                            basename  = os.path.basename(File_Type)
-                            dirs = set(dir_name.split(os.sep))
-                            steps = list(self.get_base_sample_data().keys())
-                            steps.append(self.get_step_name())
-                            step = list(dirs.intersection(steps))
-                            if len(step)==1:
-                                step_name = step[0]
-                            else:
-                                step_name = ''
-                            New_file_name = results_sample_data["Title"] + "." + step_name + "." + basename
-                            if not File_Type.endswith(os.sep):
-                                self.results_script.append("cp -s  %s   %%s \n\n"       % File_Type %  os.path.join(results_dir,New_file_name) )
-
-        # self.results_script = set(self.results_script)
-        if len(self.results_script)>0:
-            self.script=""
-            write_script = True
-            for line in self.results_script:
-                self.script+=line
-        
         self.project_del_script=set(self.project_del_script)
         if len(self.project_del_script)>0:
-            if not write_script:
-                self.script=""
+            self.script=""
             for line in self.project_del_script:
                 self.script+=line
         pass
@@ -732,7 +661,7 @@ class Step_Generic(Step):
                 self.script+=outputs_script
                 self.script+=inputs_script
             elif "command_order" in list(self.params.keys()):
-                for command_order in list(self.params["command_order"].strip('"').strip("'").split(',')):
+                for command_order in list(self.params["command_order"].split(',')):
                     if command_order=='redirects':
                         self.script+=self.get_redir_parameters_script()
                     if command_order=='inputs':
@@ -756,7 +685,8 @@ class Step_Generic(Step):
                     
     def build_scripts_byproject(self):
         """ Script building function for project-level """
-        del_script  = ""
+        
+        del_script=""
         # Each iteration must define the following class variables:
         # spec_script_name
         # script
@@ -982,7 +912,7 @@ class Step_Generic(Step):
             self.script+=outputs_script
             self.script+=inputs_script
         elif "command_order" in list(self.params.keys()):
-            for command_order in list(self.params["command_order"].strip('"').strip("'").split(',')):
+            for command_order in list(self.params["command_order"].split(',')):
                 if command_order=='redirects':
                     self.script+=self.get_redir_parameters_script()
                 if command_order=='inputs':
