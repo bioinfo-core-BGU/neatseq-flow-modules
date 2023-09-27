@@ -544,12 +544,12 @@ class Step_Generic(Step):
             
             
             if 'use_base_dir' in list(self.params.keys()):
+                self.base_dir = self.base_step_to_use.base_dir
                 if "no_sample_dir" in list(self.params.keys()):
                     sample_dir = self.base_dir
                     self.sample_data["project_data"]['base_dir'] = sample_dir
                 else:
                     sample_dir = self.base_step_to_use.make_folder_for_sample(sample)
-                self.base_dir = self.base_step_to_use.base_dir
             else:
                 if "no_sample_dir" in list(self.params.keys()):
                     sample_dir = self.base_dir
