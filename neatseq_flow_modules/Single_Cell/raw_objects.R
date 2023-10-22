@@ -11,6 +11,8 @@ option_list = list(
               help="Vector of paths to CellRanger filtered feature bc matrix h5 files (comma-separated)", metavar = "character"),
   make_option(c("-b", "--CellBender_h5"), type="character", default = NA,
               help="Vector of paths to CellBender filtered feature bc matrix h5 files (comma-separated)", metavar = "character"),
+  make_option(c("-l", "--Loom_Files"), type="character", default = NA,
+              help="Vector of paths to Loom files (comma-separated) with un-spliced information", metavar = "character"),
   make_option(c("--Samples"), type="character", default = NA,
               help="Vector of Samples names (comma-separated)", metavar = "character"),
   make_option(c("--outDir"), type="character", default = NA,
@@ -27,6 +29,8 @@ option_list = list(
               help="Exclude cells with log10(GenesPerUMI) lower than cutoff (Default is 0.8)", metavar = "character"),
   make_option(c("--Filtered_plots_only"), action="store_true", default = FALSE,
               help="Plot filtered QC plots only (Default is False)", metavar = "character"),
+  make_option(c("--Use_Spiced_as_RNA"), action="store_true", default = FALSE,
+              help="Use the Sliced assay (from loom file) as RNA (Default is to use the CellBender counts)", metavar = "character"),
   make_option(c("--MT_pattern"), type="character", default = NA,
               help="Mitochondrial genes pattern used to calculate percent.mt (usually 'MT' for human and 'mt' for mouse)", metavar = "character"),
   make_option(c("--MT_cutoff"), type="numeric", default = 0.05,
@@ -125,7 +129,8 @@ QC_Metrics <- function(metadata, dir) {
 	facet_wrap(~orig.ident, scales="free")
   ggsave(paste(opt$outDir,dir,'/','UMI_vs_Genes_Filtered.jpeg',sep=''), plt_UMIvsGenes,dpi=600,width=10,height=8)
   
-  plt_MitoCounts = metadata %>% ggplot(aes(x=percent.mt, fill=orig.ident)) +
+  if (var(metadata$percent.mt)>0){
+    plt_MitoCounts = metadata %>% ggplot(aes(x=percent.mt, fill=orig.ident)) +
 	geom_density(alpha=0.2) +
 	scale_x_log10() + 
   	theme_classic() +
@@ -136,8 +141,8 @@ QC_Metrics <- function(metadata, dir) {
 	geom_vline(xintercept = opt$MT_cutoff) +
 	geom_label(aes(opt$MT_cutoff,+Inf,vjust=2), label=paste(opt$MT_cutoff), show.legend = FALSE, color="black", fill="red") +
 	facet_wrap(vars(Source), scales="free")
-  ggsave(paste(opt$outDir,dir,'/','Mito_Ratio.jpeg',sep=''), plt_MitoCounts,dpi=600,width=12,height=8)
-  
+    ggsave(paste(opt$outDir,dir,'/','Mito_Ratio.jpeg',sep=''), plt_MitoCounts,dpi=600,width=12,height=8)
+  }
   plt_Complexity = metadata %>% ggplot(aes(x=log10GenesPerUMI, fill=orig.ident)) +
 	geom_density(alpha=0.2) +
 	theme_classic() +
@@ -169,6 +174,15 @@ if (!is.na(opt$CellBender_h5)) {
   writeLog(logfile, paste("ERROR: CellBender filtered h5 files must be specified [--CellBender_h5]"))
   stop()
 }
+
+
+if (!is.na(opt$Loom_Files)) {
+  writeLog(logfile, paste("Importing loom objects file names...",sep=''))
+  loom_files = unlist(stringi::stri_split(str = opt$Loom_Files,fixed = ','))
+} else {
+  loom_files=c()
+}
+
 if (!is.na(opt$MT_pattern)) {
   MT_pattern = paste("^",opt$MT_pattern,"-",sep='')
   writeLog(logfile, paste("Using pattern '",MT_pattern,"' to detect mitochondrial genes",sep=''))
@@ -211,8 +225,43 @@ for (sample in samples) {
   writeLog(logfile, paste('Unique cells in CellBender: ',sum(!(colnames(bender_data) %in% cells_inBoth)),sep = ''))
   writeLog(logfile, paste("Creating merged Seurat object..."))
   writeLog(logfile, paste("Removing features detected only in ",opt$min_cells," or less cells",sep=''))
-  merged_data = bender_data[,cells_inBoth]
-  obj_seurat = CreateSeuratObject(counts = merged_data, project = sample, min.cells = opt$min_cells)
+  
+  if (length(loom_files)>0){
+      if (opt$Use_Spiced_as_RNA){
+          cells_inBoth = unlist(lapply(X= cells_inBoth, FUN= function(x) stringi::stri_split_fixed(str=x,pattern="-")[[1]][1]))
+      }else{
+          merged_data     = bender_data[,cells_inBoth]
+          colnames(merged_data) = unlist(lapply(X= colnames(merged_data), FUN= function(x) stringi::stri_split_fixed(str=x,pattern="-")[[1]][1]))
+          obj_seurat      = CreateSeuratObject(counts = merged_data, project = sample, min.cells = opt$min_cells)
+          cells_inBoth    = names(obj_seurat$orig.ident)
+      }
+      library(Seurat)
+      library(SeuratDisk)
+      library(SeuratWrappers)
+      
+      lo_file = loom_files[which(sample==samples)]
+      ldat <- ReadVelocity(file = lo_file)
+      obj_seurat_loom <- as.Seurat(x = ldat, project = sample, min.cells = 0)
+      obj_seurat_loom$orig.ident = sample
+      
+      New_cell_names= stringi::stri_replace_first_fixed(str=names(obj_seurat_loom$orig.ident),pattern=paste(sample,":",sep=""),replacement="")
+      New_cell_names= stringi::stri_replace_last_fixed(str=New_cell_names,pattern="x",replacement="")
+      
+      obj_seurat_loom = RenameCells(obj_seurat_loom, new.names =New_cell_names)
+      obj_seurat_loom = subset(obj_seurat_loom,cells = cells_inBoth)
+      
+      if (opt$Use_Spiced_as_RNA){
+          obj_seurat <- obj_seurat_loom
+          obj_seurat[["RNA"]] <- obj_seurat[["spliced"]]
+      }else{
+          obj_seurat[["spliced"]]   <- obj_seurat_loom[["spliced"]]
+          obj_seurat[["unspliced"]] <- obj_seurat_loom[["unspliced"]]
+          obj_seurat[["ambiguous"]] <- obj_seurat_loom[["ambiguous"]]
+      }
+  }else{
+      merged_data = bender_data[,cells_inBoth]
+      obj_seurat = CreateSeuratObject(counts = merged_data, project = sample, min.cells = opt$min_cells)
+  }
   obj_seurat$log10GenesPerUMI = log10(obj_seurat$nFeature_RNA) / log10(obj_seurat$nCount_RNA)
   obj_seurat[["percent.mt"]] <- PercentageFeatureSet(obj_seurat, pattern = MT_pattern)
   obj_seurat@meta.data[which(is.na(obj_seurat$percent.mt)),'percent.mt'] = 0
@@ -267,5 +316,7 @@ QC_Metrics(metadata,'QC_Plots')
 writeLog(logfile, paste("Saving Results..."))
 for (sample in samples) {
   saveRDS(filtered_list[[sample]], file = paste(opt$outDir, sample, '.rds', sep=''))
+  # saveRDS(obj_list[[sample]],      file = paste(opt$outDir, sample, '.original.rds', sep=''))
 }
+  saveRDS(metadata,      file = paste(opt$outDir, 'MetaData.rds', sep=''))
 writeLog(logfile, paste("Finished"))

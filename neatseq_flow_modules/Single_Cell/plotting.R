@@ -20,10 +20,20 @@ option_list = list(
               help="Path to file with location of feature files to plot", metavar = "character"),
   make_option(c("--UMAP"), action="store_true", default = FALSE,
               help="Plot UMAP", metavar = "character"),
+  make_option(c("--TSNE"), action="store_true", default = FALSE,
+              help="Plot TSNE", metavar = "character"),
   make_option(c("--RUNUMAP"), action="store_true", default = FALSE,
               help="Calculate  a New UMAP", metavar = "character"),
+  make_option(c("--RUNTSNE"), action="store_true", default = FALSE,
+              help="Calculate  a New tSNE", metavar = "character"),
   make_option(c("--reduction"), type="character", default = NA,
               help="Which dimensional reduction to use in FindNeighbors and RunUMAP (Default is PCA)", metavar = "character"),
+  make_option(c("--Assay"), type="character", default = "RNA",
+              help="Which Assay to use, the default is RNA. if set to 'active' will use the current active assay)", metavar = "character"),
+  make_option(c("--UseMagic"), action="store_true", default = FALSE,
+              help="Will use Magic to Impute the data after normalization, Will set --Assay to RNA", metavar = "character"),
+  make_option(c("--MagicCondaEnv"), type="character", default = NA,
+              help="If --UseMagic is set it will this Conda env to fined the package [Must Be a Full Path!]", metavar = "character"),
   make_option(c("--dims"), type="numeric", default = 50,
               help="Dimensions of reduction to use as input for clustering (Default is 50). Must include --overwrite_dims", metavar = "character"),
   make_option(c("--Heatmap"), action="store_true", default = FALSE,
@@ -97,9 +107,38 @@ if (!is.na(opt$Features_file)) {
   }
 }
 
+
+
 # Set active assay for visualization
-writeLog(logfile, paste("Setting active assay as RNA for data visualization..."))
-obj_seurat@active.assay = "RNA"
+if (opt$Assay!="active"){
+    writeLog(logfile, paste(c("Setting active assay as ",opt$Assay,"for data visualization..."),sep=""))
+    obj_seurat@active.assay = opt$Assay
+}else{
+    writeLog(logfile, paste("Using active assay for data visualization..."))
+}
+
+
+if (opt$UseMagic){
+
+     if (!is.na(opt$MagicCondaEnv)){
+         .libPaths(c(.libPaths(),paste(opt$MagicCondaEnv,"/lib/R/library",sep='')))
+         reticulate::use_condaenv(condaenv=opt$MagicCondaEnv, required =T)
+     }
+     library(reticulate)
+     library(Rmagic)
+     writeLog(logfile, "Setting active assay as RNA for data visualization...")
+     obj_seurat@active.assay = "RNA"
+     writeLog(logfile, paste("Imputing Data using Magic:"))
+     obj_seurat <- NormalizeData(object = obj_seurat)
+     obj_seurat <- ScaleData(object = obj_seurat)
+     obj_seurat <- magic(obj_seurat,assay = "RNA")
+     obj_seurat@active.assay = "MAGIC_RNA"
+}
+
+
+
+
+
 
 
 # Plot Heatmap
@@ -380,6 +419,7 @@ if (opt$RUNUMAP){
 	  }
 	}
 	obj_seurat <- RunUMAP(obj_seurat, reduction = use_reducs, dims = 1:opt$dims)
+	opt$UMAP = TRUE
 	
 }
 
@@ -387,31 +427,71 @@ if (opt$RUNUMAP){
 if (opt$UMAP) {
 	  writeLog(logfile, paste("Plotting UMAP...",sep=''))
 		# Reduction usage
-		if (is.na(opt$reduction)) {
-		  writeLog(logfile, paste("Using 'pca' dimensional reduction as input for FindNeighbors and RunUMAP",sep=''))
-		  use_reducs = 'pca'
-		} else {
-		  if (opt$reduction %in% names(obj_seurat@reductions)) {
-			writeLog(logfile, paste("Using '",opt$reduction,"' dimensional reduction as input for FindNeighbors and RunUMAP",sep=''))
-			use_reducs = opt$reduction
+		if ("umap" %in% names(obj_seurat@reductions)) {
+			writeLog(logfile, paste("Using '",opt$reduction,"' dimensional reduction as input for FindNeighbors and RUNTSNE",sep=''))
+			use_reducs = "umap"
 		  } else {
 			writeLog(logfile, paste("ERROR: Unable to find reduction '",opt$reduction,"'. Available reductions: ",paste(names(obj_seurat@reductions),collapse=','),sep=''))
 			stop()
 		  }
-		}
-
-	
 	# Plots
 	# legend_pos = "none"
 	# if (opt$Show_Legend)
 	legend_pos = "right"
 	writeLog(logfile, paste("Plotting reduction figures..."))
-	plt1 <- DimPlot(obj_seurat, reduction = "umap", label = T, pt.size = 1.5, label.size = 8)+
+	plt1 <- DimPlot(obj_seurat, reduction = use_reducs, label = T, pt.size = 1.5, label.size = 8)+
 	  theme(legend.position = legend_pos)
-	pdf(paste(opt$outDir,opt$Sample,"_umapByCluster.pdf", sep = ""),width = 20, height = 15)
+	pdf(paste(opt$outDir,opt$Sample,"_",use_reducs,"ByCluster.pdf", sep = ""),width = 20, height = 15)
 	print(plt1)
 	dev.off()
 }
+
+
+
+
+if (opt$RUNTSNE){
+    writeLog(logfile, paste("Running tSNE..."))
+	# Reduction usage
+	if (is.na(opt$reduction)) {
+	  writeLog(logfile, paste("Using 'pca' dimensional reduction as input for FindNeighbors and RUNTSNE",sep=''))
+	  use_reducs = 'pca'
+	} else {
+	  if (opt$reduction %in% names(obj_seurat@reductions)) {
+		writeLog(logfile, paste("Using '",opt$reduction,"' dimensional reduction as input for FindNeighbors and RUNTSNE",sep=''))
+		use_reducs = opt$reduction
+	  } else {
+		writeLog(logfile, paste("ERROR: Unable to find reduction '",opt$reduction,"'. Available reductions: ",paste(names(obj_seurat@reductions),collapse=','),sep=''))
+		stop()
+	  }
+	}
+	obj_seurat <- RUNTSNE(obj_seurat, reduction = use_reducs, dims = 1:opt$dims)
+	opt$TSNE = TRUE
+}
+
+
+if (opt$TSNE) {
+	  writeLog(logfile, paste("Plotting TSNE...",sep=''))
+		# Reduction usage
+		if ("tsne" %in% names(obj_seurat@reductions)) {
+			writeLog(logfile, paste("Using '",opt$reduction,"' dimensional reduction as input for FindNeighbors and RUNTSNE",sep=''))
+			use_reducs = "tsne"
+		  } else {
+			writeLog(logfile, paste("ERROR: Unable to find reduction '",opt$reduction,"'. Available reductions: ",paste(names(obj_seurat@reductions),collapse=','),sep=''))
+			stop()
+		  }
+	# Plots
+	# legend_pos = "none"
+	# if (opt$Show_Legend)
+	legend_pos = "right"
+	writeLog(logfile, paste("Plotting reduction figures..."))
+	plt1 <- DimPlot(obj_seurat, reduction = use_reducs, label = T, pt.size = 1.5, label.size = 8)+
+	  theme(legend.position = legend_pos)
+	pdf(paste(opt$outDir,opt$Sample,"_",use_reducs,"ByCluster.pdf", sep = ""),width = 20, height = 15)
+	print(plt1)
+	dev.off()
+}
+
+
 
 
 opt$ID = "Test"

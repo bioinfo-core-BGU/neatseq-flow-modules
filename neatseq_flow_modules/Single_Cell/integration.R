@@ -35,6 +35,10 @@ option_list = list(
               help="Cluster with manually number of dimensions (Set dims with --dims)", metavar = "character"),
   make_option(c("--SCTransform"), action="store_true", default = FALSE,
               help="Integrate datasets using Seurat with SCTransform", metavar = "character"),
+  make_option(c("--UseMagic"), action="store_true", default = FALSE,
+              help="Will use Magic to Impute the data after normalization", metavar = "character"),
+  make_option(c("--MagicCondaEnv"), type="character", default = NA,
+              help="If --UseMagic is set it will this Conda env to fined the package [Must Be a Full Path!]", metavar = "character"),
   make_option(c("-o", "--outDir"), type="character", default = NA,
               help="Path to the output directory", metavar = "character")
 );
@@ -110,11 +114,13 @@ if (opt$overwrite_dims) {
 if (opt$CPUs>1) {
   writeLog(logfile, paste("Using multicore parallelization with ",opt$CPUs,' threads',sep=''))
   plan("multicore", workers = opt$CPUs)
-  if (!is.na(opt$Memory)) {
+}
+  
+if (!is.na(opt$Memory)) {
     writeLog(logfile, paste("Allocating ",as.numeric(opt$Memory),'GB of memory',sep=''))
     options(future.globals.maxSize = as.numeric(opt$Memory) * 1024 ^ 3)
-  }
 }
+
 
 seurat_list = list()
 # Load RDS files
@@ -159,6 +165,25 @@ if (opt$SCTransform) {
   integ_obj = IntegrateData(anchorset = integ_anchors, normalization.method = "SCT",
                             dims = 1:SigDims, verbose = FALSE)
   
+  if (opt$UseMagic){
+     if (!is.na(opt$MagicCondaEnv)){
+         .libPaths(c(.libPaths(),paste(opt$MagicCondaEnv,"/lib/R/library",sep='')))
+         reticulate::use_condaenv(condaenv=opt$MagicCondaEnv, required =T)
+     }
+     library(reticulate)
+     library(Rmagic)
+     writeLog(logfile, paste("Imputing Data using Magic:"))
+     integ_obj <- magic(integ_obj)
+     integ_obj@active.assay = "MAGIC_integrated"
+  }
+  
+  # Identification of highly variable features (feature selection)
+  writeLog(logfile, paste("Identifying highly variable features..."))
+  integ_obj <- FindVariableFeatures(integ_obj, nfeatures = opt$VariableFeatures)
+  
+  writeLog(logfile, paste("Scaling data..."))
+  integ_obj <- ScaleData(integ_obj, features = rownames(integ_obj))
+  
   writeLog(logfile, paste("Running PCA..."))
   integ_obj <- RunPCA(object = integ_obj, npcs = SigDims, verbose = FALSE)
   
@@ -168,6 +193,8 @@ if (opt$SCTransform) {
     RunUMAP(dims = 1:SigDims) %>% 
     FindNeighbors(dims = 1:SigDims) %>% 
     FindClusters(resolution = opt$Resolution)
+  
+  integ_obj <- RUNTSNE(integ_obj,dims = 1:SigDims)
   
 } else {
   writeLog(logfile, paste("Integration method: Harmony"))
@@ -183,13 +210,28 @@ if (opt$SCTransform) {
   writeLog(logfile, paste("Normalizing data..."))
   merge_obj <- NormalizeData(merge_obj)
   
-  # Identification of highly variable features (feature selection)
+
+  if (opt$UseMagic){
+     if (!is.na(opt$MagicCondaEnv)){
+         .libPaths(c(.libPaths(),paste(opt$MagicCondaEnv,"/lib/R/library",sep='')))
+         reticulate::use_condaenv(condaenv=opt$MagicCondaEnv, required =T)
+     }
+     library(reticulate)
+     library(Rmagic)
+     writeLog(logfile, paste("Imputing Data using Magic:"))
+     merge_obj <- magic(merge_obj)
+     merge_obj@active.assay = "MAGIC_integrated"
+  }
+  
+    # Identification of highly variable features (feature selection)
   writeLog(logfile, paste("Identifying highly variable features..."))
   merge_obj <- FindVariableFeatures(merge_obj, nfeatures = opt$VariableFeatures)
   
   # Scaling the data
   writeLog(logfile, paste("Scaling data..."))
   merge_obj <- ScaleData(merge_obj, features = rownames(merge_obj))
+  
+  
   
   if (isFALSE(opt$overwrite_dims)) {
     # Determine the ‘dimensionality’ of the dataset
@@ -254,6 +296,7 @@ if (opt$SCTransform) {
   harmony_embeddings <- Embeddings(integ_obj, 'harmony')
   write.csv(harmony_embeddings, file = paste(opt$outDir,opt$ID,"/harmony_embeddings.csv", sep = ""))
   
+  
   # Plots
   writeLog(logfile, paste("Plotting Harmony figures..."))
   p1 <- DimPlot(object = integ_obj, reduction = "harmony", pt.size = 0.7, group.by = "orig.ident")
@@ -268,6 +311,8 @@ if (opt$SCTransform) {
     RunUMAP(reduction = "harmony", dims = 1:SigDims) %>% 
     FindNeighbors(reduction = "harmony", dims = 1:SigDims) %>% 
     FindClusters(resolution = opt$Resolution)
+    
+    integ_obj <- RUNTSNE(integ_obj,reduction = "harmony",dims = 1:SigDims)
 }
 
 
@@ -283,6 +328,18 @@ dev.off()
 pdf(paste(opt$outDir,opt$ID,'/',opt$ID,'_umapByCluster.pdf', sep = ""), width = 20, height = 15)
 print(p2)
 dev.off()
+
+p1 <- DimPlot(integ_obj, reduction = "tsne", group.by = "orig.ident", pt.size = 1.5)+
+              theme(legend.position = legend_pos)
+p2 <- DimPlot(integ_obj, reduction = "tsne", label = T, pt.size = 1.5, label.size = 8)+
+  ggplot2::theme(legend.position = "none")
+pdf(paste(opt$outDir,opt$ID,'/',opt$ID,'_tsneBySample.pdf', sep = ""), width = 20, height = 15)
+print(p1)
+dev.off()
+pdf(paste(opt$outDir,opt$ID,'/',opt$ID,'_tsneByCluster.pdf', sep = ""), width = 20, height = 15)
+print(p2)
+dev.off()
+
 
 # Clusters distribution per Sample
 samples = unique(integ_obj$orig.ident)

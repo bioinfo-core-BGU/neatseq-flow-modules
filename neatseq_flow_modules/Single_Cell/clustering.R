@@ -25,6 +25,8 @@ option_list = list(
               help="Plot mouse adipocytes markers FeaturePlot (Adipoq+Aqp7)", metavar = "character"),
   make_option(c("--Show_Legend"), action="store_true", default = FALSE,
               help="Show legend in figures (Default is False)", metavar = "character"),
+  make_option(c("--tSNE"), action="store_true", default = FALSE,
+              help="Run 'RunTSNE' NOT 'RunUMAP' (Default is False)", metavar = "character"),
   make_option(c("--outDir"), type="character", default = NA,
               help="Path to the output directory", metavar = "character"),
   make_option(c("--overwrite_dims"), action="store_true", default = FALSE,
@@ -64,6 +66,12 @@ if (is.na(opt$outDir)) {
   stop()
 }
 
+if (opt$tSNE){
+    reduction = "tsne"
+}else{
+    reduction = "umap"
+}
+
 # Set number of dimensions for clustering
 if (obj_seurat@active.assay == "RNA") {
   writeLog(logfile, paste("Active assay detected: RNA"))
@@ -88,11 +96,11 @@ writeLog(logfile, paste("Using ",SigDims," dimensions of reduction as input for 
 
 # Reduction usage
 if (is.na(opt$reduction)) {
-  writeLog(logfile, paste("Using 'pca' dimensional reduction as input for FindNeighbors and RunUMAP",sep=''))
+  writeLog(logfile, paste("Using 'pca' dimensional reduction as input for FindNeighbors and ",reduction,sep=''))
   use_reducs = 'pca'
 } else {
   if (opt$reduction %in% names(obj_seurat@reductions)) {
-	writeLog(logfile, paste("Using '",opt$reduction,"' dimensional reduction as input for FindNeighbors and RunUMAP",sep=''))
+	writeLog(logfile, paste("Using '",opt$reduction,"' dimensional reduction as input for FindNeighbors and ",reduction,sep=''))
 	use_reducs = opt$reduction
   } else {
 	writeLog(logfile, paste("ERROR: Unable to find reduction '",opt$reduction,"'. Available reductions: ",paste(names(obj_seurat@reductions),collapse=','),sep=''))
@@ -104,23 +112,29 @@ if (is.na(opt$reduction)) {
 writeLog(logfile, paste("Clustering cells..."))
 obj_seurat <- FindNeighbors(obj_seurat, reduction = use_reducs, dims = 1:SigDims)
 obj_seurat <- FindClusters(obj_seurat, resolution = opt$Resolution)
-writeLog(logfile, paste("Running UMAP..."))
-obj_seurat <- RunUMAP(obj_seurat, reduction = use_reducs, dims = 1:SigDims)
+if (opt$tSNE){
+    writeLog(logfile, paste("Running tSNE..."))
+    obj_seurat <- RunTSNE(obj_seurat, reduction = use_reducs, dims = 1:SigDims)
+}else{
+    writeLog(logfile, paste("Running UMAP..."))
+    obj_seurat <- RunUMAP(obj_seurat, reduction = use_reducs, dims = 1:SigDims)
+}
+
 
 # Plots
 legend_pos = "none"
 if (opt$Show_Legend)
   legend_pos = "right"
 writeLog(logfile, paste("Plotting reduction figures..."))
-plt1 <- DimPlot(obj_seurat, reduction = "umap", label = T, pt.size = 1.5, label.size = 8)+
+plt1 <- DimPlot(obj_seurat, reduction = reduction, label = T, pt.size = 1.5, label.size = 8)+
   theme(legend.position = legend_pos)
-jpeg(paste(opt$outDir,opt$Sample,"_umapByCluster.jpeg", sep = ""), 
+jpeg(paste(opt$outDir,opt$Sample,"_",reduction,"ByCluster.jpeg", sep = ""), 
      width = 1500, height = 1250)
 print(plt1)
 dev.off()
 if (length(unique(obj_seurat$orig.ident))>1) {
-  plt2 <- DimPlot(obj_seurat, reduction = "umap", group.by = "orig.ident", pt.size = 1.5)
-  jpeg(paste(opt$outDir,opt$Sample,"_umapBySample.jpeg", sep = ""), width = 1500, height = 1500)
+  plt2 <- DimPlot(obj_seurat, reduction = reduction, group.by = "orig.ident", pt.size = 1.5)
+  jpeg(paste(opt$outDir,opt$Sample,"_",reduction,"BySample.jpeg", sep = ""), width = 1500, height = 1500)
   print(plt2)
   dev.off()
 }

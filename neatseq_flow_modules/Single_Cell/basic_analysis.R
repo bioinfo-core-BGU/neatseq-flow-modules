@@ -27,6 +27,10 @@ option_list = list(
               help="Allocate memory for Seurat parallelization in GB (Default is NA)", metavar = "character"),
   make_option(c("--SCTransform"), action="store_true", default = FALSE,
               help="Will use SCTransform in Seurat instead of standard log-normalization", metavar = "character"),
+  make_option(c("--UseMagic"), action="store_true", default = FALSE,
+              help="Will use Magic to Impute the data after normalization", metavar = "character"),
+  make_option(c("--MagicCondaEnv"), type="character", default = NA,
+              help="If --UseMagic is set it will this Conda env to fined the package [Must Be a Full Path!]", metavar = "character"),
   make_option(c("--SCT_ncells"), type="numeric", default = 5000,
               help="Number of subsampling cells used to build NB regression (Default is 5000)", metavar = "character"),
   make_option(c("--SCT_variable_features"), type="numeric", default = 3000,
@@ -129,6 +133,21 @@ if (opt$SCTransform) {
                                      variable.features.n = opt$SCT_variable_features)
   }
   
+  # if (opt$UseMagic){
+      # if (!is.na(opt$MagicCondaEnv)){
+         # .libPaths(c(.libPaths(),paste(opt$MagicCondaEnv,"/lib/R/library",sep='')))
+         # reticulate::use_condaenv(condaenv=opt$MagicCondaEnv, required =T)
+      # }
+      # library(reticulate)
+      # library(Rmagic)
+      # writeLog(logfile, paste("Imputing Data using Magic:"))
+      # obj_seurat <- magic(obj_seurat,assay = "SCT")
+      # obj_seurat@active.assay = "MAGIC_SCT"
+      # # Identification of highly variable features (feature selection)
+      # writeLog(logfile, paste("Identifying highly variable features..."))
+      # obj_seurat <- FindVariableFeatures(obj_seurat, nfeatures = opt$VariableFeatures)
+      # obj_seurat <- ScaleData(obj_seurat, features = rownames(obj_seurat))
+  # }
   # Linear dimensional reduction
   obj_seurat <- RunPCA(object = obj_seurat, npcs = opt$JackStraw_dims, verbose = FALSE)
   dims_i = opt$JackStraw_dims
@@ -146,6 +165,23 @@ if (opt$SCTransform) {
   writeLog(logfile, paste("Scaling data..."))
   obj_seurat <- ScaleData(obj_seurat, features = rownames(obj_seurat))
   
+  
+  
+  # if (opt$UseMagic){
+      # if (!is.na(opt$MagicCondaEnv)){
+         # .libPaths(c(.libPaths(),paste(opt$MagicCondaEnv,"/lib/R/library",sep='')))
+         # reticulate::use_condaenv(condaenv=opt$MagicCondaEnv, required =T)
+      # }
+      # library(reticulate)
+      # library(Rmagic)
+      # writeLog(logfile, paste("Imputing Data using Magic:"))
+      # obj_seurat <- magic(obj_seurat,assay = "RNA")
+      # obj_seurat@active.assay = "MAGIC_RNA"
+      # # Identification of highly variable features (feature selection)
+      # writeLog(logfile, paste("Identifying highly variable features..."))
+      # obj_seurat <- FindVariableFeatures(obj_seurat, nfeatures = opt$VariableFeatures)
+      # obj_seurat <- ScaleData(obj_seurat, features = rownames(obj_seurat))
+  # }
   # Determine the ‘dimensionality’ of the dataset
   writeLog(logfile, paste("Calculating dataset dimensionality..."))
   dims_seq <- seq.int(opt$JackStraw_dims, opt$JackStraw_dims+50, 10)
@@ -201,6 +237,34 @@ jpeg(paste(opt$outDir,opt$Sample,"_elbowPlot.jpeg", sep = ""),
      width = 1000, height = 750)
 print(plt2)
 dev.off()
+
+
+if (opt$UseMagic){
+      if (!is.na(opt$MagicCondaEnv)){
+         .libPaths(c(.libPaths(),paste(opt$MagicCondaEnv,"/lib/R/library",sep='')))
+         reticulate::use_condaenv(condaenv=opt$MagicCondaEnv, required =T)
+      }
+      library(reticulate)
+      library(Rmagic)
+      writeLog(logfile, paste("Imputing Data using Magic:"))
+	  
+	  obj_seurat@active.assay = "RNA"
+	  
+	  writeLog(logfile, paste("Normalizing data For Magic ..."))
+	  obj_seurat <- NormalizeData(obj_seurat)
+	  
+	  # Identification of highly variable features (feature selection)
+	  # writeLog(logfile, paste("Identifying highly variable features..."))
+	  # obj_seurat <- FindVariableFeatures(obj_seurat, nfeatures = opt$VariableFeatures)
+	  
+	  # Scaling the data
+	  writeLog(logfile, paste("Scaling data..."))
+	  obj_seurat <- ScaleData(obj_seurat, features = rownames(obj_seurat))
+  
+      obj_seurat <- magic(obj_seurat,assay = "RNA")
+      # obj_seurat@active.assay = "MAGIC_RNA"
+  }
+
 
 # Save results
 saveRDS(obj_seurat, file = paste(opt$outDir, opt$Sample, '.rds', sep=''))
