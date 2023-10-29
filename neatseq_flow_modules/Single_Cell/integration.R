@@ -194,7 +194,7 @@ if (opt$SCTransform) {
     FindNeighbors(dims = 1:SigDims) %>% 
     FindClusters(resolution = opt$Resolution)
   
-  integ_obj <- RUNTSNE(integ_obj,dims = 1:SigDims)
+  integ_obj <- RunTSNE(integ_obj,dims = 1:SigDims)
   
 } else {
   writeLog(logfile, paste("Integration method: Harmony"))
@@ -312,7 +312,7 @@ if (opt$SCTransform) {
     FindNeighbors(reduction = "harmony", dims = 1:SigDims) %>% 
     FindClusters(resolution = opt$Resolution)
     
-    integ_obj <- RUNTSNE(integ_obj,reduction = "harmony",dims = 1:SigDims)
+    integ_obj <- RunTSNE(integ_obj,reduction = "harmony",dims = 1:SigDims)
 }
 
 

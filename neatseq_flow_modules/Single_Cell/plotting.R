@@ -464,7 +464,7 @@ if (opt$RUNTSNE){
 		stop()
 	  }
 	}
-	obj_seurat <- RUNTSNE(obj_seurat, reduction = use_reducs, dims = 1:opt$dims)
+	obj_seurat <- RunTSNE(obj_seurat, reduction = use_reducs, dims = 1:opt$dims)
 	opt$TSNE = TRUE
 }
 
