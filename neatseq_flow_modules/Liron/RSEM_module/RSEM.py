@@ -329,10 +329,14 @@ class Step_RSEM(Step):
                 #if fastq check if it is a paired-end
                 if len({"fastq.F", "fastq.R"} & set(self.sample_data[sample].keys()))==2:
                     self.script +="--paired-end \\\n\t"
-                #Add the fastq files
-                for i in list(self.sample_data[sample].keys()):
-                    if i in ["fastq.F", "fastq.R", "fastq.S"]:
-                        self.script +="%s \\\n\t" % self.sample_data[sample][i]
+                    #Add the fastq files
+                    self.script +="%s \\\n\t" % self.sample_data[sample]["fastq.F"]
+                    self.script +="%s \\\n\t" % self.sample_data[sample]["fastq.R"]
+                else:
+                    #Add the fastq files
+                    for i in list(self.sample_data[sample].keys()):
+                        if i in ["fastq.S"]:
+                            self.script +="%s \\\n\t" % self.sample_data[sample][i]
                 #self.script +=" \\\n\t"
                 #Append the new bam file location to the bam slot 
                 if "--output-genome-bam" in list(self.params["redir_params"].keys()):
