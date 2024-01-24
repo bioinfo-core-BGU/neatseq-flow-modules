@@ -3,6 +3,7 @@ library(optparse)
 library(Seurat)
 library(dplyr)
 library(ggplot2)
+library(ggrepel)
 library(future)
 args = commandArgs(trailingOnly=TRUE)
 
@@ -11,6 +12,8 @@ option_list = list(
               help="Path to Seurat object RDS file", metavar = "character"),
   make_option(c("-s", "--Sample"), type="character", default = NA,
               help="Sample's name", metavar = "character"),
+  make_option(c("--Treatment_file"), type="character", default = NA,
+              help="Path to file with location of the table showing treatment per sample", metavar = "character"),
   make_option(c("-A", "--ident1"), type="character", default = NA,
               help="identity 1 to use in a Pairwise differential gene expression analysis", metavar = "character"),
   make_option(c("-B", "--ident2"), type="character", default = NA,
@@ -31,14 +34,20 @@ option_list = list(
               help="Use Human Genome wide annotation", metavar = "character"),
   make_option(c("--Mouse"), action="store_true", default = FALSE,
               help="Use Mouse Genome wide annotation", metavar = "character"),
-  make_option(c("--Force"), action="store_true", default = FALSE,
+  make_option(c("--Force"), action="store_true", default = TRUE,
               help="Force running DGE analysis while over-writing previous results (Default is False)", metavar = "character"),
   make_option(c("--DGE_Pairwise"), action="store_true", default = FALSE,
               help="Run pair-wise differential gene expression analysis of clusters vs each other (Default is False)", metavar = "character"),
-  make_option(c("--DGE_Clusters_vs_all"), action="store_true", default = TRUE,
+  make_option(c("--DGE_Clusters_vs_all"), action="store_true", default = FALSE,
               help="Run Clusters vs all other differential gene expression analysis of clusters vs each other (Default is False)", metavar = "character"),
   make_option(c("--DGE_Within_Clusters"), action="store_true", default = FALSE,
-              help="Run Within Clusters differential gene expression analysis [use --ident1 to set the contrast and --DGE_GroupBy to set the source ] (Default is False)", metavar = "character"),
+              help="Run Within Clusters differential gene expression analysis [use --ident1 and --ident2 to set the contrast and --DGE_GroupBy to set the source ] (Default is False)", metavar = "character"),
+  make_option(c("--Chisq"), action="store_true", default = FALSE,
+              help="Run Within Clusters differential Cell Proportion Chisq TEST [ONLY works when --DGE_Within_Clusters is set. Use --ident1 and --ident2 to set the contrast and --DGE_GroupBy to set the source ] (Default is False)", metavar = "character"),
+  make_option(c("--Chisq_minprop_cutoff"), type="numeric", default = 0,
+              help="Only consider genes with proportion of Positive cells greater then the cutoff in ident1 OR ident2 (Default is 0)", metavar = "character"),
+  make_option(c("--Chisq_diffprop_cutoff"), type="numeric", default = 0,
+              help="Only consider genes with a difference in Positive cells proportion between ident1 and ident2 greater then the cutoff (Default is 0)", metavar = "character"),
   make_option(c("--DGE_GroupBy"), type="character", default = 'orig.ident',
               help="Group by MetaData col", metavar = "character"),
   make_option(c("--pAdjustMethod"), type="character", default = 'fdr',
@@ -61,6 +70,8 @@ option_list = list(
               help="Allocate memory for Seurat parallelization in GB (Default is NA)", metavar = "character"),
   make_option(c("--Subsample"), type="character", default = NA,
               help="Subsample number of cells per cluster in DoHeatmap (Default is all cells)", metavar = "character"),
+  make_option(c("--StackedViolinPlot"), action="store_true", default = FALSE,
+              help="Plot input features stacked violin-plots", metavar = "character"),
   make_option(c("-o", "--outDir"), type="character", default = NA,
               help="Path to the output directory", metavar = "character")
 );
@@ -71,6 +82,7 @@ opt_parser = optparse::OptionParser(usage = "usage: %prog [options]",
                                     epilogue="\n\nAuthor:Gil Sorek");
 opt = optparse::parse_args(opt_parser);
 
+
 # Set log framework
 logfile = paste(opt$outDir,opt$Sample,'_log.txt',sep='')
 cat(paste('[',Sys.time(),']: Differential Gene Expression: ',opt$Sample,sep=''), file=logfile, sep='\n')
@@ -79,6 +91,7 @@ saveRDS(opt, paste(opt$outDir,'opt.rds',sep=''))
 
 print("Input var:",quote = F)
 print.data.frame(as.data.frame(x = unlist(opt),row.names = names(opt)),right = F,quote = F)
+
 
 # Import data
 if (!is.na(opt$inputRDS)) {
@@ -126,6 +139,7 @@ if (opt$CPUs>1) {
 }
 
 # Prepare for DGE analysis
+# obj_seurat <- SetIdent(obj_seurat, value= obj_seurat@meta.data$seurat_clusters)
 clusters = unique(obj_seurat@active.ident) %>% as.vector()
 writeLog(logfile, paste("Found ",length(clusters)," Clusters: ",paste(clusters,collapse=','),sep=''))
 counts = GetAssayData(object = obj_seurat, slot = "counts", assay = "RNA")
@@ -146,6 +160,64 @@ if (opt$DGE_Within_Clusters)
 
 
 
+if (!is.na(opt$Treatment_file)) {
+    treatmentTable <- read.table(opt$Treatment_file, sep = '\t', header = TRUE)
+    if (dim(treatmentTable)[1]<2) {
+      writeLog(logfile, paste("ERROR: Invalid number of columns."))
+      stop()
+    }
+    if (!(opt$DGE_GroupBy %in% colnames(treatmentTable))) {
+      writeLog(logfile, paste("ERROR: Your DGE_GroupBy parameter:",opt$DGE_GroupBy," is not in the Treatment_file columns names"))
+      stop()
+    }
+    ind= match(obj_seurat@meta.data$orig.ident, treatmentTable[[1]])
+    obj_seurat@meta.data[opt$DGE_GroupBy]= treatmentTable[ind,opt$DGE_GroupBy]
+    
+}
+
+
+Prefix  = ""
+PosCell = "_PosCell"
+NegCell = "_NegCell"
+Proportion = "_Proportion"
+Expression_Cutoff = 0
+Ncell_Cutoff      = 50
+
+CellProp = c()
+DGE_GroupBy = opt$DGE_GroupBy
+if (DGE_GroupBy %in% colnames(obj_seurat@meta.data)){
+    for (cluster in clusters) {
+        ClusterCellProp = data.frame()
+        # cluster_obj     = obj_seurat[,obj_seurat@meta.data$seurat_clusters==cluster]
+        cluster_obj     = obj_seurat[,rownames(obj_seurat@meta.data[obj_seurat@meta.data$seurat_clusters==cluster,])]
+        cluster_counts  = as.matrix(GetAssayData(object = cluster_obj, slot = "count", assay = "RNA"))
+        cells           = apply(X= cluster_counts>Expression_Cutoff,MARGIN=1,FUN=sum)
+        Genes           = names(cells[cells>Ncell_Cutoff])
+        # fetch_data      = FetchData(cluster_obj, vars = c(DGE_GroupBy,Genes))
+        fetch_data      = FetchData(cluster_obj, vars = c(DGE_GroupBy))
+        print(cluster)
+        if (length(Genes)>0){
+            for (ident in unique(obj_seurat@meta.data[,DGE_GroupBy])){
+                Ident_Cells      = rownames(fetch_data)[fetch_data[DGE_GroupBy]==ident]
+                Toatal_Cells     = length(Ident_Cells)
+                if (Toatal_Cells>0){
+                    ExpressedInCells = apply(X=as.data.frame(cluster_counts[Genes,Ident_Cells])>Expression_Cutoff,MARGIN=1,FUN=sum)
+                    ExpressedInCells = as.data.frame(ExpressedInCells)
+                    ClusterCellProp[Genes,paste(ident,PosCell,sep='')]    = ExpressedInCells
+                    ClusterCellProp[Genes,paste(ident,NegCell,sep='')]    = Toatal_Cells-ExpressedInCells
+                    ClusterCellProp[Genes,paste(ident,Proportion,sep='')] = ExpressedInCells/Toatal_Cells
+                }else{
+                    ClusterCellProp[Genes,paste(ident,PosCell,sep='')]    = Toatal_Cells
+                    ClusterCellProp[Genes,paste(ident,NegCell,sep='')]    = Toatal_Cells
+                    ClusterCellProp[Genes,paste(ident,Proportion,sep='')] = 0
+                }
+            }
+            file = paste(opt$outDir,opt$Sample,'_Cluster',cluster,"_GeneProp.csv",sep='')
+            write.csv(ClusterCellProp, file)
+            CellProp[cluster] = list(ClusterCellProp)
+        }
+    }
+}
 
 ### DGE analysis for clusters vs all other cells ###
 if (opt$DGE_Clusters_vs_all) {
@@ -250,9 +322,9 @@ if (opt$DGE_Clusters_vs_all) {
         write.csv(enrichGO_simplify@compareClusterResult,
                 file=paste(opt$outDir,opt$Sample,'/',opt$Sample,"_GO_simplify_vs_all_others.csv",sep=''),quote = FALSE,row.names = TRUE)
         if (dim(enrichGO_simplify@compareClusterResult)[1]<250) {
-          fontsize=9
+          fontsize=12
         } else {
-          fontsize=4
+          fontsize=12
         }
         enrichGO_simplify@compareClusterResult$GeneRatio=stringr::str_remove_all(enrichGO_simplify@compareClusterResult$GeneRatio,"'")
         enrichGO_dotplot <- enrichplot::dotplot(enrichGO_simplify, showCategory=10000, font.size=fontsize, label_format=100)
@@ -278,9 +350,9 @@ if (opt$DGE_Clusters_vs_all) {
       write.csv(enrichKEGG_compClusters@compareClusterResult,
               file=paste(opt$outDir,opt$Sample,'/',opt$Sample,"_KEGG_compareClusters_vs_all_others.csv",sep=''),quote = FALSE,row.names = TRUE)
       if (dim(enrichKEGG_compClusters@compareClusterResult)[1]<250) {
-        fontsize=9
+        fontsize=12
       } else {
-        fontsize=4
+        fontsize=10
       }
       enrichKEGG_compClusters@compareClusterResult$GeneRatio=stringr::str_remove_all(enrichKEGG_compClusters@compareClusterResult$GeneRatio,"'")
       enrichKEGG_dotplot <- enrichplot::dotplot(enrichKEGG_compClusters, showCategory=10000, font.size=fontsize, label_format=100)
@@ -294,100 +366,241 @@ if (opt$DGE_Clusters_vs_all) {
 
 if (opt$DGE_Within_Clusters) {
     writeLog(logfile, paste("Running Within Clusters-DGE Analysis"))
+    opt$Not_only_pos = TRUE
     sig_genes = list()
+    # if (!is.na(opt$Treatment_file)) {
+        # treatmentTable <- read.table(opt$Treatment_file, sep = '\t', header = TRUE)
+        # if (isFALSE(all(colnames(treatmentTable) == c(colnames(treatmentTable)[1],colnames(treatmentTable)[2])))) {
+          # writeLog(logfile, paste("ERROR: Invalid column names. Please use SampleID and Treatment"))
+          # stop()
+        # }
+        # ind= match(obj_seurat@meta.data$orig.ident, treatmentTable$SampleID)
+        # obj_seurat@meta.data$treatment= treatmentTable$Treatment[ind]
+        # #Subset only dent1 and ident2 samples:
+        # ident1 <- opt$ident1
+        # ident2 <- opt$ident2
+        # obj_seurat <- obj_seurat[ ,grepl(ident1, obj_seurat$treatment) | grepl(ident2, obj_seurat$treatment)]
+    # }
     if (!is.na(opt$ident1)){
         DGE_GroupBy = opt$DGE_GroupBy
         if (DGE_GroupBy %in% colnames(obj_seurat@meta.data)){
             ident1 = opt$ident1
             ident2 = opt$ident2
             idents = c(ident1,ident2)
-            if (!(idents %in% unique(obj_seurat@meta.data[,DGE_GroupBy]))) {
+            if (!all(idents %in% unique(obj_seurat@meta.data[,DGE_GroupBy]))) {
                 writeLog(logfile, paste("ERROR: Cannot find the following identities in the object: ",
                                 paste(idents[which(!(idents %in% unique(obj_seurat@meta.data[,DGE_GroupBy])))],collapse=','),sep=''))
                 stop()
             }
-            
             for (cluster in clusters){
                 dir_path = paste(opt$outDir,opt$Sample,'/FindMarkers_Within_Clusters/',ident1,'_Within_Cluster_',cluster,'/',sep='')
                 if (!dir.exists(dir_path))
                     dir.create(dir_path)
                 
+                cluster_obj = obj_seurat[,obj_seurat@meta.data$seurat_clusters==cluster]
+                Idents(cluster_obj) = cluster_obj@meta.data[,DGE_GroupBy]
+
                 # FindMarkers
-                file = paste(dir_path,'DGE_',ident1,'_Within_Cluster_',cluster,'_Markers.csv',sep='')
-                if (any(opt$Force,!file.exists(file))) {
-                  writeLog(logfile, paste("Running FindMarkers: ",ident1,'_Within_Cluster_',cluster,sep=''))
-                  
-                  # DGE_Markers <- FindMarkers(obj_seurat, ident.1 = ident1, subset.ident = cluster ,group.by = DGE_GroupBy, only.pos = !opt$Not_only_pos, min.pct = opt$min_pct, 
-                  #                               logfc.threshold = opt$logfc_threshold, test.use = opt$test_use, verbose = FALSE)
-                  cluster_obj         = obj_seurat[,obj_seurat@active.ident==cluster]
-                  Idents(cluster_obj) = cluster_obj@meta.data[DGE_GroupBy]
-                  if (cluster_obj@active.assay == "SCT"){
-                      cluster_obj = PrepSCTFindMarkers(object = cluster_obj)
-                  }
-                  cluster_counts = GetAssayData(object = cluster_obj, slot = "scale.data", assay = "RNA")
-                  
-                  DGE_Markers <- FindMarkers(cluster_obj, ident.1 = ident1,ident.2 = ident2, only.pos = !opt$Not_only_pos, min.pct = opt$min_pct, 
-                                                logfc.threshold = opt$logfc_threshold, test.use = opt$test_use, verbose = FALSE)
-                  
-                  DGE_Markers$gene = rownames(DGE_Markers)
-                  writeLog(logfile, paste("Finished FindMarkers, Saving results..."))
-                  writeLog(logfile, paste("Filtering Genes After DGE Analysis: min.pct1 >= ",opt$min_pct1,"& max.pct.2 <",opt$max_pct2," & ALPHA < ",opt$ALPHA,sep=''))
-                  if (opt$Not_only_pos) {
-                    DGE_Markers$Group = 'Up'
-                    DGE_Markers[DGE_Markers$avg_log2FC<0,'Group'] = 'Down'
+                Prefix = paste(ident1,"_VS_",ident2,sep='')
+                Prefix = paste('DGE_Within_Clusters_',Prefix,sep='')
+                file   = paste(dir_path,Prefix,cluster,'_Markers.csv',sep='')
+                writeLog(logfile, paste("Running FindMarkers: ",ident1,'_Within_Cluster_',cluster,sep=''))
+                DGE_Markers = data.frame()
+                slot2use    = "scale.data"
+                colours=c("blue","white","red")
+                if (opt$Chisq){
+                    if (cluster %in% names(CellProp)){
+                        Prefix = paste(ident2,"_VS_",ident1,sep='')
+                        Prefix = paste('Chisq_CellProp_Within_Cluster_',Prefix,sep='')
+                        file = paste(dir_path,Prefix,cluster,'_Markers.csv',sep='')
+                        ClusterCellProp = CellProp[[cluster]]
+                        if (dim(ClusterCellProp)[1]>0){
+                            ident1_PosCell          = which(colnames(ClusterCellProp) %in% paste(ident1,PosCell,sep=''))
+                            ident2_PosCell          = which(colnames(ClusterCellProp) %in% paste(ident2,PosCell,sep=''))
+                            ident1_NegCell          = which(colnames(ClusterCellProp) %in% paste(ident1,NegCell,sep=''))
+                            ident2_NegCell          = which(colnames(ClusterCellProp) %in% paste(ident2,NegCell,sep=''))
+                            
+                            ident1_Proportion       = which(colnames(ClusterCellProp) %in% paste(ident1,Proportion,sep=''))
+                            ident2_Proportion       = which(colnames(ClusterCellProp) %in% paste(ident2,Proportion,sep=''))
+                            
+                            gene_list = apply(X= ClusterCellProp,MARGIN=1,FUN= function(x) as.numeric( x[ident2_Proportion]) - as.numeric( x[ident1_Proportion]) )
+                            # names(gene_list)=rownames(ClusterCellProp)
+                            gene_list = gene_list[sort.list(gene_list,decreasing = T)]
+                            saveRDS(gene_list,file=paste(dir_path,Prefix,cluster,'_GeneList',sep=''))
+                            filter_rows             = apply(X= ClusterCellProp,MARGIN=1,FUN= function(x) sum(c(x[ident1_Proportion],x[ident2_Proportion])> opt$Chisq_minprop_cutoff)>0)
+                            ClusterCellProp         = ClusterCellProp[filter_rows,]
+                            
+                            filter_rows             = apply(X= ClusterCellProp,MARGIN=1,FUN= function(x) abs(as.numeric(x[ident1_Proportion]) - as.numeric(x[ident2_Proportion]) )  > opt$Chisq_diffprop_cutoff )
+                            ClusterCellProp         = ClusterCellProp[filter_rows,]
+                            if (dim(ClusterCellProp)[1]>0) {
+                                ClusterCellProp$p.value = apply(X= ClusterCellProp,MARGIN=1,FUN= function(x) chisq.test(x = c(x[ident2_PosCell]+1,x[ident2_NegCell]+1),
+                                                                                              p = c(x[ident1_PosCell]+1,x[ident1_NegCell]+1),
+                                                                                              rescale.p        = TRUE,
+                                                                                              simulate.p.value = FALSE)$p.value)
+                                
+                                ClusterCellProp["Group"]   = 'Up'
+                                ClusterCellProp[apply(X= ClusterCellProp,MARGIN=1,FUN= function(x) x[ident2_Proportion] < x[ident1_Proportion]),"Group"]  = 'Down'
+                                ClusterCellProp$p.adjust   = p.adjust(p =ClusterCellProp$p.value ,method = opt$pAdjustMethod)
+                                ClusterCellProp            = ClusterCellProp[order(ClusterCellProp$p.adjust, decreasing = TRUE),]
+                                write.csv(ClusterCellProp, file)
+                                df        = ClusterCellProp[ClusterCellProp$p.adjust< opt$ALPHA,]
+                                df$gene   = rownames(df)
+                                
+                                
+                                GOgse = try(clusterProfiler::gseGO(geneList=gene_list,
+                                                                   pAdjustMethod = opt$pAdjustMethod,
+                                                                   OrgDb = OrgDb,
+                                                                   ont = opt$ont,
+                                                                   keyType = "SYMBOL"),
+                                          silent = F)
+                                if (!inherits(GOgse,"try-error")) {
+                                    if (dim(GOgse)[1]>1){
+                                        write.csv(GOgse,
+                                                  file=paste(dir_path,Prefix,cluster,'_GOgse.csv',sep=''))
+                                        GOgse_plt = clusterProfiler::ridgeplot(GOgse,core_enrichment = TRUE)
+                                        pdf(paste(dir_path,Prefix,cluster,'_GOgse.pdf',sep=''),width = 40, height = 15)
+                                        print(GOgse_plt)
+                                        dev.off()
+                                    }
+                                }
+                                
+                                conv = clusterProfiler::bitr(geneID=names(gene_list), fromType = "SYMBOL", toType = "ENTREZID", OrgDb = OrgDb)
+                                names(gene_list) = conv$ENTREZID
+                                saveRDS(gene_list,file=paste(dir_path,Prefix,cluster,'_ENTREZID_GeneList',sep=''))
+                                
+                                KEGGgse = try(clusterProfiler::gseKEGG(geneList = gene_list,
+                                                                       pAdjustMethod = opt$pAdjustMethod,
+                                                                       organism = opt$organism),
+                                          silent = F)
+                                if (!inherits(KEGGgse,"try-error")) {
+                                    if (dim(KEGGgse)[1]>1){
+                                        write.csv(KEGGgse,
+                                                  file=paste(dir_path,Prefix,cluster,'_KEGGgse.csv',sep=''))
+                                        KEGGgse_plt = clusterProfiler::ridgeplot(KEGGgse,core_enrichment = TRUE)
+                                        pdf(paste(dir_path,Prefix,cluster,'_KEGGgse.pdf',sep=''),width = 40, height = 15)
+                                        print(KEGGgse_plt)
+                                        dev.off()
+                                    }
+                                }
+                                
+                            }else{
+                                df       = data.frame()
+                                writeLog(logfile, paste("No Significant Genes were Found After Filtration "))
+                            }
+                            slot2use = "counts"
+                            colours=c("white","black")
+                        }
+                    }
                     
-                    DGE_Markers_UP = DGE_Markers[DGE_Markers$Group == 'Up',]
-                    DGE_Markers_UP = DGE_Markers_UP[DGE_Markers_UP$pct.1>=opt$min_pct1 & DGE_Markers_UP$pct.2<opt$max_pct2 & DGE_Markers_UP$p_val_adj<opt$ALPHA,]
+                }else{
+                    if (any(opt$Force,!file.exists(file))) {
+                        writeLog(logfile, paste("Running FindMarkers: ",ident1,'_Within_Cluster_',cluster,sep=''))
+                        #cluster_obj = obj_seurat[,obj_seurat@active.ident==cluster]
+                        
+                        
+                        if (cluster_obj@active.assay == "SCT"){
+                            cluster_obj = PrepSCTFindMarkers(object = cluster_obj)
+                        }
+                        cluster_counts = GetAssayData(object = cluster_obj, slot = "scale.data", assay = "RNA")
+                        
+                        DGE_Markers <- FindMarkers(cluster_obj, ident.1 = ident1,ident.2 = ident2, only.pos = !opt$Not_only_pos, min.pct = opt$min_pct, 
+                                                      logfc.threshold = opt$logfc_threshold, test.use = opt$test_use, verbose = FALSE)
+                        writeLog(logfile, paste("Finished FindMarkers, Saving results..."))
+                        writeLog(logfile, paste("FindMarkers: Found ", dim(DGE_Markers)[1] ,"Significant Genes Before Filtration" ,ident1,' VS ',ident2," in Cluster ",cluster,sep=''))
+                        
+                        if (dim(DGE_Markers)[1]>0){
+                            DGE_Markers$gene = rownames(DGE_Markers)
+                            
+                            writeLog(logfile, paste("Filtering Genes After DGE Analysis: min.pct1 >= ",opt$min_pct1,"& max.pct.2 <",opt$max_pct2," & ALPHA < ",opt$ALPHA,sep=''))
+                            
+                            if (opt$Not_only_pos) {
+                                DGE_Markers$Group = 'Up'
+                                DGE_Markers[DGE_Markers$avg_log2FC<0,'Group'] = 'Down'
+                                
+                                DGE_Markers_UP = DGE_Markers[DGE_Markers$Group == 'Up',]
+                                DGE_Markers_UP = DGE_Markers_UP[DGE_Markers_UP$pct.1>=opt$min_pct1 & DGE_Markers_UP$pct.2<opt$max_pct2 & DGE_Markers_UP$p_val_adj<opt$ALPHA,]
+                                
+                                DGE_Markers_Down = DGE_Markers[DGE_Markers$Group == 'Down',]
+                                DGE_Markers_Down = DGE_Markers_Down[DGE_Markers_Down$pct.1<opt$max_pct2 & DGE_Markers_Down$pct.2>=opt$min_pct1 & DGE_Markers_Down$p_val_adj<opt$ALPHA,]
+                                
+                                DGE_Markers = rbind(DGE_Markers_UP,DGE_Markers_Down)
+                                
+                            }else{
+                                DGE_Markers = DGE_Markers[DGE_Markers$pct.1>=opt$min_pct1 & DGE_Markers$pct.2<opt$max_pct2 & DGE_Markers$p_val_adj<opt$ALPHA,]
+                            }
+                            # saveRDS(cluster_obj, paste(opt$outDir,cluster,'_cluster_obj.rds',sep=''))
+                            writeLog(logfile, paste("FindMarkers: Found ", dim(DGE_Markers)[1] ,"Significant Genes After Filtration" ,ident1,' VS ',ident2," in Cluster ",cluster,sep=''))
+                            if (dim(DGE_Markers)[1]>0){
+                                DGE_Markers = cbind(DGE_Markers, cluster_counts[ DGE_Markers$gene, rownames(cluster_obj@meta.data[cluster_obj@meta.data[DGE_GroupBy]==ident1,])])
+                                DGE_Markers['space'] = ''
+                                DGE_Markers = cbind(DGE_Markers, cluster_counts[ DGE_Markers$gene, rownames(cluster_obj@meta.data[cluster_obj@meta.data[DGE_GroupBy]==ident2,])])
+                                write.csv(DGE_Markers, file)
+                            }else{
+                                writeLog(logfile, paste("No Significant Genes were Found After Filtration "))
+                            }
+                        }else{
+                            writeLog(logfile, paste("FindMarkers Found No Significant Genes"))
+                        }
+                    } else {
+                      writeLog(logfile, paste("Loaded FindMarkers results from previous run"))
+                      DGE_Markers <- read.csv(file, header=T)
+                    }
+
+                    if (dim(DGE_Markers)[1]>0){
+                        # Top Marker Genes
+                        writeLog(logfile, paste("Calculating the top ",opt$Top_n," marker genes",sep=''))
+                        if ('Group' %in% colnames(DGE_Markers)) {
+                          Markers_Up = DGE_Markers[DGE_Markers$Group=='Up',]
+                          Top_Up = Markers_Up %>% slice_head(n=opt$Top_n)
+                          Markers_Down = DGE_Markers[DGE_Markers$Group=='Down',]
+                          Top_Down = Markers_Down %>% slice_head(n=opt$Top_n)
+                          DGE_Top_Markers = rbind(Top_Up, Top_Down)
+                        } else {
+                          DGE_Top_Markers <- DGE_Markers %>% slice_head(n=opt$Top_n)
+                        }
+                        write.csv(DGE_Top_Markers, paste(dir_path,'DGE_',ident1,"_VS_",ident2,'_Within_Cluster_',cluster,'_Markers_top',opt$Top_n,'.csv',sep=''))
+                        writeLog(logfile, paste("Plotting top ",opt$Top_n," marker genes",sep=''))
+                        
+                                            
+        #DGE_all <- FindMarkers(cluster_obj, ident.1 = ident1,ident.2 = ident2, only.pos = !opt$Not_only_pos, min.pct = 0, 
+    #                    logfc.threshold = -Inf, test.use = opt$test_use, verbose = FALSE)
+ #Volcano plot:
+   #     volcano.plot <- ggplot(aes(DGE_all, aes(x = avg_log2FC, y = -log10(p_val_adj)))) +
+ #geom_point(aes(color = ifelse(p_val_adj < 0.05, "Significant", "Not Significant")), alpha = 0.6) +
+  #scale_color_manual(values = c("Significant" = "red", "Not Significant" = "black")) +
+  #labs(x = "Log2(Fold Change)", y = "-log10(P-value)") +  geom_text_repel() + theme_classic()
+  #
+             #      pdf(paste(dir_path,'Volcano_',ident1,"_VS_",ident2,'_Within_Cluster_',cluster,'.pdf',sep=''),width = 40, height = 15)
+        #            print(volcano.plot)
+        #            dev.off() 
                     
-                    DGE_Markers_Down = DGE_Markers[DGE_Markers$Group == 'Down',]
-                    DGE_Markers_Down = DGE_Markers_Down[DGE_Markers_Down$pct.1<opt$max_pct2 & DGE_Markers_Down$pct.2>=opt$min_pct1 & DGE_Markers_Down$p_val_adj<opt$ALPHA,]
-                    
-                    DGE_Markers = rbind(DGE_Markers_UP,DGE_Markers_Down)
-                    
-                  }else{
-                    DGE_Markers = DGE_Markers[DGE_Markers$pct.1>=opt$min_pct1 & DGE_Markers$pct.2<opt$max_pct2 & DGE_Markers$p_val_adj<opt$ALPHA,]
-                  }
-                  DGE_Markers = cbind(DGE_Markers, cluster_counts[ DGE_Markers$gene, names(cluster_obj$orig.ident[cluster_obj$orig.ident==ident1])])
-                  DGE_Markers['space'] = ''
-                  DGE_Markers = cbind(DGE_Markers, cluster_counts[ DGE_Markers$gene, names(cluster_obj$orig.ident[cluster_obj$orig.ident==ident2])])
-                  write.csv(DGE_Markers, file)
-                } else {
-                  writeLog(logfile, paste("Loaded FindMarkers results from previous run"))
-                  DGE_Markers <- read.csv(file, header=T)
+                        if (!is.na(opt$Subsample)) {
+                          violin_plot <- VlnPlot(subset(cluster_obj, downsample=subsample), features= DGE_Top_Markers$gene, log = TRUE) + ggplot2::theme(axis.text.y = element_text(size = 12))
+                        } else {
+                          violin_plot <- VlnPlot(cluster_obj, features= DGE_Top_Markers$gene, log = TRUE) + ggplot2::theme(axis.text.y = element_text(size = 12))
+                        }
+                        
+                        pdf(paste(dir_path,'DGE_',ident1,"_VS_",ident2,'_Within_Cluster_',cluster,'_top',opt$Top_n,'_violinPlot.pdf',sep=''),width = 40, height = 15)
+                        print(violin_plot)
+                        dev.off()
+                         if (!is.na(opt$Subsample)) {
+                          heat_map = DoHeatmap(subset(cluster_obj, downsample=subsample), features = DGE_Top_Markers$gene, group.by= DGE_GroupBy)+ theme(axis.text.y = element_text(size = 12)) + ggplot2::scale_fill_gradientn(colours=colours) 
+                         } else {
+                          heat_map = DoHeatmap(cluster_obj, features = DGE_Top_Markers$gene, group.by= DGE_GroupBy) + theme(axis.text.y = element_text(size = 12)) + ggplot2::scale_fill_gradientn(colours=colours) # + NoLegend()
+                         } 
+                        pdf(paste(dir_path,'DGE_',ident1,"_VS_",ident2,'_Within_Cluster_',cluster,'_top',opt$Top_n,'_heatmap.pdf',sep=''),width = 40, height = 15)
+                        print(heat_map)
+                        dev.off()
+                        
+                        # Enrichment Analysis
+                        writeLog(logfile, paste("Setting Genes for Enrichment Analysis: min.pct1 >= ",opt$min_pct1," & ALPHA < ",opt$ALPHA,sep=''))
+                        df <- DGE_Markers
+                        df = df[df$pct.1>=opt$min_pct1 & df$pct.2<opt$max_pct2 & df$p_val_adj<opt$ALPHA,]
+                        writeLog(logfile, paste("Contrast ",ident1,' Within Cluster ',cluster,': ',dim(df)[1],"  Differentially Expressed Genes",sep=''))
+                    }else{
+                        writeLog(logfile, paste("FindMarkers Found No Significant Genes"))
+                    }
                 }
-                
-                # Top Marker Genes
-                writeLog(logfile, paste("Calculating the top ",opt$Top_n," marker genes",sep=''))
-                if ('Group' %in% colnames(DGE_Markers)) {
-                  Markers_Up = DGE_Markers[DGE_Markers$Group=='Up',]
-                  Top_Up = Markers_Up %>% slice_head(n=opt$Top_n)
-                  Markers_Down = DGE_Markers[DGE_Markers$Group=='Down',]
-                  Top_Down = Markers_Down %>% slice_head(n=opt$Top_n)
-                  DGE_Top_Markers = rbind(Top_Up, Top_Down)
-                } else {
-                  DGE_Top_Markers <- DGE_Markers %>% slice_head(n=opt$Top_n)
-                }
-                write.csv(DGE_Top_Markers, paste(dir_path,'DGE_',ident1,'_Within_Cluster_',cluster,'_Markers_top',opt$Top_n,'.csv',sep=''))
-                writeLog(logfile, paste("Plotting top ",opt$Top_n," marker genes",sep=''))
-                
-                # cluster_obj         = obj_seurat[,obj_seurat@active.ident==cluster]
-                # Idents(cluster_obj) = cluster_obj@meta.data[DGE_GroupBy]
-                
-                
-                if (!is.na(opt$Subsample)) {
-                  heat_map = DoHeatmap(subset(cluster_obj, downsample=subsample), features = DGE_Top_Markers$gene) + ggplot2::scale_fill_gradientn(colours=c("blue","white","red")) # + NoLegend()
-                } else {
-                  heat_map = DoHeatmap(cluster_obj, features = DGE_Top_Markers$gene) + ggplot2::scale_fill_gradientn(colours=c("blue","white","red")) # + NoLegend()
-                }
-                pdf(paste(dir_path,'DGE_',ident1,'_Within_Cluster_',cluster,'_top',opt$Top_n,'_heatmap.pdf',sep=''),width = 40, height = 15)
-                print(heat_map)
-                dev.off()
-                
-                # Enrichment Analysis
-                writeLog(logfile, paste("Setting Genes for Enrichment Analysis: min.pct1 >= ",opt$min_pct1," & ALPHA < ",opt$ALPHA,sep=''))
-                df <- DGE_Markers
-                df = df[df$pct.1>=opt$min_pct1 & df$pct.2<opt$max_pct2 & df$p_val_adj<opt$ALPHA,]
-                writeLog(logfile, paste("Contrast ",ident1,' Within Cluster ',cluster,': ',dim(df)[1],"  Differentially Expressed Genes",sep=''))
                 if (dim(df)[1]>0) {
                     # Significant Genes Heatmap
                     if ('Group' %in% colnames(df)){
@@ -397,78 +610,84 @@ if (opt$DGE_Within_Clusters) {
                         sig_genes[[cluster]] <- df$gene
                     }
                     if (!is.na(opt$Subsample)) {
-                      heat_map = DoHeatmap(subset(cluster_obj, downsample=subsample), features = df$gene) + ggplot2::scale_fill_gradientn(colours=c("blue","white","red"))# + NoLegend()
+                      heat_map = DoHeatmap(subset(cluster_obj, downsample=subsample), features = df$gene, group.by= DGE_GroupBy,slot = slot2use)+ theme(axis.text.y = element_text(size = 12)) + ggplot2::scale_fill_gradientn(colours=colours) 
                     } else {
-                      heat_map = DoHeatmap(cluster_obj, features = df$gene) + ggplot2::scale_fill_gradientn(colours=c("blue","white","red"))# + NoLegend()
+                      heat_map = DoHeatmap(cluster_obj, features = df$gene, group.by= DGE_GroupBy,slot = slot2use) + theme(axis.text.y = element_text(size = 12))+ ggplot2::scale_fill_gradientn(colours=colours)  #+ NoLegend()
                     }
-                    pdf(paste(dir_path,'DGE_',ident1,' Within Cluster ',cluster,'_heatmap.pdf',sep=''),width = 40, height = 15)
+                    pdf(paste(dir_path,Prefix,cluster,'_heatmap.pdf',sep=''),width = 40, height = 15)
                     print(heat_map)
                     dev.off()
                 }
-                
-            }
-            # GO Enrichment
-            enrichGO_compClusters <- try(clusterProfiler::compareCluster(geneClusters = sig_genes, fun = "enrichGO", pAdjustMethod = opt$pAdjustMethod,
-                                                                       OrgDb = OrgDb, ont = opt$ont, universe = background.genes, keyType = "SYMBOL"),
-                                       silent = TRUE)
-            if (!inherits(enrichGO_compClusters,"try-error")) {
-              enrichGO_compClusters@compareClusterResult$GeneRatio=paste("'",enrichGO_compClusters@compareClusterResult$GeneRatio,sep='')
-              write.csv(enrichGO_compClusters@compareClusterResult,
-                      file=paste(opt$outDir,opt$Sample,'/',opt$Sample,"_GO_compare_Within_Clusters.csv",sep=''),quote = FALSE,row.names = TRUE)
-              enrichGO_simplify <- try(clusterProfiler::simplify(enrichGO_compClusters, cutoff = opt$simplify_cutoff),
-                                     silent = TRUE)
-              if (!inherits(enrichGO_simplify,"try-error")) {
-                enrichGO_simplify@compareClusterResult$GeneRatio=paste("'",enrichGO_simplify@compareClusterResult$GeneRatio,sep='')
-                write.csv(enrichGO_simplify@compareClusterResult,
-                        file=paste(opt$outDir,opt$Sample,'/',opt$Sample,"_GO_simplify_Within_Clusters.csv",sep=''),quote = FALSE,row.names = TRUE)
-                if (dim(enrichGO_simplify@compareClusterResult)[1]<250) {
-                  fontsize=9
-                } else {
-                  fontsize=4
-                }
-                enrichGO_simplify@compareClusterResult$GeneRatio=stringr::str_remove_all(enrichGO_simplify@compareClusterResult$GeneRatio,"'")
-                enrichGO_dotplot <- enrichplot::dotplot(enrichGO_simplify, showCategory=10000, font.size=fontsize, label_format=100)
-                ggplot2::ggsave(filename = paste(opt$outDir,opt$Sample,'/',opt$Sample,"_GO_simplify_Within_Clusters_dotplot.pdf",sep=''),
-                              enrichGO_dotplot, dpi = 600,device = "pdf",width = 30,height = 50, limitsize = FALSE)
-              }
-            }
-
-            # Convert sig.genes to entrez gene ids
-            sig_genes_entrez = list()
-            for (cluster in names(sig_genes)) {
-              conv = clusterProfiler::bitr(geneID=sig_genes[[cluster]], fromType = "SYMBOL", toType = "ENTREZID", OrgDb = OrgDb)
-              sig_genes_entrez[[cluster]] = conv$ENTREZID
-              rm(conv)
-            }
-
-            # KEGG Enrichment
-            enrichKEGG_compClusters <- try(clusterProfiler::compareCluster(geneClusters = sig_genes_entrez, fun = "enrichKEGG", pAdjustMethod = opt$pAdjustMethod,
-                                                                         organism = opt$organism, universe = background.genes_entrezid),
-                                         silent = TRUE)
-            if (!inherits(enrichKEGG_compClusters,"try-error")) {
-              enrichKEGG_compClusters@compareClusterResult$GeneRatio=paste("'",enrichKEGG_compClusters@compareClusterResult$GeneRatio,sep='')
-              write.csv(enrichKEGG_compClusters@compareClusterResult,
-                      file=paste(opt$outDir,opt$Sample,'/',opt$Sample,"_KEGG_compareClusters_Within_Clusters.csv",sep=''),quote = FALSE,row.names = TRUE)
-              if (dim(enrichKEGG_compClusters@compareClusterResult)[1]<250) {
-                fontsize=9
-              } else {
-                fontsize=4
-              }
-              enrichKEGG_compClusters@compareClusterResult$GeneRatio=stringr::str_remove_all(enrichKEGG_compClusters@compareClusterResult$GeneRatio,"'")
-              enrichKEGG_dotplot <- enrichplot::dotplot(enrichKEGG_compClusters, showCategory=10000, font.size=fontsize, label_format=100)
-              ggplot2::ggsave(filename = paste(opt$outDir,opt$Sample,'/',opt$Sample,"_KEGG_compare_Within_Clusters.pdf",sep=''),
-                            enrichKEGG_dotplot, dpi = 600,device = "pdf",width = 30,height = 50, limitsize = FALSE)
-              rm(sig_genes,cluster,file,df,sig_genes_entrez,enrichGO_compClusters,enrichGO_simplify,enrichGO_dotplot,enrichKEGG_compClusters,
-                 enrichKEGG_dotplot)
             }
             
+            if (length(sig_genes)>0){
+                # GO Enrichment
+                enrichGO_compClusters <- try(clusterProfiler::compareCluster(geneClusters = sig_genes, fun = "enrichGO", pAdjustMethod = opt$pAdjustMethod,
+                                                                           OrgDb = OrgDb, ont = opt$ont, universe = background.genes, keyType = "SYMBOL"),
+                                           silent = TRUE)
+                if (!inherits(enrichGO_compClusters,"try-error")) {
+                  enrichGO_compClusters@compareClusterResult$GeneRatio=paste("'",enrichGO_compClusters@compareClusterResult$GeneRatio,sep='')
+                  write.csv(enrichGO_compClusters@compareClusterResult,
+                          file=paste(opt$outDir,opt$Sample,'/',opt$Sample,"_",Prefix,"_GO_compare.csv",sep=''),quote = FALSE,row.names = TRUE)
+                  enrichGO_simplify <- try(clusterProfiler::simplify(enrichGO_compClusters, cutoff = opt$simplify_cutoff),
+                                         silent = TRUE)
+                  if (!inherits(enrichGO_simplify,"try-error")) {
+                    enrichGO_simplify@compareClusterResult$GeneRatio=paste("'",enrichGO_simplify@compareClusterResult$GeneRatio,sep='')
+                    write.csv(enrichGO_simplify@compareClusterResult,
+                            file=paste(opt$outDir,opt$Sample,'/',opt$Sample,"_",Prefix,"_GO_simplify.csv",sep=''),quote = FALSE,row.names = TRUE)
+                    if (dim(enrichGO_simplify@compareClusterResult)[1]<250) {
+                      fontsize=14
+                    } else {
+                      fontsize=14
+                    }
+                    enrichGO_simplify@compareClusterResult$GeneRatio=stringr::str_remove_all(enrichGO_simplify@compareClusterResult$GeneRatio,"'")
+                    enrichGO_dotplot <- enrichplot::dotplot(enrichGO_simplify, showCategory=10000, font.size=fontsize, label_format=100)
+                    ggplot2::ggsave(filename = paste(opt$outDir,opt$Sample,'/',opt$Sample,"_",Prefix,"_GO_simplify_dotplot.pdf",sep=''),
+                                  enrichGO_dotplot, dpi = 600,device = "pdf",width = 30,height = 50, limitsize = FALSE)
+                  }
+                }
+                
+                # save.image(file =paste(opt$outDir,"WorkSpace.RData",sep='') )
+                
+                # Convert sig.genes to entrez gene ids
+                sig_genes_entrez = list()
+                for (cluster in names(sig_genes)) {
+                  conv = clusterProfiler::bitr(geneID=sig_genes[[cluster]], fromType = "SYMBOL", toType = "ENTREZID", OrgDb = OrgDb)
+                  sig_genes_entrez[[cluster]] = conv$ENTREZID
+                  rm(conv)
+                }
+                
+                # KEGG Enrichment
+                
+                enrichKEGG_compClusters <- try(clusterProfiler::compareCluster(geneClusters = sig_genes_entrez, fun = "enrichKEGG", pAdjustMethod = opt$pAdjustMethod,
+                                                                             organism = opt$organism, universe = background.genes_entrezid),
+                                             silent = FALSE)
+                if (!inherits(enrichKEGG_compClusters,"try-error")) {
+                  enrichKEGG_compClusters@compareClusterResult$GeneRatio=paste("'",enrichKEGG_compClusters@compareClusterResult$GeneRatio,sep='')
+                  write.csv(enrichKEGG_compClusters@compareClusterResult,
+                          file=paste(opt$outDir,opt$Sample,'/',opt$Sample,"_",Prefix,"_KEGG_compareClusters.csv",sep=''),quote = FALSE,row.names = TRUE)
+                  if (dim(enrichKEGG_compClusters@compareClusterResult)[1]<250) {
+                    fontsize=14
+                  } else {
+                    fontsize=14
+                  }
+                  enrichKEGG_compClusters@compareClusterResult$GeneRatio=stringr::str_remove_all(enrichKEGG_compClusters@compareClusterResult$GeneRatio,"'")
+                  enrichKEGG_dotplot <- enrichplot::dotplot(enrichKEGG_compClusters, showCategory=10000, font.size=fontsize, label_format=100)
+                  ggplot2::ggsave(filename = paste(opt$outDir,opt$Sample,'/',opt$Sample,Prefix,"_KEGG_compareClusters.pdf",sep=''),
+                                enrichKEGG_dotplot, dpi = 600,device = "pdf",width = 30,height = 50, limitsize = FALSE)
+                  rm(sig_genes,cluster,file,df,sig_genes_entrez,enrichGO_compClusters,enrichGO_simplify,enrichGO_dotplot,enrichKEGG_compClusters,
+                     enrichKEGG_dotplot)
+                }
+            }
         }else{
             writeLog(logfile, paste("ERROR: Cannot find the following Group in the object: ",
                         paste(idents[which(!(DGE_GroupBy %in% colnames(obj_seurat@meta.data)))],collapse=','),sep=''))
             stop()
+            
         }
     }
 }
+
 
 
 ### DGE analysis for clusters vs each other ###
@@ -532,9 +751,9 @@ if (opt$DGE_Pairwise) {
     write.csv(DGE_Top_Markers, paste(dir_path,'DGE_',paste(ident1,collapse = '.'),'_vs_',paste(ident2,collapse = '.'),'_Markers_top',opt$Top_n,'.csv',sep=''))
     writeLog(logfile, paste("Plotting top ",opt$Top_n," marker genes",sep=''))
     if (!is.na(opt$Subsample)) {
-      heat_map = DoHeatmap(subset(obj_seurat, downsample=subsample), features = DGE_Top_Markers$gene) + NoLegend()
+      heat_map = DoHeatmap(subset(obj_seurat, downsample=subsample, group.by= "orig.ident")+ theme(axis.text.y = element_text(size = 12)), features = DGE_Top_Markers$gene) + NoLegend()
     } else {
-      heat_map = DoHeatmap(obj_seurat, features = DGE_Top_Markers$gene) + NoLegend()
+      heat_map = DoHeatmap(obj_seurat, features = DGE_Top_Markers$gene, group.by= "orig.ident")+ theme(axis.text.y = element_text(size = 12)) + NoLegend()
     }
     pdf(paste(dir_path,'DGE_',paste(ident1,collapse = '.'),'_vs_',paste(ident2,collapse = '.'),'_top',opt$Top_n,'_heatmap.pdf',sep=''),width = 40, height = 15)
     print(heat_map)
@@ -551,9 +770,9 @@ if (opt$DGE_Pairwise) {
         # Significant Genes Heatmap
         sig_genes <- df$gene
         if (!is.na(opt$Subsample)) {
-          heat_map = DoHeatmap(subset(obj_seurat, downsample=subsample), features = sig_genes) + NoLegend()
+          heat_map = DoHeatmap(subset(obj_seurat, downsample=subsample), features = sig_genes, group.by= "orig.ident") + theme(axis.text.y = element_text(size = 12)) + NoLegend()
         } else {
-          heat_map = DoHeatmap(obj_seurat, features = sig_genes) + NoLegend()
+          heat_map = DoHeatmap(obj_seurat, features = sig_genes, group.by= "orig.ident")+ theme(axis.text.y = element_text(size = 12)) + NoLegend()
         }
         pdf(paste(dir_path,'DGE_',paste(ident1,collapse = '.'),'_vs_',paste(ident2,collapse = '.'),'_Up_Regulated_heatmap.pdf',sep=''),width = 40, height = 15)
         print(heat_map)
@@ -575,9 +794,9 @@ if (opt$DGE_Pairwise) {
                         file=paste(dir_path,'DGE_',paste(ident1,collapse = '.'),'_vs_',paste(ident2,collapse = '.'),'_GO_simplify.csv',sep=''),quote = FALSE,row.names = TRUE)
               
               if (dim(enrichGO_simplify@compareClusterResult)[1]<250) {
-                fontsize=9
+                fontsize=14
               } else {
-                fontsize=4
+                fontsize=14
               }
               enrichGO_simplify@compareClusterResult$GeneRatio=stringr::str_remove_all(enrichGO_simplify@compareClusterResult$GeneRatio,"'")
               enrichGO_dotplot <- enrichplot::dotplot(enrichGO_simplify, showCategory=10000, font.size=fontsize, label_format=100)
@@ -603,6 +822,8 @@ if (opt$DGE_Pairwise) {
       }
       
       # KEGG Enrichment
+      
+      
       enrichKEGG_compClusters <- try(clusterProfiler::compareCluster(geneClusters = sig_genes_entrez, fun = "enrichKEGG", pAdjustMethod = opt$pAdjustMethod,
                                                                      organism = opt$organism, universe = background.genes_entrezid),
                                      silent = TRUE)
@@ -611,9 +832,9 @@ if (opt$DGE_Pairwise) {
         write.csv(enrichKEGG_compClusters@compareClusterResult,
                   file=paste(opt$outDir,opt$Sample,'/Cluster_',cluster1,'/Cluster',cluster1,'_KEGG_compareClusters_vs_each_other.csv',sep=''),quote = FALSE,row.names = TRUE)
         if (dim(enrichKEGG_compClusters@compareClusterResult)[1]<250) {
-          fontsize=9
+          fontsize=12
         } else {
-          fontsize=4
+          fontsize=10
         }
         enrichKEGG_compClusters@compareClusterResult$GeneRatio=stringr::str_remove_all(enrichKEGG_compClusters@compareClusterResult$GeneRatio,"'")
         enrichKEGG_dotplot <- enrichplot::dotplot(enrichKEGG_compClusters, showCategory=10000, font.size=fontsize, label_format=100)

@@ -41,6 +41,9 @@ opt_parser = optparse::OptionParser(usage = "usage: %prog [options]",
                                     epilogue="\n\nAuthor:Gil Sorek");
 opt = optparse::parse_args(opt_parser);
 
+
+Doublets_colname = 'DF.classification_homotypic'
+
 # Set log framework
 logfile = paste(opt$outDir,opt$Sample,'_log.txt',sep='')
 cat(paste('[',Sys.time(),']: Modify: ',opt$Sample,sep=''), file=logfile, sep='\n')
@@ -97,25 +100,57 @@ if (!is.na(opt$Remove_Clusters)) {
   writeLog(logfile, paste("Removing the following identities from the object: ",opt$Remove_Clusters,sep=''))
 }
 
+
+
 # Remove Doublets
 if (!is.na(opt$Remove_Doublets)) {
   writeLog(logfile, paste("Removing Doublets..."))
-  if (file.exists(opt$Remove_Doublets)) {
-    DF_classifications <- read.csv(opt$Remove_Doublets, header = TRUE, row.names = 1)
-    if ('DF.classification_homotypic' %in% colnames(DF_classifications)) {
-      cells2remove <- row.names(DF_classifications[which(DF_classifications$DF.classification_homotypic=="Doublet"),])
-      writeLog(logfile, paste("Removed ",length(cells2remove)," Doublets",sep=''))
-      obj_seurat <- subset(obj_seurat, cells = cells2remove, invert = TRUE)
+  files = unlist(stringi::stri_split(str = opt$Remove_Doublets,fixed = ','))
+  Allcells2remove = c()
+  for (file in files){
+    if (file.exists(file)) {
+        DF_classifications <- read.csv(file, header = TRUE, row.names = 1)
+        if ( Doublets_colname %in% colnames(DF_classifications)) {
+            Doublets_val_colname = colnames(DF_classifications)[which( Doublets_colname == colnames(DF_classifications))-1]
+            temp_obj_seurat <- SeuratObject::AddMetaData(obj_seurat,DF_classifications)
+            temp_obj_seurat@meta.data[which(is.na(temp_obj_seurat@meta.data[Doublets_colname])),Doublets_colname] = "Singlet"
+            temp_obj_seurat@meta.data[temp_obj_seurat@meta.data[Doublets_colname]!="Doublet",Doublets_colname]    = "Singlet"
+            ct_plt <- DimPlot(temp_obj_seurat, group.by = Doublets_colname)
+            pdf(file = paste(opt$outDir,opt$Sample,tail(stringi::stri_split_fixed(str=file,pattern='/')[[1]],2)[1],'_DoubletsPlot.pdf',sep=''), 
+                width = 25, height = 15)
+            print(ct_plt)
+            dev.off()
+            
+            temp_obj_seurat@meta.data[temp_obj_seurat@meta.data[Doublets_colname]!="Doublet",Doublets_val_colname] = 0
+            ct_plt <- FeaturePlot(temp_obj_seurat, features = Doublets_val_colname)
+            pdf(file = paste(opt$outDir,opt$Sample,tail(stringi::stri_split_fixed(str=file,pattern='/')[[1]],2)[1],'_Doublets_Value_Plot.pdf',sep=''), 
+                width = 25, height = 15)
+            print(ct_plt)
+            dev.off()
+            cells2remove <- row.names(DF_classifications[which(DF_classifications[Doublets_colname]=="Doublet"),])
+            writeLog(logfile, paste("Removed ",length(cells2remove)," Doublets",sep=''))
+            Allcells2remove = c(Allcells2remove,cells2remove)
+        } else {
+            writeLog(logfile, paste("ERROR: Missing column",Doublets_colname))
+            stop()
+        }
     } else {
-      writeLog(logfile, paste("ERROR: Missing column 'DF.classification_homotypic'"))
-      stop()
+        writeLog(logfile, paste("ERROR: ",file," does not exists.",sep=''))
+        stop()
     }
-  } else {
-    writeLog(logfile, paste("ERROR: ",opt$Remove_Doublets," does not exists.",sep=''))
-    stop()
-  }
+ }
+ if (length(Allcells2remove)>0){
+    obj_seurat@meta.data[Doublets_colname] = "Singlet"
+    obj_seurat@meta.data[rownames(obj_seurat@meta.data) %in% Allcells2remove,Doublets_colname] = "Doublet"
+    ct_plt <- DimPlot(obj_seurat, group.by = Doublets_colname)
+    pdf(file = paste(opt$outDir,opt$Sample,'_ALL_DoubletsPlot.pdf',sep=''), 
+       width = 25, height = 15)
+    print(ct_plt)
+    dev.off()
+    obj_seurat <- subset(obj_seurat, cells = unique(Allcells2remove), invert = TRUE)
+    saveRDS(Allcells2remove, file = paste(opt$outDir, opt$Sample, '_DoubletsCells2Remove.rds', sep=''))
+ }
 }
-
 # Rename Identities
 if (sum(!is.na(opt$Set_Idents),!is.na(opt$Set_Ident_by_Marker))>1) {
   writeLog(logfile, paste("ERROR: Cannot rename identities using two methods, Please use either --Rename_Idents / --Set_Ident_by_Marker",sep=''))

@@ -9,6 +9,10 @@ args = commandArgs(trailingOnly=TRUE)
 option_list = list(
   make_option(c("--inputRDS"), type="character", default = NA,
               help="Path to Seurat object RDS file", metavar = "character"),
+  make_option(c("--REFFRDS"), type="character", default = NA,
+              help="Path to Seurat object RDS file That will be used as Reference for Cell-Type Annotation", metavar = "character"),
+  make_option(c("--REFFCellTypeCol"), type="character", default = NA,
+              help="The Reference MetaData Column name to use for Cell-Type Annotation", metavar = "character"),
   make_option(c("--dims"), type="numeric", default = 50,
               help="Dimensions of reduction to use as input for clustering (Default is 50). Must include --overwrite_dims", metavar = "character"),
   make_option(c("--Resolution"), type="numeric", default = 0.8,
@@ -108,6 +112,8 @@ if (is.na(opt$reduction)) {
   }
 }
 
+
+
 # Cluster the Cells
 writeLog(logfile, paste("Clustering cells..."))
 obj_seurat <- FindNeighbors(obj_seurat, reduction = use_reducs, dims = 1:SigDims)
@@ -119,6 +125,44 @@ if (opt$tSNE){
     writeLog(logfile, paste("Running UMAP..."))
     obj_seurat <- RunUMAP(obj_seurat, reduction = use_reducs, dims = 1:SigDims)
 }
+
+
+
+if (!is.na(opt$REFFRDS)){
+    Reff_seurat <- readRDS(opt$REFFRDS)
+    
+    if (is.na(opt$REFFCellTypeCol)){
+        REFFCellTypeCol = Reff_seurat@active.ident
+    }else{
+        REFFCellTypeCol = opt$REFFCellTypeCol
+    }
+
+
+    anchors    <- FindTransferAnchors(reference = Reff_seurat,
+                                  query   = obj_seurat,
+                                  dims    = 1:SigDims,
+                                  verbose = T)
+    obj_seurat <- TransferData(anchorset = anchors,
+                               query     = obj_seurat,
+                               reference = Reff_seurat,
+                               refdata   = REFFCellTypeCol,
+                               verbose   = T)
+    obj_seurat <- SetIdent(obj_seurat, value = "predicted.id")
+    
+    samples = unique(obj_seurat$orig.ident)
+    samples = samples[order(samples)]
+    df = data.frame()
+    for (sample in samples) {
+      sample_df = data.frame(table(obj_seurat@active.ident[obj_seurat$orig.ident==sample]))
+      colnames(sample_df) = c('Cluster','Cells')
+      sample_df$Ratio = sample_df$Cells / length(obj_seurat@active.ident[obj_seurat$orig.ident==sample])
+      sample_df$Sample = sample
+      df = rbind(df, sample_df)
+    }
+    write.csv(df, file=paste(opt$outDir,"Cell_Prop.csv", sep = ""))
+}
+
+
 
 
 # Plots

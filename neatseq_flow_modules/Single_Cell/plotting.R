@@ -305,6 +305,11 @@ if (opt$ViolinPlot) {
       }
       rm('ct','ct_plt','feat2use')
     }
+    All_VLN_plt <- VlnPlot(obj_seurat, features = featureData$Feature,sort=T,stack=T,same.y.lims=F,flip=T)
+    pdf(paste(opt$outDir,opt$Sample,"/",src,"/ViolinPlots/",opt$Sample,'_Stacked_ViolinPlot.pdf',sep=''), 
+              width = 25, height = 15)
+    print(All_VLN_plt)
+    dev.off()
   }
 }
 

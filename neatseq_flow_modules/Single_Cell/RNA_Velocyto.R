@@ -48,6 +48,7 @@ if (is.na(opt$outDir)) {
 }
 
 h5Seurat_file = paste(opt$outDir,opt$Sample,'.h5Seurat',sep='')
+obj_seurat[["RNA"]] <- obj_seurat[["spliced"]]
 DefaultAssay(obj_seurat) <- "RNA"
-SaveH5Seurat(obj_seurat, filename = h5Seurat_file )
-Convert(h5Seurat_file, dest = "h5ad")
+SaveH5Seurat(obj_seurat, filename = h5Seurat_file,overwrite = TRUE )
+Convert(h5Seurat_file, dest = "h5ad",overwrite = TRUE)
