@@ -448,14 +448,8 @@ class Step_Import(Step):
                             # Convert set to string:
                             src_exts = src_exts[0]
                             if src_exts not in list(self.script_path_map.keys()):
-                                # raise AssertionExcept("Unidentified extension in source '{src}' ({ext}). Can't guess "
-                                #                       "'script_path'".format(src=src, ext=src_exts))
-                                                      
-                                self.write_warning("Unidentified extension in source '{src}'  ({ext}). "
-                                                   "Can't guess 'script_path' will use cat".format(src=src, ext=src_exts))
-                                
-                                self.script_path_map[src_exts] = "cat"
-                                self.params["script_path"][src_ind] = self.script_path_map[src_exts]
+                                raise AssertionExcept("Unidentified extension in source '{src}' ({ext}). Can't guess "
+                                                      "'script_path'".format(src=src, ext=src_exts))
                             else:
                                 if isinstance(self.script_path_map[src_exts],list):
                                     self.params["script_path"][src_ind] = self.script_path_map[src_exts][0]
@@ -479,14 +473,8 @@ class Step_Import(Step):
                     # Convert set to string:
                     src_exts = src_exts[0]
                     if src_exts not in list(self.script_path_map.keys()):
-                        # raise AssertionExcept("Unidentified extension in source '{src}' for project ({ext}). "
-                        #                      "Can't guess 'script_path'".format(src=src, ext=src_exts))
-                        
-                        self.write_warning("Unidentified extension in source '{src}' for project ({ext}). "
-                                           "Can't guess 'script_path' will use cat".format(src=src, ext=src_exts))
-                        
-                        self.script_path_map[src_exts] = "cat"
-                        self.params["script_path"][src_ind] = self.script_path_map[src_exts]
+                        raise AssertionExcept("Unidentified extension in source '{src}' for project ({ext}). "
+                                              "Can't guess 'script_path'".format(src=src, ext=src_exts))
                     else:
                         if isinstance(self.script_path_map[src_exts],list):
                             self.params["script_path"][src_ind] = self.script_path_map[src_exts][0]
