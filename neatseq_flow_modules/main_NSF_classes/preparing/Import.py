@@ -623,10 +623,14 @@ class Step_Import(Step):
                 # Composing script:
                 self.script = ""
                 self.script += script_path + " \\\n\t"
-                self.script += "'"
-                # The following line concatenates all the files in the direction separated by a " "
-                self.script += "' '".join(self.sample_data[sample][src])
-                self.script += "' \\\n\t"
+                if not any((c in  ["$","@"]) for c in "' '".join(self.sample_data[sample][src]) ):
+                    self.script += "'"
+                    # The following line concatenates all the files in the direction separated by a " "
+                    self.script += "' '".join(self.sample_data[sample][src])
+                    self.script += "'"
+                else:
+                    self.script += "' '".join(self.sample_data[sample][src])
+                self.script += " \\\n\t"
                 if pipe:  # pipe is not 'None'
                     self.script += "| {pipe} \\\n\t".format(pipe = pipe)
                 self.script += "> %s%s \n\n"  % (use_dir, fq_fn)
