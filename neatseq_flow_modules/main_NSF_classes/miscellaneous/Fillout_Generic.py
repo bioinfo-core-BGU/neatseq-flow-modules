@@ -190,18 +190,15 @@ output:
         for variable in variables:
             var_def = re.findall(pattern="([^:]*):?", string=variable)
             # If variable scope is sample and the separator field (3rd slot) is not defined, change scope to sample
-            if var_def[0] in ["sample"] and (len(var_def) < 3 or not var_def[2]):
-                if "scope" not in self.params.keys():
-                    scope = "sample"
-                elif self.params["scope"]=="project":
-                    raise AssertionExcept("Scope must be either 'sample', 'project' or 'sample_control'")
+            if var_def[0] == "sample" and (len(var_def) < 3 or not var_def[2]):
+                scope = "sample"
 
         # If scope not passed, use automatically determined scope
         if "scope" not in self.params:
             self.params["scope"] = scope
         else:
-            if self.params["scope"] not in ["sample","project","sample_control"]:
-                raise AssertionExcept("Scope must be either 'sample', 'project' or 'sample_control'")
+            if self.params["scope"] not in ["sample","project"]:
+                raise AssertionExcept("Scope must be either 'sample' or 'project'")
             # User cannot require project scope with sample-scope definitions!
             if self.params["scope"] == "project" and scope=="sample":
                 # If user required project scope and sample scope fields exist, raise an error
@@ -251,15 +248,16 @@ output:
         """
         if self.params["scope"] == "project":
             sample_list = ["project_data"]
-        elif self.params["scope"] == "sample_control":
-            sample_list = self.sample_data["Controls"].keys()
-            # Changing scope to sample. Reason is so that stamping files below is done only once per sample
-            self.params["scope"] = "sample"
         elif self.params["scope"] == "sample":
             sample_list = self.sample_data["samples"]
         else:
             # Has already been tested above
             pass
+
+        if "samples_with_controls" in self.params.keys():
+            print(self.params["samples_with_controls"])
+            sample_list = self.sample_data["Controls"].keys()
+
 
         for sample in sample_list:  # Getting list of samples out of samples_hash
 
