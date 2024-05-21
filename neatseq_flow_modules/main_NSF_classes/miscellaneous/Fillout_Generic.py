@@ -154,15 +154,16 @@ class Step_Fillout_Generic(Step):
         # sys.exit()
 
         # Get all user defined variables in string
-        variables = list(set(re.findall(pattern="\{\{(.*?)\}\}",
+        variables = list(set(re.findall(pattern="{{(.*?)}}",
                                         string=self.params["script_path"])))
+
         # Find all variables in outputs:
         try:
             for outp in list(self.params["output"].keys()):
                 # Check each 'output' has a 'string' and a 'scope' defined
                 try:
                     # Extract the string from the {} and append to results:
-                    result = re.findall(pattern="\{\{(.*?)\}\}",
+                    result = re.findall(pattern="{{(.*?)}}",
                                         string=self.params["output"][outp]["string"])
                 except KeyError:
                     raise AssertionExcept("Make sure you have a 'string' and 'scope' defined "
@@ -187,17 +188,20 @@ output:
 
         # Check the definition of all variables
         for variable in variables:
-            var_def = re.findall(pattern="([^\:]*)\:?", string=variable)
+            var_def = re.findall(pattern="([^:]*):?", string=variable)
             # If variable scope is sample and the separator field (3rd slot) is not defined, change scope to sample
-            if var_def[0] == "sample" and (len(var_def) < 3 or not var_def[2]):
-                scope = "sample"
+            if var_def[0] in ["sample"] and (len(var_def) < 3 or not var_def[2]):
+                if "scope" not in self.params.keys():
+                    scope = "sample"
+                elif self.params["scope"]=="project":
+                    raise AssertionExcept("Scope must be either 'sample', 'project' or 'sample_control'")
 
         # If scope not passed, use automatically determined scope
         if "scope" not in self.params:
             self.params["scope"] = scope
         else:
-            if self.params["scope"] not in ["sample","project"]:
-                raise AssertionExcept("Scope must be either 'sample' or 'project'")
+            if self.params["scope"] not in ["sample","project","sample_control"]:
+                raise AssertionExcept("Scope must be either 'sample', 'project' or 'sample_control'")
             # User cannot require project scope with sample-scope definitions!
             if self.params["scope"] == "project" and scope=="sample":
                 # If user required project scope and sample scope fields exist, raise an error
@@ -247,10 +251,15 @@ output:
         """
         if self.params["scope"] == "project":
             sample_list = ["project_data"]
+        elif self.params["scope"] == "sample_control":
+            sample_list = self.sample_data["Controls"].keys()
+            # Changing scope to sample. Reason is so that stamping files below is done only once per sample
+            self.params["scope"] = "sample"
         elif self.params["scope"] == "sample":
             sample_list = self.sample_data["samples"]
         else:
-            raise AssertionExcept("'scope' must be either 'sample' or 'project'")
+            # Has already been tested above
+            pass
 
         for sample in sample_list:  # Getting list of samples out of samples_hash
 
@@ -324,11 +333,11 @@ output:
         rawstring=string
         # Try using function to include export (setenv) etc...
 
-        variables = list(set(re.findall(pattern="(\{\{.*?\}\})", string=rawstring)))
+        variables = list(set(re.findall(pattern="({{.*?}})", string=rawstring)))
 
         for variable in variables:
             # Splitting by ':'
-            var_def = re.findall(pattern="([^\:]*)\:?",string=variable.strip('{{').strip('}}'))
+            var_def = re.findall(pattern="([^:]*):?",string=variable.strip('{{').strip('}}'))
             # var_def = variable.split(":")
 
             if len(var_def) < 4:
@@ -401,6 +410,9 @@ output:
 
                 continue
             # ------------------------------
+            if var_def[0] == "control":
+                sample = self.sample_data["Controls"][sample]
+                var_def[0] = "sample"
             if var_def[0] == "sample":
                 # Create local copy of sample_data. If base is defined, this will be the base sample_data
                 if not var_def[3]:  # Base not defined. Use current
@@ -452,6 +464,6 @@ output:
                 continue
             # ------------------------------
             #  variable does not match any of the expected formats:
-            raise AssertionExcept('Variable {var} in script_path not identified'.format(var=variable))
+            # raise AssertionExcept('Variable {var} in script_path not identified'.format(var=variable))
         # print "Return: ", rawstring
         return rawstring
