@@ -255,12 +255,12 @@ output:
             pass
 
         if "samples_with_controls" in self.params.keys():
-            print(self.params["samples_with_controls"])
             sample_list = self.sample_data["Controls"].keys()
 
 
         for sample in sample_list:  # Getting list of samples out of samples_hash
 
+            # print(f"-------\nnew sample   -----> {sample}")
             # Name of specific script:
             self.spec_script_name = self.set_spec_script_name(sample)
             self.script = ""
@@ -330,10 +330,10 @@ output:
 
         rawstring=string
         # Try using function to include export (setenv) etc...
-
         variables = list(set(re.findall(pattern="({{.*?}})", string=rawstring)))
 
         for variable in variables:
+            # print(variable)
             # Splitting by ':'
             var_def = re.findall(pattern="([^:]*):?",string=variable.strip('{{').strip('}}'))
             # var_def = variable.split(":")
@@ -408,10 +408,14 @@ output:
 
                 continue
             # ------------------------------
-            if var_def[0] == "control":
-                sample = self.sample_data["Controls"][sample]
-                var_def[0] = "sample"
-            if var_def[0] == "sample":
+            if var_def[0] in ["sample","control"]:
+                if var_def[0] == "control":
+                    sample = self.sample_data["Controls"][sample]
+                    # var_def[0] = "sample"
+                    # print("control")
+                # print("sample")
+                # print(sample)
+
                 # Create local copy of sample_data. If base is defined, this will be the base sample_data
                 if not var_def[3]:  # Base not defined. Use current
                     sample_data = self.sample_data
