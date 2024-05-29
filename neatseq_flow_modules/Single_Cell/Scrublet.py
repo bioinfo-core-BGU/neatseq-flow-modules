@@ -54,21 +54,29 @@ RNA = Seurat.GetAssayData(df, assay="RNA",slot="counts")
 counts_matrix = t_default(as_matrix(RNA))
 
 scrub = scr.Scrublet(counts_matrix,expected_doublet_rate=args.expected_doublet_rate)
-if args.threshold>0:
-    scrub.call_doublets(threshold=args.threshold)
+
 
 doublet_scores, predicted_doublets = scrub.scrub_doublets(min_counts = args.min_counts, 
                                                           min_cells  = args.min_cells, 
                                                           min_gene_variability_pctl = args.min_gene_variability_pctl,
                                                           n_prin_comps = args.n_prin_comps)
 
+if args.threshold>0:
+    predicted_doublets = scrub.call_doublets(threshold=args.threshold)
+
 Results = pd.DataFrame({'Predicted_Doublets':predicted_doublets , 'Doublet_Scores':doublet_scores},index=counts_matrix.rownames)
 
 Results.loc[Results.Predicted_Doublets==False,"DF.classification_homotypic"] = "Singlet"
 Results.loc[Results.Predicted_Doublets==True ,"DF.classification_homotypic"] = "Doublet"
 
-scrub.plot_histogram()
 
-plt.savefig(args.output_dir+"/Histogram.pdf", format="pdf")
 
 Results.to_csv(args.output_dir+"/Classification.csv")
+
+try:
+    scrub.plot_histogram()
+    plt.savefig(args.output_dir+"/Histogram.pdf", format="pdf")
+except:
+    scrub.threshold_ = 1
+    scrub.plot_histogram()
+    plt.savefig(args.output_dir+"/Histogram.pdf", format="pdf")

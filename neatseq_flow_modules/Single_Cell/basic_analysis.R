@@ -37,6 +37,12 @@ option_list = list(
               help="Use this many features as variable features after ranking by residual variance (Default is 3000)", metavar = "character"),
   make_option(c("--SCT_regress_vars"), type="character", default = NA,
               help="Variables to regress out in a second non-regularized linear regression (comma-separated)", metavar = "character"),
+  make_option(c("--CellCycleScoring"), action="store_true", default = FALSE,
+              help=" Perform CellCycleScoring to identify the cell-cycle stat of the cells (Default is False)", metavar = "character"),
+  make_option(c("--CellCycle2regressOut"), action="store_true", default = FALSE,
+              help=" Regress Out CellCycle stat of the cells (Default is False)", metavar = "character"),
+  make_option(c("--CellCycle2regressOut_CC_Difference"), action="store_true", default = FALSE,
+              help="Using the CC.Difference regression method (Default is FALSE)", metavar = "character"),
   make_option(c("--Sample"), type="character", default = NA,
               help="Sample's name", metavar = "character"),
   make_option(c("--outDir"), type="character", default = NA,
@@ -118,13 +124,40 @@ if (opt$Exclude_Outliers) {
   }
 }
 
+if (!is.na(opt$SCT_regress_vars)) {
+   vars_to_regress = unlist(stringi::stri_split(str = opt$SCT_regress_vars,fixed = ','))
+}else{
+   vars_to_regress = c()
+}
+
+if (opt$CellCycleScoring){
+    s.genes    = Seurat::cc.genes$s.genes
+    g2m.genes  = Seurat::cc.genes$g2m.genes
+    if (opt$CellCycle2regressOut){
+        obj_seurat = CellCycleScoring(obj_seurat, s.features = s.genes, g2m.features = g2m.genes, set.ident = FALSE)
+        if (!opt$CellCycle2regressOut_CC_Difference){
+            vars_to_regress = c(vars_to_regress,c("S.Score", "G2M.Score"))
+            # obj_seurat = ScaleData(obj_seurat, vars.to.regress = vars_to_regress, features = rownames(obj_seurat))
+        }else{
+            obj_seurat$CC.Difference = obj_seurat$S.Score - obj_seurat$G2M.Score
+            vars_to_regress = c(vars_to_regress,"CC.Difference")
+            # obj_seurat               = ScaleData(obj_seurat, vars.to.regress = vars_to_regress, features = rownames(obj_seurat))
+        }
+    }else{
+        obj_seurat = CellCycleScoring(obj_seurat, s.features = s.genes, g2m.features = g2m.genes, set.ident = TRUE)
+    }
+}
+
+
+
 if (opt$SCTransform) {
   writeLog(logfile, paste("Using SCTransform based normalization instead of standard log-normalization",sep=''))
   writeLog(logfile, paste("Number of subsampling cells used to build NB regression: ",opt$SCT_ncells,sep=''))
   writeLog(logfile, paste("Number of variable features used after ranking by residual variance: ",opt$SCT_variable_features,sep=''))
-  if (!is.na(opt$SCT_regress_vars)) {
+  if (length(vars_to_regress)>0) {
     writeLog(logfile, paste("Variables to regress out in a second non-regularized linear regression: ",opt$SCT_regress_vars,sep=''))
-    vars_to_regress = unlist(stringi::stri_split(str = opt$SCT_regress_vars,fixed = ','))
+    # vars_to_regress = unlist(stringi::stri_split(str = opt$SCT_regress_vars,fixed = ','))
+    
     obj_seurat = Seurat::SCTransform(object = obj_seurat, ncells = opt$SCT_ncells, 
                                      variable.features.n = opt$SCT_variable_features, 
                                      vars.to.regress = vars_to_regress)
@@ -163,7 +196,10 @@ if (opt$SCTransform) {
   
   # Scaling the data
   writeLog(logfile, paste("Scaling data..."))
-  obj_seurat <- ScaleData(obj_seurat, features = rownames(obj_seurat))
+  # vars_to_regress = unlist(stringi::stri_split(str = opt$SCT_regress_vars,fixed = ','))
+  obj_seurat <- ScaleData(obj_seurat, 
+                          vars.to.regress = vars_to_regress,
+                          features = rownames(obj_seurat))
   
   
   
@@ -247,20 +283,21 @@ if (opt$UseMagic){
       library(reticulate)
       library(Rmagic)
       writeLog(logfile, paste("Imputing Data using Magic:"))
-	  
-	  obj_seurat@active.assay = "RNA"
-	  
-	  writeLog(logfile, paste("Normalizing data For Magic ..."))
-	  obj_seurat <- NormalizeData(obj_seurat)
-	  
-	  # Identification of highly variable features (feature selection)
-	  # writeLog(logfile, paste("Identifying highly variable features..."))
-	  # obj_seurat <- FindVariableFeatures(obj_seurat, nfeatures = opt$VariableFeatures)
-	  
-	  # Scaling the data
-	  writeLog(logfile, paste("Scaling data..."))
-	  obj_seurat <- ScaleData(obj_seurat, features = rownames(obj_seurat))
-  
+      
+      obj_seurat@active.assay = "RNA"
+      
+      writeLog(logfile, paste("Normalizing data For Magic ..."))
+      obj_seurat <- NormalizeData(obj_seurat)
+      
+      # Identification of highly variable features (feature selection)
+      # writeLog(logfile, paste("Identifying highly variable features..."))
+      # obj_seurat <- FindVariableFeatures(obj_seurat, nfeatures = opt$VariableFeatures)
+      
+      # Scaling the data
+      writeLog(logfile, paste("Scaling data..."))
+      obj_seurat <- ScaleData(obj_seurat, 
+                          vars.to.regress = vars_to_regress,
+                          features = rownames(obj_seurat))
       obj_seurat <- magic(obj_seurat,assay = "RNA")
       # obj_seurat@active.assay = "MAGIC_RNA"
   }

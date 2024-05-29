@@ -39,6 +39,8 @@ option_list = list(
               help="Will use Magic to Impute the data after normalization", metavar = "character"),
   make_option(c("--MagicCondaEnv"), type="character", default = NA,
               help="If --UseMagic is set it will this Conda env to fined the package [Must Be a Full Path!]", metavar = "character"),
+  make_option(c("--slingshot"), action="store_true", default = FALSE,
+              help="Perform a slingshot Trajectory analysis (Default is False)", metavar = "character"),
   make_option(c("-o", "--outDir"), type="character", default = NA,
               help="Path to the output directory", metavar = "character")
 );
@@ -48,6 +50,8 @@ opt_parser = optparse::OptionParser(usage = "usage: %prog [options]",
                                     option_list=option_list,
                                     epilogue="\n\nAuthor:Gil Sorek");
 opt = optparse::parse_args(opt_parser);
+
+reduction = "umap"
 
 # Set log framework
 logfile = paste(opt$outDir,opt$ID,'_log.txt', sep = "")
@@ -130,7 +134,8 @@ if (!is.na(opt$inputRDS)) {
     file = files[which(sample==samples)]
     if (file.exists(file)) {
       seurat_obj = readRDS(file)
-      seurat_obj@meta.data[,stringr::str_detect(colnames(seurat_obj@meta.data),c('snn_res','seurat_clusters'))] <- NULL
+      # seurat_obj@meta.data[,stringr::str_detect(colnames(seurat_obj@meta.data),c('snn_res','seurat_clusters'))] <- NULL
+      seurat_obj@meta.data[,colnames(seurat_obj@meta.data) %in% c('snn_res','seurat_clusters')] <- NULL
       seurat_list <- c(seurat_list, seurat_obj)
       rm(seurat_obj)
     } else {
@@ -318,14 +323,14 @@ if (opt$SCTransform) {
 
 legend_pos = "right"
 writeLog(logfile, paste("Plotting Integrated object figures..."))
-p1 <- DimPlot(integ_obj, reduction = "umap", group.by = "orig.ident", pt.size = 1.5)+
+p1 <- DimPlot(integ_obj, reduction = reduction, group.by = "orig.ident", pt.size = 1.5)+
               theme(legend.position = legend_pos)
-p2 <- DimPlot(integ_obj, reduction = "umap", label = T, pt.size = 1.5, label.size = 8)+
+p2 <- DimPlot(integ_obj, reduction = reduction, label = T, pt.size = 1.5, label.size = 8)+
   ggplot2::theme(legend.position = "none")
-pdf(paste(opt$outDir,opt$ID,'/',opt$ID,'_umapBySample.pdf', sep = ""), width = 20, height = 15)
+pdf(paste(opt$outDir,opt$ID,'/',opt$ID,'_',reduction,'BySample.pdf', sep = ""), width = 20, height = 15)
 print(p1)
 dev.off()
-pdf(paste(opt$outDir,opt$ID,'/',opt$ID,'_umapByCluster.pdf', sep = ""), width = 20, height = 15)
+pdf(paste(opt$outDir,opt$ID,'/',opt$ID,'_',reduction,'ByCluster.pdf', sep = ""), width = 20, height = 15)
 print(p2)
 dev.off()
 
@@ -387,6 +392,60 @@ clusters_plot = ggplot(df, aes(x=Cluster,y=Ratio,fill=Sample)) +
   ggtitle("Samples distribution per Cluster")
 ggplot2::ggsave(filename = paste(opt$outDir,opt$ID,'/',opt$ID,'_SamplesDistPerCluster.pdf', sep = ""),
                 clusters_plot, dpi=600, width=12, height=6,device='pdf')
+
+
+if (opt$slingshot){
+    library(slingshot)
+    if (reduction == "tsne"){
+        sce <- slingshot(as.matrix(integ_obj@reductions$tsne@cell.embeddings),
+                                omega = T,
+                                omega_scale = 1.5,
+                                stretch=1.5,
+                                clusterLabels = integ_obj@active.ident)
+    }else{
+        sce <- slingshot(as.matrix(integ_obj@reductions$umap@cell.embeddings),
+                                omega = T,
+                                omega_scale = 1.5,
+                                stretch=1.5,
+                                clusterLabels = integ_obj@active.ident)
+    
+    }
+    Pseudotime = as.data.frame(slingPseudotime(sce))
+    data       = SlingshotDataSet(sce)
+    curves     = slingCurves(sce, as.df = TRUE)
+    mst        = slingMST(sce, as.df = F)
+    
+    curves$x = curves[,1]
+    curves$y = curves[,2]
+    Pseudotime = Pseudotime[rownames(integ_obj@meta.data),]
+    integ_obj = Seurat::AddMetaData(object =integ_obj, Pseudotime)
+  
+    plt_Slingshot = Seurat::DimPlot(object =integ_obj,reduction = reduction,label = T)+
+                                    geom_path(data = curves %>% arrange(Order),
+                                              arrow = arrow(length = unit(0.1, "inches")),
+                                              aes(x=x,y=y,group = Lineage ),size=1, colour = "black")+
+                                    facet_wrap(vars(Lineage))
+    jpeg(paste(opt$outDir,opt$Sample,"_",reduction,"Slingshot.jpeg", sep = ""), 
+    width = 1500, height = 1250)
+    print(plt_Slingshot)
+    dev.off()
+    for (Lineage in colnames(Pseudotime)){
+        Lineage_id = as.integer(strsplit(x = Lineage ,split  = "Lineage" )[[1]][2])
+        plt_Lineage =Seurat::FeaturePlot(object =integ_obj,reduction = reduction,features = Lineage  )+
+                            geom_path(data = curves[curves$Lineage==Lineage_id,] %>% arrange(Order),
+                            arrow = arrow(length = unit(0.1, "inches")),
+                            aes(x=x,y=y,group = Lineage ), size = 1)
+        jpeg(paste(opt$outDir,opt$Sample,"_",reduction,"Slingshot_",Lineage,".jpeg", sep = ""), 
+        width = 1500, height = 1250)
+        print(plt_Lineage)
+        dev.off()
+    }
+    
+    
+
+}
+
+
 
 # Save results
 writeLog(logfile, paste("Saving results..."))

@@ -31,6 +31,8 @@ option_list = list(
               help="Show legend in figures (Default is False)", metavar = "character"),
   make_option(c("--tSNE"), action="store_true", default = FALSE,
               help="Run 'RunTSNE' NOT 'RunUMAP' (Default is False)", metavar = "character"),
+  make_option(c("--slingshot"), action="store_true", default = FALSE,
+              help="Perform a slingshot Trajectory analysis (Default is False)", metavar = "character"),
   make_option(c("--outDir"), type="character", default = NA,
               help="Path to the output directory", metavar = "character"),
   make_option(c("--overwrite_dims"), action="store_true", default = FALSE,
@@ -75,6 +77,23 @@ if (opt$tSNE){
 }else{
     reduction = "umap"
 }
+
+
+# if (opt$CellCycleScoring){
+    # s.genes    = Seurat::cc.genes$s.genes
+    # g2m.genes  = Seurat::cc.genes$g2m.genes
+    # if (opt$CellCycle2regressOut){
+        # obj_seurat = CellCycleScoring(obj_seurat, s.features = s.genes, g2m.features = g2m.genes, set.ident = FALSE)
+        # if (!opt$CellCycle2regressOut_CC_Difference){
+            # obj_seurat = ScaleData(obj_seurat, vars.to.regress = c("S.Score", "G2M.Score"), features = rownames(obj_seurat))
+        # }else{
+            # obj_seurat$CC.Difference = obj_seurat$S.Score - obj_seurat$G2M.Score
+            # obj_seurat               = ScaleData(obj_seurat, vars.to.regress = "CC.Difference", features = rownames(obj_seurat))
+        # }
+    # }else{
+        # obj_seurat = CellCycleScoring(obj_seurat, s.features = s.genes, g2m.features = g2m.genes, set.ident = TRUE)
+    # }
+# }
 
 # Set number of dimensions for clustering
 if (obj_seurat@active.assay == "RNA") {
@@ -182,6 +201,21 @@ if (length(unique(obj_seurat$orig.ident))>1) {
   print(plt2)
   dev.off()
 }
+
+if ( "Phase" %in% colnames(obj_seurat@meta.data)) {
+    writeLog(logfile, paste("Plotting Cell Cycle Scoring reduction figures..."))
+    plt3 <- DimPlot(obj_seurat,
+                    reduction = reduction,
+                    group.by = "Phase",
+                    label = T, pt.size = 1.5,
+                    label.size = 8)+
+      theme(legend.position = legend_pos)
+    jpeg(paste(opt$outDir,opt$Sample,"_",reduction,"ByCellCycle.jpeg", sep = ""), 
+         width = 1500, height = 1250)
+    print(plt3)
+    dev.off()
+}
+
 plt3 <- VlnPlot(obj_seurat, features = "nCount_RNA", pt.size = 0)+ 
   geom_boxplot(width=0.3)+
   theme(legend.position = legend_pos) +
@@ -246,7 +280,56 @@ ggplot2::ggsave(filename = paste(opt$outDir,opt$Sample,'_SamplesDistPerCluster.j
                 clusters_plot, dpi=600, width=12, height=6)
 }
 
+if (opt$slingshot){
+    library(slingshot)
+    if (reduction == "tsne"){
+        sce <- slingshot(as.matrix(obj_seurat@reductions$tsne@cell.embeddings),
+                                omega = T,
+                                omega_scale = 1.5,
+                                stretch=1.5,
+                                clusterLabels = obj_seurat@active.ident)
+    }else{
+        sce <- slingshot(as.matrix(obj_seurat@reductions$umap@cell.embeddings),
+                                omega = T,
+                                omega_scale = 1.5,
+                                stretch=1.5,
+                                clusterLabels = obj_seurat@active.ident)
+    
+    }
+    Pseudotime = as.data.frame(slingPseudotime(sce))
+    data       = SlingshotDataSet(sce)
+    curves     = slingCurves(sce, as.df = TRUE)
+    mst        = slingMST(sce, as.df = F)
+    
+    curves$x = curves[,1]
+    curves$y = curves[,2]
+    Pseudotime = Pseudotime[rownames(obj_seurat@meta.data),]
+    obj_seurat = Seurat::AddMetaData(object =obj_seurat, Pseudotime)
+  
+    plt_Slingshot = Seurat::DimPlot(object =obj_seurat,reduction = reduction,label = T)+
+                                    geom_path(data = curves %>% arrange(Order),
+                                              arrow = arrow(length = unit(0.1, "inches")),
+                                              aes(x=x,y=y,group = Lineage ),size=1, colour = "black")+
+                                    facet_wrap(vars(Lineage))
+    jpeg(paste(opt$outDir,opt$Sample,"_",reduction,"Slingshot.jpeg", sep = ""), 
+    width = 1500, height = 1250)
+    print(plt_Slingshot)
+    dev.off()
+    for (Lineage in colnames(Pseudotime)){
+        Lineage_id = as.integer(strsplit(x = Lineage ,split  = "Lineage" )[[1]][2])
+        plt_Lineage =Seurat::FeaturePlot(object =obj_seurat,reduction = reduction,features = Lineage  )+
+                            geom_path(data = curves[curves$Lineage==Lineage_id,] %>% arrange(Order),
+                            arrow = arrow(length = unit(0.1, "inches")),
+                            aes(x=x,y=y,group = Lineage ), size = 1)
+        jpeg(paste(opt$outDir,opt$Sample,"_",reduction,"Slingshot_",Lineage,".jpeg", sep = ""), 
+        width = 1500, height = 1250)
+        print(plt_Lineage)
+        dev.off()
+    }
+    
+    
 
+}
 
 # Save results
 saveRDS(obj_seurat, file = paste(opt$outDir, opt$Sample, '.rds', sep=''))
