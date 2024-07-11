@@ -16,3 +16,4 @@ venv/
 workflows_devel/
 *.mine/
 workflow_conda_yamls/
+.DS_Store

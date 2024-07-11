@@ -154,15 +154,16 @@ class Step_Fillout_Generic(Step):
         # sys.exit()
 
         # Get all user defined variables in string
-        variables = list(set(re.findall(pattern="\{\{(.*?)\}\}",
+        variables = list(set(re.findall(pattern="{{(.*?)}}",
                                         string=self.params["script_path"])))
+
         # Find all variables in outputs:
         try:
             for outp in list(self.params["output"].keys()):
                 # Check each 'output' has a 'string' and a 'scope' defined
                 try:
                     # Extract the string from the {} and append to results:
-                    result = re.findall(pattern="\{\{(.*?)\}\}",
+                    result = re.findall(pattern="{{(.*?)}}",
                                         string=self.params["output"][outp]["string"])
                 except KeyError:
                     raise AssertionExcept("Make sure you have a 'string' and 'scope' defined "
@@ -187,7 +188,7 @@ output:
 
         # Check the definition of all variables
         for variable in variables:
-            var_def = re.findall(pattern="([^\:]*)\:?", string=variable)
+            var_def = re.findall(pattern="([^:]*):?", string=variable)
             # If variable scope is sample and the separator field (3rd slot) is not defined, change scope to sample
             if var_def[0] == "sample" and (len(var_def) < 3 or not var_def[2]):
                 scope = "sample"
@@ -250,10 +251,16 @@ output:
         elif self.params["scope"] == "sample":
             sample_list = self.sample_data["samples"]
         else:
-            raise AssertionExcept("'scope' must be either 'sample' or 'project'")
+            # Has already been tested above
+            pass
+
+        if "samples_with_controls" in self.params.keys():
+            sample_list = self.sample_data["Controls"].keys()
+
 
         for sample in sample_list:  # Getting list of samples out of samples_hash
 
+            # print(f"-------\nnew sample   -----> {sample}")
             # Name of specific script:
             self.spec_script_name = self.set_spec_script_name(sample)
             self.script = ""
@@ -323,12 +330,12 @@ output:
 
         rawstring=string
         # Try using function to include export (setenv) etc...
-
-        variables = list(set(re.findall(pattern="(\{\{.*?\}\})", string=rawstring)))
+        variables = list(set(re.findall(pattern="({{.*?}})", string=rawstring)))
 
         for variable in variables:
+            # print(variable)
             # Splitting by ':'
-            var_def = re.findall(pattern="([^\:]*)\:?",string=variable.strip('{{').strip('}}'))
+            var_def = re.findall(pattern="([^:]*):?",string=variable.strip('{{').strip('}}'))
             # var_def = variable.split(":")
 
             if len(var_def) < 4:
@@ -401,7 +408,16 @@ output:
 
                 continue
             # ------------------------------
-            if var_def[0] == "sample":
+            if var_def[0] in ["sample","control"]:
+
+                sample_2_use = sample
+                if var_def[0] == "control":
+                    sample_2_use = self.sample_data["Controls"][sample]
+                    # var_def[0] = "sample"
+                    # print("control")
+                # print("sample")
+                # print(sample)
+
                 # Create local copy of sample_data. If base is defined, this will be the base sample_data
                 if not var_def[3]:  # Base not defined. Use current
                     sample_data = self.sample_data
@@ -424,16 +440,16 @@ output:
                         except KeyError:
                             raise AssertionExcept("File type '{type}' not found in all samples".format(type=var_def[1]))
                 else:           # Separator is not defined
-                    if not sample:
+                    if not sample_2_use:
                         raise AssertionExcept("Trying to parse sample in project scope script!")
                     if not var_def[1]:
-                        repl_str = sample
+                        repl_str = sample_2_use
                     else:
                         try:
-                            repl_str=("{!r}".format(sample_data[sample][var_def[1]])).strip("'")
+                            repl_str=("{!r}".format(sample_data[sample_2_use][var_def[1]])).strip("'")
                         except KeyError:
                             raise AssertionExcept("File type '{type}' not found in sample".format(type=var_def[1]),
-                                                  sample)
+                                                  sample_2_use)
 
                 rawstring = re.sub(pattern=re.escape(variable),
                                    repl=repl_str,
@@ -452,6 +468,6 @@ output:
                 continue
             # ------------------------------
             #  variable does not match any of the expected formats:
-            raise AssertionExcept('Variable {var} in script_path not identified'.format(var=variable))
+            # raise AssertionExcept('Variable {var} in script_path not identified'.format(var=variable))
         # print "Return: ", rawstring
         return rawstring
