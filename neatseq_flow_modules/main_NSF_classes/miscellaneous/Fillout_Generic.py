@@ -409,8 +409,10 @@ output:
                 continue
             # ------------------------------
             if var_def[0] in ["sample","control"]:
+
+                sample_2_use = sample
                 if var_def[0] == "control":
-                    sample = self.sample_data["Controls"][sample]
+                    sample_2_use = self.sample_data["Controls"][sample]
                     # var_def[0] = "sample"
                     # print("control")
                 # print("sample")
@@ -438,16 +440,16 @@ output:
                         except KeyError:
                             raise AssertionExcept("File type '{type}' not found in all samples".format(type=var_def[1]))
                 else:           # Separator is not defined
-                    if not sample:
+                    if not sample_2_use:
                         raise AssertionExcept("Trying to parse sample in project scope script!")
                     if not var_def[1]:
-                        repl_str = sample
+                        repl_str = sample_2_use
                     else:
                         try:
-                            repl_str=("{!r}".format(sample_data[sample][var_def[1]])).strip("'")
+                            repl_str=("{!r}".format(sample_data[sample_2_use][var_def[1]])).strip("'")
                         except KeyError:
                             raise AssertionExcept("File type '{type}' not found in sample".format(type=var_def[1]),
-                                                  sample)
+                                                  sample_2_use)
 
                 rawstring = re.sub(pattern=re.escape(variable),
                                    repl=repl_str,
