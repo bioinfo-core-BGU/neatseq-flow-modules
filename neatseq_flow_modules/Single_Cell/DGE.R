@@ -56,6 +56,8 @@ option_list = list(
               help="Use only genes with uniformly distributed expression values", metavar = "character"),
   make_option(c("--Chisq"), action="store_true", default = FALSE,
               help="Run Within Clusters differential Cell Proportion Chisq TEST [ONLY works when --DGE_Within_Clusters is set. Use --ident1 and --ident2 to set the contrast and --DGE_GroupBy to set the source ] (Default is False)", metavar = "character"),
+  make_option(c("--Chisq_only_top_genes"), action="store_true", default = FALSE,
+              help="Use only --Top_n genes for the Enrichment Analysis  (Default is False)", metavar = "character"),
   make_option(c("--Chisq_minprop_cutoff"), type="numeric", default = 0,
               help="Only consider genes with proportion of Positive cells greater then the cutoff in ident1 OR ident2 (Default is 0)", metavar = "character"),
   make_option(c("--Chisq_diffprop_cutoff"), type="numeric", default = 0,
@@ -457,7 +459,7 @@ if (opt$DGE_Within_Clusters) {
                             # names(gene_list)=rownames(ClusterCellProp)
                             gene_list = gene_list[sort.list(gene_list,decreasing = T)]
                             saveRDS(gene_list,file=paste(dir_path,Prefix,cluster,'_GeneList',sep=''))
-                            filter_rows             = apply(X= ClusterCellProp,MARGIN=1,FUN= function(x) sum(c(x[ident1_Proportion],x[ident2_Proportion])> opt$Chisq_minprop_cutoff)>0)
+                            filter_rows             = apply(X= ClusterCellProp,MARGIN=1,FUN= function(x) sum(c(as.numeric(x[ident1_Proportion]),as.numeric(x[ident2_Proportion])) > opt$Chisq_minprop_cutoff)>0)
                             ClusterCellProp         = ClusterCellProp[filter_rows,]
                             
                             filter_rows             = apply(X= ClusterCellProp,MARGIN=1,FUN= function(x) abs(as.numeric(x[ident1_Proportion]) - as.numeric(x[ident2_Proportion]) )  > opt$Chisq_diffprop_cutoff )
@@ -468,25 +470,61 @@ if (opt$DGE_Within_Clusters) {
                                                                                               rescale.p        = TRUE,
                                                                                               simulate.p.value = FALSE)$p.value)
                                 
-                                ClusterCellProp["Group"]   = 'Up'
-                                ClusterCellProp[apply(X= ClusterCellProp,MARGIN=1,FUN= function(x) x[ident2_Proportion] < x[ident1_Proportion]),"Group"]  = 'Down'
+                                ClusterCellProp["Group"]           = 'Up'
+                                ClusterCellProp["Proportion_Diff"] = apply(X= ClusterCellProp,MARGIN=1,FUN= function(x) as.numeric(x[ident2_Proportion]) - as.numeric(x[ident1_Proportion]))
+                                # ClusterCellProp[apply(X= ClusterCellProp,MARGIN=1,FUN= function(x) as.numeric(x[ident2_Proportion]) < as.numeric(x[ident1_Proportion])),"Group"]  = 'Down'
+                                ClusterCellProp[ClusterCellProp["Proportion_Diff"]<0,"Group"] = 'Down'
                                 ClusterCellProp$p.adjust   = p.adjust(p =ClusterCellProp$p.value ,method = opt$pAdjustMethod)
                                 ClusterCellProp            = ClusterCellProp[order(ClusterCellProp$p.adjust, decreasing = TRUE),]
-                                ClusterCellProp = ClusterCellProp[sort.list(ClusterCellProp$p.adjust),]
+                                ClusterCellProp            = ClusterCellProp[sort.list(ClusterCellProp$p.adjust),]
+                                
+                                ClusterCellProp[ClusterCellProp$p.adjust>opt$ALPHA,"Group"] = "Not_Significant"
                                 write.csv(ClusterCellProp, file)
+                                
+                                volcanoPlot = ggplot2::ggplot(data = ClusterCellProp,mapping = aes(x=Proportion_Diff,y=-log10(p.adjust) ))+
+                                                       geom_point(aes(colour = Group ),size = 1)+
+                                                       scale_color_manual(values=c("black","blue","red"))+
+                                                       xlim(-3, 3) +
+                                                       theme_classic()
+                                pdf(paste(dir_path,Prefix,cluster,'_volcanoPlot_Chisq.pdf',sep=''),width = 40, height = 15)
+                                print(volcanoPlot)
+                                dev.off()
+                                
                                 df        = ClusterCellProp[ClusterCellProp$p.adjust< opt$ALPHA,]
                                 df$gene   = rownames(df)
-                                if (length(df$gene)>0){
-                                    if (length(df$gene)>opt$Top_n){
-                                    pheatmap::pheatmap(mat = ClusterCellProp[df$gene[1:opt$Top_n],stringi::stri_endswith(str = colnames(ClusterCellProp),fixed = Proportion)],
+                                df = df[order(abs(df$Proportion_Diff),decreasing = T), ]
+                                UP_genes = df[df$Group=='Up',]
+                                if (length(UP_genes$gene)>0){
+                                    if (length(UP_genes$gene)>opt$Top_n){
+                                        pheatmap::pheatmap(mat = ClusterCellProp[UP_genes$gene[1:opt$Top_n],stringi::stri_endswith(str = colnames(ClusterCellProp),fixed = Proportion)],
                                                        cluster_rows = F,cluster_cols = T,
-                                                       filename = paste(dir_path,Prefix,cluster,"_Top",opt$Top_n,'_ChisqHeatMap.pdf',sep=''))
+                                                       filename = paste(dir_path,Prefix,cluster,"_Top_",opt$Top_n,'_UP_ChisqHeatMap.pdf',sep=''))
+                                        if (opt$Chisq_only_top_genes){
+                                            df = df[1:opt$Top_n,]
+                                        }
                                     }else{
-                                        pheatmap::pheatmap(mat = ClusterCellProp[df$gene,stringi::stri_endswith(str = colnames(ClusterCellProp),fixed = Proportion)],
-                                                        cluster_rows = F,cluster_cols = T,
-                                                        filename = paste(dir_path,Prefix,cluster,'_ChisqHeatMap.pdf',sep=''))
+                                        pheatmap::pheatmap(mat = ClusterCellProp[UP_genes$gene,stringi::stri_endswith(str = colnames(ClusterCellProp),fixed = Proportion)],
+                                                       cluster_rows = F,cluster_cols = T,
+                                                       filename = paste(dir_path,Prefix,cluster,'_UP_ChisqHeatMap.pdf',sep=''))
                                     }
                                 }
+                                
+                                Down_genes = df[df$Group=='Down',]
+                                if (length(Down_genes$gene)>0){
+                                    if (length(Down_genes$gene)>opt$Top_n){
+                                        pheatmap::pheatmap(mat = ClusterCellProp[Down_genes$gene[1:opt$Top_n],stringi::stri_endswith(str = colnames(ClusterCellProp),fixed = Proportion)],
+                                                       cluster_rows = F,cluster_cols = T,
+                                                       filename = paste(dir_path,Prefix,cluster,"_Top_",opt$Top_n,'_Down_ChisqHeatMap.pdf',sep=''))
+                                        if (opt$Chisq_only_top_genes){
+                                            df = df[1:opt$Top_n,]
+                                        }
+                                    }else{
+                                        pheatmap::pheatmap(mat = ClusterCellProp[Down_genes$gene,stringi::stri_endswith(str = colnames(ClusterCellProp),fixed = Proportion)],
+                                                       cluster_rows = F,cluster_cols = T,
+                                                       filename = paste(dir_path,Prefix,cluster,'_Down_ChisqHeatMap.pdf',sep=''))
+                                    }
+                                }
+                                # df = df[order(df$Proportion_Diff,decreasing = T), ]
                                 GOgse = try(clusterProfiler::gseGO(geneList=gene_list,
                                                                    pAdjustMethod = opt$pAdjustMethod,
                                                                    OrgDb = OrgDb,
@@ -539,6 +577,7 @@ if (opt$DGE_Within_Clusters) {
                         cluster_exp   = as.matrix(GetAssayData(object = cluster_obj, slot = slot2use, assay = "MAGIC_RNA"))   
                     }else{
                         slot2use    = "data"
+                        # slot2use    = "scale.data"
                         cluster_exp   = as.matrix(GetAssayData(object = cluster_obj, slot = slot2use, assay = assay2use))
                     }
                     
@@ -727,13 +766,20 @@ if (opt$DGE_Within_Clusters) {
                         sig_genes[[cluster]] <- df$gene
                     }
                     if (!is.na(opt$Subsample)) {
-                      heat_map = DoHeatmap(subset(cluster_obj, downsample=subsample), features = df$gene, group.by= DGE_GroupBy,assay=assay2use,slot = slot2use)+ theme(axis.text.y = element_text(size = 12)) + ggplot2::scale_fill_gradientn(colours=colours) 
+                      heat_map     = DoHeatmap(subset(cluster_obj, downsample=subsample), features = df$gene, group.by= DGE_GroupBy,assay=assay2use,slot = slot2use)+ theme(axis.text.y = element_text(size = 12)) + ggplot2::scale_fill_gradientn(colours=colours) 
+                      heat_map_top = DoHeatmap(subset(cluster_obj, downsample=subsample), features = df$gene[1:opt$Top_n], group.by= DGE_GroupBy,assay=assay2use,slot = slot2use)+ theme(axis.text.y = element_text(size = 12)) + ggplot2::scale_fill_gradientn(colours=colours) 
                     } else {
-                      heat_map = DoHeatmap(cluster_obj, features = df$gene, group.by= DGE_GroupBy,assay=assay2use,slot = slot2use) + theme(axis.text.y = element_text(size = 12))+ ggplot2::scale_fill_gradientn(colours=colours)  #+ NoLegend()
+                      heat_map     = DoHeatmap(cluster_obj, features = df$gene, group.by= DGE_GroupBy,assay=assay2use,slot = slot2use) + theme(axis.text.y = element_text(size = 12))+ ggplot2::scale_fill_gradientn(colours=colours)  #+ NoLegend()
+                      heat_map_top = DoHeatmap(cluster_obj, features = df$gene[1:opt$Top_n], group.by= DGE_GroupBy,assay=assay2use,slot = slot2use) + theme(axis.text.y = element_text(size = 12))+ ggplot2::scale_fill_gradientn(colours=colours)  #+ NoLegend()
                     }
                     pdf(paste(dir_path,Prefix,cluster,'_heatmap.pdf',sep=''),width = 40, height = 15)
                     print(heat_map)
                     dev.off()
+                    
+                    pdf(paste(dir_path,Prefix,cluster,"_Top",opt$Top_n,'_heatmap.pdf',sep=''),width = 40, height = 15)
+                    print(heat_map_top)
+                    dev.off()
+                    
                 }
             }
             
