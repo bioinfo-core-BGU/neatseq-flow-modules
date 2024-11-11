@@ -11,6 +11,8 @@ option_list = list(
               help="Path to Seurat object RDS file", metavar = "character"),
   make_option(c("-s", "--Sample"), type="character", default = NA,
               help="Sample's name", metavar = "character"),
+  make_option(c("--DontUseSpliced"),  action="store_true",default=FALSE,
+              help="Don't Use the Spliced data as RNA Assay", metavar = "character"),
   make_option(c("-o", "--outDir"), type="character", default = NA,
               help="Path to the output directory", metavar = "character")
 );
@@ -48,7 +50,9 @@ if (is.na(opt$outDir)) {
 }
 
 h5Seurat_file = paste(opt$outDir,opt$Sample,'.h5Seurat',sep='')
-obj_seurat[["RNA"]] <- obj_seurat[["spliced"]]
-DefaultAssay(obj_seurat) <- "RNA"
+if (opt$DontUseSpliced==FALSE){
+    obj_seurat[["RNA"]] <- obj_seurat[["spliced"]]
+    DefaultAssay(obj_seurat) <- "RNA"
+}
 SaveH5Seurat(obj_seurat, filename = h5Seurat_file,overwrite = TRUE )
 Convert(h5Seurat_file, dest = "h5ad",overwrite = TRUE)
