@@ -689,7 +689,8 @@ class Step_Generic(Step):
                 # Add output files
                 for outputs in list(self.params["outputs"].keys()): 
                     # Define output filename  
-                    if get_File_Type_data(self.params["outputs"],[outputs,"constant_file_name"])=="":
+                    # if get_File_Type_data(self.params["outputs"],[outputs,"constant_file_name"])=="":
+                    if "constant_file_name" not in list(self.params["outputs"][outputs].keys()):
                         prefix=get_File_Type_data(self.params["outputs"],[outputs,"prefix"])
                         suffix=get_File_Type_data(self.params["outputs"],[outputs,"suffix"])
                         if "use_base_name" not in list(self.params["outputs"][outputs].keys()):                            
@@ -701,6 +702,9 @@ class Step_Generic(Step):
                     else:
                         output_filename = "".join([use_dir ,get_File_Type_data(self.params["outputs"],[outputs,"constant_file_name"])])
                         real_filename   = "".join([sample_dir ,get_File_Type_data(self.params["outputs"],[outputs,"constant_file_name"])])
+                        if get_File_Type_data(self.params["outputs"],[outputs,"constant_file_name"])=="":
+                            output_filename = output_filename + os.sep
+                            real_filename   = real_filename   + os.sep
                     
                     real_filename   = real_filename.replace('{{project_name}}',self.sample_data["Title"])
                     output_filename = output_filename.replace('{{project_name}}',self.sample_data["Title"])
