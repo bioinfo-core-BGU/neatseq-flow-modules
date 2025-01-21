@@ -11,8 +11,12 @@ option_list = list(
               help="Path to Seurat object RDS file", metavar = "character"),
   make_option(c("-s", "--Sample"), type="character", default = NA,
               help="Sample's name", metavar = "character"),
+  make_option(c("-a", "--assay"), type="character", default = "RNA",
+              help="Sample's name", metavar = "character"),
   make_option(c("--DontUseSpliced"),  action="store_true",default=FALSE,
               help="Don't Use the Spliced data as RNA Assay", metavar = "character"),
+  make_option(c("--OnlyCounts"),  action="store_true",default=FALSE,
+              help="Use Only Count Data", metavar = "character"),
   make_option(c("-o", "--outDir"), type="character", default = NA,
               help="Path to the output directory", metavar = "character")
 );
@@ -54,5 +58,14 @@ if (opt$DontUseSpliced==FALSE){
     obj_seurat[["RNA"]] <- obj_seurat[["spliced"]]
     DefaultAssay(obj_seurat) <- "RNA"
 }
+
+
+if (opt$OnlyCounts){
+    # obj_seurat = DietSeurat(obj_seurat, layers =c("counts"), assays=c(opt$assay))
+    obj_seurat[[opt$assay]]$data       <- NULL
+    obj_seurat[[opt$assay]]$scale.data <- NULL
+}
+DefaultAssay(obj_seurat) <- opt$assay
+
 SaveH5Seurat(obj_seurat, filename = h5Seurat_file,overwrite = TRUE )
 Convert(h5Seurat_file, dest = "h5ad",overwrite = TRUE)

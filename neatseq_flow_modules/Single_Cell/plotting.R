@@ -46,6 +46,8 @@ option_list = list(
               help="Plot input features dot-plot", metavar = "character"),
   make_option(c("--StackedViolinPlot"), action="store_true", default = FALSE,
               help="Plot input features stacked violin-plots", metavar = "character"),
+  make_option(c("--fontsize"), type="numeric", default = 18,
+              help="Plot axis font size", metavar = "character"),			  
   make_option(c("--FeaturePlot"), action="store_true", default = FALSE,
               help="Plot input features feature-plot", metavar = "character")
 );
@@ -219,11 +221,11 @@ if (opt$Heatmap) {
   col_fun = circlize::colorRamp2(c(-5,0,5), c('yellow','black','purple'))
   heat_map = ComplexHeatmap::Heatmap(matrix = counts_scaled, cluster_rows = FALSE, cluster_columns = FALSE,
                                    col = col_fun, name = "Heatmap", show_column_names = FALSE, row_title_rot = 0,
-                                   row_names_side = "right", row_names_gp = gpar(fontsize = 12), border = TRUE, show_heatmap_legend = opt$Show_Heatmap_Legend,
+                                   row_names_side = "right", row_names_gp = gpar(fontsize = opt$fontsize), border = TRUE, show_heatmap_legend = opt$Show_Heatmap_Legend,
                                    column_split = col_clusters, row_split = row_clusters, row_gap = grid::unit(3, "mm"), column_gap = grid::unit(4, "mm"),
                                    top_annotation = HeatmapAnnotation(foo = anno_block(gp = gpar(fill = 1:length(unique(col_clusters))))),
                                    left_annotation = rowAnnotation(foo = anno_block(gp = gpar(fill = 1:length(unique(row_clusters))))))
-  pdf(file = paste(opt$outDir,opt$Sample,"/",src,"/",opt$Sample,"_features_heatmap.pdf", sep = ""), width = 25, height = 15)
+  pdf(file = paste(opt$outDir,opt$Sample,"/",src,"/","Features_heatmap.pdf", sep = ""), width = 25, height = 15)
   draw(heat_map)
   dev.off()
   
@@ -235,11 +237,11 @@ if (opt$Heatmap) {
       counts_scaled_smallclusters = as.matrix(data.frame(t(counts_scaled_smallclusters), row.names=feat2use$Feature))
   heat_map_small = ComplexHeatmap::Heatmap(matrix = counts_scaled_smallclusters, cluster_rows = FALSE, cluster_columns = FALSE,
                                    col = col_fun, name = "Heatmap", show_column_names = FALSE, row_title_rot = 0,
-                                   row_names_side = "right", row_names_gp = gpar(fontsize = 12), border = TRUE, show_heatmap_legend = opt$Show_Heatmap_Legend,
+                                   row_names_side = "right", row_names_gp = gpar(fontsize = opt$fontsize), border = TRUE, show_heatmap_legend = opt$Show_Heatmap_Legend,
                                    column_split = col_smallclusters, row_split = row_clusters, row_gap = grid::unit(3, "mm"), column_gap = grid::unit(4, "mm"),
                                    top_annotation = HeatmapAnnotation(foo = anno_block(gp = gpar(fill = 1:length(unique(col_smallclusters))))),
                                    left_annotation = rowAnnotation(foo = anno_block(gp = gpar(fill = 1:length(unique(row_clusters))))))
-  pdf(file = paste(opt$outDir,opt$Sample,"/",src,"/",opt$Sample,"_features_heatmap_small_clusters.pdf", sep = ""), width = 25, height = 15)
+  pdf(file = paste(opt$outDir,opt$Sample,"/",src,"/","Features_heatmap_small_clusters.pdf", sep = ""), width = 25, height = 15)
   draw(heat_map_small)
   dev.off()
   rm('heat_map')
@@ -265,7 +267,7 @@ if (opt$FeaturePlot) {
       feat2use = feat2use[feat2use %in% rownames(obj_seurat)]
       if (length(feat2use)>0) {
         ct_plt <- FeaturePlot(obj_seurat, features = feat2use)
-        pdf(file = paste(opt$outDir,opt$Sample,"/",src,"/FeaturePlots/",opt$Sample,'_',stringr::str_replace(ct,' ','_'),'_FeaturePlot.pdf',sep=''), 
+        pdf(file = paste(opt$outDir,opt$Sample,"/",src,"/FeaturePlots/",stringr::str_replace(ct,' ','_'),'_FeaturePlot.pdf',sep=''), 
              width = 25, height = 15)
         print(ct_plt)
         dev.off()
@@ -296,7 +298,7 @@ if (opt$ViolinPlot) {
       feat2use = feat2use[feat2use %in% rownames(obj_seurat)]
       if (length(feat2use)>0) {
         ct_plt <- VlnPlot(obj_seurat, features = feat2use)
-        pdf(paste(opt$outDir,opt$Sample,"/",src,"/ViolinPlots/",opt$Sample,'_',stringr::str_replace(ct,' ','_'),'_ViolinPlot.pdf',sep=''), 
+        pdf(paste(opt$outDir,opt$Sample,"/",src,"/ViolinPlots/",stringr::str_replace(ct,' ','_'),'_ViolinPlot.pdf',sep=''), 
              width = 25, height = 15)
         print(ct_plt)
         dev.off()
@@ -305,8 +307,9 @@ if (opt$ViolinPlot) {
       }
       rm('ct','ct_plt','feat2use')
     }
-    All_VLN_plt <- VlnPlot(obj_seurat, features = featureData$Feature,sort=T,stack=T,same.y.lims=F,flip=T)
-    pdf(paste(opt$outDir,opt$Sample,"/",src,"/ViolinPlots/",opt$Sample,'_Stacked_ViolinPlot.pdf',sep=''), 
+    All_VLN_plt <- VlnPlot(obj_seurat, features = featureData$Feature,sort='decreasing',stack=T,same.y.lims=F,flip=T,cols= DiscretePalette(n =length(unique(celltypes))+1, palette = "polychrome"))+
+			theme(axis.text.x=element_text(size= opt$font_size))+ theme(axis.text.y=element_text(size= opt$font_size))
+    pdf(paste(opt$outDir,opt$Sample,"/",src,"/ViolinPlots/",'Stacked_ViolinPlot.pdf',sep=''), 
               width = 25, height = 15)
     print(All_VLN_plt)
     dev.off()
@@ -332,7 +335,7 @@ if (opt$DotPlot) {
       feat2use = feat2use[feat2use %in% rownames(obj_seurat)]
       if (length(feat2use)>0) {
         ct_plt <- DotPlot(obj_seurat, features = unique(feat2use))
-        pdf(paste(opt$outDir,opt$Sample,"/",src,"/DotPlots/",opt$Sample,'_',stringr::str_replace(ct,' ','_'),'_DotPlot.pdf',sep=''), 
+        pdf(paste(opt$outDir,opt$Sample,"/",src,"/DotPlots/",stringr::str_replace(ct,' ','_'),'_DotPlot.pdf',sep=''), 
              width = 25, height = 15)
         print(ct_plt)
         dev.off()
@@ -344,69 +347,7 @@ if (opt$DotPlot) {
   }
 }
 
-# StackedViolinPlot functions
-modify_vlnplot<- function(obj, 
-                          feature, 
-                          pt.size = 0, 
-                          plot.margin = unit(c(-0.75, 0, -0.75, 0), "cm"),
-                          ...) {
-  p<- VlnPlot(obj, features = feature, pt.size = pt.size, ... )  + 
-    xlab("") + ylab(feature) + ggtitle("") + 
-    theme(legend.position = "none", 
-          axis.text.x = element_blank(), 
-          axis.ticks.x = element_blank(), 
-          axis.title.y = element_text(size = rel(1), angle = 0), 
-          axis.text.y = element_text(size = rel(1)), 
-          plot.margin = plot.margin ) 
-  return(p)
-}
 
-## extract the max value of the y axis
-extract_max<- function(p){
-  ymax<- max(ggplot_build(p)$layout$panel_scales_y[[1]]$range$range)
-  return(ceiling(ymax))
-}
-
-
-## main function
-StackedVlnPlot<- function(obj, features,
-                          pt.size = 0, 
-                          plot.margin = unit(c(-0.75, 0, -0.75, 0), "cm"),
-                          ...) {
-  
-  plot_list<- purrr::map(features, function(x) modify_vlnplot(obj = obj,feature = x, ...))
-  
-  # Add back x-axis title to bottom plot. patchwork is going to support this?
-  plot_list[[length(plot_list)]]<- plot_list[[length(plot_list)]] +
-    theme(axis.text.x=element_text(), axis.ticks.x = element_line())
-  
-  # change the y-axis tick to only max value 
-  ymaxs<- purrr::map_dbl(plot_list, extract_max)
-  plot_list<- purrr::map2(plot_list, ymaxs, function(x,y) x + 
-                            scale_y_continuous(breaks = c(y)) + 
-                            expand_limits(y = y))
-
-  p<- patchwork::wrap_plots(plotlist = plot_list, ncol = 1)
-  return(p)
-}
-# Plot StackedViolinPlot
-if (opt$StackedViolinPlot) {
-  writeLog(logfile, paste("Plotting Stacked Violin-Plots...",sep=''))
-  if (is.na(opt$Features_file)) {
-    writeLog(logfile, paste("ERROR: Please provide cell-type marker genes list [--Features_file]"))
-	stop()
-  }
-  for (src in names(features_list)) {
-    featureData = features_list[[src]]
-    if (!dir.exists(paste(opt$outDir,opt$Sample,"/",src,sep='')))
-      dir.create(paste(opt$outDir,opt$Sample,"/",src,sep=''))
-	feat2use = featureData$Feature[featureData$Feature %in% rownames(obj_seurat)]
-	vlnplt = StackedVlnPlot(obj = obj_seurat, features = feat2use)
-	pdf(file = paste(opt$outDir,opt$Sample,"/",src,"/",opt$Sample,"_StackedViolinPlot.pdf", sep = ""), width = 25, height = 15)
-	print(vlnplt)
-	dev.off()
-  }
-}
 
 if (opt$RUNUMAP){
     writeLog(logfile, paste("Running UMAP..."))
@@ -446,8 +387,14 @@ if (opt$UMAP) {
 	writeLog(logfile, paste("Plotting reduction figures..."))
 	plt1 <- DimPlot(obj_seurat, reduction = use_reducs, label = T, pt.size = 1.5, label.size = 8)+
 	  theme(legend.position = legend_pos)
-	pdf(paste(opt$outDir,opt$Sample,"_",use_reducs,"ByCluster.pdf", sep = ""),width = 20, height = 15)
+	pdf(paste(opt$outDir,use_reducs,"ByCluster.pdf", sep = ""),width = 20, height = 15)
 	print(plt1)
+	dev.off()
+	
+	plt2 <- DimPlot(obj_seurat, reduction = use_reducs, label = FALSE, pt.size = 1.5)+
+	  theme(legend.position = legend_pos)
+	pdf(paste(opt$outDir,use_reducs,"_noLabels.pdf", sep = ""),width = 20, height = 15)
+	print(plt2)
 	dev.off()
 }
 
@@ -557,12 +504,5 @@ clusters_plot = ggplot(df, aes(x=Cluster,y=Ratio,fill=Sample)) +
   
 ggplot2::ggsave(filename = paste(opt$outDir,opt$ID,'_SamplesDistPerCluster.pdf', sep = ""),
                 clusters_plot, dpi=600, width=12, height=6,device='pdf')
-
-
-
-
-
-
-
 
 writeLog(logfile, paste("Finished",sep=''))

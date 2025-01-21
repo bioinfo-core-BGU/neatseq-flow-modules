@@ -133,7 +133,7 @@ obj_seurat@meta.data$treatment= treatmentTable$Treatment[ind]
 #Subset only dent1 and ident2 samples:
 ident1 <- opt$ident1
 ident2 <- opt$ident2
-obj_seurat <- obj_seurat[ ,grepl(ident1, obj_seurat$treatment) | grepl(ident2, obj_seurat$treatment)]
+obj_seurat <- obj_seurat[ ,obj_seurat@meta.data == ident1| obj_seurat@meta.data$treatment== ident2)]
 
 
 # Parallelization

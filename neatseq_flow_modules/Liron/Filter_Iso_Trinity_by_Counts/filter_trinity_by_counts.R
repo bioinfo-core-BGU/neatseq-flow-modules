@@ -32,12 +32,12 @@ option_list = list(
     make_option(c("-g", "--grouping"), 
                 type = "character", 
                 default = NULL, 
-                help = "Path to table of sample groupings. The First column is the samples names (identical to those in --counts header) and a Grouping column ( indicate the name of this column in --grouping_Field  ).", 
+                help = "Path to table of sample groupings. Two columns: 1) sample names (identical to those in --counts header) and 2) treatment names.", 
                 metavar = "character"),
-    make_option(c("-d", "--grouping_Field"), 
+    make_option(c("--treatment_header"), 
                 type = "character", 
-                default = NULL, 
-                help = "Name of the Field (Column Name) in the Grouping File (--grouping) to Group the Samples", 
+                default = "Treatment", 
+                help = "Name of column with treatment information", 
                 metavar = "character"),
     make_option(c("-f", "--FASTA"), 
                 type = "character", 
@@ -89,7 +89,22 @@ opt_parser = optparse::OptionParser(usage = "usage: %prog [options]",
 opt = optparse::parse_args(opt_parser);
 
 
+#########################
 
+# opt <- list()
+# opt$grouping <- "/gpfs0/bioinfo/projects/Amir_Sagi/19.Hippolyte_inermis/02.Assembly/grouping.txt"
+# opt$min_count <- 3 
+# opt$min_sample <- 2 
+# opt$min_groups <- 1 
+# opt$counts <- "/gpfs0/bioinfo/projects/Amir_Sagi/19.Hippolyte_inermis/02.Assembly/data//trinity_statistics/trin_map_org_stats/Assembly_H_inermis.isoform.counts.matrix"
+# opt$FASTA <- "/gpfs0/bioinfo/projects/Amir_Sagi/19.Hippolyte_inermis/02.Assembly/data//trinity_mapping/trin_map_org/Reference/Assembly_H_inermis.fasta"
+# opt$output <- "/gpfs0/bioinfo/projects/Amir_Sagi/19.Hippolyte_inermis/02.Assembly/data//Generic/filter_fasta/Assembly_H_inermis.filtered.fasta"
+# opt$plot <- TRUE
+# opt$gene_map <- "/gpfs0/bioinfo/projects/Amir_Sagi/19.Hippolyte_inermis/02.Assembly/data//Trinity_gene_to_trans_map/Renamed_Gene_Trans_Map/Assembly_H_inermis.fasta.gene_trans_map"
+
+
+
+#########################
 
 if (any(lapply(X = c("counts", "grouping", "FASTA", "min_count"), 
                FUN = function(x) !(x %in% names(opt)))))     {
@@ -107,6 +122,8 @@ if (!("output" %in% names(opt))) {
     cat("No --output passed. Using %s\n\n", opt$output)
 }
 
+# save(opt, file="opts.R")
+# stop()
 
 cat(sprintf("\n[%s] \n\tFinding genes with: \n\t\tmore than %f (counts or normalized counts) \n\t\tin at least %s samples \n\t\tin at least %s treatments. \n\tUsing files: \n\t\tcounts: %s\n\t\tgrouping: %s\n\t\tfasta: %s\n",
             date(),
@@ -117,6 +134,50 @@ if ("gene_map" %in% names(opt)) {
     cat(sprintf("\tAlso, using gene to trans map: %s\n",opt$gene_map))
 } 
 cat(sprintf("\tOutputting to %s\n",opt$output))
+
+cat(sprintf("\n[%s] Reading table %s\n",date(),opt$grouping))
+#########################
+# Removing all comments but for lines beginning with #SampleID
+# Saving lines to temp file
+# Loading from temp file with read.delim
+mycon <- file(opt$grouping, "r")
+temp_fn <- tempfile(fileext = ".txt")
+tempf <- file(temp_fn, open="w")
+while ( TRUE ) {
+    line <- readLines(mycon, n = 1)
+    line <- str_replace(string = line,
+                        pattern = regex(pattern = "\\s*#(?!SampleID).*",ignore_case =TRUE),
+                        replacement = "")
+    if ( length(line) == 0 ) {
+        break
+    }
+    writeLines(line,con = tempf)
+}
+
+close(mycon)
+close(tempf)
+sample_division <- read.delim(file = temp_fn,
+                              header = T,
+                              stringsAsFactors = F,
+                              comment.char = "")
+
+if (!(opt$treatment_header %in% names(sample_division))) {
+    stop(sprintf("Column %s does not exist in grouping file!\n",opt$treatment_header))
+    
+}
+
+
+unlink(temp_fn)
+
+names(sample_division)[1] <- "SampleID"
+sample_division <- sample_division[,c("SampleID", opt$treatment_header)]
+names(sample_division)[2] <- "Treatment"
+
+sample_division$SampleID <- make.names(sample_division$SampleID)
+sample_division$SampleID <- str_replace(string = sample_division$SampleID,
+                                        pattern = "^(\\d)",
+                                        replacement = "X\\1")
+
 
 cat(sprintf("\n[%s] Reading table %s\n",date(),opt$counts))
 FPKM_tab <- read.delim(opt$counts, he=T)
@@ -156,22 +217,9 @@ if (opt$plot) {
 }
 
 
-cat(sprintf("\n[%s] Reading table %s\n",date(),opt$grouping))
-sample_division <- read.delim(opt$grouping,
-                              header = T,
-                              stringsAsFactors = F,
-                              comment.char = "#")
-if (opt$grouping_Field %in% colnames(sample_division)){                     
-    sample_division = sample_division[,c(colnames(sample_division)[1],opt$grouping_Field ) ]
-} else{
-    stop(cat("Your grouping_Field could not be found in the grouping file"))
-}
 
-colnames(sample_division) = c('SampleID','Treatment')
 
-sample_division$SampleID <- str_replace(string = sample_division$SampleID,
-                                        pattern = "^(\\d)",
-                                        replacement = "X\\1")
+
 ## Testing partial coverage of samples in sample_division:
 # sample_division[1:29,] -> sample_division
 
@@ -188,12 +236,14 @@ FPKM_tab_long <-
     # Add field indicating whther higher than cutoff
     mutate(passCO = FPKM>=opt$min_count)   
     
+# write.table(FPKM_tab_long,file = paste0(opt$output,".test.tab"),quote = F,sep = "\t",row.names = F)
 
        
 cat(sprintf("\n[%s] Step 2: Calculate samples >= %d\n",date(),opt$min_sample))
-FPKM_passCO <- FPKM_tab_long                                 %>% 
+FPKM_passCO <- 
+    FPKM_tab_long                                            %>% 
     group_by(Transcript,Treatment)                           %>% 
-    summarise(treatPass = sum(passCO) >= opt$min_sample)     %>% 
+    summarise(treatPass = sum(passCO) >= opt$min_sample)     %>%
     group_by(Transcript)                                     %>% 
     summarise(genePassed = sum(treatPass))
 
@@ -261,8 +311,6 @@ if ("transrate" %in% names(opt)) {
 }
 
 
-
-# For each blast result:
 
 t1 <- fastaindex[fastaindex$gene_name %in% passed_genes,]
 newseq <- readBStringSet(t1)

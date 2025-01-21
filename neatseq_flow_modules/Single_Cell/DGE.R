@@ -60,6 +60,10 @@ option_list = list(
               help="Use only --Top_n genes for the Enrichment Analysis  (Default is False)", metavar = "character"),
   make_option(c("--Chisq_minprop_cutoff"), type="numeric", default = 0,
               help="Only consider genes with proportion of Positive cells greater then the cutoff in ident1 OR ident2 (Default is 0)", metavar = "character"),
+  make_option(c("--Chisq_Expression_Cutoff"), type="numeric", default = 0,
+              help="Consider Positive cell for a gene if the cell gene Expression value is above this Cutoff (Default is 0)", metavar = "character"),
+  make_option(c("--Chisq_Ncell_Cutoff"), type="numeric", default = 50,
+              help="Only consider genes with this amount of positive cells (Default is 50)", metavar = "character"),
   make_option(c("--Chisq_diffprop_cutoff"), type="numeric", default = 0,
               help="Only consider genes with a difference in Positive cells proportion between ident1 and ident2 greater then the cutoff (Default is 0)", metavar = "character"),
   make_option(c("--DGE_GroupBy"), type="character", default = 'orig.ident',
@@ -194,8 +198,8 @@ Prefix  = ""
 PosCell = "_PosCell"
 NegCell = "_NegCell"
 Proportion = "_Proportion"
-Expression_Cutoff = 0
-Ncell_Cutoff      = 50
+Expression_Cutoff = opt$Chisq_Expression_Cutoff
+Ncell_Cutoff      = opt$Chisq_Ncell_Cutoff
 
 CellProp = c()
 DGE_GroupBy = opt$DGE_GroupBy
@@ -876,9 +880,11 @@ if (opt$DGE_Pairwise) {
     file = paste(dir_path,'DGE_',paste(ident1,collapse = '.'),'_vs_',paste(ident2,collapse = '.'),'_Markers.csv',sep='')
     if (any(opt$Force,!file.exists(file))) {
       writeLog(logfile, paste("Running FindMarkers: ",paste(ident1,collapse = '.'),' vs. ',paste(ident2,collapse = '.'),sep=''))
-      obj_seurat = PrepSCTFindMarkers(object = obj_seurat )
+      if (obj_seurat@active.assay == "SCT"){
+          obj_seurat = PrepSCTFindMarkers(object = obj_seurat)
+      }
       DGE_Markers <- FindMarkers(obj_seurat, ident.1 = ident1, ident.2 = ident2, only.pos = !opt$Not_only_pos, min.pct = opt$min_pct, 
-                                    logfc.threshold = opt$logfc_threshold, test.use = opt$test_use, verbose = FALSE)
+                                    logfc.threshold = opt$logfc_threshold, test.use = opt$test_use, verbose = T)
       DGE_Markers$gene = rownames(DGE_Markers)
       writeLog(logfile, paste("Finished FindMarkers, Saving results..."))
       if (opt$Not_only_pos) {
@@ -916,9 +922,15 @@ if (opt$DGE_Pairwise) {
     write.csv(DGE_Top_Markers, paste(dir_path,'DGE_',paste(ident1,collapse = '.'),'_vs_',paste(ident2,collapse = '.'),'_Markers_top',opt$Top_n,'.csv',sep=''))
     writeLog(logfile, paste("Plotting top ",opt$Top_n," marker genes",sep=''))
     if (!is.na(opt$Subsample)) {
-      heat_map = DoHeatmap(subset(obj_seurat, downsample=subsample, group.by= "orig.ident")+ theme(axis.text.y = element_text(size = 12)), features = DGE_Top_Markers$gene) + NoLegend()
+      heat_map = DoHeatmap(subset(obj_seurat, downsample=subsample),
+                                  cells= names(obj_seurat@active.ident[obj_seurat@active.ident %in% c(ident1,ident2)]),
+                                  group.by= "ident",
+                                  features = DGE_Top_Markers$gene) + theme(axis.text.y = element_text(size = 12)) + NoLegend()
     } else {
-      heat_map = DoHeatmap(obj_seurat, features = DGE_Top_Markers$gene, group.by= "orig.ident")+ theme(axis.text.y = element_text(size = 12)) + NoLegend()
+      heat_map = DoHeatmap(obj_seurat, 
+                           cells= names(obj_seurat@active.ident[obj_seurat@active.ident %in% c(ident1,ident2)]),
+                           features = DGE_Top_Markers$gene,
+                           group.by= "ident")+ theme(axis.text.y = element_text(size = 12)) + NoLegend()
     }
     pdf(paste(dir_path,'DGE_',paste(ident1,collapse = '.'),'_vs_',paste(ident2,collapse = '.'),'_top',opt$Top_n,'_heatmap.pdf',sep=''),width = 40, height = 15)
     print(heat_map)
@@ -935,9 +947,15 @@ if (opt$DGE_Pairwise) {
         # Significant Genes Heatmap
         sig_genes <- df$gene
         if (!is.na(opt$Subsample)) {
-          heat_map = DoHeatmap(subset(obj_seurat, downsample=subsample), features = sig_genes, group.by= "orig.ident") + theme(axis.text.y = element_text(size = 12)) + NoLegend()
+          heat_map = DoHeatmap(subset(obj_seurat, downsample=subsample),
+                               cells= names(obj_seurat@active.ident[obj_seurat@active.ident %in% c(ident1,ident2)]),
+                               features = sig_genes,
+                               group.by= "orig.ident") + theme(axis.text.y = element_text(size = 12)) + NoLegend()
         } else {
-          heat_map = DoHeatmap(obj_seurat, features = sig_genes, group.by= "orig.ident")+ theme(axis.text.y = element_text(size = 12)) + NoLegend()
+          heat_map = DoHeatmap(obj_seurat,
+                               cells= names(obj_seurat@active.ident[obj_seurat@active.ident %in% c(ident1,ident2)]),
+                               features = sig_genes,
+                               group.by= "ident")+ theme(axis.text.y = element_text(size = 12)) + NoLegend()
         }
         pdf(paste(dir_path,'DGE_',paste(ident1,collapse = '.'),'_vs_',paste(ident2,collapse = '.'),'_Up_Regulated_heatmap.pdf',sep=''),width = 40, height = 15)
         print(heat_map)

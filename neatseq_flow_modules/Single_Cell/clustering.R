@@ -284,13 +284,13 @@ if (opt$slingshot){
     library(slingshot)
     if (reduction == "tsne"){
         sce <- slingshot(as.matrix(obj_seurat@reductions$tsne@cell.embeddings),
-                                omega = T,
+                                omega = T, 
                                 omega_scale = 1.5,
                                 stretch=1.5,
                                 clusterLabels = obj_seurat@active.ident)
     }else{
         sce <- slingshot(as.matrix(obj_seurat@reductions$umap@cell.embeddings),
-                                omega = T,
+                                omega = T, 
                                 omega_scale = 1.5,
                                 stretch=1.5,
                                 clusterLabels = obj_seurat@active.ident)
@@ -317,7 +317,7 @@ if (opt$slingshot){
     dev.off()
     for (Lineage in colnames(Pseudotime)){
         Lineage_id = as.integer(strsplit(x = Lineage ,split  = "Lineage" )[[1]][2])
-        plt_Lineage =Seurat::FeaturePlot(object =obj_seurat,reduction = reduction,features = Lineage  )+
+        plt_Lineage =Seurat::FeaturePlot(object =obj_seurat,reduction = reduction,features = Lineage)+
                             geom_path(data = curves[curves$Lineage==Lineage_id,] %>% arrange(Order),
                             arrow = arrow(length = unit(0.1, "inches")),
                             aes(x=x,y=y,group = Lineage ), size = 1)

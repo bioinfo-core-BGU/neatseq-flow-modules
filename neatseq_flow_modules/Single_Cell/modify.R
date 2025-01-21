@@ -31,6 +31,17 @@ option_list = list(
               help="Set the Active_Assay for this analysis, default = RNA" , metavar = "character"),
   make_option(c("--CleanClusters"), action="store_true", default = FALSE,
               help="Remove clustering information from meta-data (Default is False)", metavar = "character"),
+  make_option(c("--Pseudobulk"), action="store_true", default = FALSE,
+              help="Create pseudobulk object from each sample (Default is False)", metavar = "character"),
+  make_option(c("--group.by1"), type="character", default = "orig.ident",
+              help="Create pseudobulk object from each sample and a second variable, i.e. cluster", metavar = "character"),
+  make_option(c("--group.by2"), type="character", default = "seurat_clusters",
+              help="Create pseudobulk object from each sample and a second variable, i.e. cluster", metavar = "character"),
+  make_option(c("--Cell_cycle"), , action="store_true", default = FALSE,
+              help="examine cell cycle variation in our data", metavar = "character"),
+  make_option(c("--Cell_cycle_genes"), type="character", default = NA,
+              help="Path to csv file with cel cycle associated genes", metavar = "character"),			  
+  #mouse genes from https://github.com/hbc/tinyatlas/tree/master/cell_cycle
   make_option(c("--Remove_Doublets"), type="character", default = NA,
               help="Path to CSV file with classifications for each cell (DF.classification_homotypic column)", metavar = "character")
 );
@@ -182,6 +193,7 @@ if (!is.na(opt$Set_Idents)) {
 	ident.new = paste(data$ident.new[i])
 	cells2rename = names(fetch_idents[fetch_idents==ident.old])
     Idents(obj_seurat, cells = cells2rename) = ident.new
+	obj_seurat@meta.data$seurat_clusters <- Idents(obj_seurat)
   }
 }
 # Rename Idents based on Marker Expression (--Set_Ident_by_Marker)
@@ -222,6 +234,7 @@ if (!is.na(opt$Set_Ident_by_Marker)) {
   }
   writeLog(logfile, paste("Found ",length(cells2rename)," cells, renaming to '",new_ident,"'",sep=''))
   Idents(obj_seurat, cells=cells2rename) <- new_ident
+  obj_seurat@meta.data$seurat_clusters <- Idents(obj_seurat)
 }
 
 # DietSeurat
@@ -275,3 +288,44 @@ if (opt$CleanClusters) {
 # Save results
 saveRDS(obj_seurat, file = paste(opt$outDir, opt$Sample, '.rds', sep=''))
 writeLog(logfile, paste("Finished"))
+
+#Create pseudobulk from Seurat object:
+if (opt$Pseudobulk) {
+  writeLog(logfile, paste("Creating pseudobulk object per group..."))
+  
+  library(tidyr)
+  library(reshape2)
+ #Use active.ident as cellType in metadata:
+  df1 <- as.data.frame(Idents(obj_seurat))
+  obj_seurat@meta.data$cellType <- df1[,1]
+  counts <- GetAssayData(object = obj_seurat, assay = "RNA", layer = "counts")
+  
+  count <- as.data.frame(t(as.matrix(counts)))
+		if(all(rownames(count)== rownames(obj_seurat@meta.data))){
+  count$group1 <-  obj_seurat@meta.data[ ,names(obj_seurat@meta.data) %in% opt$group.by1]
+  count$group2 <- obj_seurat@meta.data[ ,names(obj_seurat@meta.data) %in% opt$group.by2]
+  count$group1_2 <- paste(count$group1, count$group2, sep ="_")  
+  ps <- gather(count, "Gene","gene_sum", 1:(ncol(count)-3))
+  pseudo <- dcast(ps, Gene ~ group1_2, fun.aggregate = sum, value.var = 'gene_sum')
+  rownames(pseudo) <- pseudo$Gene
+#Save results
+write.table(pseudo[,-1],file = paste(opt$outDir, opt$Sample, '.txt', sep=''), sep = "\t", quote= FALSE)
+}
+}
+
+if (opt$Cell_cycle) {
+  writeLog(logfile, paste("Storing S and G2/M scores in object meta data..."))
+if (opt$  Cell_cycle_genes){
+	writeLog(logfile, paste("Using S and G2/M gene list from file"))
+	}
+#Assign Cell-Cycle Scores:
+#This stores S and G2/M scores in object meta data, along with the predicted classification of each cell
+#in either G2M, S or G1 phase
+Cell_cycle_genes <- read.csv(opt$Cell_cycle_genes)
+s.genes <-  Cell_cycle_genes[Cell_cycle_genes$phase == 'S',]
+g2m.genes <- Cell_cycle_genes[Cell_cycle_genes$phase == 'G2/M',]
+obj_seurat <- CellCycleScoring(obj_seurat, s.features = s.genes, g2m.features = g2m.genes, set.ident = FALSE)
+# Save results
+saveRDS(obj_seurat, file = paste(opt$outDir, opt$Sample, '.rds', sep=''))
+writeLog(logfile, paste("Finished"))
+}
