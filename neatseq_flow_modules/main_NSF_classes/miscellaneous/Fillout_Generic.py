@@ -19,6 +19,7 @@ File and directory names are embedded in the script by describing the file or di
 Include 4 colon-separated fields: (a) scope, (b) slot, (c) separator and (d) base.
 For example: ``{{sample:fastq.F:,:merge1}}`` is replaced with sample ``fastq.F`` files from ``merge1`` instance, seperated by commas (only for project scope scripts, of course).
 Leave fields empty if you do not want to pass a value, e.g. ``{{sample:fastq.F}}`` is replaced with the sample ``fastq.F`` file.
+If the partition option is used: (a) can be set to part.
 
 2. Sample and project names:
 ******************************
@@ -26,6 +27,10 @@ Leave fields empty if you do not want to pass a value, e.g. ``{{sample:fastq.F}}
 You can include the sample or project names in the script by leaving out the file type field. *e.g.* ``{{sample}}`` will be replaced by the sample name.
 
 To get a list of sample names, set the separator field to the separator of your choice, *e.g.* ``{{sample::,}}`` will be replaced with a comma-separated list of sample names.
+
+If the partition option is used: (a) can be set to part and if (b) is not set it will use the part number for numeric partition or line in the file used in the partition option. 
+In this case (d) can be set to "clean" , "basename" or "clean,basename" to use only the basename of part. If clean is used will replace spaces with underscore and strip whitespaces
+
 
 3. Directories
 *****************
@@ -38,7 +43,6 @@ You can include two directories in your command:
 
     "``{{base_dir}}``", "Returns the base directory for the step."
     "``{{dir}}``", "Returns the active directory of the script. For project-scope scripts, this is identical to ``base_dir``. For sample scope scripts, this will be a direcotry within ``base_dir`` for sample related files."
-
 .. Tip:: You can obtain the ``base_dir`` or ``dir`` values for a base step, by including the name of the base in the 4th colon separated position, just as you'd do for the file slots. *e.g.* ``{{base_dir:::merge1}}`` will return the ``base_dir`` for step ``merge1`` and ``{{dir:::merge1}}`` will return the ``dir`` for the current sample for step ``merge1``.
 
 
@@ -68,7 +72,9 @@ The following examples cover most of the options:
     "``{{sample}}``", "The sample name"
     "``{{sample::,}}``", "A comma-separated list of sample names"
     "``{{sample:fastq.F:,:base}}``", "A comma-separated list of the ``fastq.F`` files of all samples, taken from the sample data of step ``base``."
-
+    "``{{part:::basename,clean}}``", "If the partition option is used, returns the part number for numeric partition or line in the file used in the partition option. If basename is added it will use only the basename of part. If clean is used will replace spaces with underscore and strip whitespaces"
+    "``{{part:fastq.F}}``", "If the partition option is used, returns the file type fastq.F in the current part"
+    
 .. Tip:: For a colon separate list of sample names or files, use the word 'colon' in the separator slot.
 
 .. Note:: The separator field is ignored for project-scope slots.
@@ -96,6 +102,8 @@ Parameters that can be set
 
     "output", "", "A block including 'scope' and 'string' definining the script outputs"
     "scope", "``sample|project``", "The scope of the resulting scripts. You cannot set scope to project if there are sample-scope fields defined."
+    "partition", "``number|file-path``", "Can split the analysis to number of parts or by lines in a file."
+    "del_partition", "", "If in Previous steps the ``partition`` option was used, it will delete all output information from that partition."
 
 
 Lines for parameter file
@@ -251,68 +259,119 @@ output:
             sample_list = self.sample_data["samples"]
         else:
             raise AssertionExcept("'scope' must be either 'sample' or 'project'")
-
+        
+        partitions = range(1)
+        if "partition" in self.params:
+            self.params["partition"] = self.params["partition"].strip('"').strip("'")
+            if os.path.exists(self.params["partition"]):
+                try:
+                    with open(self.params["partition"],"r") as f :
+                        partitions = f.read().splitlines()
+                except Exception as inst:
+                    raise AssertionExcept("{output}!".format(output=inst))
+            elif self.params["partition"].isnumeric():
+                partitions = range(int(self.params["partition"]))
+                partitions = list(map(lambda x:  str(x+1),list(partitions)))
+        else:
+            partitions = range(1)
+        
+        
+        
         for sample in sample_list:  # Getting list of samples out of samples_hash
-
-            # Name of specific script:
-            self.spec_script_name = self.set_spec_script_name(sample)
-            self.script = ""
-
             # Make a dir for the current sample:
             sample_dir = self.make_folder_for_sample(sample)
-
             # This line should be left before every new script. It sees to local issues.
             # Use the dir it returns as the base_dir for this step.
             use_dir = self.local_start(sample_dir)
-
-            # Creating new copy of params output so that samples don't modify the global version
-            if "output" in self.params:
-                self.params_output = deepcopy(self.params["output"])
-            else:
-                self.params_output = {}
-            for outp in self.params_output:
-                self.params_output[outp]["string"] = self.format_script_path(string=self.params_output[outp]["string"],
-                                                                           use_dir=use_dir,
-                                                                           sample=sample)
-
-            self.script = self.format_script_path(string=self.params["script_path"],
-                                                  use_dir=use_dir,
-                                                  sample=sample)
-            # # Try using function to include export (setenv) etc...
-            # if "output" in self.params:
-            for outp in self.params_output:
-                # If script and output scopes are identical:
-                if self.params_output[outp]["scope"] == self.params["scope"]:
-                    # Store type after formatting:
-                    self.sample_data[sample][outp] = \
-                        self.format_script_path(string=self.params_output[outp]["string"],
-                                                use_dir=use_dir,
-                                                sample=sample)
-                    self.stamp_file(self.sample_data[sample][outp])
-                # If script is project and output is sample:
-                elif self.params_output[outp]["scope"] == "sample":
-                    self.write_warning("Writing sample scope output for project scope script!")
-                    for outp_sample in self.sample_data["samples"]:
-                        self.sample_data[outp_sample][outp] = \
-                            self.format_script_path(string=self.params_output[outp]["string"],
-                                                    use_dir=use_dir,
-                                                    sample=outp_sample)
-                        self.stamp_file(self.sample_data[outp_sample][outp])
-                # If script is sample and output is project:
-                elif self.params_output[outp]["scope"] == "project":
-                    self.write_warning("Writing project scope output for sample scope script!")
-                    self.sample_data["project_data"][outp] = \
-                        self.format_script_path(string=self.params_output[outp]["string"],
-                                                use_dir=use_dir,
-                                                sample=sample)
-                    self.stamp_file(self.sample_data["project_data"][outp])
+            
+            if "del_partition" in self.params:
+                if "part" in self.sample_data[sample]:
+                    self.sample_data[sample]["part"] = {}
+            
+            for part in partitions:
+                # Name of specific script:
+                if len(partitions)>1:
+                    part_name = os.path.basename(part)
+                    rx = re.compile('\W+')
+                    part_name = rx.sub('_', part_name).strip()
+                    self.spec_script_name = self.set_spec_script_name(sample+ "." +part_name)
                 else:
-                    pass
-            # Wrapping up function. Leave these lines at the end of every iteration:
-            self.local_finish(use_dir, sample_dir)
-            self.create_low_level_script()
+                    self.spec_script_name = self.set_spec_script_name(sample)
+                    part = None
+                    part_name = ""
+                self.script = ""
+                
+                # Creating new copy of params output so that samples don't modify the global version
+                if "output" in self.params:
+                    self.params_output = deepcopy(self.params["output"])
+                else:
+                    self.params_output = {}
+                for outp in self.params_output:
+                    self.params_output[outp]["string"] = self.format_script_path(string=self.params_output[outp]["string"],
+                                                                               use_dir=use_dir,
+                                                                               sample=sample,
+                                                                               part = part,
+                                                                               outp = outp)
 
-    def format_script_path(self, string, use_dir=None, sample=None):
+                self.script = self.format_script_path(string=self.params["script_path"],
+                                                      use_dir=use_dir,
+                                                      sample=sample,
+                                                      part = part)
+                # # Try using function to include export (setenv) etc...
+                # if "output" in self.params:
+                for outp in self.params_output:
+                    # If script and output scopes are identical:
+                    if self.params_output[outp]["scope"] == self.params["scope"]:
+                        if (part==partitions[-1]) or (part==None):
+                            # Store type after formatting:
+                            self.sample_data[sample][outp] = \
+                                self.format_script_path(string=self.params_output[outp]["string"],
+                                                        use_dir=use_dir,
+                                                        sample=sample,
+                                                        part = part)
+                            self.stamp_file(self.sample_data[sample][outp])
+                    # If script is project and output is sample:
+                    elif self.params_output[outp]["scope"] == "sample":
+                        if (part==partitions[-1]) or (part==None):
+                            self.write_warning("Writing sample scope output for project scope script!")
+                            for outp_sample in self.sample_data["samples"]:
+                                self.sample_data[outp_sample][outp] = \
+                                    self.format_script_path(string=self.params_output[outp]["string"],
+                                                            use_dir=use_dir,
+                                                            sample=outp_sample,
+                                                            part = part)
+                                self.stamp_file(self.sample_data[outp_sample][outp])
+                    # If script is sample and output is project:
+                    elif self.params_output[outp]["scope"] == "project":
+                        if (part==partitions[-1]) or (part==None):
+                            self.write_warning("Writing project scope output for sample scope script!")
+                            self.sample_data["project_data"][outp] = \
+                                self.format_script_path(string=self.params_output[outp]["string"],
+                                                        use_dir=use_dir,
+                                                        sample=sample,
+                                                        part = part)
+                            self.stamp_file(self.sample_data["project_data"][outp])
+                    elif self.params_output[outp]["scope"] == "part":
+                        if part!=None:
+                            
+                            if "part" in self.sample_data[sample]:
+                                if part not in self.sample_data[sample]["part"]:
+                                    self.sample_data[sample]["part"][part] ={}
+                            else:
+                                self.sample_data[sample]["part"] = {}
+                                self.sample_data[sample]["part"][part] ={}
+                            self.sample_data[sample]["part"][part][outp] = \
+                                self.format_script_path(string=self.params_output[outp]["string"],
+                                                        use_dir=use_dir,
+                                                        sample=sample,
+                                                        part = part)
+                    else:
+                        pass
+                # Wrapping up function. Leave these lines at the end of every iteration:
+                self.local_finish(use_dir, sample_dir)
+                self.create_low_level_script()
+
+    def format_script_path(self, string, use_dir=None, sample=None,part=None,outp=None):
         """
 
         :return:
@@ -451,7 +510,109 @@ output:
                     raise AssertionExcept("Error embedding output '{var}'".format(var=variable), sample)
                 continue
             # ------------------------------
+            
+            if var_def[0] == "part":
+                if sample==None:
+                   part_scope  = "project_data"
+                else:
+                    part_scope = sample
+                
+                if part!=None:
+                    if outp!=None:
+                        self.params_output[outp]["scope"] = "part"
+                    if var_def[1]:
+                        # Create local copy of sample_data. If base is defined, this will be the base sample_data
+                        if not var_def[3]:  # Base not defined. Use current
+                            sample_data = self.sample_data
+                            # print "self"
+                        else:  # Base defined. Use defined base
+                            if var_def[3] not in self.get_base_sample_data():
+                                raise AssertionExcept("No base '{base}' defined!".format(base=var_def[3]))
+                            sample_data = self.get_base_sample_data()[var_def[3]]
+                            # print "base"
+                        
+                        try:
+                            repl_str=("{!r}".format(sample_data[part_scope]["part"][part][var_def[1]])).strip("'")
+                        except KeyError:
+                            raise AssertionExcept("File type '{type}' not found in part '{part}'".format(type=var_def[1],
+                                                                                                         part=part ),
+                                                  part_scope)
+
+                        rawstring = re.sub(pattern=re.escape(variable),
+                                           repl=repl_str,
+                                           string=rawstring)
+
+                    else:
+                        if var_def[2]:
+                            try:
+                                repl_str = var_def[2].join([("{!r}".format(self.clean(parts,var_def[3]))).strip("'")
+                                                      for parts
+                                                      in sample_data[part_scope]["part"]])
+
+                            except KeyError:
+                                raise AssertionExcept("There are no parts in '{scope}'".format(scope=part_scope))
+                        
+                            rawstring = re.sub(pattern=re.escape(variable),
+                                           repl=repl_str,
+                                           string=rawstring)
+                        else:
+                            part_name = part
+                            part_name = self.clean(part_name,var_def[3])
+                            rawstring = rawstring.replace(variable, part_name)
+                else:
+                    if outp==None:
+                        if var_def[1]:
+                            # Create local copy of sample_data. If base is defined, this will be the base sample_data
+                            if not var_def[3]:  # Base not defined. Use current
+                                sample_data = self.sample_data
+                                # print "self"
+                            else:  # Base defined. Use defined base
+                                if var_def[3] not in self.get_base_sample_data():
+                                    raise AssertionExcept("No base '{base}' defined!".format(base=var_def[3]))
+                                sample_data = self.get_base_sample_data()[var_def[3]]
+                                # print "base"
+                            
+                            if not var_def[2]:
+                                var_def[2] = " "
+
+                            try:
+                                repl_str = var_def[2].join([("{!r}".format(sample_data[part_scope]["part"][parts][var_def[1]])).strip("'")
+                                                      for parts
+                                                      in sample_data[part_scope]["part"]])
+
+                            except KeyError:
+                                raise AssertionExcept("File type '{type}' not found in '{scope}'".format(type=var_def[1],
+                                                                                                         scope=part_scope))
+                        else:
+                            if not var_def[2]:
+                                var_def[2] = " "
+                            try:
+                                repl_str = var_def[2].join([("{!r}".format(self.clean(parts,var_def[3]))).strip("'")
+                                                      for parts
+                                                      in sample_data[part_scope]["part"]])
+
+                            except KeyError:
+                                raise AssertionExcept("There are no parts in '{scope}'".format(scope=part_scope))
+                        
+                        rawstring = re.sub(pattern=re.escape(variable),
+                                       repl=repl_str,
+                                       string=rawstring)
+                    else:
+                        raise AssertionExcept("You can NOT use '{{part}}' in output file type string when partition is not set")
+                continue
+            # ------------------------------
             #  variable does not match any of the expected formats:
             raise AssertionExcept('Variable {var} in script_path not identified'.format(var=variable))
+            
+           
         # print "Return: ", rawstring
         return rawstring
+
+    def clean(self,string,options):
+        if options:
+            if "basename" in options.split(","):
+                string = os.path.basename(string)
+            if "clean" in options.split(","):
+                rx = re.compile('\W+')
+                string = rx.sub('_', string).strip()
+        return string
