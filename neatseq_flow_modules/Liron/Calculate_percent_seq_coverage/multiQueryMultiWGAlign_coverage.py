@@ -92,12 +92,12 @@ def LaunchSubProcess(ProcParam, stdlogFH, errlogFH):
 	proc.wait()
 	rc = proc.returncode
 	if (rc != 0):
-		print "Error: the program just executed has returned a non-zero exit code!"
+		print("Error: the program just executed has returned a non-zero exit code!")
 		sys.exit()
 #	return proc
 	
 def readCoveragePerBaseFromPILEUP(mpileupFile):
-	print "Reading coverage info from the pile-up file \"%s\".." %mpileupFile
+	print("Reading coverage info from the pile-up file \"%s\".." %mpileupFile)
 	mySequenceCoverage={}
 	fh=open(mpileupFile, 'rb')
 	csvreader=csv.reader(fh, delimiter="\t", quoting = csv.QUOTE_NONE, quotechar = "")
